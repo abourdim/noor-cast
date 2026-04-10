@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="fr" dir="ltr" data-theme="jungle">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>TutoCast — Crée tes tutos comme un pro !</title>
+  <meta name="description" content="TutoCast — enregistre des tutos vidéo multi-caméras (écran + webcams + micro) directement depuis ton navigateur. Kid-friendly, zéro install, privacy-first." />
+  <meta name="author" content="Workshop-DIY — abourdim" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="TutoCast — Crée tes tutos comme un pro !" />
+  <meta property="og:description" content="Enregistre des tutos vidéo multi-caméras directement depuis ton navigateur." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="icon.svg" />
+
+  <!-- PWA -->
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#071407" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Righteous&family=Tajawal:wght@400;500;700&family=Bangers&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- ═══════════════════ SPLASH SCREEN ═══════════════════ -->
+  <div class="splash" id="splash" onclick="dismissSplash()">
+    <div class="splash-inner">
+      <div class="splash-logo" id="splashLogo">
+        <img src="logo.svg" alt="TutoCast" width="128" height="128" />
+      </div>
+      <div class="splash-title">TutoCast</div>
+      <div class="splash-sub" data-i18n="slogan">🎬 Crée tes tutos comme un pro !</div>
+      <div class="splash-hint" data-i18n="splashHint">tap to skip</div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="deco-band top-band" aria-hidden="true"></div>
+
+    <div class="rows-container">
+
+      <!-- ═══════════════════ HEADER ═══════════════════ -->
+      <div class="header">
+        <div class="title-block">
+          <div class="tc-logo-wrap">
+            <img src="logo.svg" alt="TutoCast" width="56" height="56" id="headerLogo" />
+          </div>
+          <div>
+            <h1 data-i18n="title">TutoCast</h1>
+            <div class="subtitle" data-i18n="slogan">🎬 Crée tes tutos comme un pro !</div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-buttons">
+            <button id="helpBtn" class="btn-icon-only" aria-label="Help">❓</button>
+            <button id="settingsBtn" class="btn-icon-only" aria-label="Settings">⚙️</button>
+            <button id="logBtn" class="btn-icon-only" aria-label="Activity Log">📜</button>
+          </div>
+          <div class="status-pill" id="statusPill">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText" data-i18n="statusIdle">Prêt</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ ONBOARDING CARD (first launch) ═══════════════════ -->
+      <div class="card tc-onboarding" id="tcOnboarding" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span class="icon">👋</span> <span data-i18n="onbTitle">Salut ! Prêt à faire ton premier tuto ?</span></div>
+          </div>
+          <button class="btn-icon-only" id="tcOnboardingClose" aria-label="Close">✕</button>
+        </div>
+        <ol class="tc-onb-steps">
+          <li><span class="tc-onb-num">1</span><span data-i18n="onb1">Choisis tes caméras et ton écran (panneau de droite)</span></li>
+          <li><span class="tc-onb-num">2</span><span data-i18n="onb2">Choisis une scène prête à l'emploi, ou crée la tienne</span></li>
+          <li><span class="tc-onb-num">3</span><span data-i18n="onb3">Appuie sur le gros bouton rouge 🔴 et c'est parti !</span></li>
+          <li><span class="tc-onb-num">4</span><span data-i18n="onb4">Ton tuto est téléchargé automatiquement à la fin</span></li>
+        </ol>
+        <button class="tc-onb-go" id="tcOnboardingGo" data-i18n="onbGo">C'est parti !</button>
+      </div>
+
+      <!-- ═══════════════════ MAIN STUDIO CARD ═══════════════════ -->
+      <div class="card tc-studio" id="mainCard">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.1.0</span></div>
+          </div>
+          <div class="tc-rec-indicator" id="tcRecIndicator">
+            <span class="tc-rec-dot"></span>
+            <span class="tc-rec-time" id="tcRecTime">00:00</span>
+          </div>
+        </div>
+
+        <!-- Studio canvas preview + sidebars -->
+        <div class="tc-studio-grid">
+          <!-- LEFT SIDEBAR: Sources -->
+          <aside class="tc-sidebar tc-sidebar-sources">
+            <div class="tc-side-title">📹 <span data-i18n="sources">Sources</span></div>
+
+            <div class="tc-source-row">
+              <label data-i18n="sourceScreen">Écran</label>
+              <button class="tc-src-btn" id="srcScreenBtn" data-i18n="add">+ Ajouter</button>
+            </div>
+
+            <div class="tc-source-row">
+              <label data-i18n="sourceCam">Caméra</label>
+              <select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— sélectionne —</option></select>
+              <button class="tc-src-btn" id="srcCamBtn" data-i18n="add">+</button>
+            </div>
+
+            <div class="tc-source-row">
+              <label data-i18n="sourceMic">Micro</label>
+              <select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— sélectionne —</option></select>
+            </div>
+
+            <div class="tc-vu">
+              <div class="tc-vu-bar" id="tcVuBar"></div>
+            </div>
+
+            <div class="tc-side-title" style="margin-top:14px">🎭 <span data-i18n="activeSources">Sources actives</span></div>
+            <ul class="tc-src-list" id="tcSrcList"></ul>
+
+            <div class="tc-side-title" style="margin-top:14px">🤖 <span data-i18n="sensors">Capteurs</span></div>
+            <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
+            <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
+          </aside>
+
+          <!-- CENTER: Canvas preview -->
+          <div class="tc-stage-wrap">
+            <div class="tc-stage" id="tcStage">
+              <canvas id="tcCanvas" width="1920" height="1080"></canvas>
+              <canvas id="tcOverlayCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
+              <div class="tc-stage-hint" id="tcStageHint" data-i18n="stageHint">👆 Ajoute une source pour commencer</div>
+              <div class="tc-countdown" id="tcCountdown"></div>
+              <div class="tc-teleprompter" id="tcTeleprompter" style="display:none">
+                <div class="tc-tele-inner" id="tcTeleInner">Colle ton script ici…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDEBAR: Scenes + texts -->
+          <aside class="tc-sidebar tc-sidebar-scenes">
+            <div class="tc-side-title">🎭 <span data-i18n="scenes">Scènes</span></div>
+            <div class="tc-scenes" id="tcScenes"></div>
+
+            <div class="tc-side-title" style="margin-top:14px">✏️ <span data-i18n="texts">Textes</span></div>
+            <div class="tc-text-presets" id="tcTextPresets"></div>
+            <button class="tc-btn-full" id="tcAddTextBtn">+ <span data-i18n="addText">Texte libre</span></button>
+
+            <div class="tc-side-title" style="margin-top:14px">🛠 <span data-i18n="tools">Outils</span></div>
+            <button class="tc-btn-full" id="tcLaserBtn">🔴 <span data-i18n="laser">Laser</span> <kbd>L</kbd></button>
+            <button class="tc-btn-full" id="tcFreezeBtn">❄️ <span data-i18n="freeze">Geler</span> <kbd>F</kbd></button>
+            <button class="tc-btn-full" id="tcWhiteboardBtn">✏️ <span data-i18n="whiteboard">Dessiner</span> <kbd>D</kbd></button>
+            <button class="tc-btn-full" id="tcTeleBtn">📜 <span data-i18n="teleprompter">Teleprompter</span></button>
+            <button class="tc-btn-full" id="tcSnapBtn">📸 <span data-i18n="snapshot">Capture photo</span> <kbd>S</kbd></button>
+          </aside>
+        </div>
+
+        <!-- BIG REC BUTTON BAR -->
+        <div class="tc-rec-bar">
+          <button class="tc-rec-btn" id="tcRecBtn" aria-label="Record">
+            <span class="tc-rec-icon">⏺</span>
+            <span class="tc-rec-label" data-i18n="recStart">ENREGISTRER</span>
+          </button>
+          <button class="tc-rec-aux" id="tcPauseBtn" disabled>⏸ <span data-i18n="pause">Pause</span></button>
+          <button class="tc-rec-aux" id="tcMarkBtn" disabled>🏷 <span data-i18n="mark">Marker</span> <kbd>M</kbd></button>
+          <button class="tc-rec-aux" id="tcStopBtn" disabled>⏹ <span data-i18n="stop">Stop</span></button>
+        </div>
+
+        <!-- Last take preview -->
+        <div class="tc-take" id="tcTake" style="display:none">
+          <video id="tcTakeVideo" controls></video>
+          <div class="tc-take-actions">
+            <a class="tc-btn-full" id="tcDownloadBtn" download>⬇️ <span data-i18n="download">Télécharger</span></a>
+            <a class="tc-btn-full" id="tcDownloadVtt" download>📝 <span data-i18n="downloadChapters">Chapitres (.vtt)</span></a>
+            <button class="tc-btn-full" id="tcNewTakeBtn">🎬 <span data-i18n="newTake">Nouveau tuto</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ BADGES SECTION ═══════════════════ -->
+      <details class="collapsible">
+        <summary><span class="icon">🏆</span> <span data-i18n="badgesTitle">Tes badges</span></summary>
+        <div class="card">
+          <div class="tc-badges" id="tcBadges"></div>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- ═══════════════════ NEWS TICKER ═══════════════════ -->
+    <div class="tc-ticker" id="tcTicker">
+      <div class="tc-ticker-track" id="tcTickerTrack"></div>
+      <button class="tc-ticker-pause" id="tcTickerPause" aria-label="pause ticker">⏸</button>
+    </div>
+
+    <!-- ═══════════════════ FOOTER ═══════════════════ -->
+    <footer class="app-footer">
+      <span class="footer-text">powered by <a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></span>
+    </footer>
+
+    <div class="deco-band bottom-band" aria-hidden="true"></div>
+  </div>
+
+  <!-- Confetti canvas (hidden by default, shown on recording complete) -->
+  <canvas id="tcConfetti" class="tc-confetti-canvas"></canvas>
+
+  <!-- Matrix rain canvas (unused — kept for workshop-diy compatibility) -->
+  <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+
+  <!-- Debug panel -->
+  <div id="debugPanel" class="debug-panel">
+    <span id="debugFps">0 FPS</span>
+    <span id="debugMem">0 MB</span>
+  </div>
+
+  <!-- ═══════════════════ LEFT PANEL — Help ═══════════════════ -->
+  <div class="sidebar-overlay" id="helpOverlay"></div>
+  <aside class="sidebar sidebar-left" id="helpPanel" aria-label="Help" role="dialog" aria-modal="true">
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="help">❓ Aide</span>
+      <button id="helpCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="help-tabs">
+      <button class="help-tab active" data-tab="faq" data-i18n="faq">FAQ</button>
+      <button class="help-tab" data-tab="howto" data-i18n="howto">Comment faire</button>
+      <button class="help-tab" data-tab="wiki" data-i18n="wiki">Wiki</button>
+      <button class="help-tab" data-tab="news" data-i18n="news">Nouveautés</button>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- FAQ -->
+      <div class="help-content active" id="helpFaq">
+        <details class="help-item" open>
+          <summary data-i18n="faq_q1">Qu'est-ce que TutoCast ?</summary>
+          <p data-i18n="faq_a1">TutoCast est un outil web pour enregistrer des tutos vidéo avec plusieurs caméras (écran + webcams + micro) directement depuis ton navigateur. Zéro install, zéro compte, tout reste chez toi.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q2">Comment ajouter plusieurs caméras ?</summary>
+          <p data-i18n="faq_a2">Dans le panneau de gauche, choisis une caméra dans la liste et clique sur « + ». Tu peux répéter pour ajouter jusqu'à 3 caméras (ex. une pour ton robot, une pour toi, une pour l'écran du micro:bit).</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q3">Je peux lire les capteurs de mon micro:bit ?</summary>
+          <p data-i18n="faq_a3">Oui ! Clique sur « 📡 Connecter micro:bit » dans le panneau de gauche. Ton navigateur va demander l'autorisation de se connecter en Bluetooth. Une fois connecté, les valeurs des capteurs (accéléromètre, luminosité, boutons) s'affichent en overlay sur ta vidéo. ⚠️ Chrome/Edge uniquement.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q4">Quels sont les raccourcis clavier ?</summary>
+          <p data-i18n="faq_a4">R = Rec/Stop · P = Pause · M = Marker · 1-9 = Changer de scène · L = Laser (maintenir) · F = Geler l'écran · D = Dessiner · S = Capture photo · T = Texte rapide · Espace = Afficher/masquer ta webcam</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q5">Mes vidéos sont privées ?</summary>
+          <p data-i18n="faq_a5">100%. Rien ne quitte ton ordi. L'enregistrement reste dans la mémoire du navigateur et se télécharge directement sur ton disque. Aucun compte, aucune analytique, aucun serveur.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q6">Quel format de sortie ?</summary>
+          <p data-i18n="faq_a6">WebM (VP9 + Opus). Lisible dans VLC, Chrome, Firefox, YouTube, et Davinci Resolve. Pour convertir en MP4, utilise ffmpeg ou un outil en ligne comme cloudconvert.com.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q7">Le teleprompter est visible dans ma vidéo ?</summary>
+          <p data-i18n="faq_a7">Non, jamais. Le teleprompter s'affiche par-dessus l'aperçu uniquement pour toi. Il n'est pas dessiné sur le canvas qui compose la vidéo, donc il n'apparaît pas dans l'enregistrement final.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q8">Navigateur recommandé ?</summary>
+          <p data-i18n="faq_a8">Chrome ou Edge desktop. Firefox marche pour l'enregistrement mais pas pour Web Bluetooth (micro:bit). Safari ne supporte ni les capteurs ni certaines options audio. iOS n'est pas supporté car Safari Mobile bloque la capture d'écran.</p>
+        </details>
+      </div>
+
+      <!-- How-To -->
+      <div class="help-content" id="helpHowto">
+        <div class="help-step"><span class="help-step-num">1</span><p data-i18n="howto_1">Branche tes caméras USB (si besoin) et autorise l'accès quand le navigateur te le demande.</p></div>
+        <div class="help-step"><span class="help-step-num">2</span><p data-i18n="howto_2">Dans le panneau Sources à gauche, ajoute ton écran, tes caméras et choisis ton micro.</p></div>
+        <div class="help-step"><span class="help-step-num">3</span><p data-i18n="howto_3">Clique sur une des scènes pré-réglées à droite (Code, Robot, Studio…) — la composition change instantanément.</p></div>
+        <div class="help-step"><span class="help-step-num">4</span><p data-i18n="howto_4">Ajoute un texte depuis la bibliothèque (⭐ Bravo, 🎯 Étape 1…) — il apparaît en overlay.</p></div>
+        <div class="help-step"><span class="help-step-num">5</span><p data-i18n="howto_5">Clique sur le gros bouton 🔴 ENREGISTRER. Compte à rebours 3-2-1, puis ça tourne.</p></div>
+        <div class="help-step"><span class="help-step-num">6</span><p data-i18n="howto_6">Utilise les touches 1-9 pour changer de scène en live. L pour laser pointer, F pour geler l'écran, D pour dessiner.</p></div>
+        <div class="help-step"><span class="help-step-num">7</span><p data-i18n="howto_7">Clique ⏹ Stop. Ton tuto est téléchargé en .webm, avec les chapitres en .vtt.</p></div>
+      </div>
+
+      <!-- Wiki -->
+      <div class="help-content" id="helpWiki">
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_multicam_title">🎥 Multi-caméras</h3>
+          <p data-i18n="wiki_multicam">TutoCast peut afficher simultanément jusqu'à 3 caméras + 1 écran + le micro. Chaque source est une boîte déplaçable dans la scène. Tu peux définir sa forme (rectangle ou cercle), sa taille et sa position.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_scenes_title">🎭 Scènes</h3>
+          <p data-i18n="wiki_scenes">Une scène est un layout : position/taille/visibilité de chaque source + textes actifs. Tu peux switcher entre les scènes pendant l'enregistrement avec les touches 1-9 ou en cliquant. Cut sec, pas de latence.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_sensor_title">🤖 Capteurs micro:bit</h3>
+          <p data-i18n="wiki_sensor">Via Web Bluetooth, TutoCast se connecte directement au micro:bit et lit en temps réel ses capteurs (accéléromètre, luminosité, température, boutons). Les valeurs s'affichent en overlay sur la vidéo, parfait pour expliquer un capteur à des élèves.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_privacy_title">🔒 Privacy</h3>
+          <p data-i18n="wiki_privacy">Tout reste local. Les flux vidéo sont traités par le navigateur, compositionnés sur un canvas, et enregistrés en mémoire via MediaRecorder. Le fichier final est téléchargé sur ton disque. Aucun serveur, aucune télémétrie.</p>
+        </div>
+      </div>
+
+      <!-- News / Changelog -->
+      <div class="help-content" id="helpNews">
+        <div class="wiki-entry">
+          <h3>🆕 v0.1.0 — 10 avril 2026</h3>
+          <p data-i18n="news_010">Première version de TutoCast 🎉</p>
+          <ul>
+            <li data-i18n="news_010_1">Multi-caméras (écran + jusqu'à 3 cams + micro)</li>
+            <li data-i18n="news_010_2">6 scènes prêtes à l'emploi (Code, Robot, Capteurs, Code+Robot, Studio, Toi)</li>
+            <li data-i18n="news_010_3">Textes overlay avec bibliothèque de presets kid-friendly</li>
+            <li data-i18n="news_010_4">Outils live : laser pointer, gel d'écran, whiteboard, teleprompter</li>
+            <li data-i18n="news_010_5">Capteurs micro:bit via Web Bluetooth (Chrome/Edge)</li>
+            <li data-i18n="news_010_6">Chapitres automatiques exportés en .vtt</li>
+            <li data-i18n="news_010_7">Markers live (touche M) + captures photo (touche S)</li>
+            <li data-i18n="news_010_8">Badges de progression + confetti à la fin</li>
+            <li data-i18n="news_010_9">Trilingue FR/EN/AR, 8 thèmes visuels</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>TutoCast</span>
+      <span class="badge"><strong>v0.1.0</strong></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Settings ═══════════════════ -->
+  <div class="sidebar-overlay" id="settingsOverlay"></div>
+  <aside class="sidebar" id="settingsPanel" aria-label="Settings" role="dialog" aria-modal="true">
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="settings">⚙️ Paramètres</span>
+      <button id="settingsCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="sidebar-body">
+      <div class="sidebar-group">
+        <label class="sidebar-label" data-i18n="language">Langue</label>
+        <select id="langSelect" class="sidebar-select" aria-label="Language">
+          <option value="en">🇬🇧 EN</option>
+          <option value="fr" selected>🇫🇷 FR</option>
+          <option value="ar">🇩🇿 عربي</option>
+        </select>
+      </div>
+      <div class="sidebar-group">
+        <label class="sidebar-label" data-i18n="theme">Thème</label>
+        <select id="themeSelect" class="sidebar-select" aria-label="Theme">
+          <option value="jungle" selected>Jungle</option>
+          <option value="mosque-gold">Mosque</option>
+          <option value="zellige">Zellige</option>
+          <option value="andalus">Andalus</option>
+          <option value="riad">Riad</option>
+          <option value="medina">Medina</option>
+          <option value="space">Space</option>
+          <option value="robot">Robot</option>
+        </select>
+      </div>
+      <div class="sidebar-group">
+        <label class="toggle-ctrl">
+          <input type="checkbox" id="soundToggle" class="checkbox-ctrl" checked />
+          <span data-i18n="soundEffects">🔊 Effets sonores</span>
+        </label>
+      </div>
+      <div class="sidebar-group">
+        <label class="toggle-ctrl">
+          <input type="checkbox" id="tcMirrorCam" class="checkbox-ctrl" />
+          <span data-i18n="mirrorCam">🪞 Miroir webcam</span>
+        </label>
+      </div>
+      <div class="sidebar-group">
+        <label class="toggle-ctrl">
+          <input type="checkbox" id="tcCountdownEnabled" class="checkbox-ctrl" checked />
+          <span data-i18n="countdownOn">⏱ Compte à rebours 3-2-1</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>TutoCast</span>
+      <span class="badge"><strong>v0.1.0</strong></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Activity Log ═══════════════════ -->
+  <aside class="sidebar" id="logPanel" aria-label="Activity Log">
+    <div class="resize-handle" id="logResizeHandle"></div>
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="activityLog">📜 Journal</span>
+      <div class="log-controls">
+        <button id="clearLogBtn" class="btn-sm"><span class="btn-icon">🧹</span><span data-i18n="clear">Effacer</span></button>
+        <button id="copyLogBtn" class="btn-sm"><span class="btn-icon">📋</span><span data-i18n="copy">Copier</span></button>
+        <button id="exportLogBtn" class="btn-sm"><span class="btn-icon">💾</span><span data-i18n="export">Exporter</span></button>
+        <button id="logCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="log-filters" id="logFilters">
+      <button class="log-filter active" data-filter="all" data-i18n="filterAll">Tout</button>
+      <button class="log-filter" data-filter="info">Info</button>
+      <button class="log-filter" data-filter="success">✓</button>
+      <button class="log-filter" data-filter="error">✗</button>
+      <button class="log-filter" data-filter="tx">TX</button>
+      <button class="log-filter" data-filter="rx">RX</button>
+    </div>
+
+    <div class="sidebar-body log-body">
+      <div class="log" id="logContainer" aria-live="polite"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span data-i18n="eventsMsg">Événements et messages</span>
+      <span class="badge"><strong>v0.1.0</strong></span>
+    </div>
+  </aside>
+
+  <!-- Toast -->
+  <div id="toastIndicator" class="toast-indicator">
+    <div class="toast-inner">
+      <div class="spinner"></div>
+      <div id="toastMessage" class="toast-text">Working…</div>
+    </div>
+  </div>
+
+  <script src="tutocast.js"></script>
+</body>
+</html>

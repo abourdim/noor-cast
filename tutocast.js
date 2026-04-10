@@ -1,0 +1,1416 @@
+/* ═══════════════════════════════════════════════════════════════════
+   TutoCast v0.1.0 — kids-friendly multi-cam screen recorder
+   Single-file app logic. Zero dependencies. Chrome/Edge desktop.
+
+   Architecture:
+     1. i18n  (LANG + applyI18n)
+     2. Shell (splash, panels, log, toast, themes)
+     3. Engine (sources manager, canvas renderer, scenes manager)
+     4. Recorder (MediaRecorder + chapters VTT)
+     5. Live tools (laser, freeze, whiteboard, teleprompter, snapshot)
+     6. micro:bit sensors (Web Bluetooth)
+     7. Kid polish (pet, badges, confetti, ticker)
+     8. Onboarding + wiring
+   ═══════════════════════════════════════════════════════════════════ */
+
+const APP_VERSION = '0.1.0';
+const $ = (id) => document.getElementById(id);
+
+/* ─────────── 1. i18n ─────────── */
+
+const LANG = {
+  fr: {
+    title: 'TutoCast', slogan: '🎬 Crée tes tutos comme un pro !',
+    statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
+    sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
+    selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
+    activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
+    scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre',
+    tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner',
+    teleprompter: 'Teleprompter', snapshot: 'Capture photo',
+    recStart: 'ENREGISTRER', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
+    download: 'Télécharger', downloadChapters: 'Chapitres (.vtt)', newTake: 'Nouveau tuto',
+    badgesTitle: 'Tes badges',
+    onbTitle: 'Salut ! Prêt à faire ton premier tuto ?',
+    onb1: 'Choisis tes caméras et ton écran (panneau de gauche)',
+    onb2: "Choisis une scène prête, ou crée la tienne",
+    onb3: "Appuie sur le gros bouton rouge 🔴 et c'est parti !",
+    onb4: 'Ton tuto est téléchargé automatiquement à la fin',
+    onbGo: "C'est parti !",
+    stageHint: '👆 Ajoute une source pour commencer',
+    mainSection: 'Studio', mainDesc: 'Compose ta scène et enregistre',
+    mirrorCam: '🪞 Miroir webcam', countdownOn: '⏱ Compte à rebours 3-2-1',
+    scene_code: '💻 Code', scene_robot: '🤖 Robot', scene_sensors: '🎛 Capteurs',
+    scene_coderobot: '💻🤖 Code + Robot', scene_studio: '🎬 Studio', scene_you: '👋 Toi',
+    txt_bravo: '⭐ Bravo !', txt_step1: '🎯 Étape 1', txt_step2: '🎯 Étape 2', txt_step3: '🎯 Étape 3',
+    txt_watch: '👀 Regarde', txt_tip: '💡 Astuce !', txt_careful: '⚠️ Attention', txt_oops: '🙈 Oups !',
+    txt_yourturn: '💪 À toi !', txt_done: '🎉 Fini !',
+    tip_1: '💡 Appuie sur 1-9 pour changer de scène instantanément',
+    tip_2: '✏️ Clique droit sur le canvas pour ajouter un texte',
+    tip_3: '🎨 8 thèmes dispos dans les Paramètres ⚙️',
+    tip_4: '🎥 Jusqu\'à 3 caméras + écran + micro',
+    tip_5: '⭐ Parle fort, souris, amuse-toi !',
+    tip_6: '🎯 Un tuto = préparer, enregistrer, partager',
+    tip_7: '💾 Tes vidéos restent sur ton ordi, rien n\'est envoyé en ligne',
+    tip_8: '🤖 Tuto micro:bit ? Essaie la scène "Code + Robot"',
+    tip_9: '🧠 Commence par la scène "Toi" pour ton intro',
+    tip_10: '🎬 Appuie sur R pour démarrer/arrêter l\'enregistrement',
+    news: 'Nouveautés',
+    disconnected: 'Déconnecté', connected: 'Connecté',
+    activityLog: '📜 Journal', eventsMsg: 'Événements et messages',
+    clear: 'Effacer', copy: 'Copier', theme: 'Thème',
+    settings: '⚙️ Paramètres', language: 'Langue',
+    help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
+    soundEffects: '🔊 Effets sonores',
+    splashHint: 'appuyer pour passer',
+    export: 'Exporter', filterAll: 'Tout',
+    working: 'En cours…', copied: 'Copié !', copyFail: 'Échec',
+    logCleared: 'Journal effacé',
+    ready: '🚀 TutoCast prêt !',
+    readyToRecord: '✅ Prêt à enregistrer',
+    needSources: '⚠️ Ajoute au moins une source avant d\'enregistrer',
+    recStarted: '🔴 Enregistrement démarré',
+    recStopped: '⏹ Enregistrement terminé',
+    recPaused: '⏸ Pause',
+    recResumed: '▶ Reprise',
+    markerAdded: '🏷 Marker ajouté',
+    snapshotSaved: '📸 Photo téléchargée',
+    sceneChanged: '🎭 Scène',
+    textAdded: '✏️ Texte ajouté',
+    laserOn: '🔴 Laser activé',
+    freezeOn: '❄️ Écran gelé',
+    freezeOff: '▶ Écran repris',
+    drawOn: '✏️ Mode dessin',
+    drawOff: '✏️ Mode dessin désactivé',
+    teleOn: '📜 Teleprompter visible',
+    teleOff: '📜 Teleprompter caché',
+    promptTelePlaceholder: 'Colle ton script ici…',
+    btConnected: '📡 micro:bit connecté !',
+    btError: '❌ Connexion micro:bit échouée',
+    permissionDenied: '🔒 Permission refusée. Autorise la caméra dans les réglages du navigateur.',
+    badge_first: 'Premier tuto',
+    badge_long: 'Plus de 5 min',
+    badge_multi: 'Multi-caméras',
+    badge_all_scenes: 'Toutes les scènes',
+    badge_marker_king: 'Roi des markers',
+    badge_micro: 'micro:bit branché',
+    t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
+    t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
+  },
+  en: {
+    title: 'TutoCast', slogan: '🎬 Make your tutorials like a pro!',
+    statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
+    sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
+    selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
+    activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
+    scenes: 'Scenes', texts: 'Texts', addText: 'Free text',
+    tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw',
+    teleprompter: 'Teleprompter', snapshot: 'Photo snapshot',
+    recStart: 'REC', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
+    download: 'Download', downloadChapters: 'Chapters (.vtt)', newTake: 'New tutorial',
+    badgesTitle: 'Your badges',
+    onbTitle: 'Hi! Ready for your first tutorial?',
+    onb1: 'Pick your cameras and screen (left panel)',
+    onb2: 'Choose a ready-made scene, or create your own',
+    onb3: 'Hit the big red button 🔴 and go!',
+    onb4: 'Your tutorial downloads automatically at the end',
+    onbGo: "Let's go!",
+    stageHint: '👆 Add a source to get started',
+    mainSection: 'Studio', mainDesc: 'Compose your scene and record',
+    mirrorCam: '🪞 Mirror webcam', countdownOn: '⏱ 3-2-1 countdown',
+    scene_code: '💻 Code', scene_robot: '🤖 Robot', scene_sensors: '🎛 Sensors',
+    scene_coderobot: '💻🤖 Code + Robot', scene_studio: '🎬 Studio', scene_you: '👋 You',
+    txt_bravo: '⭐ Well done!', txt_step1: '🎯 Step 1', txt_step2: '🎯 Step 2', txt_step3: '🎯 Step 3',
+    txt_watch: '👀 Watch', txt_tip: '💡 Tip!', txt_careful: '⚠️ Careful', txt_oops: '🙈 Oops!',
+    txt_yourturn: '💪 Your turn!', txt_done: '🎉 Done!',
+    tip_1: '💡 Press 1-9 to switch scenes instantly',
+    tip_2: '✏️ Right-click the canvas to add a text',
+    tip_3: '🎨 8 themes in Settings ⚙️',
+    tip_4: '🎥 Up to 3 cameras + screen + mic',
+    tip_5: '⭐ Speak loud, smile, have fun!',
+    tip_6: '🎯 A tutorial = prepare, record, share',
+    tip_7: '💾 Your videos stay on your computer',
+    tip_8: '🤖 micro:bit tutorial? Try the "Code + Robot" scene!',
+    tip_9: '🧠 Start with the "You" scene for your intro',
+    tip_10: '🎬 Press R to start/stop recording',
+    news: 'News',
+    disconnected: 'Disconnected', connected: 'Connected',
+    activityLog: '📜 Activity Log', eventsMsg: 'Events & messages',
+    clear: 'Clear', copy: 'Copy', theme: 'Theme',
+    settings: '⚙️ Settings', language: 'Language',
+    help: '❓ Help', faq: 'FAQ', howto: 'How-to', wiki: 'Wiki',
+    soundEffects: '🔊 Sound effects',
+    splashHint: 'tap to skip',
+    export: 'Export', filterAll: 'All',
+    working: 'Working…', copied: 'Copied!', copyFail: 'Copy failed',
+    logCleared: 'Log cleared',
+    ready: '🚀 TutoCast ready!',
+    readyToRecord: '✅ Ready to record',
+    needSources: '⚠️ Add at least one source before recording',
+    recStarted: '🔴 Recording started',
+    recStopped: '⏹ Recording stopped',
+    recPaused: '⏸ Paused',
+    recResumed: '▶ Resumed',
+    markerAdded: '🏷 Marker added',
+    snapshotSaved: '📸 Photo saved',
+    sceneChanged: '🎭 Scene',
+    textAdded: '✏️ Text added',
+    laserOn: '🔴 Laser on',
+    freezeOn: '❄️ Screen frozen',
+    freezeOff: '▶ Screen live',
+    drawOn: '✏️ Draw mode',
+    drawOff: '✏️ Draw mode off',
+    teleOn: '📜 Teleprompter on',
+    teleOff: '📜 Teleprompter off',
+    promptTelePlaceholder: 'Paste your script here…',
+    btConnected: '📡 micro:bit connected!',
+    btError: '❌ micro:bit connection failed',
+    permissionDenied: '🔒 Permission denied. Allow camera in browser settings.',
+    badge_first: 'First tutorial',
+    badge_long: 'Over 5 minutes',
+    badge_multi: 'Multi-camera',
+    badge_all_scenes: 'All scenes used',
+    badge_marker_king: 'Marker king',
+    badge_micro: 'micro:bit plugged',
+    t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
+    t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
+  },
+  ar: {
+    title: 'TutoCast', slogan: '🎬 اصنع دروسك كالمحترفين!',
+    statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
+    sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
+    selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
+    activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
+    scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر',
+    tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم',
+    teleprompter: 'تيليبرومبتر', snapshot: 'لقطة',
+    recStart: 'تسجيل', recStop: 'إيقاف', pause: 'إيقاف مؤقت', mark: 'علامة', stop: 'إيقاف',
+    download: 'تحميل', downloadChapters: 'فصول (.vtt)', newTake: 'درس جديد',
+    badgesTitle: 'شاراتك',
+    onbTitle: 'أهلاً! جاهز لأول درس؟',
+    onb1: 'اختر كاميراتك وشاشتك', onb2: 'اختر مشهدًا جاهزًا',
+    onb3: 'اضغط على الزر الأحمر 🔴', onb4: 'سيتم تحميل درسك تلقائيًا',
+    onbGo: 'هيّا!',
+    stageHint: '👆 أضف مصدرًا للبدء',
+    mainSection: 'الاستوديو', mainDesc: 'اصنع مشهدك وسجّل',
+    mirrorCam: '🪞 مرآة', countdownOn: '⏱ عدّ تنازلي 3-2-1',
+    scene_code: '💻 كود', scene_robot: '🤖 روبوت', scene_sensors: '🎛 مستشعرات',
+    scene_coderobot: '💻🤖 كود + روبوت', scene_studio: '🎬 استوديو', scene_you: '👋 أنت',
+    txt_bravo: '⭐ أحسنت!', txt_step1: '🎯 الخطوة 1', txt_step2: '🎯 الخطوة 2', txt_step3: '🎯 الخطوة 3',
+    txt_watch: '👀 انظر', txt_tip: '💡 نصيحة!', txt_careful: '⚠️ انتبه', txt_oops: '🙈 أخطأت!',
+    txt_yourturn: '💪 دورك!', txt_done: '🎉 انتهى!',
+    tip_1: '💡 اضغط 1-9 لتبديل المشاهد',
+    tip_2: '✏️ انقر بالزر الأيمن لإضافة نص',
+    tip_3: '🎨 8 مظاهر في الإعدادات',
+    tip_4: '🎥 حتى 3 كاميرات + شاشة + ميكروفون',
+    tip_5: '⭐ تكلّم بصوت عالٍ!',
+    tip_6: '🎯 تحضير، تسجيل، مشاركة',
+    tip_7: '💾 فيديوهاتك تبقى على حاسوبك',
+    tip_8: '🤖 جرّب مشهد "كود + روبوت"',
+    tip_9: '🧠 ابدأ بمشهد "أنت"',
+    tip_10: '🎬 اضغط R للتسجيل',
+    news: 'جديد',
+    disconnected: 'غير متصل', connected: 'متصل',
+    activityLog: '📜 سجل النشاط', eventsMsg: 'الأحداث والرسائل',
+    clear: 'مسح', copy: 'نسخ', theme: 'المظهر',
+    settings: '⚙️ الإعدادات', language: 'اللغة',
+    help: '❓ مساعدة', faq: 'أسئلة', howto: 'كيف', wiki: 'ويكي',
+    soundEffects: '🔊 مؤثرات صوتية',
+    splashHint: 'انقر للتخطي',
+    export: 'تصدير', filterAll: 'الكل',
+    working: 'جارٍ…', copied: 'تم النسخ!', copyFail: 'فشل',
+    logCleared: 'تم المسح',
+    ready: '🚀 TutoCast جاهز!',
+    readyToRecord: '✅ جاهز للتسجيل',
+    needSources: '⚠️ أضف مصدرًا أولاً',
+    recStarted: '🔴 بدأ التسجيل',
+    recStopped: '⏹ انتهى التسجيل',
+    recPaused: '⏸ إيقاف مؤقت', recResumed: '▶ استئناف',
+    markerAdded: '🏷 علامة',
+    snapshotSaved: '📸 حفظ اللقطة',
+    sceneChanged: '🎭 المشهد',
+    textAdded: '✏️ نص مُضاف',
+    laserOn: '🔴 الليزر', freezeOn: '❄️ مُجمَّد', freezeOff: '▶ مباشر',
+    drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
+    teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
+    promptTelePlaceholder: 'الصق النص هنا…',
+    btConnected: '📡 micro:bit متصل!', btError: '❌ فشل الاتصال',
+    permissionDenied: '🔒 تم رفض الإذن.',
+    badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
+    badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
+    t_mosque: 'مسجد', t_zellige: 'زليج', t_andalus: 'أندلس',
+    t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
+  }
+};
+
+let currentLang = 'fr';
+
+function t(key) { return (LANG[currentLang] && LANG[currentLang][key]) || LANG.en[key] || key; }
+
+function applyI18n() {
+  const s = LANG[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (s[k] != null) el.textContent = s[k];
+  });
+  document.title = `${s.title} — ${s.slogan}`;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+}
+
+function setLanguage(lang) {
+  if (!LANG[lang]) return;
+  currentLang = lang;
+  applyI18n();
+  try { localStorage.setItem('tc-lang', lang); } catch {}
+  renderTicker();
+  renderScenes();
+  renderTextPresets();
+  renderBadges();
+  log(`🌐 ${lang.toUpperCase()}`, 'info');
+}
+
+/* ─────────── 2. Shell: splash, panels, log, toast, themes ─────────── */
+
+function dismissSplash() {
+  const el = $('splash'); if (!el) return;
+  el.classList.add('hidden');
+  setTimeout(() => el.remove(), 600);
+}
+window.dismissSplash = dismissSplash;
+
+function setTheme(name) {
+  document.documentElement.dataset.theme = name;
+  try { localStorage.setItem('tc-theme', name); } catch {}
+}
+
+const logHistory = [];
+function log(msg, type = 'info') {
+  const c = $('logContainer'); if (!c) return;
+  const d = document.createElement('div');
+  d.className = `log-line ${type}`;
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  logHistory.push({ msg, type, time: Date.now() });
+  if (logHistory.length > 500) logHistory.shift();
+}
+
+function showToast(msg, ms = 2000) {
+  const t = $('toastIndicator'), m = $('toastMessage'); if (!t || !m) return;
+  m.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  if (ms > 0) showToast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function openPanel(id) {
+  const p = $(id); if (!p) return;
+  p.classList.add('open');
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.add('show');
+}
+function closePanel(id) {
+  const p = $(id); if (!p) return;
+  p.classList.remove('open');
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('show');
+}
+function closeAllPanels() {
+  ['helpPanel', 'settingsPanel', 'logPanel'].forEach(closePanel);
+}
+
+/* ─────────── 3. Engine: sources + renderer ─────────── */
+
+const Engine = {
+  canvas: null, ctx: null,
+  overlayCanvas: null, overlayCtx: null,
+  width: 1920, height: 1080,
+  sources: [],        // {id, type:'screen'|'cam'|'mic', stream, video, label, x, y, w, h, shape, mirrored}
+  nextId: 1,
+  rafId: null,
+  frozenFrame: null,  // ImageData when frozen
+  audioCtx: null, audioDest: null, analyser: null,
+  masterStream: null,
+
+  init() {
+    this.canvas = $('tcCanvas');
+    this.overlayCanvas = $('tcOverlayCanvas');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
+    this.overlayCtx = this.overlayCanvas.getContext('2d');
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.audioDest = this.audioCtx.createMediaStreamDestination();
+    this.analyser = this.audioCtx.createAnalyser();
+    this.analyser.fftSize = 256;
+    this.loop();
+  },
+
+  loop() {
+    this.render();
+    this.rafId = requestAnimationFrame(() => this.loop());
+  },
+
+  render() {
+    const { ctx, width, height } = this;
+    // background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+
+    if (Recorder.frozen && this.frozenFrame) {
+      ctx.putImageData(this.frozenFrame, 0, 0);
+    } else {
+      // draw visible sources (filter non-video)
+      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && s.video && s.video.readyState >= 2);
+      visible.forEach(src => this.drawSource(src));
+    }
+
+    // draw text overlays
+    TextOverlays.drawAll(ctx);
+
+    // draw sensor overlay if active
+    Sensors.drawOverlay(ctx);
+
+    // overlay canvas for laser + whiteboard (separate so it stays across frames for whiteboard)
+    // (the overlay is composited by CSS on top, not in canvas stream directly,
+    //  BUT we also need it in the recording — so we draw it onto the main canvas too)
+    ctx.drawImage(this.overlayCanvas, 0, 0);
+
+    // update VU meter
+    this.updateVU();
+  },
+
+  drawSource(src) {
+    const { ctx } = this;
+    const { video, x, y, w, h, shape, mirrored } = src;
+    ctx.save();
+    if (shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+    }
+    if (mirrored) {
+      ctx.translate(x + w, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, w, h);
+    } else {
+      ctx.drawImage(video, x, y, w, h);
+    }
+    ctx.restore();
+    // subtle border for visibility
+    if (shape === 'circle') {
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  },
+
+  async addScreen() {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30 },
+        audio: false
+      });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      const src = {
+        id: this.nextId++, type: 'screen', stream, video,
+        label: t('sourceScreen'),
+        x: 0, y: 0, w: this.width, h: this.height,
+        shape: 'rect', visible: true, mirrored: false,
+      };
+      this.sources.push(src);
+      stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
+      this.onSourcesChanged();
+      log(`+ ${t('sourceScreen')}`, 'success');
+    } catch (e) {
+      log(`✗ screen: ${e.message}`, 'error');
+      if (e.name === 'NotAllowedError') showToast(t('permissionDenied'), 3500);
+    }
+  },
+
+  async addCamera(deviceId, label) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: 1280, height: 720 }
+      });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      const n = this.sources.filter(s => s.type === 'cam').length;
+      // stagger placements
+      const positions = [
+        { x: 1440, y: 760, w: 440, h: 280 },  // bottom-right
+        { x: 40, y: 760, w: 440, h: 280 },    // bottom-left
+        { x: 40, y: 40, w: 440, h: 280 },     // top-left
+      ];
+      const pos = positions[n % 3];
+      const src = {
+        id: this.nextId++, type: 'cam', stream, video,
+        label: label || `Camera ${n + 1}`,
+        x: pos.x, y: pos.y, w: pos.w, h: pos.h,
+        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
+      };
+      this.sources.push(src);
+      this.onSourcesChanged();
+      log(`+ ${src.label}`, 'success');
+      Badges.unlockIfMultiCam();
+    } catch (e) {
+      log(`✗ cam: ${e.message}`, 'error');
+      if (e.name === 'NotAllowedError') showToast(t('permissionDenied'), 3500);
+    }
+  },
+
+  async setMic(deviceId) {
+    // remove previous mic
+    this.sources = this.sources.filter(s => {
+      if (s.type === 'mic') {
+        try { s.stream.getTracks().forEach(t => t.stop()); } catch {}
+        return false;
+      }
+      return true;
+    });
+    if (!deviceId) { this.onSourcesChanged(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: true, noiseSuppression: true }
+      });
+      const src = { id: this.nextId++, type: 'mic', stream, label: 'Mic' };
+      this.sources.push(src);
+      // hook into audio graph
+      const node = this.audioCtx.createMediaStreamSource(stream);
+      node.connect(this.audioDest);
+      node.connect(this.analyser);
+      this.onSourcesChanged();
+      log('+ Mic', 'success');
+    } catch (e) {
+      log(`✗ mic: ${e.message}`, 'error');
+    }
+  },
+
+  removeSource(id) {
+    const src = this.sources.find(s => s.id === id);
+    if (!src) return;
+    try { src.stream.getTracks().forEach(t => t.stop()); } catch {}
+    this.sources = this.sources.filter(s => s.id !== id);
+    this.onSourcesChanged();
+    log(`- ${src.label}`, 'info');
+  },
+
+  onSourcesChanged() {
+    const list = $('tcSrcList');
+    if (list) {
+      list.innerHTML = '';
+      this.sources.forEach(s => {
+        const li = document.createElement('li');
+        const icon = s.type === 'screen' ? '🖥' : s.type === 'cam' ? '🎥' : '🎤';
+        li.innerHTML = `<span>${icon}</span><span class="tc-src-name">${s.label}</span><button title="Remove">✕</button>`;
+        li.querySelector('button').addEventListener('click', () => this.removeSource(s.id));
+        list.appendChild(li);
+      });
+    }
+    const stage = $('tcStage');
+    if (stage) stage.classList.toggle('has-sources', this.sources.some(s => s.type !== 'mic'));
+  },
+
+  getMasterStream() {
+    const videoTrack = this.canvas.captureStream(30).getVideoTracks()[0];
+    const audioTrack = this.audioDest.stream.getAudioTracks()[0];
+    const tracks = [videoTrack];
+    if (audioTrack) tracks.push(audioTrack);
+    return new MediaStream(tracks);
+  },
+
+  updateVU() {
+    const bar = $('tcVuBar'); if (!bar || !this.analyser) return;
+    const data = new Uint8Array(this.analyser.frequencyBinCount);
+    this.analyser.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / data.length);
+    const pct = Math.min(100, rms * 400);
+    bar.style.width = pct + '%';
+  },
+
+  async enumerateDevices() {
+    // Prompt for permission first (blank getUserMedia) so labels are populated
+    try { await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(s => s.getTracks().forEach(t => t.stop())); } catch {}
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    const camSel = $('camSelect'), micSel = $('micSelect');
+    if (camSel) {
+      camSel.innerHTML = `<option value="">${t('selectCam')}</option>`;
+      cams.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Camera ${d.deviceId.slice(0, 4)}`; camSel.appendChild(o); });
+    }
+    if (micSel) {
+      micSel.innerHTML = `<option value="">${t('selectMic')}</option>`;
+      mics.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Mic ${d.deviceId.slice(0, 4)}`; micSel.appendChild(o); });
+    }
+  },
+};
+
+/* ─────────── Scenes Manager ─────────── */
+
+const Scenes = {
+  // Each scene: { key, label, apply: (engine) => void }
+  presets: [
+    { key: 'code', icon: '💻', apply: (e) => setLayout(e, { screen: 'full', facecam: 'br' }) },
+    { key: 'robot', icon: '🤖', apply: (e) => setLayout(e, { firstCam: 'full', facecam: 'br' }) },
+    { key: 'sensors', icon: '🎛', apply: (e) => setLayout(e, { secondCam: 'full', facecam: 'br' }) },
+    { key: 'coderobot', icon: '💻🤖', apply: (e) => setLayout(e, { screen: 'left', firstCam: 'right', facecam: 'br' }) },
+    { key: 'studio', icon: '🎬', apply: (e) => setLayout(e, { grid: true }) },
+    { key: 'you', icon: '👋', apply: (e) => setLayout(e, { facecam: 'full' }) },
+  ],
+  active: 'code',
+
+  switch(key) {
+    const s = this.presets.find(p => p.key === key);
+    if (!s) return;
+    s.apply(Engine);
+    this.active = key;
+    this.render();
+    log(`${t('sceneChanged')} : ${s.icon} ${t('scene_' + key)}`, 'info');
+    Chapters.add(t('scene_' + key));
+    Badges.unlockScene(key);
+  },
+
+  render() { renderScenes(); }
+};
+
+function setLayout(engine, layout) {
+  // facecam = last camera added (usually the "you" cam)
+  const cams = engine.sources.filter(s => s.type === 'cam');
+  const screen = engine.sources.find(s => s.type === 'screen');
+  const W = engine.width, H = engine.height;
+
+  // Hide all
+  engine.sources.forEach(s => { if (s.type !== 'mic') s.visible = false; });
+
+  const place = (src, pos) => {
+    if (!src) return;
+    src.visible = true;
+    if (pos === 'full')      { src.x = 0; src.y = 0; src.w = W; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'left') { src.x = 0; src.y = 0; src.w = W * 0.6; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'right'){ src.x = W * 0.6; src.y = 0; src.w = W * 0.4; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'br')   { src.x = W - 440; src.y = H - 340; src.w = 400; src.h = 300; src.shape = 'circle'; }
+  };
+
+  if (layout.screen) place(screen, layout.screen);
+  if (layout.firstCam && cams[0]) place(cams[0], layout.firstCam);
+  if (layout.secondCam && cams[1]) place(cams[1], layout.secondCam);
+  const faceCam = cams[cams.length - 1];
+  if (layout.facecam && faceCam) place(faceCam, layout.facecam);
+
+  if (layout.grid) {
+    const items = [screen, cams[0], cams[1]].filter(Boolean);
+    const cellW = W / 2, cellH = H / 2;
+    items.forEach((s, i) => {
+      s.visible = true; s.shape = 'rect';
+      s.x = (i % 2) * cellW; s.y = Math.floor(i / 2) * cellH;
+      s.w = cellW; s.h = cellH;
+    });
+    if (faceCam && !items.includes(faceCam)) place(faceCam, 'br');
+  }
+}
+
+function renderScenes() {
+  const el = $('tcScenes'); if (!el) return;
+  el.innerHTML = '';
+  Scenes.presets.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tc-scene-btn' + (Scenes.active === s.key ? ' active' : '');
+    btn.innerHTML = `<span class="tc-scene-icon">${s.icon}</span><span>${t('scene_' + s.key)}</span><kbd style="opacity:.4;font-size:.6rem">${i + 1}</kbd>`;
+    btn.addEventListener('click', () => Scenes.switch(s.key));
+    el.appendChild(btn);
+  });
+}
+
+/* ─────────── Text Overlays ─────────── */
+
+const TextOverlays = {
+  items: [], // { id, text, x, y, size, color, bg }
+  nextId: 1,
+
+  add(text, opts = {}) {
+    const item = {
+      id: this.nextId++,
+      text,
+      x: opts.x ?? Engine.width / 2,
+      y: opts.y ?? 120,
+      size: opts.size ?? 80,
+      color: opts.color ?? '#ffffff',
+      bg: opts.bg ?? 'rgba(0,0,0,.65)',
+    };
+    this.items.push(item);
+    log(`${t('textAdded')}: ${text}`, 'info');
+    // auto-remove after 4s for preset texts (kids won't clutter)
+    if (opts.ttl !== 0) setTimeout(() => this.remove(item.id), opts.ttl || 4000);
+    return item;
+  },
+
+  remove(id) { this.items = this.items.filter(i => i.id !== id); },
+
+  drawAll(ctx) {
+    this.items.forEach(item => {
+      ctx.save();
+      ctx.font = `800 ${item.size}px Bangers, Righteous, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const metrics = ctx.measureText(item.text);
+      const padX = 30, padY = 18;
+      const w = metrics.width + padX * 2;
+      const h = item.size * 1.2 + padY * 2;
+      // bg
+      ctx.fillStyle = item.bg;
+      ctx.beginPath();
+      const r = 20;
+      const x = item.x - w / 2, y = item.y - h / 2;
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.fill();
+      // text with outline
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      ctx.strokeText(item.text, item.x, item.y);
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, item.x, item.y);
+      ctx.restore();
+    });
+  }
+};
+
+const TEXT_PRESETS = ['bravo', 'step1', 'step2', 'step3', 'watch', 'tip', 'careful', 'oops', 'yourturn', 'done'];
+
+function renderTextPresets() {
+  const el = $('tcTextPresets'); if (!el) return;
+  el.innerHTML = '';
+  TEXT_PRESETS.forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = t('txt_' + key);
+    btn.addEventListener('click', () => TextOverlays.add(t('txt_' + key)));
+    el.appendChild(btn);
+  });
+}
+
+/* ─────────── 4. Recorder ─────────── */
+
+const Recorder = {
+  recorder: null, chunks: [], startTime: 0, pausedDuration: 0, pausedAt: 0,
+  timerId: null, state: 'idle', frozen: false,
+
+  async start() {
+    if (Engine.sources.filter(s => s.type !== 'mic').length === 0) {
+      showToast(t('needSources'), 2500);
+      return;
+    }
+    // countdown
+    if ($('tcCountdownEnabled').checked) {
+      await this.countdown();
+    }
+    const stream = Engine.getMasterStream();
+    const mime = this.pickMime();
+    try {
+      this.recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+    } catch (e) {
+      this.recorder = new MediaRecorder(stream);
+    }
+    this.chunks = [];
+    this.recorder.ondataavailable = e => { if (e.data && e.data.size) this.chunks.push(e.data); };
+    this.recorder.onstop = () => this.finish();
+    this.recorder.start(1000);
+    this.startTime = Date.now();
+    this.pausedDuration = 0;
+    this.state = 'recording';
+    Chapters.reset();
+    Chapters.add(t('scene_' + Scenes.active));
+    this.updateUI();
+    this.startTimer();
+    log(t('recStarted'), 'success');
+    showToast(t('recStarted'), 1500);
+    Pet.setMood('happy');
+  },
+
+  pickMime() {
+    const candidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+    ];
+    for (const m of candidates) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
+  },
+
+  async countdown() {
+    const el = $('tcCountdown');
+    for (let n = 3; n > 0; n--) {
+      el.textContent = n;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      await new Promise(r => setTimeout(r, 900));
+    }
+    el.classList.remove('show');
+  },
+
+  togglePause() {
+    if (!this.recorder) return;
+    if (this.state === 'recording') {
+      this.recorder.pause();
+      this.pausedAt = Date.now();
+      this.state = 'paused';
+      log(t('recPaused'), 'info');
+    } else if (this.state === 'paused') {
+      this.recorder.resume();
+      this.pausedDuration += Date.now() - this.pausedAt;
+      this.state = 'recording';
+      log(t('recResumed'), 'info');
+    }
+    this.updateUI();
+  },
+
+  stop() {
+    if (!this.recorder) return;
+    try { this.recorder.stop(); } catch {}
+    this.state = 'idle';
+    this.stopTimer();
+  },
+
+  finish() {
+    const blob = new Blob(this.chunks, { type: this.chunks[0]?.type || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const video = $('tcTakeVideo');
+    video.src = url;
+    $('tcTake').style.display = 'block';
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    const dl = $('tcDownloadBtn');
+    dl.href = url; dl.download = `${fname}.webm`;
+    // Chapters VTT
+    const vtt = Chapters.toVTT();
+    const vttBlob = new Blob([vtt], { type: 'text/vtt' });
+    const vttUrl = URL.createObjectURL(vttBlob);
+    const dlVtt = $('tcDownloadVtt');
+    dlVtt.href = vttUrl; dlVtt.download = `${fname}.vtt`;
+    // trigger auto-download of webm
+    setTimeout(() => dl.click(), 200);
+    log(t('recStopped'), 'success');
+    showToast('🎉 ' + t('recStopped'), 2500);
+    Confetti.burst();
+    Badges.unlockFirst();
+    Badges.unlockLong(this.elapsed());
+    Pet.setMood('happy');
+    this.updateUI();
+  },
+
+  elapsed() {
+    if (!this.startTime) return 0;
+    const now = this.state === 'paused' ? this.pausedAt : Date.now();
+    return Math.max(0, now - this.startTime - this.pausedDuration);
+  },
+
+  startTimer() {
+    this.timerId = setInterval(() => this.updateTimer(), 500);
+  },
+  stopTimer() {
+    clearInterval(this.timerId); this.timerId = null;
+    const el = $('tcRecTime'); if (el) el.textContent = '00:00';
+  },
+  updateTimer() {
+    const ms = this.elapsed();
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const el = $('tcRecTime');
+    if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  },
+
+  updateUI() {
+    const rec = $('tcRecBtn'), ind = $('tcRecIndicator');
+    const recording = this.state === 'recording' || this.state === 'paused';
+    rec.classList.toggle('recording', recording);
+    rec.querySelector('.tc-rec-label').textContent = recording ? t('recStop') : t('recStart');
+    ind.classList.toggle('active', this.state === 'recording');
+    ['tcPauseBtn', 'tcMarkBtn', 'tcStopBtn'].forEach(id => { $(id).disabled = !recording; });
+    const pill = $('statusPill'), st = $('statusText');
+    if (pill && st) {
+      pill.classList.toggle('connected', recording);
+      st.textContent = this.state === 'recording' ? t('statusRec')
+                      : this.state === 'paused' ? t('statusPaused')
+                      : t('statusIdle');
+    }
+  },
+};
+
+/* ─────────── Chapters (VTT) ─────────── */
+
+const Chapters = {
+  items: [], // { time, label }
+  start: 0,
+
+  reset() { this.items = []; this.start = Date.now(); },
+
+  add(label) {
+    if (Recorder.state !== 'recording') return;
+    const t = Recorder.elapsed() / 1000;
+    this.items.push({ time: t, label });
+  },
+
+  fmtTime(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = (s % 60).toFixed(3);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${sec.padStart(6, '0')}`;
+  },
+
+  toVTT() {
+    if (this.items.length === 0) return 'WEBVTT\n\n';
+    let out = 'WEBVTT\n\n';
+    const end = Recorder.elapsed() / 1000;
+    this.items.forEach((c, i) => {
+      const next = i + 1 < this.items.length ? this.items[i + 1].time : end;
+      out += `${this.fmtTime(c.time)} --> ${this.fmtTime(next)}\n${c.label}\n\n`;
+    });
+    return out;
+  },
+
+  addMarker() {
+    const label = `Marker ${this.items.filter(i => i.label.startsWith('Marker')).length + 1}`;
+    this.items.push({ time: Recorder.elapsed() / 1000, label });
+    log(`${t('markerAdded')} — ${label}`, 'info');
+    Badges.unlockMarker(this.items.length);
+  }
+};
+
+/* ─────────── 5. Live tools ─────────── */
+
+/* Laser pointer — drawn on overlay canvas, fades after release */
+const Laser = {
+  on: false, x: 0, y: 0, lastMove: 0,
+  setup() {
+    const stage = $('tcStage');
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.on) return;
+      const r = stage.getBoundingClientRect();
+      this.x = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.y = ((e.clientY - r.top) / r.height) * Engine.height;
+      this.lastMove = Date.now();
+    });
+    // render loop integration
+    setInterval(() => this.render(), 33);
+  },
+  render() {
+    if (!this.on) { Engine.overlayCtx.clearRect(0, 0, Engine.width, Engine.height); return; }
+    const c = Engine.overlayCtx;
+    c.clearRect(0, 0, Engine.width, Engine.height);
+    c.save();
+    const grd = c.createRadialGradient(this.x, this.y, 4, this.x, this.y, 40);
+    grd.addColorStop(0, 'rgba(255,60,60,1)');
+    grd.addColorStop(0.3, 'rgba(255,60,60,.6)');
+    grd.addColorStop(1, 'rgba(255,60,60,0)');
+    c.fillStyle = grd;
+    c.beginPath(); c.arc(this.x, this.y, 40, 0, Math.PI * 2); c.fill();
+    c.restore();
+  },
+  toggle() {
+    this.on = !this.on;
+    log(this.on ? t('laserOn') : '⚪ Laser off', 'info');
+    $('tcLaserBtn').classList.toggle('active', this.on);
+  }
+};
+
+/* Freeze — snapshot current canvas frame, Render loop draws the frozen ImageData instead */
+const Freeze = {
+  toggle() {
+    if (Recorder.frozen) {
+      Recorder.frozen = false;
+      Engine.frozenFrame = null;
+      log(t('freezeOff'), 'info');
+      $('tcFreezeBtn').classList.remove('active');
+    } else {
+      Engine.frozenFrame = Engine.ctx.getImageData(0, 0, Engine.width, Engine.height);
+      Recorder.frozen = true;
+      log(t('freezeOn'), 'info');
+      $('tcFreezeBtn').classList.add('active');
+    }
+  }
+};
+
+/* Whiteboard — draws on the overlay canvas, persists */
+const Whiteboard = {
+  on: false, drawing: false, lastX: 0, lastY: 0,
+  setup() {
+    const stage = $('tcStage');
+    const ov = Engine.overlayCanvas;
+    const down = (e) => {
+      if (!this.on) return;
+      this.drawing = true;
+      const r = stage.getBoundingClientRect();
+      this.lastX = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.lastY = ((e.clientY - r.top) / r.height) * Engine.height;
+    };
+    const move = (e) => {
+      if (!this.drawing) return;
+      const r = stage.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * Engine.width;
+      const y = ((e.clientY - r.top) / r.height) * Engine.height;
+      const c = Engine.overlayCtx;
+      c.strokeStyle = '#fbbf24';
+      c.lineWidth = 8;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(this.lastX, this.lastY);
+      c.lineTo(x, y);
+      c.stroke();
+      this.lastX = x; this.lastY = y;
+    };
+    const up = () => { this.drawing = false; };
+    stage.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  },
+  toggle() {
+    this.on = !this.on;
+    $('tcStage').classList.toggle('drawing', this.on);
+    $('tcWhiteboardBtn').classList.toggle('active', this.on);
+    log(this.on ? t('drawOn') : t('drawOff'), 'info');
+    if (!this.on && Laser.on === false) {
+      // keep drawings visible but stop drawing events
+    }
+  },
+  clear() { Engine.overlayCtx.clearRect(0, 0, Engine.width, Engine.height); }
+};
+
+/* Teleprompter — overlay visible on stage only, NOT drawn to canvas */
+const Teleprompter = {
+  on: false,
+  toggle() {
+    this.on = !this.on;
+    const el = $('tcTeleprompter');
+    el.style.display = this.on ? 'block' : 'none';
+    const inner = $('tcTeleInner');
+    if (this.on && inner.textContent === 'Colle ton script ici…') {
+      inner.textContent = t('promptTelePlaceholder');
+    }
+    inner.contentEditable = 'true';
+    $('tcTeleBtn').classList.toggle('active', this.on);
+    log(this.on ? t('teleOn') : t('teleOff'), 'info');
+  }
+};
+
+/* Snapshot — download current canvas as PNG */
+function snapshot() {
+  Engine.canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log(t('snapshotSaved'), 'success');
+  });
+}
+
+/* ─────────── 6. micro:bit sensors (Web Bluetooth) ─────────── */
+
+const Sensors = {
+  device: null, server: null,
+  values: null, // { a: 0, b: 0, x: 0, y: 0, z: 0, light: 0 }
+
+  async connect() {
+    if (!navigator.bluetooth) {
+      showToast('❌ Web Bluetooth non supporté (Chrome/Edge requis)', 3000);
+      return;
+    }
+    try {
+      this.device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'BBC micro:bit' }],
+        optionalServices: [
+          'e95d0753-251d-470a-a062-fa1922dfa9a8', // Accelerometer service
+          'e95d9882-251d-470a-a062-fa1922dfa9a8', // Button service
+        ],
+      });
+      this.server = await this.device.gatt.connect();
+      // Try accelerometer
+      try {
+        const accelSvc = await this.server.getPrimaryService('e95d0753-251d-470a-a062-fa1922dfa9a8');
+        const accelChar = await accelSvc.getCharacteristic('e95dca4b-251d-470a-a062-fa1922dfa9a8');
+        await accelChar.startNotifications();
+        accelChar.addEventListener('characteristicvaluechanged', (e) => {
+          const v = e.target.value;
+          this.values = this.values || {};
+          this.values.x = v.getInt16(0, true) / 1000;
+          this.values.y = v.getInt16(2, true) / 1000;
+          this.values.z = v.getInt16(4, true) / 1000;
+          this.updatePanel();
+        });
+      } catch (e) { /* accelerometer optional */ }
+      // Try buttons
+      try {
+        const btnSvc = await this.server.getPrimaryService('e95d9882-251d-470a-a062-fa1922dfa9a8');
+        const aChar = await btnSvc.getCharacteristic('e95dda90-251d-470a-a062-fa1922dfa9a8');
+        await aChar.startNotifications();
+        aChar.addEventListener('characteristicvaluechanged', (e) => {
+          this.values = this.values || {};
+          this.values.a = e.target.value.getUint8(0);
+          this.updatePanel();
+        });
+        const bChar = await btnSvc.getCharacteristic('e95dda91-251d-470a-a062-fa1922dfa9a8');
+        await bChar.startNotifications();
+        bChar.addEventListener('characteristicvaluechanged', (e) => {
+          this.values = this.values || {};
+          this.values.b = e.target.value.getUint8(0);
+          this.updatePanel();
+        });
+      } catch (e) { /* buttons optional */ }
+      log(t('btConnected'), 'success');
+      showToast(t('btConnected'), 2500);
+      Badges.unlockMicrobit();
+      this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
+      $('tcBtValues').style.display = 'block';
+    } catch (e) {
+      log(`${t('btError')}: ${e.message}`, 'error');
+      showToast(t('btError'), 2500);
+    }
+  },
+
+  updatePanel() {
+    const el = $('tcBtValues'); if (!el || !this.values) return;
+    const v = this.values;
+    el.innerHTML = `🔘 A: ${v.a ?? '-'}   B: ${v.b ?? '-'}<br>📐 X: ${(v.x ?? 0).toFixed(2)}<br>   Y: ${(v.y ?? 0).toFixed(2)}<br>   Z: ${(v.z ?? 0).toFixed(2)}`;
+  },
+
+  drawOverlay(ctx) {
+    if (!this.values) return;
+    const v = this.values;
+    ctx.save();
+    ctx.font = '700 36px Orbitron, monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const pad = 16;
+    const x = 40, y = 40;
+    const lines = [
+      `🤖 micro:bit`,
+      `A:${v.a ?? '-'}  B:${v.b ?? '-'}`,
+      `X:${(v.x ?? 0).toFixed(2)}`,
+      `Y:${(v.y ?? 0).toFixed(2)}`,
+      `Z:${(v.z ?? 0).toFixed(2)}`,
+    ];
+    const w = 340, h = lines.length * 44 + pad * 2;
+    ctx.fillStyle = 'rgba(0,0,0,.65)';
+    ctx.beginPath();
+    const r = 16;
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+    ctx.fillStyle = '#a3e635';
+    lines.forEach((line, i) => ctx.fillText(line, x + pad, y + pad + i * 44));
+    ctx.restore();
+  }
+};
+
+/* ─────────── 7. Kid polish: pet, badges, confetti, ticker ─────────── */
+
+const Pet = {
+  setMood(mood) {
+    // Placeholder — could animate a DOM element, for now just log
+    // In a fuller impl, a pixel pet in the corner changes emoji
+  }
+};
+
+const Badges = {
+  list: [
+    { key: 'first', icon: '🎬', i18n: 'badge_first' },
+    { key: 'long', icon: '⏱', i18n: 'badge_long' },
+    { key: 'multi', icon: '🎥', i18n: 'badge_multi' },
+    { key: 'all_scenes', icon: '🎭', i18n: 'badge_all_scenes' },
+    { key: 'marker_king', icon: '🏷', i18n: 'badge_marker_king' },
+    { key: 'micro', icon: '🤖', i18n: 'badge_micro' },
+  ],
+  unlocked: new Set(),
+  scenesUsed: new Set(),
+
+  load() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-badges') || '[]');
+      this.unlocked = new Set(s);
+    } catch {}
+  },
+  save() { try { localStorage.setItem('tc-badges', JSON.stringify([...this.unlocked])); } catch {} },
+  unlock(k) {
+    if (this.unlocked.has(k)) return;
+    this.unlocked.add(k);
+    this.save();
+    renderBadges();
+    showToast(`🏆 ${t('badge_' + k)}`, 2200);
+  },
+  unlockFirst() { this.unlock('first'); },
+  unlockLong(ms) { if (ms > 5 * 60 * 1000) this.unlock('long'); },
+  unlockIfMultiCam() { if (Engine.sources.filter(s => s.type === 'cam').length >= 2) this.unlock('multi'); },
+  unlockScene(k) {
+    this.scenesUsed.add(k);
+    if (this.scenesUsed.size >= Scenes.presets.length) this.unlock('all_scenes');
+  },
+  unlockMarker(n) { if (n >= 5) this.unlock('marker_king'); },
+  unlockMicrobit() { this.unlock('micro'); },
+};
+
+function renderBadges() {
+  const el = $('tcBadges'); if (!el) return;
+  el.innerHTML = '';
+  Badges.list.forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'tc-badge' + (Badges.unlocked.has(b.key) ? ' unlocked' : '');
+    d.innerHTML = `<div class="tc-badge-icon">${b.icon}</div><div>${t(b.i18n)}</div>`;
+    el.appendChild(d);
+  });
+}
+
+const Confetti = {
+  canvas: null, ctx: null, particles: [], rafId: null,
+  burst() {
+    if (!this.canvas) {
+      this.canvas = $('tcConfetti');
+      this.ctx = this.canvas.getContext('2d');
+    }
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.canvas.classList.add('active');
+    this.particles = [];
+    const colors = ['#fb923c', '#a3e635', '#facc15', '#ef4444', '#2563eb', '#ffffff'];
+    for (let i = 0; i < 140; i++) {
+      this.particles.push({
+        x: this.canvas.width / 2,
+        y: this.canvas.height / 2,
+        vx: (Math.random() - 0.5) * 18,
+        vy: (Math.random() - 0.5) * 18 - 6,
+        size: 6 + Math.random() * 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        life: 1,
+      });
+    }
+    const start = Date.now();
+    const tick = () => {
+      const age = Date.now() - start;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.4;
+        p.rot += p.vr;
+        p.life = Math.max(0, 1 - age / 3500);
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(p.rot);
+        this.ctx.globalAlpha = p.life;
+        this.ctx.fillStyle = p.color;
+        this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.5);
+        this.ctx.restore();
+      });
+      if (age < 3500) this.rafId = requestAnimationFrame(tick);
+      else { this.canvas.classList.remove('active'); this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); }
+    };
+    tick();
+  }
+};
+
+function renderTicker() {
+  const el = $('tcTickerTrack'); if (!el) return;
+  const items = [];
+  for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+  // duplicate to keep the scroll feeling continuous
+  el.textContent = items.join('    •    ') + '    •    ' + items.join('    •    ');
+}
+
+/* ─────────── 8. Onboarding + wiring ─────────── */
+
+function setupOnboarding() {
+  const seen = localStorage.getItem('tc-onboarded');
+  if (!seen) $('tcOnboarding').style.display = 'block';
+  $('tcOnboardingClose').addEventListener('click', () => {
+    $('tcOnboarding').style.display = 'none';
+    try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+  });
+  $('tcOnboardingGo').addEventListener('click', () => {
+    $('tcOnboarding').style.display = 'none';
+    try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+  });
+}
+
+function setupHelpTabs() {
+  document.querySelectorAll('.help-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.help-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.help-content').forEach(c => c.classList.remove('active'));
+      const id = 'help' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
+      const el = $(id); if (el) el.classList.add('active');
+    });
+  });
+}
+
+function setupHotkeys() {
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k >= '1' && k <= '9') {
+      const idx = parseInt(k) - 1;
+      if (Scenes.presets[idx]) { Scenes.switch(Scenes.presets[idx].key); e.preventDefault(); }
+    } else if (k === 'r') { Recorder.state === 'idle' ? Recorder.start() : Recorder.stop(); e.preventDefault(); }
+    else if (k === 'p') { Recorder.togglePause(); e.preventDefault(); }
+    else if (k === 'm') { Chapters.addMarker(); e.preventDefault(); }
+    else if (k === 's') { snapshot(); e.preventDefault(); }
+    else if (k === 'l') { Laser.toggle(); e.preventDefault(); }
+    else if (k === 'f') { Freeze.toggle(); e.preventDefault(); }
+    else if (k === 'd') { Whiteboard.toggle(); e.preventDefault(); }
+    else if (k === 'escape') { closeAllPanels(); }
+  });
+}
+
+function wireEvents() {
+  // Splash dismiss
+  const sp = $('splash');
+  if (sp) setTimeout(() => { sp.classList.add('hidden'); setTimeout(() => sp.remove(), 600); }, 2200);
+
+  // Panels
+  $('helpBtn').addEventListener('click', () => openPanel('helpPanel'));
+  $('settingsBtn').addEventListener('click', () => openPanel('settingsPanel'));
+  $('logBtn').addEventListener('click', () => openPanel('logPanel'));
+  $('helpCloseBtn').addEventListener('click', () => closePanel('helpPanel'));
+  $('settingsCloseBtn').addEventListener('click', () => closePanel('settingsPanel'));
+  $('logCloseBtn').addEventListener('click', () => closePanel('logPanel'));
+  ['helpOverlay', 'settingsOverlay'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', closeAllPanels); });
+
+  // Log controls
+  $('clearLogBtn').addEventListener('click', () => { $('logContainer').innerHTML = ''; log(t('logCleared'), 'info'); });
+  $('copyLogBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(logHistory.map(l => `[${new Date(l.time).toLocaleTimeString()}] ${l.msg}`).join('\n')); showToast(t('copied'), 1500); }
+    catch { showToast(t('copyFail'), 1500); }
+  });
+  $('exportLogBtn').addEventListener('click', () => {
+    const txt = logHistory.map(l => `[${new Date(l.time).toLocaleTimeString()}] [${l.type}] ${l.msg}`).join('\n');
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'tutocast-log.txt'; a.click();
+  });
+
+  // Lang & theme
+  $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
+  $('themeSelect').addEventListener('change', (e) => setTheme(e.target.value));
+
+  // Sources
+  $('srcScreenBtn').addEventListener('click', () => Engine.addScreen());
+  $('srcCamBtn').addEventListener('click', () => {
+    const sel = $('camSelect');
+    const deviceId = sel.value;
+    const label = sel.options[sel.selectedIndex].textContent;
+    Engine.addCamera(deviceId, label);
+  });
+  $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
+  $('btConnectBtn').addEventListener('click', () => Sensors.connect());
+
+  // Text free
+  $('tcAddTextBtn').addEventListener('click', () => {
+    const text = prompt('Texte à afficher :', '');
+    if (text) TextOverlays.add(text, { ttl: 0 });
+  });
+
+  // Tools
+  $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
+  $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
+  $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
+  $('tcTeleBtn').addEventListener('click', () => Teleprompter.toggle());
+  $('tcSnapBtn').addEventListener('click', () => snapshot());
+
+  // Rec bar
+  $('tcRecBtn').addEventListener('click', () => {
+    if (Recorder.state === 'idle') Recorder.start();
+    else Recorder.stop();
+  });
+  $('tcPauseBtn').addEventListener('click', () => Recorder.togglePause());
+  $('tcMarkBtn').addEventListener('click', () => Chapters.addMarker());
+  $('tcStopBtn').addEventListener('click', () => Recorder.stop());
+  $('tcNewTakeBtn').addEventListener('click', () => {
+    $('tcTake').style.display = 'none';
+    $('tcTakeVideo').src = '';
+  });
+
+  // Ticker pause
+  $('tcTickerPause').addEventListener('click', () => {
+    const t = $('tcTicker'); t.classList.toggle('paused');
+    $('tcTickerPause').textContent = t.classList.contains('paused') ? '▶' : '⏸';
+  });
+
+  // Mirror toggle re-applies to cams
+  $('tcMirrorCam').addEventListener('change', (e) => {
+    Engine.sources.filter(s => s.type === 'cam').forEach(s => s.mirrored = e.target.checked);
+  });
+}
+
+async function init() {
+  // Restore prefs
+  try {
+    const lang = localStorage.getItem('tc-lang'); if (lang) currentLang = lang;
+    const theme = localStorage.getItem('tc-theme'); if (theme) setTheme(theme);
+  } catch {}
+  $('langSelect').value = currentLang;
+  applyI18n();
+
+  Badges.load();
+
+  Engine.init();
+  Laser.setup();
+  Whiteboard.setup();
+
+  renderScenes();
+  renderTextPresets();
+  renderBadges();
+  renderTicker();
+
+  setupOnboarding();
+  setupHelpTabs();
+  setupHotkeys();
+  wireEvents();
+
+  // Set default scene
+  Scenes.active = 'code';
+  Recorder.updateUI();
+
+  // Enumerate devices on user gesture (button click below). Do a best-effort non-prompting first pass.
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    const camSel = $('camSelect'), micSel = $('micSelect');
+    cams.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Camera ${d.deviceId.slice(0, 4) || 'default'}`; camSel.appendChild(o); });
+    mics.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Mic ${d.deviceId.slice(0, 4) || 'default'}`; micSel.appendChild(o); });
+  } catch (e) {
+    log(`enumerateDevices: ${e.message}`, 'error');
+  }
+
+  log(t('ready'), 'success');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

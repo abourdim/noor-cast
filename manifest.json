@@ -1,0 +1,12 @@
+{
+  "name": "TutoCast — Crée tes tutos comme un pro !",
+  "short_name": "TutoCast",
+  "description": "TutoCast — enregistre des tutos vidéo multi-caméras (écran + webcams + micro) directement depuis ton navigateur. Kid-friendly, zéro install, privacy-first.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#071407",
+  "theme_color": "#071407",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
