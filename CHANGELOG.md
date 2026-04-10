@@ -3,6 +3,34 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.1.1 — 2026-04-10
+
+Bug fixes after the first full runtime test pass (UI buttons, i18n, scenes,
+tools, panels, hotkeys, ticker — all exercised in a real Chrome instance via
+Bash-background ruby HTTP server + Chrome-in-Chrome automation).
+
+### Fixed
+- **Double emoji in scene buttons** (`"💻💻 Code"` instead of `"💻 Code"`):
+  the emoji was rendered twice — once as the standalone `.tc-scene-icon` span,
+  once inside the `scene_*` i18n label itself. Stripped the emoji from the
+  6 `scene_*` keys across EN / FR / AR so the icon slot is the single source
+  of truth.
+- **41 i18n keys referenced by `data-i18n` but missing from `LANG`**: all
+  FAQ questions/answers (`faq_q1..q8` + `faq_a1..a8`), how-to steps
+  (`howto_1..howto_7`), wiki entries (`wiki_multicam*`, `wiki_scenes*`,
+  `wiki_sensor*`, `wiki_privacy*`), and the v0.1.0 changelog entries
+  (`news_010` + `news_010_1..9`) were only present as HTML fallback text in
+  French. Switching to English or Arabic left them untranslated. Added all
+  41 keys × 3 languages = 123 new translation entries. The three `LANG`
+  blocks are now perfectly balanced at **169 keys each**.
+
+### Notes
+- Zero runtime errors or console warnings during the full test pass.
+- All 6 scenes, 10 text presets, 4 tools, 3 panels, 4 help tabs, 8 themes,
+  3 languages, ticker, and every hotkey (1-6, L, F, D, Esc) verified working.
+- Remaining untested paths require real device permissions (screen capture,
+  getUserMedia camera/mic) and live recording — documented in README.
+
 ## v0.1.0 — 2026-04-10
 
 First release. Kids-friendly browser-based multi-camera tutorial recorder.

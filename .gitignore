@@ -18,3 +18,6 @@ dist/
 *.webm
 *.mp4
 *.vtt
+
+# Preview / dev tools (not part of the shipped app)
+.claude/
