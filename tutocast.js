@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.61 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.62 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.61';
+const APP_VERSION = '0.7.62';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 04:30';
+const BUILD_DATE = '2026-04-12 04:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -209,6 +209,8 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'Retry 30s (pendant enregistrement)',
     cheatMiscInstantRec: 'Rec instantané (saute le compte)',
+    cheatMiscPasteImg: 'Coller une image du presse-papier',
+    pasteImageError: '❌ Image invalide',
     instantRec: '⚡ Démarrage instantané',
     softRewindToast: '↶ Retry — 30 dernières secondes marquées',
     undoDone: '↩ Annulé',
@@ -716,6 +718,8 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'Retry last 30s (while recording)',
     cheatMiscInstantRec: 'Instant rec (skip countdown)',
+    cheatMiscPasteImg: 'Paste image from clipboard',
+    pasteImageError: '❌ Invalid image',
     instantRec: '⚡ Instant start',
     softRewindToast: '↶ Retry — last 30s flagged',
     undoDone: '↩ Undone',
@@ -1215,6 +1219,8 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'إعادة آخر 30 ثانية (أثناء التسجيل)',
     cheatMiscInstantRec: 'تسجيل فوري (تخطي العد)',
+    cheatMiscPasteImg: 'لصق صورة من الحافظة',
+    pasteImageError: '❌ صورة غير صالحة',
     instantRec: '⚡ بدء فوري',
     softRewindToast: '↶ إعادة — آخر 30 ثانية مُعلّمة',
     undoDone: '↩ تم التراجع',
@@ -1925,6 +1931,31 @@ const Engine = {
 
   drawSource(src) {
     const { ctx } = this;
+
+    // v0.7.62: image sources (from clipboard paste) take a simplified draw
+    // path — shape clip + drawImage — bypassing the video filter/mirror/
+    // blur/title chain, since they're static bitmaps that don't need any
+    // of that logic.
+    if (src.type === 'image' && src.img) {
+      const { x, y, w, h } = src;
+      const cx = x + w / 2, cy = y + h / 2;
+      const r = Math.min(w, h) / 2;
+      const rot = src.rotation || 0;
+      ctx.save();
+      if (rot !== 0) {
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.translate(-cx, -cy);
+      }
+      this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+      ctx.save();
+      ctx.clip();
+      ctx.drawImage(src.img, x, y, w, h);
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
+
     const { video, shape, mirrored } = src;
     let { x, y, w, h } = src;
 
@@ -2274,6 +2305,48 @@ const Engine = {
     }
   },
 
+  /* v0.7.62: inject an image from a Blob (typically clipboard paste) as
+     a new overlay source. The image is rendered via ctx.drawImage and
+     takes the shortcut branch in drawSource(). It's draggable, resizable,
+     and persists until removed — same lifecycle as camera/screen sources. */
+  async addImage(blob, label) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const targetH = 400;
+        const targetW = targetH * aspect;
+        const src = {
+          id: this.nextId++,
+          type: 'image',
+          label: label || 'clipboard',
+          img,
+          imgUrl: url,
+          x: (this.width - targetW) / 2,
+          y: (this.height - targetH) / 2,
+          w: targetW,
+          h: targetH,
+          shape: 'rect',
+          visible: true,
+          hidden: false,
+          custom: true,
+        };
+        this.sources.push(src);
+        this.onSourcesChanged();
+        showToast(`📋 ${label || 'clipboard'}`, 1500);
+        if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
+        resolve(src);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        showToast(t('pasteImageError') || '❌ Image invalide', 2000);
+        resolve(null);
+      };
+      img.src = url;
+    });
+  },
+
   async setMic(deviceId) {
     // remove previous mic
     this.sources = this.sources.filter(s => {
@@ -2365,7 +2438,15 @@ const Engine = {
   removeSource(id) {
     const src = this.sources.find(s => s.id === id);
     if (!src) return;
-    try { src.stream.getTracks().forEach(t => t.stop()); } catch {}
+    // v0.7.62: image sources carry a blob URL instead of a MediaStream —
+    // revoke the object URL so the pasted bitmap is GC'd.
+    try {
+      if (src.type === 'image' && src.imgUrl) {
+        URL.revokeObjectURL(src.imgUrl);
+      } else if (src.stream) {
+        src.stream.getTracks().forEach(t => t.stop());
+      }
+    } catch {}
     this.sources = this.sources.filter(s => s.id !== id);
     if (Drag.selectedSourceId === id) Drag.selectedSourceId = null;
     this.onSourcesChanged();
@@ -8390,6 +8471,26 @@ function setupHotkeys() {
       const app = document.querySelector('.app');
       if (app && app.classList.contains('maximized')) { toggleMaximize(); return; }
       closeAllPanels();
+    }
+  });
+
+  // v0.7.62: Ctrl+V / Cmd+V pastes a clipboard image as an overlay source.
+  // Listens on document so it works anywhere in the app — but ignores
+  // input / textarea / contentEditable targets so users can still paste
+  // text into the teleprompter, scene names, etc.
+  document.addEventListener('paste', async (e) => {
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable)) return;
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for (const item of items) {
+      if (item.type && item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          Engine.addImage(blob, 'clipboard');
+          return;
+        }
+      }
     }
   });
 }
