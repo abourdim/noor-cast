@@ -133,19 +133,51 @@ docks **below the stage** (never over the recording area):
 - **Text toolbar**: 6 color swatches · Aa font cycle · 🎭 transparency ·
   ↺ ↻ rotate · 📋 duplicate · ✕ delete
 - HTML elements — never appear in the recording
-- **Horizontal tools bar** above the studio (v0.7.18): Laser · Freeze ·
-  Draw · Zoom | Teleprompter · Snapshot · Fullscreen, with kbd shortcut
-  chips. Responsive: labels hide under 920 px.
+- **Horizontal tools bar** above the studio (v0.7.18 → v0.7.23):
+  Laser · 💧 Ripples · Freeze · Draw · Zoom · 🎯 AutoZoom · Teleprompter ·
+  Snapshot · Fullscreen. 9 buttons total with kbd shortcut chips.
+  Responsive: labels hide under 920 px.
+
+### 📜 Broadcast teleprompter (v0.7.20)
+Press `T` or click the 📜 button to open a Canva-style script overlay
+with real broadcast controls:
+- **Auto-scroll** via ⏵/⏸ button + speed slider (10-120 px/s)
+- **A− / A+** font size (12-72 px), **↔− / ↔+** width (30-100 %)
+- **↻ Reset** scroll back to top
+- **Persistent script** — every keystroke saves to localStorage and
+  reloads on page open
+- **HTML only** — never drawn on the output canvas, never in the recording
+
+### 🎯 Auto-zoom on click (v0.7.21)
+ScreenStudio's signature feature, baked in: toggle the 🎯 button and
+click anywhere on a screen-type source. The preview smoothly zooms in
+at the click point for 1.5 s then eases back out. Built on top of the
+existing `Zoom` object — it detects click-vs-drag (< 5 canvas px AND
+< 500 ms) and only fires over screen sources, never cameras.
+
+### 💧 Click ripples (v0.7.23)
+Every `mousedown` on the stage emits an **animated two-ring ripple**
+that expands and fades over 600 ms — outer ring in theme accent, inner
+ring in white. Rendered on the output canvas (unlike the teleprompter),
+so the ripples ARE in the final recording. Opt-in via the 💧 button.
 
 ### ✨ Effects (v0.4.0)
 - **Background blur** (🌫 per source) — sharp center, blurred edge ring, no ML model
 - **Theme-accent glow** around every visible source (follows the 8 themes)
 - **Marker pulse** — sources briefly scale on every `M` keypress
 
-### ✂️ Post-recording trim (v0.3.0)
+### ✂️ Post-recording trim (v0.3.0 → v0.7.22)
 - Open the recorded take in the built-in trim modal
-- Drag two handles to pick the final start/end points
-- Preview each handle with a one-click seek
+- **Visual scrubber** with draggable in/out handles + live playhead
+  (v0.7.22) in addition to the fallback range sliders
+- **Click-to-seek** anywhere on the scrubber track
+- **✂ Auto-cut silences** — one-click detection of silent regions
+  (`OfflineAudioContext` RMS analysis, −45 dBFS threshold, ≥ 2 s), with
+  faint bands on the scrubber and in/out auto-set to the first non-silent
+  window
+- **Keyboard shortcuts** inside the modal: `Space` play/pause,
+  `← / →` nudge 1 s, `[ / ]` set in/out, `Enter` export, `Esc` close
+- **Live duration readout**: `00:12 / 00:47 (trim 34 s)`
 - **Export** → new file with a single re-encode pass (offscreen canvas + MediaRecorder)
 - **VTT chapters automatically adjusted** and filtered to the new window
 - 100% local, zero deps, zero cloud — same engine as the main recorder
