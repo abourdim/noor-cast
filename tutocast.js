@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.106 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.107 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.106';
+const APP_VERSION = '0.7.107';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 22:30';
+const BUILD_DATE = '2026-04-11 12:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -4749,6 +4749,33 @@ const Recorder = {
       size: blob.size,
       pauses: this.pauseCount || 0,  // v0.7.88
     });
+    // v0.7.107: if the user dropped chapter markers during this take,
+    // auto-suggest the first chapter's label as the take title. Never
+    // overwrite a title the user already typed (titleInput still holds
+    // the default fname from the prime step above, so we treat that as
+    // "untouched" and only replace it — any *other* value is the user).
+    if (titleInput && Chapters.items.length > 0) {
+      const firstLabel = String(Chapters.items[0].label || '').trim();
+      // Sanitize to a safe filename segment: strip disallowed chars,
+      // collapse whitespace to '-', cap at 40 chars.
+      const sanitizeSeg = (s) => s
+        .replace(/[\\/:*?"<>|]+/g, '')       // forbidden FS chars
+        .replace(/[\r\n\t]+/g, ' ')          // control whitespace → space
+        .replace(/\s+/g, '-')                // collapse whitespace → dash
+        .replace(/-+/g, '-')                 // collapse repeated dashes
+        .replace(/^[-.]+|[-.]+$/g, '')       // trim leading/trailing . -
+        .slice(0, 40);
+      const sanitized = sanitizeSeg(firstLabel);
+      // Only overwrite if the title input is still at its primed default
+      // (fname) — i.e. the user hasn't customized it yet.
+      if (sanitized && titleInput.value === fname) {
+        titleInput.value = sanitized;
+        // Fire the same 'input' event the v0.7.102 live-rewire listener
+        // hooks so every download link's `download` attribute picks up
+        // the new base name immediately.
+        titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
     // v0.7.93: reset + render the 1-5 star rating widget for this take
     TakeRating.reset();
     TakeRating.render();

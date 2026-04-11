@@ -3,35 +3,42 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.106 — 2026-04-11 (Number-key quick hide/show for sources)
+## v0.7.107 — 2026-04-11 (Auto-suggest take title from first chapter marker)
 
-Pressing **Alt+1** through **Alt+9** now toggles the visibility of the
-corresponding video source in the sidebar (Alt+1 = first source, Alt+2
-= second, etc.), with a toast confirming the new state. Plain `1-9` is
-already bound to scene switching, so the feature rides on the Alt
-modifier to stay out of the way. The existing sidebar eye-icon button
-(`👁 / 🙈`) already toggled the same `source.hidden` flag, so the new
-hotkeys mirror that exact behaviour — no new state, no migration.
+When a recording finishes, if the user dropped any chapter markers
+during the take, the take title input (`#tcTakeTitleInput`, added in
+v0.7.102) is now auto-filled with a sanitized version of the *first*
+chapter's label instead of the generic `tutocast-YYYY-MM-DD-HH-MM`
+default. The same value is pushed straight into every download link's
+`download` attribute via the v0.7.102 live-rewire listener, so the
+`.webm`, `.vtt`, `.md` and `-sensors.csv` files all land on disk with a
+meaningful name out of the box.
 
 ### Added
-- Alt+1..9 hotkey branch in `setupHotkeys()` that filters `Engine.sources`
-  to the non-mic entries, flips `target.hidden`, re-renders the sidebar
-  via `Engine.onSourcesChanged()`, and toasts `"N. <label> — <state>"`
-  using the existing `sourceHidden` / `sourceShown` i18n keys.
-- Defensive early-return in `Engine.drawSource()` that honours both
-  `src.visible === false` and `src.hidden`. The main render loop already
-  filters on both fields before calling `drawSource`, but other call
-  sites (selection chrome preview, snapshot helpers) now respect manual
-  toggles too.
+- In `Recorder.finish()`, right after `History.add(...)`: if
+  `Chapters.items.length > 0`, grab `items[0].label`, run it through a
+  small inline `sanitizeSeg()` helper (strips `\ / : * ? " < > |`,
+  collapses whitespace to `-`, trims leading/trailing dots + dashes,
+  caps at 40 chars), and assign it to `tcTakeTitleInput.value`.
+- After the assignment, a synthetic `new Event('input', {bubbles:true})`
+  is dispatched on the input so the v0.7.102 wired listener re-writes
+  every download link's `download` attribute immediately — no extra
+  keystroke required from the user.
 
-### Notes
-- No i18n strings added — `sourceHidden` / `sourceShown` already exist
-  in FR / EN / AR from v0.7.6.
-- No sidebar markup added — the eye-icon button next to each source row
-  has existed since v0.7.6 and is the click-target equivalent of the
-  new hotkey.
-- Scene hotkeys (`1-9` with no modifier) are untouched and still switch
-  scenes as before.
+### Preserved
+- If no chapter markers were dropped, the v0.7.102 default behavior is
+  untouched (the input stays primed with the timestamp-based `fname`).
+- The user can still edit the suggested title afterwards; the existing
+  v0.7.102 live-rewire keeps all download links in sync.
+- The title is only overwritten when the input still holds the primed
+  default, so nothing the user has typed mid-take (via some future
+  flow) would be clobbered.
+
+### Files
+- `tutocast.js` — `Recorder.finish()`: ~30 lines added after
+  `History.add(...)`, no other code paths touched.
+- `index.html` / `tutocast.js` — version bump to 0.7.107,
+  `BUILD_DATE` refreshed.
 
 ## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
 
