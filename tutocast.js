@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.85 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.86 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.85';
+const APP_VERSION = '0.7.86';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 10:30';
+const BUILD_DATE = '2026-04-12 10:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -292,6 +292,9 @@ const LANG = {
     sceneReordered: 'Scènes réordonnées',
     minimap: 'Aperçu',
     historyTitle: 'Mes tutos',
+    dailyGoalReached: 'Objectif du jour atteint !',
+    streak: 'Série',
+    days: 'jours',
     historyEmpty: 'Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !',
     historyClear: "🗑 Vider l'historique",
     historyConfirmClear: "Vider l'historique des tutos ?",
@@ -865,6 +868,9 @@ const LANG = {
     sceneReordered: 'Scenes reordered',
     minimap: 'Preview',
     historyTitle: 'My tutorials',
+    dailyGoalReached: 'Daily goal reached!',
+    streak: 'Streak',
+    days: 'days',
     historyEmpty: 'No tutorial yet. Click 🔴 RECORD to start!',
     historyClear: '🗑 Clear history',
     historyConfirmClear: 'Clear tutorial history?',
@@ -1430,6 +1436,9 @@ const LANG = {
     sceneReordered: 'تمت إعادة ترتيب المشاهد',
     minimap: 'معاينة',
     historyTitle: 'دروسي',
+    dailyGoalReached: 'تم تحقيق هدف اليوم!',
+    streak: 'سلسلة',
+    days: 'أيام',
     historyEmpty: 'لا دروس بعد. اضغط 🔴 تسجيل للبدء!',
     historyClear: '🗑 مسح السجل',
     historyConfirmClear: 'مسح سجل الدروس؟',
@@ -4481,6 +4490,7 @@ const Recorder = {
       badges: Badges.unlocked ? Badges.unlocked.size : 0,
       size: blob.size,
     });
+    try { DailyGoal.celebrate(); } catch (e) { log('daily goal error: ' + e.message, 'error'); }
 
     // trigger auto-download of webm
     setTimeout(() => dl.click(), 200);
@@ -8506,6 +8516,55 @@ const History = {
     return String(s).replace(/[&<>"']/g, c => (
       { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
     ));
+  },
+};
+
+/* v0.7.86 — daily-goal celebration + streak toast. Reads History.entries
+   but doesn't mutate it. Uses a separate localStorage key (tc-last-rec-day)
+   so the "first today?" check is O(1) and doesn't depend on Dashboard. */
+const DailyGoal = {
+  // Returns true if this finished recording is the first one today.
+  check() {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    let last = null;
+    try { last = localStorage.getItem('tc-last-rec-day'); } catch {}
+    if (last === key) return { first: false, streak: 0 };
+
+    // First recording today — update the marker + compute streak
+    try { localStorage.setItem('tc-last-rec-day', key); } catch {}
+
+    // Streak: count backwards from today in History.entries' day-set
+    const uniqueDays = new Set();
+    try {
+      if (typeof History !== 'undefined' && Array.isArray(History.entries)) {
+        History.entries.forEach(e => {
+          const d = new Date(e.at);
+          uniqueDays.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        });
+      }
+    } catch {}
+    uniqueDays.add(key);  // include today
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today.getTime() - i * 86400000);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (uniqueDays.has(k)) streak++;
+      else break;
+    }
+    return { first: true, streak };
+  },
+
+  celebrate() {
+    const result = this.check();
+    if (!result.first) return;
+    showToast('🎯 ' + (t('dailyGoalReached') || 'Objectif du jour atteint !'), 2600);
+    try { Confetti.burst && Confetti.burst(); } catch {}
+    if (result.streak >= 2) {
+      setTimeout(() => {
+        showToast('🔥 ' + (t('streak') || 'Série') + `: ${result.streak} ` + (t('days') || 'jours'), 2600);
+      }, 2800);
+    }
   },
 };
 
