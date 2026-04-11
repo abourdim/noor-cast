@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.99 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.102 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.101';
+const APP_VERSION = '0.7.102';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 14:30';
+const BUILD_DATE = '2026-04-12 14:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -330,6 +330,7 @@ const LANG = {
     dashPauses: 'pauses/take',
     dashAvgRating: 'note moy.',
     takeRating: 'Note ce tuto :',
+    takeTitle: '📝 Nom du fichier',
     manyPauses: 'Tu as fait beaucoup de pauses — essaie Shift+R pour démarrer direct',
     dashNote: '💡 Stats calculées sur les 10 derniers tutos',
     setSecDanger: '♻ Maintenance',
@@ -943,6 +944,7 @@ const LANG = {
     dashPauses: 'pauses/take',
     dashAvgRating: 'avg rating',
     takeRating: 'Rate this take:',
+    takeTitle: '📝 File name',
     manyPauses: 'You paused a lot — try Shift+R for instant start',
     dashNote: '💡 Stats from the last 10 tutorials',
     setSecDanger: '♻ Maintenance',
@@ -1548,6 +1550,7 @@ const LANG = {
     dashPauses: 'إيقاف/درس',
     dashAvgRating: 'متوسط التقييم',
     takeRating: 'قيّم هذا الدرس:',
+    takeTitle: '📝 اسم الملف',
     manyPauses: 'لقد أوقفت كثيرًا — جرّب Shift+R للبدء الفوري',
     dashNote: '💡 إحصاءات آخر 10 دروس',
     setSecDanger: '♻ الصيانة',
@@ -4631,6 +4634,34 @@ const Recorder = {
     const ext = this.extForMime(mimeType);
     const dl = $('tcDownloadBtn');
     dl.href = url; dl.download = `${fname}.${ext}`;
+    // v0.7.102: prime the title input with the auto-generated name
+    const titleInput = $('tcTakeTitleInput');
+    if (titleInput) {
+      titleInput.value = fname;
+      // Update every download link's .download attribute when the user types
+      if (!titleInput._wired) {
+        titleInput.addEventListener('input', () => {
+          const newName = titleInput.value.trim() || fname;
+          const map = {
+            tcDownloadBtn: '.webm',
+            tcDownloadVtt: '.vtt',
+            tcDownloadMd: '.md',
+            tcDownloadCsv: '-sensors.csv',
+          };
+          Object.entries(map).forEach(([id, suffix]) => {
+            const el = $(id);
+            if (!el) return;
+            // Strip any existing extension from the user-entered name
+            const base = newName.replace(/\.(webm|mp4|vtt|md)$/, '').replace(/-sensors\.csv$/, '');
+            // Determine actual extension from what's already in the href's download
+            const currentExt = (el.download || '').match(/\.(\w+)$/);
+            if (currentExt) el.download = base + currentExt[0];
+            else el.download = base + suffix;
+          });
+        });
+        titleInput._wired = true;
+      }
+    }
     // Chapters VTT
     const vtt = Chapters.toVTT();
     const vttBlob = new Blob([vtt], { type: 'text/vtt' });

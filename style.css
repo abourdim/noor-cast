@@ -2011,6 +2011,23 @@ body.log-open .app {
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: 8px;
 }
+/* v0.7.102: take title (filename) inline editor — sits above download buttons */
+.tc-take-title-wrap {
+  margin: 8px 0;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+.tc-take-title-wrap label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: .72rem;
+  color: rgba(255, 255, 255, .7);
+}
+.tc-take-title-wrap input {
+  width: 100%;
+}
 .tc-take-rating-label {
   font-family: var(--font-h, Righteous, sans-serif);
   font-size: .8rem;
