@@ -3,6 +3,41 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.103 — 2026-04-11 (Source layer/z-index badge on hover)
+
+Hovering a video source on the stage now pops a small dark pill
+near the cursor showing its layer number — `#3 / 7` where `3` is
+the layer counted from the back (1 = backmost) and `7` is the total
+count of visible sources. The same `#N/total` chip is also rendered
+as a static prefix on every sidebar source row so teachers can see
+the full stacking order at a glance without hovering the canvas.
+
+The number matches the draw order inside `Engine.render()`: the
+`sources[]` array is iterated low-index → high-index, so index 0 is
+drawn first (back) and the last index is drawn last (front / top of
+the stack). Bring-forward / send-back actions in the source context
+menu already reorder this array, so the badge reflects those changes
+immediately on the next hover / sidebar rebuild.
+
+### Added
+- `LayerBadge` module in `tutocast.js` — lazy-creates a single
+  `#tcLayerBadge` DOM element (fixed-position, pointer-events:none)
+  and exposes `showAt(x, y, layer, total)` / `hide()`.
+- `Drag.setup()` now attaches a stage `mousemove` listener that runs
+  the existing `_hitTest(mx, my)` against the cursor position and
+  calls `LayerBadge.showAt()` when the hit is a source. Cleared on
+  drag-start, `mouseleave`, and non-source hover.
+- `Engine.onSourcesChanged()` renders a `.tc-src-layer` chip
+  (`#N/total`) at the start of every video source row; mic sources
+  are excluded from the count.
+- CSS: `#tcLayerBadge` pill (dark bg, accent border, monospace) and
+  `.tc-src-layer` sidebar chip in `style.css`.
+
+### Changed
+- Bump `APP_VERSION` to `0.7.103`, `BUILD_DATE` to `2026-04-12 15:10`,
+  `tutocast.js` header comment to `v0.7.103`, and all four `v0.7.102`
+  display tags in `index.html` to `v0.7.103`.
+
 ## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
 
 Every mousedown on the stage emits an animated two-ring ripple that

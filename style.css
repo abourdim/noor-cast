@@ -2499,6 +2499,40 @@ body.log-open .app {
   color: rgba(255, 255, 255, .8);
 }
 
+/* v0.7.103: floating layer/z-index badge shown while hovering a source
+   on the stage. Small dark pill that follows the cursor. Also used as
+   a static prefix chip in the sidebar source rows (see .tc-src-layer). */
+#tcLayerBadge {
+  position: fixed;
+  z-index: 12950;
+  pointer-events: none;
+  padding: 3px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--accent, #a3e635);
+  background: rgba(12, 31, 10, .94);
+  border: 1px solid rgba(163, 230, 53, .5);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .55);
+  letter-spacing: .02em;
+}
+.tc-src-layer {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  margin-right: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .68rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--accent, #a3e635);
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(163, 230, 53, .35);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
 /* v0.7.14: Settings panel sections (collapsible via <details>).
    Each section has a bold summary header and an indented body. */
 .tc-set-section {

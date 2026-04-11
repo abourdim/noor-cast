@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.102 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.103 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.102';
+const APP_VERSION = '0.7.103';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 14:45';
+const BUILD_DATE = '2026-04-12 15:10';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -3102,6 +3102,11 @@ const Engine = {
     const list = $('tcSrcList');
     if (list) {
       list.innerHTML = '';
+      // v0.7.103: compute layer numbers (1 = back, total = front) over
+      // the visible/video sources so the sidebar chip matches the hover
+      // badge on the stage. Mic sources are excluded from the count.
+      const videoTotal = this.sources.filter(s => s.type !== 'mic').length;
+      let videoSeen = 0;
       this.sources.forEach(s => {
         const li = document.createElement('li');
         li.className = 'tc-src-row';
@@ -3109,6 +3114,16 @@ const Engine = {
         // Top row: icon + editable title + action icons
         const topRow = document.createElement('div');
         topRow.className = 'tc-src-row-top';
+        // v0.7.103: static layer chip (back-indexed). Mic sources get
+        // no chip since they don't participate in z-order.
+        if (s.type !== 'mic') {
+          videoSeen += 1;
+          const layerChip = document.createElement('span');
+          layerChip.className = 'tc-src-layer';
+          layerChip.textContent = `#${videoSeen}/${videoTotal}`;
+          layerChip.title = `layer ${videoSeen} of ${videoTotal} (1 = back)`;
+          topRow.appendChild(layerChip);
+        }
         const icon = s.type === 'screen' ? '🖥' : s.type === 'cam' ? '🎥' : '🎤';
         const iconEl = document.createElement('span'); iconEl.textContent = icon;
         const nameEl = document.createElement('span');
@@ -5453,6 +5468,27 @@ const Drag = {
     this.stage.addEventListener('mousedown', (e) => this._onDown(e));
     window.addEventListener('mousemove', (e) => this._onMove(e));
     window.addEventListener('mouseup', (e) => this._onUp(e));
+    // v0.7.103: hover source to reveal the layer/z-index badge.
+    // Uses the same _hitTest as mousedown so the hover layer matches
+    // exactly what a click would select. Cleared on mouseleave.
+    this.stage.addEventListener('mousemove', (e) => {
+      if (this.state) { LayerBadge.hide(); return; }
+      const [mx, my] = this._stageToCanvas(e);
+      const hit = this._hitTest(mx, my);
+      if (hit && hit.kind === 'source') {
+        const idx = Engine.sources.indexOf(hit.ref);
+        if (idx < 0) { LayerBadge.hide(); return; }
+        // Layer number from BACK = array index + 1 (index 0 is drawn first = back).
+        const total = Engine.sources.filter(s => s.type !== 'mic').length;
+        const layerFromBack = Engine.sources
+          .slice(0, idx + 1)
+          .filter(s => s.type !== 'mic').length;
+        LayerBadge.showAt(e.clientX, e.clientY, layerFromBack, total);
+      } else {
+        LayerBadge.hide();
+      }
+    });
+    this.stage.addEventListener('mouseleave', () => LayerBadge.hide());
     // v0.7.53: Ctrl+wheel on the stage = smooth zoom toward the cursor.
     // Without Ctrl, let the page scroll normally.
     this.stage.addEventListener('wheel', (e) => {
@@ -5886,6 +5922,43 @@ const Drag = {
     Engine.onSourcesChanged();
     log('🔓 layout reset', 'info');
     showToast(t('layoutReset'), 1800);
+  },
+};
+
+/* ─────────── LayerBadge — floating "#N / total" pill on source hover (v0.7.103) ─────
+   Lazy-creates a single fixed-position DOM element that tracks the
+   cursor while hovering a video source on the stage. The N is the
+   layer index from BACK (1 = backmost, total = frontmost), matching
+   the draw order in Engine.render() which iterates sources[] low→high.
+   Also shown in the sidebar source rows (see Engine.onSourcesChanged).
+*/
+const LayerBadge = {
+  el: null,
+  _ensure() {
+    if (this.el) return this.el;
+    this.el = document.createElement('div');
+    this.el.id = 'tcLayerBadge';
+    this.el.style.display = 'none';
+    document.body.appendChild(this.el);
+    return this.el;
+  },
+  showAt(clientX, clientY, layer, total) {
+    const el = this._ensure();
+    el.textContent = `#${layer} / ${total}`;
+    el.style.display = 'block';
+    // Position slightly offset from the cursor, clamped to viewport
+    const pad = 14;
+    let left = clientX + pad;
+    let top  = clientY + pad;
+    const w = el.offsetWidth || 56;
+    const h = el.offsetHeight || 22;
+    if (left + w + 4 > window.innerWidth)  left = clientX - w - pad;
+    if (top  + h + 4 > window.innerHeight) top  = clientY - h - pad;
+    el.style.left = Math.max(4, left) + 'px';
+    el.style.top  = Math.max(4, top)  + 'px';
+  },
+  hide() {
+    if (this.el) this.el.style.display = 'none';
   },
 };
 
