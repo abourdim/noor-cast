@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.97';
+const APP_VERSION = '0.7.98';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 13:30';
+const BUILD_DATE = '2026-04-12 13:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -213,6 +213,7 @@ const LANG = {
     brandQrUrl: '🔗 URL du badge card',
     brandLogoOpacity: '💧 Transparence du logo',
     brandLogoFilter: '🎨 Filtre du logo',
+    watermarkLabel: '💧 Watermark',
     tickerCustomLabel: '📰 Messages du ticker (un par ligne)',
     tickerCustomHint: 'Laisse vide pour utiliser les 10 conseils par défaut.',
     setSecGeneral: 'Général',
@@ -820,6 +821,7 @@ const LANG = {
     brandQrUrl: '🔗 Badge card URL',
     brandLogoOpacity: '💧 Logo opacity',
     brandLogoFilter: '🎨 Logo filter',
+    watermarkLabel: '💧 Watermark',
     tickerCustomLabel: '📰 Ticker messages (one per line)',
     tickerCustomHint: 'Leave empty to use the 10 default tips.',
     setSecGeneral: 'General',
@@ -1419,6 +1421,7 @@ const LANG = {
     brandQrUrl: '🔗 رابط بطاقة الشارة',
     brandLogoOpacity: '💧 شفافية الشعار',
     brandLogoFilter: '🎨 فلتر الشعار',
+    watermarkLabel: '💧 علامة مائية',
     tickerCustomLabel: '📰 رسائل الشريط (سطر لكل رسالة)',
     tickerCustomHint: 'اتركه فارغًا لاستخدام النصائح العشر الافتراضية.',
     setSecGeneral: 'عام',
@@ -2390,6 +2393,9 @@ const Engine = {
 
     // Brand watermark (logo + slogan + fun effect) — always on top of overlays
     Brand.draw(ctx);
+
+    // v0.7.98: stage watermark text overlay (corner stamp)
+    Watermark.render(ctx, width, height);
 
     // v0.7.46: grid overlay — shown only while Alt-drag is active
     if (Drag._gridVisible) {
@@ -5946,6 +5952,70 @@ const Brand = {
       ctx.fillText(S.text, cx, cy);
       ctx.restore();
     }
+  },
+};
+
+/* v0.7.98 — Stage watermark text overlay: a simple monospace text stamp
+   that's always visible in a fixed corner. Useful for lesson copyright /
+   channel branding. Different from Brand (v0.7.7) which is draggable. */
+const Watermark = {
+  text: '',
+  corner: 'br',  // tl / tr / bl / br
+  opacity: 0.55,
+
+  load() {
+    try {
+      this.text = localStorage.getItem('tc-watermark-text') || '';
+      this.corner = localStorage.getItem('tc-watermark-corner') || 'br';
+      const op = parseFloat(localStorage.getItem('tc-watermark-opacity'));
+      if (!isNaN(op)) this.opacity = Math.max(0, Math.min(1, op));
+    } catch {}
+  },
+  setText(s) {
+    this.text = String(s || '').slice(0, 80);
+    try { localStorage.setItem('tc-watermark-text', this.text); } catch {}
+  },
+  setCorner(c) {
+    if (['tl','tr','bl','br'].includes(c)) {
+      this.corner = c;
+      try { localStorage.setItem('tc-watermark-corner', c); } catch {}
+    }
+  },
+  setOpacity(v) {
+    this.opacity = Math.max(0, Math.min(1, parseFloat(v) || 0.55));
+    try { localStorage.setItem('tc-watermark-opacity', String(this.opacity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.text) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.font = '700 26px ui-monospace, monospace';
+    const pad = 24;
+    const m = ctx.measureText(this.text);
+    const tw = m.width + 20;
+    const th = 40;
+    let bx, by;
+    if (this.corner === 'tl') { bx = pad; by = pad; }
+    else if (this.corner === 'tr') { bx = W - pad - tw; by = pad; }
+    else if (this.corner === 'bl') { bx = pad; by = H - pad - th; }
+    else { bx = W - pad - tw; by = H - pad - th; }
+    // Rounded background
+    ctx.fillStyle = 'rgba(0, 0, 0, .45)';
+    ctx.beginPath();
+    const r = 8;
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + tw - r, by); ctx.quadraticCurveTo(bx + tw, by, bx + tw, by + r);
+    ctx.lineTo(bx + tw, by + th - r); ctx.quadraticCurveTo(bx + tw, by + th, bx + tw - r, by + th);
+    ctx.lineTo(bx + r, by + th); ctx.quadraticCurveTo(bx, by + th, bx, by + th - r);
+    ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by);
+    ctx.fill();
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.text, bx + 10, by + th / 2);
+    ctx.restore();
   },
 };
 
@@ -10758,6 +10828,22 @@ function wireEvents() {
       try { localStorage.setItem('tc-brand-url', e.target.value); } catch {}
     });
   }
+  // v0.7.98: stage watermark text overlay
+  const wmText = $('tcWatermarkInput');
+  if (wmText) {
+    wmText.value = Watermark.text;
+    wmText.addEventListener('input', (e) => Watermark.setText(e.target.value));
+  }
+  const wmCorner = $('tcWatermarkCorner');
+  if (wmCorner) {
+    wmCorner.value = Watermark.corner;
+    wmCorner.addEventListener('change', (e) => Watermark.setCorner(e.target.value));
+  }
+  const wmOp = $('tcWatermarkOpacity');
+  if (wmOp) {
+    wmOp.value = String(Watermark.opacity);
+    wmOp.addEventListener('input', (e) => Watermark.setOpacity(e.target.value));
+  }
   // Custom ticker messages (v0.7.8)
   const tickerTA = $('tcTickerCustomInput');
   if (tickerTA) {
@@ -11012,6 +11098,7 @@ async function init() {
   Scenes.loadCustom();  // v0.7.48: restore custom scenes
   Scenes.loadOrder();  // v0.7.32: restore persisted scene order before first render
   Brand.load();
+  Watermark.load();  // v0.7.98
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
   Badges.load();
 

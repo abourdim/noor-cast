@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.97</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.98</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -778,7 +778,7 @@
       <!-- News / Changelog -->
       <div class="help-content" id="helpNews">
         <div class="wiki-entry">
-          <h3>🚀 v0.7.40 → v0.7.97 — 12 avril 2026</h3>
+          <h3>🚀 v0.7.40 → v0.7.98 — 12 avril 2026</h3>
           <p data-i18n="news_087">50+ features en vrac : polish, accessibilité, pro tools 🚀⌨🎨🔧</p>
           <ul>
             <li data-i18n="news_087_1">🎚 Audio : meter LED, boost mic, noise gate, ducking auto quand tu parles, sous-titres live (WebSpeech)</li>
@@ -1037,7 +1037,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.97</strong></span>
+      <span class="badge"><strong>v0.7.98</strong></span>
     </div>
   </aside>
 
@@ -1381,6 +1381,17 @@
           <!-- v0.7.42: badge card link URL — printed on BadgeCard PNG exports -->
           <label class="sidebar-label" style="margin-top:10px" data-i18n="brandQrUrl">🔗 URL du badge card</label>
           <input type="url" id="tcBrandUrlInput" class="sidebar-select" placeholder="https://mon-cours.fr/lecon-42" />
+
+          <!-- v0.7.98: stage watermark text overlay — corner stamp -->
+          <label class="sidebar-label" style="margin-top:12px" data-i18n="watermarkLabel">💧 Watermark</label>
+          <input type="text" id="tcWatermarkInput" class="sidebar-select" placeholder="© 2026 Mon Cours" maxlength="80" />
+          <select id="tcWatermarkCorner" class="sidebar-select" style="margin-top:6px">
+            <option value="tl">↖ Haut-gauche</option>
+            <option value="tr">↗ Haut-droite</option>
+            <option value="bl">↙ Bas-gauche</option>
+            <option value="br" selected>↘ Bas-droite</option>
+          </select>
+          <input type="range" id="tcWatermarkOpacity" min="0" max="1" step="0.05" value="0.55" class="tc-brand-range" style="margin-top:6px" />
         </div>
       </details>
 
@@ -1398,7 +1409,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.97</strong></span>
+      <span class="badge"><strong>v0.7.98</strong></span>
     </div>
   </aside>
 
@@ -1430,7 +1441,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.97</strong></span>
+      <span class="badge"><strong>v0.7.98</strong></span>
     </div>
   </aside>
 
