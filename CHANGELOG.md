@@ -3,6 +3,35 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
+
+Every mousedown on the stage emits an animated two-ring ripple that
+expands and fades over 600 ms, rendered on the output canvas (unlike
+the teleprompter) so it's baked into the recording. Opt-in via the
+💧 Ripples button in the tools bar. Built as a parallel to the
+existing Laser pipeline — own offscreen canvas, own `render()` method,
+composited by `Engine.render()` right after Laser.
+
+### Added
+- `Ripples` object in `tutocast.js` mirroring the `Laser` shape:
+  `enabled`, `particles[]`, dedicated 1920×1080 offscreen canvas,
+  `setup()`, `toggle()`, `add(x, y)`, `render()`.
+- `Engine.render()` now calls `Ripples.render()` + composites
+  `Ripples.canvas` right after the laser dot.
+- `Drag._onDown` feeds every canvas click into `Ripples.add(mx, my)`
+  immediately after the `_stageToCanvas(e)` mapping — zero
+  interference with selection / move / resize.
+- Floating tools bar button `#tcRipplesBtn` (💧 icon, "Ripples" label),
+  wired to `Ripples.toggle()`.
+- i18n keys `ripples`, `ripplesOn`, `ripplesOff` in FR / EN / AR.
+
+### Visual
+- Outer ring: theme accent (`Engine._accentColor`), expands to 80 px,
+  6 px stroke, starts at 0.7 alpha and fades to 0.
+- Inner ring: white, expands to 40 px, 3 px stroke, starts at 0.9
+  alpha — sharper leading edge.
+- 600 ms duration per ripple, dead particles spliced on each frame.
+
 ## v0.7.22 — 2026-04-11 (Post-recording trim editor enhancements)
 
 Three additive improvements to the existing `Trim` tool, on top of the

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.22 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.23 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.22';
+const APP_VERSION = '0.7.23';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 18:15';
+const BUILD_DATE = '2026-04-11 18:25';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -29,7 +29,7 @@ const LANG = {
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
     activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
     scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre',
-    tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner',
+    tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Capture photo',
     recStart: 'ENREGISTRER', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
     download: 'Télécharger', downloadChapters: 'Chapitres (.vtt)', newTake: 'Nouveau tuto',
@@ -79,6 +79,7 @@ const LANG = {
     sceneChanged: '🎭 Scène',
     textAdded: '✏️ Texte ajouté',
     laserOn: '🔴 Laser activé', laserOff: '⚪ Laser désactivé',
+    ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
     drawOn: '✏️ Mode dessin',
@@ -386,7 +387,7 @@ const LANG = {
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
     activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
     scenes: 'Scenes', texts: 'Texts', addText: 'Free text',
-    tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw',
+    tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Photo snapshot',
     recStart: 'REC', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
     download: 'Download', downloadChapters: 'Chapters (.vtt)', newTake: 'New tutorial',
@@ -436,6 +437,7 @@ const LANG = {
     sceneChanged: '🎭 Scene',
     textAdded: '✏️ Text added',
     laserOn: '🔴 Laser on', laserOff: '⚪ Laser off',
+    ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
     drawOn: '✏️ Draw mode',
@@ -743,7 +745,7 @@ const LANG = {
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
     activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
     scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر',
-    tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم',
+    tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم', ripples: 'موجات',
     teleprompter: 'تيليبرومبتر', snapshot: 'لقطة',
     recStart: 'تسجيل', recStop: 'إيقاف', pause: 'إيقاف مؤقت', mark: 'علامة', stop: 'إيقاف',
     download: 'تحميل', downloadChapters: 'فصول (.vtt)', newTake: 'درس جديد',
@@ -790,6 +792,7 @@ const LANG = {
     sceneChanged: '🎭 المشهد',
     textAdded: '✏️ نص مُضاف',
     laserOn: '🔴 الليزر', laserOff: '⚪ إيقاف الليزر', freezeOn: '❄️ مُجمَّد', freezeOff: '▶ مباشر',
+    ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
     promptTelePlaceholder: 'الصق النص هنا…', promptFreeText: 'النص المراد عرضه:',
@@ -1273,6 +1276,11 @@ const Engine = {
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
     ctx.drawImage(this.laserCanvas, 0, 0);
+
+    // v0.7.23: Click ripples — parallel pipeline to Laser, composited right
+    // after so ripples are baked into the final recording.
+    Ripples.render();
+    ctx.drawImage(Ripples.canvas, 0, 0);
 
     // v0.7.1: reposition the floating text color toolbar each frame so it
     // follows the selected overlay during drag/resize/rotation
@@ -2736,6 +2744,68 @@ const Laser = {
   }
 };
 
+/* Ripples — click tracer. Every mousedown on the stage emits a two-ring
+   ripple that expands from radius 0 to 80px and fades over 600ms.
+   Rendered on its own offscreen canvas, composited by Engine.render()
+   right after Laser — so ripples ARE baked into the final recording
+   (unlike the teleprompter overlay which stays in the DOM only). */
+const Ripples = {
+  enabled: false,
+  particles: [],
+  canvas: null,
+  ctx: null,
+  DURATION: 600,  // ms
+  MAX_R: 80,
+
+  setup() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = 1920;
+    this.canvas.height = 1080;
+    this.ctx = this.canvas.getContext('2d');
+  },
+  toggle() {
+    this.enabled = !this.enabled;
+    $('tcRipplesBtn')?.classList.toggle('active', this.enabled);
+    showToast(this.enabled ? '💧 ' + t('ripplesOn') : '💧 ' + t('ripplesOff'), 1400);
+    log('ripples ' + (this.enabled ? 'on' : 'off'), 'info');
+  },
+  add(x, y) {
+    if (!this.enabled) return;
+    this.particles.push({ x, y, t0: performance.now() });
+  },
+  render() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.particles.length === 0) return;
+    const now = performance.now();
+    const accent = (Engine && Engine._accentColor) || '#a3e635';
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      const age = now - p.t0;
+      if (age >= this.DURATION) { this.particles.splice(i, 1); continue; }
+      const k = age / this.DURATION;  // 0..1
+      // Outer ring: full radius, fades out
+      const rOut = this.MAX_R * k;
+      this.ctx.save();
+      this.ctx.globalAlpha = (1 - k) * 0.7;
+      this.ctx.strokeStyle = accent;
+      this.ctx.lineWidth = 6;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, rOut, 0, Math.PI * 2);
+      this.ctx.stroke();
+      // Inner ring: half the radius, sharper
+      const rIn = this.MAX_R * 0.5 * k;
+      this.ctx.globalAlpha = (1 - k) * 0.9;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, rIn, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+  }
+};
+
 /* Freeze — snapshot current canvas frame, Render loop draws the frozen ImageData instead */
 const Freeze = {
   toggle() {
@@ -2912,6 +2982,10 @@ const Drag = {
     const [mx, my] = this._stageToCanvas(e);
     // v0.7.21: arm click-vs-drag detector for AutoZoom
     AutoZoom.armDown(mx, my);
+
+    // v0.7.23: emit a click ripple at the canvas coord — fires on every
+    // mousedown before any selection / resize logic. No-op when disabled.
+    Ripples.add(mx, my);
 
     // v0.7.3: text-overlay canvas ✕ delete button
     if (TextOverlays.selectedId != null) {
@@ -5392,6 +5466,7 @@ function wireEvents() {
 
   // Tools
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
+  $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
@@ -5591,6 +5666,7 @@ async function init() {
 
   Engine.init();
   Laser.setup();
+  Ripples.setup();
   Whiteboard.setup();
   Zoom.setup();
   Drag.setup();
