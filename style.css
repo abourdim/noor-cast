@@ -1785,6 +1785,37 @@ body.log-open .app {
 }
 .tc-text-presets button:hover { background: var(--glow); border-color: var(--accent); }
 
+/* ─── v0.7.60: emoji picker palette ─── */
+.tc-emoji-palette {
+  background: rgba(0, 0, 0, .45);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 10px;
+  padding: 8px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-emoji-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+}
+.tc-emoji-palette button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 6px 4px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background .1s, transform .1s;
+}
+.tc-emoji-palette button:hover {
+  background: rgba(255, 255, 255, .1);
+  transform: scale(1.15);
+}
+
 /* ─── REC bar ─── */
 .tc-rec-bar {
   display: flex; align-items: center; justify-content: center; gap: 12px;

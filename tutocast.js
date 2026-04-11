@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.59 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.60 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.59';
+const APP_VERSION = '0.7.60';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 04:00';
+const BUILD_DATE = '2026-04-12 04:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -28,7 +28,7 @@ const LANG = {
     sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
     activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
-    scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre',
+    scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre', emojiBtn: 'Emoji',
     tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Capture photo',
     recStart: 'ENREGISTRER', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
@@ -533,7 +533,7 @@ const LANG = {
     sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
     activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
-    scenes: 'Scenes', texts: 'Texts', addText: 'Free text',
+    scenes: 'Scenes', texts: 'Texts', addText: 'Free text', emojiBtn: 'Emoji',
     tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Photo snapshot',
     recStart: 'REC', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
@@ -1038,7 +1038,7 @@ const LANG = {
     sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
     activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
-    scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر',
+    scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر', emojiBtn: 'إيموجي',
     tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم', ripples: 'موجات',
     teleprompter: 'تيليبرومبتر', snapshot: 'لقطة',
     recStart: 'تسجيل', recStop: 'إيقاف', pause: 'إيقاف مؤقت', mark: 'علامة', stop: 'إيقاف',
@@ -8487,6 +8487,35 @@ function wireEvents() {
   $('tcAddTextBtn').addEventListener('click', () => {
     const text = prompt(t('promptFreeText'), '');
     if (text) TextOverlays.add(text, { ttl: 0 });
+  });
+  // v0.7.60: emoji picker
+  $('tcEmojiBtn')?.addEventListener('click', () => {
+    const palette = $('tcEmojiPalette');
+    if (!palette) return;
+    palette.style.display = palette.style.display === 'none' ? 'block' : 'none';
+  });
+  $('tcEmojiPalette')?.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.textContent.trim();
+      // Drop an emoji overlay at center-stage. TTL so it fades after 4s.
+      TextOverlays.add(emoji, {
+        ttl: 4000,
+        size: 220,
+        color: '#ffffff',
+        bg: '#000000',
+        transparency: 2,  // outlined — no bg box
+        x: Engine.width / 2,
+        y: Engine.height / 2,
+      });
+      $('tcEmojiPalette').style.display = 'none';
+    });
+  });
+  // Close palette on Escape / outside-click
+  document.addEventListener('click', (e) => {
+    const palette = $('tcEmojiPalette');
+    if (!palette || palette.style.display === 'none') return;
+    if (e.target.closest('#tcEmojiBtn') || e.target.closest('#tcEmojiPalette')) return;
+    palette.style.display = 'none';
   });
   // v0.7.14: text default font picker — applies to subsequent text overlays.
   // Existing overlays can still cycle their font via the floating Aa button.
