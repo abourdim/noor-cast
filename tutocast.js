@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.40 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.41 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.40';
+const APP_VERSION = '0.7.41';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 23:00';
+const BUILD_DATE = '2026-04-11 23:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -197,6 +197,10 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'Retry 30s (pendant enregistrement)',
     softRewindToast: '↶ Retry — 30 dernières secondes marquées',
+    undoDone: '↩ Annulé',
+    redoDone: '↪ Rétabli',
+    undoEmpty: '↩ Rien à annuler',
+    redoEmpty: '↪ Rien à rétablir',
     introOutroLabel: "🎬 Cartes intro/outro cinématiques",
     outroTitle: 'Merci !',
     outroBadges: 'badges',
@@ -643,6 +647,10 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'Retry last 30s (while recording)',
     softRewindToast: '↶ Retry — last 30s flagged',
+    undoDone: '↩ Undone',
+    redoDone: '↪ Redone',
+    undoEmpty: '↩ Nothing to undo',
+    redoEmpty: '↪ Nothing to redo',
     introOutroLabel: '🎬 Cinematic intro/outro cards',
     outroTitle: 'Thank you!',
     outroBadges: 'badges',
@@ -1081,6 +1089,10 @@ const LANG = {
     cheatMiscDebug: 'Debug HUD',
     cheatMiscRetry: 'إعادة آخر 30 ثانية (أثناء التسجيل)',
     softRewindToast: '↶ إعادة — آخر 30 ثانية مُعلّمة',
+    undoDone: '↩ تم التراجع',
+    redoDone: '↪ تمت الإعادة',
+    undoEmpty: '↩ لا شيء للتراجع',
+    redoEmpty: '↪ لا شيء للإعادة',
     introOutroLabel: '🎬 بطاقات مقدمة/خاتمة سينمائية',
     outroTitle: 'شكرًا!',
     outroBadges: 'شارات',
@@ -2032,6 +2044,8 @@ const Engine = {
     this.onSourcesChanged();
     log(`- ${src.label}`, 'info');
     showToast(`✕ ${t('sourceRemoved')}: ${src.label}`, 1500);
+    // v0.7.41: snapshot layout after a source is removed (undoable)
+    if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
   },
 
   onSourcesChanged() {
@@ -3909,10 +3923,15 @@ const Drag = {
   },
 
   _onUp(e) {
+    // v0.7.41: if a real drag/resize just happened, capture a layout
+    // snapshot so Ctrl+Z can undo. We only capture on actual transitions
+    // (state was a move/resize, not a click).
+    const wasDragOrResize = this.state && (this.state.mode === 'move' || this.state.mode === 'resize');
     if (this.state) {
       this.state = null;
       if (this.stage) this.stage.classList.remove('dragging');
     }
+    if (wasDragOrResize) LayoutHistory.capture();
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
     // miss _hitTest still trigger auto-zoom when the coords land on a
@@ -5832,6 +5851,81 @@ const Minimap = {
   },
 };
 
+/* v0.7.41: LayoutHistory — undo/redo stack for source layout changes.
+   Captures a snapshot (source x/y/w/h/shape/visible/hidden/custom) on
+   every drag-end or resize-end. Ctrl+Z (when NOT recording, since
+   v0.7.38 owns Ctrl+Z during recording for soft-rewind) pops the
+   stack and restores the previous layout. Ctrl+Shift+Z redoes. */
+const LayoutHistory = {
+  MAX: 20,
+  stack: [],      // array of snapshots, index 0 = oldest
+  cursor: -1,     // points to the current state; undo = cursor-1, redo = cursor+1
+  _suppress: false,
+
+  _snapshot() {
+    return Engine.sources.map(s => ({
+      id: s.id,
+      x: s.x, y: s.y, w: s.w, h: s.h,
+      shape: s.shape,
+      visible: s.visible,
+      hidden: s.hidden,
+      custom: s.custom,
+    }));
+  },
+
+  capture() {
+    if (this._suppress) return;
+    // Drop any redo branch when a new change is made
+    if (this.cursor < this.stack.length - 1) {
+      this.stack = this.stack.slice(0, this.cursor + 1);
+    }
+    this.stack.push(this._snapshot());
+    if (this.stack.length > this.MAX) this.stack.shift();
+    this.cursor = this.stack.length - 1;
+  },
+
+  undo() {
+    if (this.cursor <= 0) {
+      showToast(t('undoEmpty') || '↩ Rien à annuler', 1100);
+      return;
+    }
+    this.cursor--;
+    this._apply(this.stack[this.cursor]);
+    showToast(t('undoDone') || '↩ Annulé', 1100);
+  },
+
+  redo() {
+    if (this.cursor >= this.stack.length - 1) {
+      showToast(t('redoEmpty') || '↪ Rien à rétablir', 1100);
+      return;
+    }
+    this.cursor++;
+    this._apply(this.stack[this.cursor]);
+    showToast(t('redoDone') || '↪ Rétabli', 1100);
+  },
+
+  _apply(snap) {
+    this._suppress = true;
+    snap.forEach(entry => {
+      const s = Engine.sources.find(src => src.id === entry.id);
+      if (!s) return;
+      s.x = entry.x; s.y = entry.y; s.w = entry.w; s.h = entry.h;
+      s.shape = entry.shape;
+      s.visible = entry.visible;
+      s.hidden = entry.hidden;
+      s.custom = entry.custom;
+    });
+    Engine.onSourcesChanged();
+    this._suppress = false;
+  },
+
+  // Capture an initial snapshot after sources list changes (add/remove)
+  // so undo always has a starting point to return to.
+  captureDelayed() {
+    setTimeout(() => this.capture(), 50);
+  },
+};
+
 /* v0.7.24: Cheatsheet — keyboard-shortcut overlay, toggle with ? / Shift+/.
    All shortcuts grouped by category so teachers can discover the full
    keyboard API without digging through FAQ. Pure presentation — the
@@ -6824,14 +6918,22 @@ function setupHotkeys() {
       }
       return;
     }
-    // v0.7.38: Ctrl/Cmd+Z during recording = soft rewind 30s (drop the
-    // last 30s in the post-recording trim). Only intercepted during
-    // recording/paused so normal Ctrl+Z undo still works elsewhere.
+    // v0.7.38: Ctrl/Cmd+Z during recording = soft rewind 30s
+    // v0.7.41: Ctrl/Cmd+Z outside recording = undo layout change
+    // Ctrl+Shift+Z = redo (in either state, since recording doesn't
+    // have a "redo" semantic)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'z') {
+      LayoutHistory.redo();
+      e.preventDefault();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'z') {
       if (Recorder.state === 'recording' || Recorder.state === 'paused') {
         Recorder.softRewind();
-        e.preventDefault();
+      } else {
+        LayoutHistory.undo();
       }
+      e.preventDefault();
       return;
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
