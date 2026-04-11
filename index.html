@@ -109,7 +109,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.5.0</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.6.0</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -209,6 +209,7 @@
             <a class="tc-btn-full" id="tcDownloadCsv" download style="display:none">📈 <span data-i18n="downloadCsv">Capteurs (.csv)</span></a>
             <button class="tc-btn-full" id="tcTrimBtn">✂️ <span data-i18n="trim">Couper</span></button>
             <button class="tc-btn-full tc-silence-trim" id="tcSilenceTrimBtn" style="display:none">🔇 <span data-i18n="removeSilence">Retirer les silences</span></button>
+            <button class="tc-btn-full tc-badge-btn" id="tcBadgeBtn">🏆 <span data-i18n="badgeBtn">Carte badge</span></button>
             <button class="tc-btn-full" id="tcNewTakeBtn">🎬 <span data-i18n="newTake">Nouveau tuto</span></button>
           </div>
         </div>
@@ -346,6 +347,11 @@
 
       <!-- How-To -->
       <div class="help-content" id="helpHowto">
+        <div class="help-firsttime">
+          <div class="help-firsttime-title">⭐ <span data-i18n="firstTimeTitle">Première fois ? Commence ici</span></div>
+          <p data-i18n="firstTimeBody">Les 7 étapes ci-dessous t'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. TutoCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.</p>
+          <p class="help-firsttime-teacher" data-i18n="firstTimeTeacher">👩‍🏫 <strong>Pour les profs :</strong> TutoCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.</p>
+        </div>
         <div class="help-step"><span class="help-step-num">1</span><p data-i18n="howto_1">Branche tes caméras USB (si besoin) et autorise l'accès quand le navigateur te le demande.</p></div>
         <div class="help-step"><span class="help-step-num">2</span><p data-i18n="howto_2">Dans le panneau Sources à gauche, ajoute ton écran, tes caméras et choisis ton micro.</p></div>
         <div class="help-step"><span class="help-step-num">3</span><p data-i18n="howto_3">Clique sur une des scènes pré-réglées à droite (Code, Robot, Studio…) — la composition change instantanément.</p></div>
@@ -377,6 +383,16 @@
 
       <!-- News / Changelog -->
       <div class="help-content" id="helpNews">
+        <div class="wiki-entry">
+          <h3>🏆 v0.6.0 — 11 avril 2026</h3>
+          <p data-i18n="news_060">Polish adoption 🎵🏆👩‍🏫</p>
+          <ul>
+            <li data-i18n="news_060_1">Jingle d'intro Web Audio (1.5s) en option — opt-in dans les Paramètres</li>
+            <li data-i18n="news_060_2">Carte badge PNG partageable générée après chaque enregistrement</li>
+            <li data-i18n="news_060_3">Callout « Première fois ? Commence ici » + pitch prof dans l'aide</li>
+            <li data-i18n="news_060_4">README enrichi d'une section « Pour les profs »</li>
+          </ul>
+        </div>
         <div class="wiki-entry">
           <h3>🤖 v0.5.0 — 11 avril 2026</h3>
           <p data-i18n="news_050">micro:bit superpouvoirs + trim intelligent 🤖🔇</p>
@@ -505,7 +521,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.5.0</strong></span>
+      <span class="badge"><strong>v0.6.0</strong></span>
     </div>
   </aside>
 
@@ -564,6 +580,12 @@
         </label>
       </div>
       <div class="sidebar-group">
+        <label class="toggle-ctrl">
+          <input type="checkbox" id="tcJingleToggle" class="checkbox-ctrl" />
+          <span data-i18n="jingleLabel">🎵 Jingle d'intro (1.5s)</span>
+        </label>
+      </div>
+      <div class="sidebar-group">
         <label class="sidebar-label" data-i18n="outputFormat">🎞 Format de sortie</label>
         <select id="tcFormatSelect" class="sidebar-select" aria-label="Output format">
           <option value="auto" data-i18n="formatAuto">Auto (MP4 si possible)</option>
@@ -575,7 +597,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.5.0</strong></span>
+      <span class="badge"><strong>v0.6.0</strong></span>
     </div>
   </aside>
 
@@ -607,7 +629,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.5.0</strong></span>
+      <span class="badge"><strong>v0.6.0</strong></span>
     </div>
   </aside>
 

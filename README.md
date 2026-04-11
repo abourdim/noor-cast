@@ -9,8 +9,40 @@ to **3 cameras + 1 screen + 1 microphone simultaneously**, compose them into
 live-switchable scenes, annotate with on-screen text, freeze the screen mid-
 explanation, draw on it, and even **read your micro:bit sensors live via Web
 Bluetooth** — all from the browser, without installing anything. The final
-tutorial downloads as a `.webm` with a `.vtt` chapter file. Trilingual FR /
-EN / AR, 8 visual themes, huge red REC button, confetti at the end.
+tutorial downloads as a `.webm` (or `.mp4`) with a `.vtt` chapter file and
+an optional `.csv` sensor timeline. Trilingual FR / EN / AR, 8 visual themes,
+huge red REC button, confetti at the end.
+
+---
+
+## 👩‍🏫 For teachers (the actual pitch)
+
+TutoCast is built for **one specific person**: a teacher explaining code with
+a robot. If that's you, here's what you get that nobody else offers:
+
+- **No install, no account, no cloud.** Open `index.html` in a Chromebook.
+  Everything stays on your computer. Legal / parental / GDPR friendly.
+- **One tool for everything.** Screen + face cam + robot cam + mic + live
+  scene switching + whiteboard + laser + markers + chapters + trim +
+  silence removal — without leaving the browser.
+- **The micro:bit IS your remote.** Button A zooms in, button B drops a
+  chapter marker, tilting the robot drives the laser pointer. Hands-free
+  recording while you hold the robot.
+- **Guided templates.** Pick `📚 Full lesson`, `🤖 Robot demo`, or
+  `🔧 Fix-it` on first launch and TutoCast walks you through a 5-step
+  sequence. Zero decision fatigue.
+- **Smart silence trimmer.** One click after Stop removes all the "umm..."
+  pauses. No external editor.
+- **Kid-friendly.** 10 colorful text stickers, confetti on finish, big
+  red REC button, achievement badges, 8 visual themes.
+- **Runs on a Chromebook.** No dependencies, no install, no RAM hog.
+
+**The first 5 minutes:** grant cam/mic permissions → pick the `🤖 Démo robot`
+template → connect your micro:bit via the `📡 Connecter micro:bit` button →
+hit the big red REC → the template guides you through Intro / Code / Robot /
+Sensors / Recap. Press `M` for a marker, `Q` for a quick quiz card. When
+you Stop, the trim tool offers to remove silences and the badge card
+generates a shareable PNG of your tutorial's stats.
 
 ---
 

@@ -3,6 +3,94 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.6.0 — 2026-04-11
+
+Polish / adoption round. Two Tier-2 polish features plus two
+documentation improvements. All verified via the Preview MCP harness.
+
+The honest caveat: I still recommend a real 45-minute smoke test
+before considering any of these done. Every release since v0.2.2 has
+been verified headlessly; none have been verified by a human with a
+real camera + real micro:bit + real classroom. See the v0.2.2
+CHANGELOG entry for why that matters.
+
+### Added — 🎵 Intro jingle
+
+Optional "show's starting" cue captured IN the recording.
+
+- Four-note triangle-wave arpeggio: C5 → E5 → G5 → C6, total duration
+  ~1.5 s
+- Routes through `Engine.audioDest` so it's encoded into the video's
+  audio track — not just a monitor sound
+- Also connected to `audioCtx.destination` so the teacher hears it too
+- Soft exponential gain envelope (no click artifacts)
+- **Opt-in** via `🎵 Jingle d'intro` checkbox in Settings, default OFF
+- Persisted via `tc-jingle` localStorage
+- Fires from `Recorder.start()` after `recorder.start(250)` so the
+  audio is definitely captured
+
+Verified: object exists, 4 notes defined, enable/disable persists,
+play() is a clean no-op when disabled, doesn't throw when enabled.
+
+### Added — 🏆 Shareable badge card
+
+Post-recording 1200×630 PNG (OpenGraph / social-card dimensions) with
+the tutorial's stats, rendered via pure Canvas2D.
+
+- **Captured at `Recorder.finish()`**: duration, cam count, screen
+  count, micro:bit connected, chapter count, template used, current
+  theme accent, timestamp
+- **`BadgeCard.exportPng()`**: renders the card with a theme-accent
+  gradient background, outer frame, TutoCast logo + version, headline,
+  a 2×2 stat grid, template badge in the bottom-right corner if one
+  was active, slogan + date footer
+- Triggered from a new `🏆 Badge` button in the Take panel
+- Download filename: `{basename}-badge.png`
+- **Zero dependencies** — no deps, no cloud, no AI
+
+Verified: capture stores correct stats (247 s, 2 cams, 1 screen,
+1 micro:bit, 4 chapters, lesson template, accent #a3e635),
+`exportPng()` produces a **709,819-byte PNG**.
+
+### Added — "First time? Start here" callout (Help → How-to)
+
+First-run teachers open the Help panel's How-to tab and see a new
+highlighted orange callout above the 7 steps:
+
+- **Title**: "⭐ Première fois ? Commence ici"
+- **Body**: explains the <5-minute onboarding loop and the no-install
+  promise
+- **Teacher sub-callout** (green-bordered): explains the TutoCast
+  mission for teachers specifically — teach code with a robot, use
+  the "🤖 Démo robot" template, 100% local
+
+All three text fields are i18n'd (FR/EN/AR).
+
+### Added — README "For teachers" section
+
+New top-level pitch section immediately after the headline, explaining:
+- The zero-install / zero-account / zero-cloud promise
+- The micro:bit-as-remote superpower (A=zoom, B=marker, tilt=laser)
+- Template-guided workflow
+- Silence trimmer
+- Runs on a Chromebook
+- "The first 5 minutes" walkthrough
+
+### i18n
+- 13 new keys × 3 languages (jingle label, badge card labels and
+  strings, first-time callout title/body/teacher note, news_060
+  entries).
+
+### Verified (Preview MCP harness)
+- Jingle: object present, 4 notes, disabled default, persistence,
+  no-op when off, plays when on
+- BadgeCard: capture records correct stats, exportPng produces
+  710 KB PNG with correct filename
+- DOM: tcJingleToggle, tcBadgeBtn, help-firsttime, help-firsttime-teacher
+  all present
+- i18n: 306 keys × 3 langs balanced, all HTML data-i18n resolves
+- JS syntax: `node --check` OK
+
 ## v0.5.0 — 2026-04-11
 
 Six features in one release. Four Tier-1 "this is what makes TutoCast

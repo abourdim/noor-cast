@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.5.0 — kids-friendly multi-cam screen recorder
+   TutoCast v0.6.0 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.6.0';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -114,6 +114,19 @@ const LANG = {
     silenceChip: 'Tu es silencieux…',
     quizPromptLabel: 'Quelle question veux-tu poser à tes élèves ?',
     sensorOverlayLabel: '🤖 Overlay auto si le robot bouge fort',
+    jingleLabel: '🎵 Jingle d\'intro (1.5s)',
+    badgeBtn: 'Carte badge',
+    badgeHeadline: 'Tuto enregistré !',
+    badgeStatDuration: 'Durée',
+    badgeStatSources: 'Sources',
+    badgeStatChapters: 'Chapitres',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ Aucun tuto à exporter',
+    badgeExported: 'Badge exporté',
+    badgeError: '✗ Impossible de générer le badge',
+    firstTimeTitle: 'Première fois ? Commence ici',
+    firstTimeBody: 'Les 7 étapes ci-dessous t\'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. TutoCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.',
+    firstTimeTeacher: '👩‍🏫 Pour les profs : TutoCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -219,6 +232,11 @@ const LANG = {
     news_050_4: "Chip d'alerte silence en temps réel (>1.8s de micro muet, visible toi seul)",
     news_050_5: "Touche Q = carte question overlay (kid-friendly quiz)",
     news_050_6: "Overlay 🤖 auto si le robot s'agite fort (opt-in dans les Paramètres)",
+    news_060: "Polish adoption 🎵🏆👩‍🏫",
+    news_060_1: "Jingle d'intro Web Audio (1.5s) en option — opt-in dans les Paramètres",
+    news_060_2: "Carte badge PNG partageable générée après chaque enregistrement",
+    news_060_3: "Callout « Première fois ? Commence ici » + pitch prof dans l'aide",
+    news_060_4: "README enrichi d'une section « Pour les profs »",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -348,6 +366,19 @@ const LANG = {
     silenceChip: 'You\'re silent…',
     quizPromptLabel: 'What question do you want to ask your students?',
     sensorOverlayLabel: '🤖 Auto-overlay when the robot jolts',
+    jingleLabel: '🎵 Intro jingle (1.5s)',
+    badgeBtn: 'Badge card',
+    badgeHeadline: 'Tutorial recorded!',
+    badgeStatDuration: 'Duration',
+    badgeStatSources: 'Sources',
+    badgeStatChapters: 'Chapters',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ No tutorial to export',
+    badgeExported: 'Badge exported',
+    badgeError: '✗ Could not generate the badge',
+    firstTimeTitle: 'First time? Start here',
+    firstTimeBody: 'The 7 steps below take you from zero to your first downloaded tutorial in under 5 minutes. TutoCast runs on a Chromebook or any desktop browser, no account, no install.',
+    firstTimeTeacher: '👩‍🏫 For teachers: TutoCast is built to explain code with a robot (micro:bit, Arduino, LEGO). Use the "🤖 Robot demo" template for a guided 5-step sequence. Your videos stay 100% on your computer.',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -453,6 +484,11 @@ const LANG = {
     news_050_4: "Live silence warning chip (>1.8s quiet mic, visible to you only)",
     news_050_5: "Q key = quiz card overlay (kid-friendly mid-recording question)",
     news_050_6: "Auto 🤖 overlay when the robot jolts hard (opt-in in Settings)",
+    news_060: "Adoption polish 🎵🏆👩‍🏫",
+    news_060_1: "Optional 1.5s Web Audio intro jingle — opt-in in Settings",
+    news_060_2: "Shareable PNG badge card generated after every recording",
+    news_060_3: "\"First time? Start here\" callout + teacher pitch in the help panel",
+    news_060_4: "README now has a proper \"For teachers\" section",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -574,6 +610,19 @@ const LANG = {
     silenceChip: 'أنت صامت…',
     quizPromptLabel: 'ما السؤال الذي تريد طرحه على طلابك؟',
     sensorOverlayLabel: '🤖 طبقة تلقائية عند اهتزاز الروبوت',
+    jingleLabel: '🎵 جينغل المقدمة (1.5ث)',
+    badgeBtn: 'بطاقة شارة',
+    badgeHeadline: 'تم تسجيل الدرس!',
+    badgeStatDuration: 'المدة',
+    badgeStatSources: 'المصادر',
+    badgeStatChapters: 'الفصول',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ لا يوجد درس للتصدير',
+    badgeExported: 'تم تصدير الشارة',
+    badgeError: '✗ تعذّر إنشاء الشارة',
+    firstTimeTitle: 'أول مرة؟ ابدأ من هنا',
+    firstTimeBody: 'الخطوات السبع أدناه تأخذك من الصفر إلى أول درس محمّل في أقل من 5 دقائق. يعمل TutoCast على Chromebook أو أي متصفح سطح مكتب، بدون حساب، بدون تثبيت.',
+    firstTimeTeacher: '👩‍🏫 للمعلّمين: TutoCast مصمّم لشرح الكود مع روبوت (micro:bit، Arduino، LEGO). استخدم قالب «🤖 عرض روبوت» لتسلسل موجّه من 5 خطوات. فيديوهاتك تبقى 100% على حاسوبك.',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -675,6 +724,11 @@ const LANG = {
     news_050_4: "إشعار صمت مباشر (> 1.8ث ميكروفون صامت، مرئي لك فقط)",
     news_050_5: "مفتاح Q = بطاقة سؤال (quiz) ملائمة للأطفال",
     news_050_6: "طبقة 🤖 تلقائية عند اهتزاز الروبوت بقوة (اختياري في الإعدادات)",
+    news_060: "تلميع التبنّي 🎵🏆👩‍🏫",
+    news_060_1: "جينغل مقدمة Web Audio اختياري (1.5ث) — تفعيل في الإعدادات",
+    news_060_2: "بطاقة شارة PNG قابلة للمشاركة تُنشأ بعد كل تسجيل",
+    news_060_3: "نداء «أول مرة؟ ابدأ من هنا» + طرح للمعلّمين في لوحة المساعدة",
+    news_060_4: "إضافة قسم «للمعلّمين» في README",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",
@@ -1624,6 +1678,9 @@ const Recorder = {
       log(t('recStarted'), 'success');
       showToast(t('recStarted'), 1500);
       Sfx.play('start');
+      // v0.6.0: optional intro jingle, plays INTO the recording so every
+      // tutorial opens with a "show's starting" cue
+      Jingle.play();
     } finally {
       this._starting = false;
     }
@@ -1763,6 +1820,9 @@ const Recorder = {
     const silenceBtn = $('tcSilenceTrimBtn');
     if (silenceBtn) silenceBtn.style.display = 'none';  // reset until analysed
     SilenceTrim.checkLastTake();
+
+    // v0.6.0: snapshot stats for the BadgeCard generator
+    BadgeCard.capture(blob, this.elapsed());
 
     // trigger auto-download of webm
     setTimeout(() => dl.click(), 200);
@@ -2575,6 +2635,169 @@ const SilenceTrim = {
   },
 };
 
+/* BadgeCard — generates a 1200×630 PNG achievement card after a recording.
+   Social-share-ready dimensions (OpenGraph / Twitter card). Pure canvas
+   drawing, zero deps. Renders TutoCast branding + duration + camera count
+   + chapter count + micro:bit status + template used (if any). */
+const BadgeCard = {
+  W: 1200, H: 630,
+
+  _lastStats: null,
+
+  /* Called from Recorder.finish(). Snapshots the stats that we need to
+     render into the card so subsequent recordings don't overwrite them. */
+  capture(blob, durationMs) {
+    const mbCount = Sensors.values ? 1 : 0;
+    const camCount = Engine.sources.filter(s => s.type === 'cam').length;
+    const scrCount = Engine.sources.filter(s => s.type === 'screen').length;
+    const chapters = Chapters.items ? Chapters.items.length : 0;
+    const markers = Chapters.items ? Chapters.items.filter(i => i.label && i.label.startsWith('Marker')).length : 0;
+    this._lastStats = {
+      duration: durationMs / 1000,
+      bytes: blob.size,
+      camCount, scrCount, mbCount, chapters, markers,
+      template: Templates.active ? Templates.active.key : null,
+      templateIcon: Templates.active ? Templates.active.icon : null,
+      templateLabel: Templates.active ? Templates.active.i18n : null,
+      themeAccent: Engine._accentColor || '#a3e635',
+      date: new Date(),
+    };
+  },
+
+  /* Render the stashed stats into a fresh canvas and trigger a PNG download. */
+  exportPng() {
+    const s = this._lastStats;
+    if (!s) { showToast(t('badgeNoTake'), 2500); return; }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = this.W;
+    canvas.height = this.H;
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient using the current theme accent
+    const bg = ctx.createLinearGradient(0, 0, this.W, this.H);
+    bg.addColorStop(0, '#0a1a04');
+    bg.addColorStop(1, '#000000');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    // Accent-color glow in top-right
+    const glow = ctx.createRadialGradient(this.W * 0.85, this.H * 0.2, 20, this.W * 0.85, this.H * 0.2, 500);
+    glow.addColorStop(0, this._hexToRgba(s.themeAccent, 0.35));
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    // Outer frame
+    ctx.strokeStyle = s.themeAccent;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(20, 20, this.W - 40, this.H - 40);
+
+    // Big trophy emoji + "TutoCast" logo in top-left
+    ctx.font = '700 110px "Righteous", Arial, sans-serif';
+    ctx.fillStyle = s.themeAccent;
+    ctx.textBaseline = 'top';
+    ctx.fillText('🎬', 60, 56);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('TutoCast', 200, 56);
+
+    // Version tag
+    ctx.font = '500 28px "Orbitron", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.fillText('v' + APP_VERSION, 205, 180);
+
+    // Headline
+    ctx.font = '800 64px "Bangers", "Righteous", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t('badgeHeadline'), 60, 240);
+
+    // Stat rows — four cells, two per row
+    const stats = [
+      [this._fmtDuration(s.duration), t('badgeStatDuration')],
+      [`${s.camCount}🎥 + ${s.scrCount}🖥`,            t('badgeStatSources')],
+      [`${s.chapters}🏷`,                               t('badgeStatChapters')],
+      [s.mbCount ? '🤖 ' + t('connected') : '—',        t('badgeStatMicrobit')],
+    ];
+    const gridX = 60, gridY = 340;
+    const cellW = (this.W - 120) / 2, cellH = 90;
+    stats.forEach((row, i) => {
+      const cx = gridX + (i % 2) * cellW;
+      const cy = gridY + Math.floor(i / 2) * cellH;
+      // Value — big, accent color
+      ctx.font = '800 48px "Orbitron", monospace';
+      ctx.fillStyle = s.themeAccent;
+      ctx.fillText(row[0], cx, cy);
+      // Label — small, muted
+      ctx.font = '500 20px "Righteous", Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.fillText(row[1], cx, cy + 52);
+    });
+
+    // Template badge in bottom-right if one was active
+    if (s.templateIcon) {
+      const tplText = `${s.templateIcon} ${t(s.templateLabel)}`;
+      ctx.font = '600 28px "Righteous", Arial, sans-serif';
+      const textW = ctx.measureText(tplText).width;
+      const padX = 18, padY = 10;
+      const tx = this.W - 60 - textW - padX * 2;
+      const ty = this.H - 60 - 44;
+      ctx.fillStyle = this._hexToRgba(s.themeAccent, 0.18);
+      ctx.strokeStyle = s.themeAccent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      this._roundRect(ctx, tx, ty, textW + padX * 2, 44, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(tplText, tx + padX, ty + padY);
+    }
+
+    // Footer slogan
+    ctx.font = '500 22px "Righteous", Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    const pad2 = n => String(n).padStart(2, '0');
+    const dt = `${s.date.getFullYear()}-${pad2(s.date.getMonth() + 1)}-${pad2(s.date.getDate())}`;
+    ctx.fillText(`${t('slogan')}    ·    ${dt}`, 60, this.H - 60);
+
+    // Export
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast(t('badgeError'), 3000); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = s.date;
+      const fname = `tutocast-${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}-${pad2(now.getHours())}-${pad2(now.getMinutes())}-badge.png`;
+      a.href = url; a.download = fname;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      log(`🏆 badge card exported: ${fname}`, 'success');
+      showToast(`🏆 ${t('badgeExported')}`, 2500);
+      Sfx.play('click');
+    }, 'image/png');
+  },
+
+  _fmtDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  },
+
+  _hexToRgba(hex, a) {
+    const h = hex.trim().replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  },
+
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  },
+};
+
 /* QuizCard — press Q mid-recording, enter a question, it appears as a big
    text overlay. Reuses TextOverlays so it's drawn on the canvas and goes
    into the recording. Auto-removes after 6 seconds. Not interactive —
@@ -2855,6 +3078,53 @@ const Sensors = {
 };
 
 /* ─────────── 7. Kid polish: sfx, debug hud, badges, confetti, ticker ─────────── */
+
+/* Jingle — a short "show's starting" arpeggio played INTO the recording.
+   Routes through Engine.audioDest so it's captured by MediaRecorder.
+   Opt-in in Settings (default off). Plays right after MediaRecorder has
+   been started, not during the 3-2-1 countdown. */
+const Jingle = {
+  enabled: false,
+  NOTES: [
+    // [frequencyHz, startSec, durSec]
+    [523.25, 0.00, 0.18],  // C5
+    [659.25, 0.15, 0.18],  // E5
+    [783.99, 0.30, 0.18],  // G5
+    [1046.5, 0.45, 0.55],  // C6 sustained
+  ],
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-jingle') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-jingle', v ? '1' : '0'); } catch {}
+  },
+
+  play() {
+    if (!this.enabled) return;
+    const ac = Engine.audioCtx;
+    if (!ac) return;
+    const now = ac.currentTime;
+    this.NOTES.forEach(([f, t0, dur]) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now + t0);
+      // Soft envelope so it doesn't click
+      g.gain.setValueAtTime(0.0001, now + t0);
+      g.gain.exponentialRampToValueAtTime(0.18, now + t0 + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + dur);
+      // Route through audioDest (captured by MediaRecorder) AND audioCtx.destination
+      // so the teacher hears it too
+      o.connect(g);
+      g.connect(Engine.audioDest);
+      g.connect(ac.destination);
+      o.start(now + t0);
+      o.stop(now + t0 + dur + 0.02);
+    });
+  },
+};
 
 /* Tiny Web Audio SFX — respects the soundToggle checkbox */
 const Sfx = {
@@ -3191,6 +3461,17 @@ function wireEvents() {
   const silBtn = $('tcSilenceTrimBtn');
   if (silBtn) silBtn.addEventListener('click', () => SilenceTrim.exportCleaned());
 
+  // Badge card wiring (v0.6.0)
+  const badgeBtn = $('tcBadgeBtn');
+  if (badgeBtn) badgeBtn.addEventListener('click', () => BadgeCard.exportPng());
+
+  // Jingle toggle (v0.6.0) — opt-in in Settings
+  const jingleEl = $('tcJingleToggle');
+  if (jingleEl) {
+    jingleEl.checked = Jingle.enabled;
+    jingleEl.addEventListener('change', (e) => Jingle.setEnabled(e.target.checked));
+  }
+
   // Sensor-triggered overlay toggle (v0.5.0) — opt-in in Settings
   const sensorOverlayEl = $('tcSensorOverlayToggle');
   if (sensorOverlayEl) {
@@ -3233,6 +3514,7 @@ async function init() {
   $('langSelect').value = currentLang;
 
   Sfx.load();
+  Jingle.load();
   Badges.load();
 
   applyI18n();  // after Sfx/Badges so Teleprompter.hasUserText() is safe

@@ -1736,6 +1736,48 @@ body.log-open .app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   HELP PANEL — "First time? Start here" callout (v0.6.0)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.help-firsttime {
+  background: rgba(251, 146, 60, .08);
+  border: 2px solid rgba(251, 146, 60, .3);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.help-firsttime-title {
+  font-family: var(--font-h);
+  font-size: 1.05rem;
+  color: #fb923c;
+  margin-bottom: 10px;
+  letter-spacing: .04em;
+}
+.help-firsttime p {
+  font-size: .85rem;
+  line-height: 1.5;
+  margin: 0 0 10px 0;
+}
+.help-firsttime p:last-child { margin-bottom: 0; }
+.help-firsttime-teacher {
+  background: rgba(163, 230, 53, .08);
+  border-inline-start: 3px solid var(--accent);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: .8rem !important;
+}
+
+/* Post-recording badge button gets a subtle gold tint to stand out */
+.tc-badge-btn {
+  background: linear-gradient(135deg, rgba(251, 191, 36, .18), rgba(251, 146, 60, .12)) !important;
+  border-color: rgba(251, 191, 36, .4) !important;
+}
+.tc-badge-btn:hover {
+  background: linear-gradient(135deg, rgba(251, 191, 36, .3), rgba(251, 146, 60, .2)) !important;
+  border-color: rgba(251, 191, 36, .7) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    SILENCE WARNING CHIP — v0.5.0
    Appears on the stage (teacher-only, NOT in the recording) when the
    mic has been quiet > 1.8s during an active recording.
