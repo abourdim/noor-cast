@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.26 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.27 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.26';
+const APP_VERSION = '0.7.27';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 19:30';
+const BUILD_DATE = '2026-04-11 19:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -197,6 +197,8 @@ const LANG = {
     autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
     autoPaused: '⏸ Enregistrement suspendu',
     autoResumed: '▶ Enregistrement repris',
+    sensorChartTitle: 'Capteurs micro:bit',
+    sensorBtnsLegend: 'Boutons',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Réinitialiser les badges',
     clearCache: 'Vider le cache complet',
@@ -596,6 +598,8 @@ const LANG = {
     autoPauseLabel: '⏸ Auto-pause when you switch tab',
     autoPaused: '⏸ Recording paused',
     autoResumed: '▶ Recording resumed',
+    sensorChartTitle: 'micro:bit sensors',
+    sensorBtnsLegend: 'Buttons',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Reset badges',
     clearCache: 'Clear all local data',
@@ -987,6 +991,8 @@ const LANG = {
     autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
     autoPaused: '⏸ تم إيقاف التسجيل مؤقتًا',
     autoResumed: '▶ استُؤنف التسجيل',
+    sensorChartTitle: 'مستشعرات micro:bit',
+    sensorBtnsLegend: 'الأزرار',
     setSecDanger: '♻ الصيانة',
     resetBadges: 'إعادة تعيين الشارات',
     clearCache: 'مسح جميع البيانات المحلية',
@@ -2755,9 +2761,13 @@ const Recorder = {
         dlCsv.style.display = '';
       }
       log(`📈 sensor CSV: ${SensorTimeline.samples.length} samples`, 'info');
+      // v0.7.27: render the sensor mini-chart in the take panel
+      SensorChart.render(SensorTimeline.samples);
     } else {
       const dlCsv = $('tcDownloadCsv');
       if (dlCsv) dlCsv.style.display = 'none';
+      const wrap = $('tcSensorChartWrap');
+      if (wrap) wrap.style.display = 'none';
     }
 
     // v0.5.0: if silence-trim has something to offer, expose the button
@@ -5064,6 +5074,106 @@ const SensorTimeline = {
     const header = 't_seconds,accel_x,accel_y,accel_z,button_a,button_b\n';
     const rows = this.samples.map(s => `${s.t},${s.x},${s.y},${s.z},${s.a},${s.b}`).join('\n');
     return header + rows + '\n';
+  },
+};
+
+/* v0.7.27: SensorChart — renders the SensorTimeline samples into the
+   take panel's mini-chart canvas. X/Y/Z accelerometer lines over time,
+   button A/B presses as short vertical marks at the bottom. Purely
+   presentational — no interactivity. */
+const SensorChart = {
+  render(samples) {
+    const wrap = $('tcSensorChartWrap');
+    const canvas = $('tcSensorChart');
+    if (!wrap || !canvas || !samples || samples.length === 0) {
+      if (wrap) wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = '';
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, .35)';
+    ctx.fillRect(0, 0, W, H);
+    // Center zero line
+    ctx.strokeStyle = 'rgba(255, 255, 255, .15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, H / 2);
+    ctx.lineTo(W, H / 2);
+    ctx.stroke();
+
+    // Compute time range + accel range
+    const first = parseFloat(samples[0].t);
+    const last = parseFloat(samples[samples.length - 1].t);
+    const duration = Math.max(0.001, last - first);
+    // Accel is typically in g (−2 to +2 on micro:bit). Auto-range anyway.
+    let maxAbs = 0;
+    samples.forEach(s => {
+      const x = Math.abs(parseFloat(s.x));
+      const y = Math.abs(parseFloat(s.y));
+      const z = Math.abs(parseFloat(s.z));
+      if (x > maxAbs) maxAbs = x;
+      if (y > maxAbs) maxAbs = y;
+      if (z > maxAbs) maxAbs = z;
+    });
+    if (maxAbs < 0.1) maxAbs = 1;  // avoid flat chart
+
+    const pad = 8;
+    const plotH = H - pad * 2 - 12; // leave 12px at bottom for button marks
+    const midY = pad + plotH / 2;
+
+    const xAt = (t) => ((parseFloat(t) - first) / duration) * W;
+    const yAt = (v) => midY - (parseFloat(v) / maxAbs) * (plotH / 2);
+
+    // Draw X/Y/Z lines
+    const lines = [
+      { key: 'x', color: '#ef4444' },  // red
+      { key: 'y', color: '#22c55e' },  // green
+      { key: 'z', color: '#38bdf8' },  // cyan
+    ];
+    lines.forEach(({ key, color }) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      samples.forEach((s, i) => {
+        const px = xAt(s.t);
+        const py = yAt(s[key]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+    });
+
+    // Button A/B marks — small vertical ticks at the bottom whenever
+    // the button is pressed (value === 1)
+    ctx.lineWidth = 2;
+    samples.forEach(s => {
+      if (s.a) {
+        ctx.strokeStyle = '#fbbf24';  // yellow for A
+        const px = xAt(s.t);
+        ctx.beginPath();
+        ctx.moveTo(px, H - 10);
+        ctx.lineTo(px, H - 2);
+        ctx.stroke();
+      }
+      if (s.b) {
+        ctx.strokeStyle = '#fb923c';  // orange for B
+        const px = xAt(s.t);
+        ctx.beginPath();
+        ctx.moveTo(px, H - 6);
+        ctx.lineTo(px, H - 2);
+        ctx.stroke();
+      }
+    });
+
+    // Top-left label: sample count + duration
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(255, 255, 255, .55)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${samples.length} pts · ${duration.toFixed(1)}s · ±${maxAbs.toFixed(2)}g`, 6, 4);
   },
 };
 

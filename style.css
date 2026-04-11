@@ -2434,6 +2434,44 @@ body.log-open .app {
   animation: splashFadeIn .2s ease-out;
 }
 
+/* v0.7.27: Sensor timeline mini-chart in the take panel */
+.tc-sensor-chart-wrap {
+  margin: 12px 0 8px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 10px;
+}
+.tc-sensor-chart-title {
+  font-family: var(--font-h), Righteous, sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: color-mix(in srgb, var(--accent2, #fb923c) 80%, white);
+  margin-bottom: 8px;
+}
+.tc-sensor-chart-wrap canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+  border-radius: 6px;
+  background: #000;
+}
+.tc-sensor-chart-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+  font-size: .72rem;
+  font-family: ui-monospace, monospace;
+  color: rgba(255, 255, 255, .7);
+}
+.tc-sensor-legend-x { color: #ef4444; }
+.tc-sensor-legend-y { color: #22c55e; }
+.tc-sensor-legend-z { color: #38bdf8; }
+.tc-sensor-legend-b { color: #fbbf24; }
+
 /* v0.7.24: Keyboard cheat sheet overlay */
 .tc-cheat-modal {
   position: fixed; inset: 0;
