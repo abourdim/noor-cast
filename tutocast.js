@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.91';
+const APP_VERSION = '0.7.92';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 12:00';
+const BUILD_DATE = '2026-04-12 12:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -503,6 +503,17 @@ const LANG = {
     news_070_5: "Titre/caption par source (style lower-third) — tape directement dans le panneau sources",
     news_070_6: "Bouton plein écran ⛶ — l'aperçu prend tout l'écran, Esc pour sortir",
     news_070_7: "Hints clavier affichés quand tu actives Zoom / Laser / Gel / Dessin",
+    news_087: "50+ features en vrac : polish, accessibilité, pro tools 🚀⌨🎨🔧",
+    news_087_1: "🎚 Audio : meter LED, boost mic, noise gate, ducking auto quand tu parles, sous-titres live (WebSpeech)",
+    news_087_2: "🎨 Brand : presets 1/2/3, couleur accent custom, chroma key, filtre logo silhouette",
+    news_087_3: "🎬 Scène : 9 formes, 4 aspect ratios (16:9 / 9:16 / 1:1 / 4:3), drag-reorder + Shift+Alt+←→, custom scenes save, intro text auto, transition fade",
+    news_087_4: "✏ Dessin : whiteboard 6 couleurs + gomme + 3 épaisseurs, contour de texte slider, emoji picker, annotation snapshot",
+    news_087_5: "⌨ Clavier : cheat sheet (?), raccourcis rebindables, long-press REC instantané, Ctrl+Z retry/undo/redo, Ctrl+S tout télécharger",
+    news_087_6: "📐 Layout : alignment guides, drag threshold, Alt+grid snap 48px, minimap sidebar, scroll-wheel zoom Ctrl+roue",
+    news_087_7: "📸 Capture : snapshot 1×/2×/4×, gallery strip, paste image Ctrl+V, PiP popout caméra, context menu clic-droit",
+    news_087_8: "📊 Feedback : dashboard stats, history 10 derniers, badge unlock confetti, 3 nouveaux badges cumulatifs, daily goal streak",
+    news_087_9: "🎞 Recording : time goal + auto-stop, pause count, countdown custom 1-10s, intro/outro cinéma, auto-pause tab loss, big marker B, click ripples",
+    news_087_10: "🔧 Maintenance : session bundle export/import, diagnostics browser, tip of day, tour guidé, screensaver 90s, clock overlay, chapter list cliquable, waveform audio, sensor chart micro:bit",
     news_039: "11 fonctionnalités d'atelier : thumbnails, gallery, chapters, minimap, waveform, context menu, tour, intro text, retry, badge URL 🎁",
     news_039_1: "Thumbnails des scènes (v0.7.29) + barre de snapshots (v0.7.30) sous la scène",
     news_039_2: "Liste de chapitres cliquable (v0.7.31) sous la vidéo finale — seek en 1 clic",
@@ -1087,6 +1098,17 @@ const LANG = {
     news_070_5: "Per-source title/caption (lower-third style) — type it directly in the sources panel",
     news_070_6: "⛶ Fullscreen button — the preview fills the screen, Esc to exit",
     news_070_7: "Keyboard hints pop up when you toggle Zoom / Laser / Freeze / Draw",
+    news_087: "50+ features across the board: polish, accessibility, pro tools 🚀⌨🎨🔧",
+    news_087_1: "🎚 Audio: LED meter, mic boost, noise gate, auto-ducking when you speak, live captions (WebSpeech)",
+    news_087_2: "🎨 Brand: 3 preset slots, custom accent color, chroma key, silhouette tint filter",
+    news_087_3: "🎬 Scene: 9 shapes, 4 aspect ratios (16:9 / 9:16 / 1:1 / 4:3), drag reorder + Shift+Alt+←→, custom scene save, auto intro text, fade transition",
+    news_087_4: "✏ Drawing: whiteboard 6 colors + eraser + 3 thicknesses, text outline slider, emoji picker, snapshot annotation",
+    news_087_5: "⌨ Keyboard: cheat sheet (?), rebindable hotkeys, long-press REC instant, Ctrl+Z retry/undo/redo, Ctrl+S download-all",
+    news_087_6: "📐 Layout: smart alignment guides, drag threshold, Alt+grid snap 48px, live minimap, Ctrl+wheel zoom",
+    news_087_7: "📸 Capture: 1×/2×/4× snapshots, gallery strip, Ctrl+V paste image, PiP camera popout, right-click context menu",
+    news_087_8: "📊 Feedback: stats dashboard, 10-take history, badge unlock confetti, 3 new cumulative badges, daily goal streak",
+    news_087_9: "🎞 Recording: time goal + auto-stop, pause counter, custom 1-10s countdown, cinematic intro/outro, auto-pause on tab loss, big marker B, click ripples",
+    news_087_10: "🔧 Maintenance: session bundle export/import, browser diagnostics, tip of day, guided tour, 90s screensaver, clock overlay, clickable chapter list, audio waveform, micro:bit sensor chart",
     news_039: "11 workshop features: thumbnails, gallery, chapters, minimap, waveform, context menu, tour, intro text, retry, badge URL 🎁",
     news_039_1: "Scene thumbnails (v0.7.29) + snapshot gallery strip (v0.7.30) under the stage",
     news_039_2: "Clickable chapter list (v0.7.31) under the finished video — seek in one click",
@@ -1657,6 +1679,17 @@ const LANG = {
     news_070_5: "عنوان/تسمية لكل مصدر (أسلوب lower-third) — اكتبه مباشرة في لوحة المصادر",
     news_070_6: "زر ملء الشاشة ⛶ — المعاينة تملأ الشاشة، Esc للخروج",
     news_070_7: "تلميحات لوحة مفاتيح تظهر عند تفعيل التكبير / الليزر / التجميد / الرسم",
+    news_087: "50+ ميزة: صقل، إتاحة، أدوات احترافية 🚀⌨🎨🔧",
+    news_087_1: "🎚 الصوت: مقياس LED، تعزيز الميكروفون، بوابة الصمت، خفض تلقائي عند التحدث، ترجمات مباشرة",
+    news_087_2: "🎨 العلامة: 3 إعدادات مسبقة، لون تمييز مخصص، مفتاح اللون، فلتر صورة ظلية",
+    news_087_3: "🎬 المشهد: 9 أشكال، 4 نسب (16:9 / 9:16 / 1:1 / 4:3)، إعادة الترتيب بالسحب + Shift+Alt+←→، حفظ المشاهد المخصصة، نص افتتاحي تلقائي، انتقال تلاشي",
+    news_087_4: "✏ الرسم: سبورة 6 ألوان + ممحاة + 3 سماكات، منزلقة إطار النص، منتقي الإيموجي، توضيح اللقطة",
+    news_087_5: "⌨ لوحة المفاتيح: ورقة اختصارات (?)، اختصارات قابلة لإعادة الربط، ضغط طويل للتسجيل الفوري، Ctrl+Z تراجع/إعادة، Ctrl+S تحميل الكل",
+    news_087_6: "📐 التخطيط: أدلة محاذاة ذكية، عتبة السحب، التقاط Alt بالشبكة 48 بكسل، خريطة مصغرة، تكبير بالعجلة",
+    news_087_7: "📸 الالتقاط: لقطات 1×/2×/4×، شريط المعرض، لصق صورة Ctrl+V، إخراج الكاميرا PiP، قائمة النقر الأيمن",
+    news_087_8: "📊 التغذية الراجعة: لوحة الإحصاءات، سجل آخر 10 تسجيلات، الاحتفال بفتح الشارات، 3 شارات تراكمية جديدة، سلسلة الهدف اليومي",
+    news_087_9: "🎞 التسجيل: هدف المدة + إيقاف تلقائي، عداد الإيقاف، عد تنازلي مخصص 1-10 ث، مقدمة/خاتمة سينمائية، إيقاف تلقائي عند تبديل علامة التبويب، علامة كبيرة B، موجات النقر",
+    news_087_10: "🔧 الصيانة: تصدير/استيراد الجلسة، تشخيص المتصفح، نصيحة اليوم، جولة موجهة، شاشة توقف 90 ث، ساعة، قائمة فصول قابلة للنقر، موجة صوتية، رسم مستشعر micro:bit",
     news_039: "11 ميزة استوديو: صور مصغّرة، معرض، فصول، خريطة مصغّرة، موجة صوتية، قائمة سياقية، جولة، نص افتتاح، إعادة، رابط الشارة 🎁",
     news_039_1: "صور مصغّرة للمشاهد (v0.7.29) + شريط اللقطات (v0.7.30) تحت المسرح",
     news_039_2: "قائمة فصول قابلة للنقر (v0.7.31) تحت الفيديو النهائي — انتقال بنقرة واحدة",
