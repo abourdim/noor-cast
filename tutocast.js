@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.32 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.33 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.32';
+const APP_VERSION = '0.7.33';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 21:00';
+const BUILD_DATE = '2026-04-11 21:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -201,6 +201,7 @@ const LANG = {
     sensorBtnsLegend: 'Boutons',
     chapterListTitle: 'Chapitres',
     sceneReordered: 'Scènes réordonnées',
+    minimap: 'Aperçu',
     historyTitle: 'Mes tutos',
     historyEmpty: 'Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !',
     historyClear: "🗑 Vider l'historique",
@@ -615,6 +616,7 @@ const LANG = {
     sensorBtnsLegend: 'Buttons',
     chapterListTitle: 'Chapters',
     sceneReordered: 'Scenes reordered',
+    minimap: 'Preview',
     historyTitle: 'My tutorials',
     historyEmpty: 'No tutorial yet. Click 🔴 RECORD to start!',
     historyClear: '🗑 Clear history',
@@ -1021,6 +1023,7 @@ const LANG = {
     sensorBtnsLegend: 'الأزرار',
     chapterListTitle: 'الفصول',
     sceneReordered: 'تمت إعادة ترتيب المشاهد',
+    minimap: 'معاينة',
     historyTitle: 'دروسي',
     historyEmpty: 'لا دروس بعد. اضغط 🔴 تسجيل للبدء!',
     historyClear: '🗑 مسح السجل',
@@ -1444,6 +1447,10 @@ const Engine = {
     // v0.7.25: Intro/outro cards — drawn on top of sources + overlays
     // but BELOW laser/ripples so pointer visuals still land on top.
     IntroOutro.render(ctx, width, height);
+
+    // v0.7.33: refresh the sidebar minimap a few times per second so
+    // it reflects live source movements without being a rAF hot path.
+    Minimap.maybeRender();
 
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
@@ -5294,6 +5301,81 @@ const SnapshotGallery = {
   },
 };
 
+/* v0.7.33: Minimap — a tiny 192×108 canvas at the top of the Sources
+   sidebar showing the current stage composition at all times. Driven
+   by Engine.render() via Minimap.maybeRender() which throttles to
+   ~6 FPS so we're not eating render budget. */
+const Minimap = {
+  canvas: null,
+  ctx: null,
+  lastAt: 0,
+  FPS: 6,  // 6 updates/sec is plenty for a static-ish sidebar preview
+
+  setup() {
+    this.canvas = $('tcMinimap');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+  },
+
+  maybeRender() {
+    if (!this.ctx) return;
+    const now = performance.now();
+    const interval = 1000 / this.FPS;
+    if (now - this.lastAt < interval) return;
+    this.lastAt = now;
+    this._draw();
+  },
+
+  _draw() {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    // Clear
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    // Scale factor from engine (1920×1080) → minimap
+    const sx = W / Engine.width;
+    const sy = H / Engine.height;
+    // Draw visible sources as filled rects/circles in theme-coded colours
+    const sources = Engine.sources.filter(s =>
+      s.type !== 'mic' && s.visible !== false && !s.hidden
+    );
+    sources.forEach(s => {
+      const x = s.x * sx;
+      const y = s.y * sy;
+      const w = s.w * sx;
+      const h = s.h * sy;
+      // Colour by type
+      let fill, stroke;
+      if (s.type === 'screen') { fill = 'rgba(56, 189, 248, .75)'; stroke = '#0ea5e9'; }
+      else if (s.type === 'cam') { fill = 'rgba(163, 230, 53, .75)'; stroke = '#65a30d'; }
+      else { fill = 'rgba(251, 146, 60, .75)'; stroke = '#ea580c'; }
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      if (s.shape === 'circle') {
+        const cx = x + w / 2, cy = y + h / 2;
+        const r = Math.min(w, h) / 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      }
+    });
+    // Highlight selected source with a bright outline
+    if (Drag.selectedSourceId != null) {
+      const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+      if (sel && sel.visible !== false && !sel.hidden) {
+        ctx.strokeStyle = Engine._accentColor || '#a3e635';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sel.x * sx, sel.y * sy, sel.w * sx, sel.h * sy);
+      }
+    }
+  },
+};
+
 /* v0.7.24: Cheatsheet — keyboard-shortcut overlay, toggle with ? / Shift+/.
    All shortcuts grouped by category so teachers can discover the full
    keyboard API without digging through FAQ. Pure presentation — the
@@ -6620,6 +6702,7 @@ async function init() {
   SourceToolbar.setup();
   Teleprompter.setup();
   Cheatsheet.setup();
+  Minimap.setup();
 
   renderScenes();
   renderTextPresets();

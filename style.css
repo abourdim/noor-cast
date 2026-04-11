@@ -2486,6 +2486,37 @@ body.log-open .app {
   animation: splashFadeIn .2s ease-out;
 }
 
+/* v0.7.33: Live stage minimap at the top of the Sources sidebar */
+.tc-minimap-wrap {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 6px 6px 4px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+.tc-minimap-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  background: #000;
+}
+.tc-minimap-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-family: var(--font-h), Righteous, sans-serif;
+  font-size: .58rem;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .6);
+  background: rgba(0, 0, 0, .55);
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
 /* v0.7.31: Clickable chapter list in the take panel */
 .tc-chapter-list {
   margin: 12px 0 8px;
