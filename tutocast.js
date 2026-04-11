@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.28 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.29 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.28';
+const APP_VERSION = '0.7.29';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 20:00';
+const BUILD_DATE = '2026-04-11 20:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -2093,14 +2093,63 @@ const Engine = {
 /* ─────────── Scenes Manager ─────────── */
 
 const Scenes = {
-  // Each scene: { key, label, apply: (engine) => void }
+  /* Each scene: { key, icon, apply, preview }
+     v0.7.29: `preview` is a static rect schematic used to render a
+     mini-thumbnail inside the scene button. Each rect is normalized
+     0..1 in both axes with {kind: 'screen'|'cam'|'face'}. These
+     mirror what `apply()` does to real sources at runtime — kept in
+     sync manually since apply() is imperative and we can't reflect it. */
   presets: [
-    { key: 'code', icon: '💻', apply: (e) => setLayout(e, { screen: 'full', facecam: 'br' }) },
-    { key: 'robot', icon: '🤖', apply: (e) => setLayout(e, { firstCam: 'full', facecam: 'br' }) },
-    { key: 'sensors', icon: '🎛', apply: (e) => setLayout(e, { secondCam: 'full', facecam: 'br' }) },
-    { key: 'coderobot', icon: '💻🤖', apply: (e) => setLayout(e, { screen: 'left', firstCam: 'right', facecam: 'br' }) },
-    { key: 'studio', icon: '🎬', apply: (e) => setLayout(e, { grid: true }) },
-    { key: 'you', icon: '👋', apply: (e) => setLayout(e, { facecam: 'full' }) },
+    {
+      key: 'code', icon: '💻',
+      apply: (e) => setLayout(e, { screen: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'screen', x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'robot', icon: '🤖',
+      apply: (e) => setLayout(e, { firstCam: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'sensors', icon: '🎛',
+      apply: (e) => setLayout(e, { secondCam: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'coderobot', icon: '💻🤖',
+      apply: (e) => setLayout(e, { screen: 'left', firstCam: 'right', facecam: 'br' }),
+      preview: [
+        { kind: 'screen', x: 0,    y: 0,    w: 0.6,  h: 1,    shape: 'rect' },
+        { kind: 'cam',    x: 0.6,  y: 0,    w: 0.4,  h: 1,    shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'studio', icon: '🎬',
+      apply: (e) => setLayout(e, { grid: true }),
+      preview: [
+        { kind: 'screen', x: 0,   y: 0,   w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'cam',    x: 0.5, y: 0,   w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'cam',    x: 0,   y: 0.5, w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'you', icon: '👋',
+      apply: (e) => setLayout(e, { facecam: 'full' }),
+      preview: [
+        { kind: 'face', x: 0, y: 0, w: 1, h: 1, shape: 'rect' },
+      ]
+    },
   ],
   active: 'code',
 
@@ -2170,10 +2219,46 @@ function renderScenes() {
   Scenes.presets.forEach((s, i) => {
     const btn = document.createElement('button');
     btn.className = 'tc-scene-btn' + (Scenes.active === s.key ? ' active' : '');
-    btn.innerHTML = `<span class="tc-scene-icon">${s.icon}</span><span>${t('scene_' + s.key)}</span><kbd style="opacity:.4;font-size:.6rem">${i + 1}</kbd>`;
+    btn.innerHTML = `
+      ${sceneThumbSvg(s.preview)}
+      <span class="tc-scene-icon">${s.icon}</span>
+      <span class="tc-scene-label">${t('scene_' + s.key)}</span>
+      <kbd class="tc-scene-kbd">${i + 1}</kbd>
+    `;
     btn.addEventListener('click', () => Scenes.switch(s.key));
     el.appendChild(btn);
   });
+}
+
+/* v0.7.29: render a scene preview as inline SVG showing source rects.
+   Colors match what kids see on-screen:
+     screen = blue/cyan
+     cam    = accent green
+     face   = accent-2 orange (roundish) */
+function sceneThumbSvg(preview) {
+  if (!preview || !preview.length) return '';
+  const W = 64, H = 36; // 16:9 thumbnail
+  const rects = preview.map(r => {
+    const x = (r.x * W).toFixed(1);
+    const y = (r.y * H).toFixed(1);
+    const w = (r.w * W).toFixed(1);
+    const h = (r.h * H).toFixed(1);
+    let fill, stroke;
+    if (r.kind === 'screen') { fill = '#38bdf8'; stroke = '#0ea5e9'; }
+    else if (r.kind === 'face') { fill = '#fb923c'; stroke = '#ea580c'; }
+    else { fill = '#a3e635'; stroke = '#65a30d'; }
+    if (r.shape === 'circle') {
+      const cx = (parseFloat(x) + parseFloat(w) / 2).toFixed(1);
+      const cy = (parseFloat(y) + parseFloat(h) / 2).toFixed(1);
+      const rr = (Math.min(parseFloat(w), parseFloat(h)) / 2).toFixed(1);
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${rr}" ry="${rr}" fill="${fill}" stroke="${stroke}" stroke-width="0.6" opacity=".85"/>`;
+    }
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" ry="1.5" fill="${fill}" stroke="${stroke}" stroke-width="0.6" opacity=".85"/>`;
+  }).join('');
+  return `<svg class="tc-scene-thumb" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="2" ry="2" fill="#0a0a0a"/>
+    ${rects}
+  </svg>`;
 }
 
 /* ─────────── Templates ─────────── */

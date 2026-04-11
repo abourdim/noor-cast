@@ -1679,21 +1679,47 @@ body.log-open .app {
   background: rgba(0,0,0,.3);
   border: 2px solid var(--border);
   border-radius: 10px;
-  padding: 10px 6px;
+  padding: 6px 4px 8px;
   cursor: pointer;
   color: var(--text);
   font-family: var(--font-h);
-  font-size: .7rem;
+  font-size: .68rem;
   text-align: center;
   transition: all .15s;
-  display: flex; flex-direction: column; gap: 4px; align-items: center;
+  display: flex; flex-direction: column; gap: 2px; align-items: center;
+  position: relative;
 }
-.tc-scene-btn .tc-scene-icon { font-size: 1.4rem; line-height: 1; }
-.tc-scene-btn:hover { background: var(--glow); border-color: var(--accent); }
+/* v0.7.29: scene preview thumbnail */
+.tc-scene-btn .tc-scene-thumb {
+  width: 100%;
+  max-width: 72px;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  margin-bottom: 2px;
+}
+.tc-scene-btn .tc-scene-icon { font-size: 1.15rem; line-height: 1; }
+.tc-scene-btn .tc-scene-label {
+  font-size: .68rem;
+  line-height: 1.1;
+}
+.tc-scene-btn .tc-scene-kbd {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: .6rem;
+  opacity: .45;
+  background: rgba(0, 0, 0, .4);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.tc-scene-btn:hover { background: var(--glow); border-color: var(--accent); transform: translateY(-1px); }
 .tc-scene-btn.active {
   background: var(--accent); color: var(--bg); border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(163,230,53,.3);
 }
+.tc-scene-btn.active .tc-scene-kbd { background: rgba(0, 0, 0, .25); color: var(--bg); }
 
 /* ─── Text presets ─── */
 .tc-text-presets {
