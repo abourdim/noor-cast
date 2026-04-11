@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.29 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.30 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.29';
+const APP_VERSION = '0.7.30';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 20:15';
+const BUILD_DATE = '2026-04-11 20:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -5071,8 +5071,90 @@ function snapshot() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     log(t('snapshotSaved'), 'success');
+    // v0.7.30: also push a thumbnail into the visible strip below the stage
+    SnapshotGallery.add(blob);
   });
 }
+
+/* v0.7.30: SnapshotGallery — compact strip of thumbnails below the stage
+   showing every snapshot taken during the current session. Each entry is
+   a small canvas + download icon + delete button. In-memory only —
+   cleared on reload (snapshot PNGs are already downloaded to disk at
+   the moment of capture, so no data is lost). */
+const SnapshotGallery = {
+  MAX: 20,          // cap so a long session doesn't bloat memory
+  entries: [],      // { id, blob, url, thumbDataUrl, at }
+  _nextId: 1,
+
+  add(blob) {
+    const id = this._nextId++;
+    const url = URL.createObjectURL(blob);
+    // Build a small thumbnail for the strip. Re-draw the current stage
+    // canvas into a 160x90 thumb — cheaper than decoding the blob back.
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 160;
+    thumbCanvas.height = 90;
+    const tctx = thumbCanvas.getContext('2d');
+    try {
+      tctx.drawImage(Engine.canvas, 0, 0, 160, 90);
+    } catch {}
+    const thumbDataUrl = thumbCanvas.toDataURL('image/png');
+    this.entries.push({ id, blob, url, thumbDataUrl, at: Date.now() });
+    if (this.entries.length > this.MAX) {
+      const dropped = this.entries.shift();
+      try { URL.revokeObjectURL(dropped.url); } catch {}
+    }
+    this.render();
+  },
+
+  remove(id) {
+    const idx = this.entries.findIndex(e => e.id === id);
+    if (idx < 0) return;
+    try { URL.revokeObjectURL(this.entries[idx].url); } catch {}
+    this.entries.splice(idx, 1);
+    this.render();
+  },
+
+  clear() {
+    this.entries.forEach(e => { try { URL.revokeObjectURL(e.url); } catch {} });
+    this.entries = [];
+    this.render();
+  },
+
+  render() {
+    const strip = $('tcSnapshotStrip');
+    if (!strip) return;
+    if (this.entries.length === 0) {
+      strip.style.display = 'none';
+      strip.innerHTML = '';
+      return;
+    }
+    strip.style.display = '';
+    strip.innerHTML = '';
+    // Newest first visually
+    [...this.entries].reverse().forEach(entry => {
+      const wrap = document.createElement('div');
+      wrap.className = 'tc-snap-thumb';
+      wrap.innerHTML = `
+        <img src="${entry.thumbDataUrl}" alt="snapshot" />
+        <button class="tc-snap-del" title="Delete">✕</button>
+      `;
+      const img = wrap.querySelector('img');
+      img.addEventListener('click', () => {
+        // Re-download on click
+        const a = document.createElement('a');
+        a.href = entry.url;
+        a.download = `snapshot-${entry.id}.png`;
+        a.click();
+      });
+      wrap.querySelector('.tc-snap-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.remove(entry.id);
+      });
+      strip.appendChild(wrap);
+    });
+  },
+};
 
 /* v0.7.24: Cheatsheet — keyboard-shortcut overlay, toggle with ? / Shift+/.
    All shortcuts grouped by category so teachers can discover the full
