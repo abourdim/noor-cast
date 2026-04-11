@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.43 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.44 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.43';
+const APP_VERSION = '0.7.44';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 00:00';
+const BUILD_DATE = '2026-04-12 00:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -226,6 +226,12 @@ const LANG = {
     badgesReset: '🗑 Badges réinitialisés',
     cacheCleared: '💥 Cache vidé — rechargement…',
     confirmClearCache: 'Effacer TOUTES les données locales (badges, logo, préférences, ticker…) ? L\'app repartira comme neuve.',
+    bundleExport: 'Exporter la session',
+    bundleImport: 'Importer une session',
+    bundleExported: '📦 Session exportée',
+    bundleImported: '📦 Session importée — rechargement…',
+    bundleBadFormat: '❌ Format invalide',
+    bundleConfirm: 'Remplacer tes données locales par cette session ?',
     buildMeta: 'Compilé',
     faq_q9: '🏆 C\'est quoi les badges ?',
     faq_a9: 'Des petits trophées locaux qui se débloquent au fur et à mesure : 🎬 Premier tuto (1re prise finie), ⏱ Plus de 5 min (prise de plus de 5 minutes), 🎥 Multi-caméras (2+ cams en même temps), 🎭 Toutes les scènes (toutes utilisées), 🏷 Roi des markers (5+ dans une prise), 🤖 micro:bit branché (1re connexion BT). Tout est stocké localement (localStorage), rien n\'est envoyé nulle part.',
@@ -686,6 +692,12 @@ const LANG = {
     badgesReset: '🗑 Badges reset',
     cacheCleared: '💥 Cache cleared — reloading…',
     confirmClearCache: 'Erase ALL local data (badges, logo, preferences, ticker…)? The app will restart like a fresh install.',
+    bundleExport: 'Export session',
+    bundleImport: 'Import session',
+    bundleExported: '📦 Session exported',
+    bundleImported: '📦 Session imported — reloading…',
+    bundleBadFormat: '❌ Invalid format',
+    bundleConfirm: 'Replace your local data with this session?',
     buildMeta: 'Built',
     faq_q9: '🏆 What are the badges?',
     faq_a9: 'Small local trophies that unlock as you go: 🎬 First tutorial (first take finished), ⏱ Over 5 min (take longer than 5 minutes), 🎥 Multi-camera (2+ cams at once), 🎭 All scenes (every preset used), 🏷 Marker king (5+ markers in one take), 🤖 micro:bit plugged (first BT connection). Everything is stored locally (localStorage), nothing is ever sent anywhere.',
@@ -1138,6 +1150,12 @@ const LANG = {
     badgesReset: '🗑 تم إعادة تعيين الشارات',
     cacheCleared: '💥 تم مسح الذاكرة — إعادة تحميل…',
     confirmClearCache: 'حذف جميع البيانات المحلية (الشارات، الشعار، التفضيلات، الشريط…)؟ سيعيد التطبيق التشغيل كأنه مثبت حديثًا.',
+    bundleExport: 'تصدير الجلسة',
+    bundleImport: 'استيراد جلسة',
+    bundleExported: '📦 تم تصدير الجلسة',
+    bundleImported: '📦 تم الاستيراد — إعادة تحميل…',
+    bundleBadFormat: '❌ تنسيق غير صالح',
+    bundleConfirm: 'استبدال بياناتك المحلية بهذه الجلسة؟',
     buildMeta: 'تم البناء',
     faq_q9: '🏆 ما هي الشارات؟',
     faq_a9: 'كؤوس محلية صغيرة تُفتح تدريجيًا: 🎬 أول درس (أول تسجيل منتهٍ)، ⏱ أكثر من 5 دقائق (تسجيل يتجاوز 5 دقائق)، 🎥 كاميرات متعددة (2+ كاميرات معًا)، 🎭 جميع المشاهد (استعمال كل المشاهد)، 🏷 ملك العلامات (5+ علامات في تسجيل واحد)، 🤖 micro:bit موصول (أول اتصال BT). كل شيء مخزّن محليًا، لا يُرسل شيء إلى أي مكان.',
@@ -6432,6 +6450,91 @@ const History = {
   },
 };
 
+/* v0.7.44: portable session bundle. Exports everything a teacher
+   would want to re-import on another machine — badges, history,
+   preferences, brand logo, tutorial text presets, scene order.
+   Streams, video blobs, and recording chunks are NOT included;
+   this is a "my TutoCast setup" backup, not a "my recordings"
+   archive. */
+const SessionBundle = {
+  export() {
+    const bundle = {
+      v: 1,                           // bundle schema version
+      app: APP_VERSION,
+      built: BUILD_DATE,
+      exportedAt: new Date().toISOString(),
+      settings: {},
+      badges: [...(Badges.unlocked || [])],
+      badgesScenesUsed: [...(Badges.scenesUsed || [])],
+      history: (History.entries || []).slice(),
+      sceneOrder: (Scenes.presets || []).map(p => p.key),
+      brand: {
+        logo: this._tryLocalStorage('tc-brand-logo'),
+        slogan: this._tryLocalStorage('tc-brand-slogan'),
+        sloganColor: this._tryLocalStorage('tc-brand-slogan-color'),
+        url: this._tryLocalStorage('tc-brand-url'),
+      },
+      teleprompter: {
+        script: this._tryLocalStorage('tc-tele-script'),
+        speed: this._tryLocalStorage('tc-tele-speed'),
+        font: this._tryLocalStorage('tc-tele-font'),
+        width: this._tryLocalStorage('tc-tele-width'),
+      },
+      ticker: this._tryLocalStorage('tc-ticker-custom'),
+    };
+    // Grab every tc-* localStorage key for the settings slot
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tc-')) bundle.settings[k] = localStorage.getItem(k);
+      }
+    } catch {}
+    const json = JSON.stringify(bundle, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `tutocast-session-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(t('bundleExported') || '📦 Session exportée', 1800);
+  },
+
+  import(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const bundle = JSON.parse(reader.result);
+        if (!bundle || typeof bundle !== 'object' || bundle.v !== 1) {
+          showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+          return;
+        }
+        if (!confirm(t('bundleConfirm') || 'Remplacer tes données locales par cette session ?')) return;
+        // Replay all tc-* settings
+        if (bundle.settings) {
+          try {
+            Object.entries(bundle.settings).forEach(([k, v]) => {
+              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+            });
+          } catch {}
+        }
+        showToast(t('bundleImported') || '📦 Session importée — rechargement…', 1800);
+        setTimeout(() => location.reload(), 900);
+      } catch (e) {
+        showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+        log('bundle import error: ' + e.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  },
+
+  _tryLocalStorage(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  },
+};
+
 /* v0.7.27: SensorChart — renders the SensorTimeline samples into the
    take panel's mini-chart canvas. X/Y/Z accelerometer lines over time,
    button A/B presses as short vertical marks at the bottom. Purely
@@ -7236,6 +7339,13 @@ function wireEvents() {
     } catch {}
     showToast(t('cacheCleared'), 1400);
     setTimeout(() => location.reload(), 900);
+  });
+  // v0.7.44: portable session bundle — export / import JSON manifest
+  $('tcExportBundleBtn')?.addEventListener('click', () => SessionBundle.export());
+  $('tcImportBundleInput')?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (f) SessionBundle.import(f);
+    e.target.value = '';  // Reset for re-selection
   });
   // Build timestamp chip — static text + i18n label
   const bm = $('tcBuildMeta');
