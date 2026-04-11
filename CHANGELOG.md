@@ -3,6 +3,58 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.2.4 — 2026-04-11
+
+Reported: the working area is too small. Correct.
+
+### Root cause
+
+Three bottlenecks conspiring to squish the canvas preview:
+
+1. **`.app { max-width: 1240px }`** — the TutoCast override of the base
+   workshop-diy `820px` cap was still far too narrow. On a 1920px
+   viewport you lost ~680px to margins; on 1600px you lost ~360px.
+2. **`.tc-studio-grid { grid-template-columns: 220px 1fr 220px }`** —
+   fixed sidebars plus a `1fr` center column. With a 1240px app and
+   padding/gaps, the stage got ~748px wide → 420px tall at 16:9. Tiny.
+3. **Sidebars had no height cap.** The scenes sidebar packs 6 scene
+   buttons + 10 text presets + 5 tool buttons into ~839px of content.
+   The grid's height equals the tallest child, so the sidebar forced
+   the whole row to 839px tall, pushing the REC button 290px below
+   the fold on a 900px viewport.
+
+### Fixed
+- **`.app` is now fluid**: `max-width: min(1760px, calc(100vw - 24px))`.
+  Fills the viewport up to 1760px, then stops so sidebars don't stretch
+  miles from the canvas on ultra-wide monitors.
+- **`.tc-studio-grid`**: columns are `240px minmax(0, 1fr) 240px` with
+  `gap: 16px`. The `minmax(0, 1fr)` is critical — without it, the grid
+  cell refuses to shrink below the canvas's intrinsic size and layout
+  blows out on narrow viewports. Sidebars get 20px more breathing
+  room than before (220 → 240).
+- **`.tc-stage` is capped by viewport height**: `max-height: calc(100vh
+  - 360px)` plus a matching `max-width: calc((100vh - 360px) * 16/9)`
+  so the 16:9 aspect ratio is preserved when the height cap kicks in
+  (otherwise the width stays at the grid cell's 1fr and the shape
+  distorts to ~1.81:1).
+- **`.tc-sidebar` has `max-height: calc(100vh - 360px)` + `overflow-y:
+  auto`** with a scoped scrollbar style. Grid height now equals stage
+  height instead of tallest-sidebar, so REC stays above the fold.
+- **`.tc-stage-wrap` gets `min-width: 0`** so it's allowed to shrink
+  below the canvas's content size (needed for `minmax(0, 1fr)` to
+  actually do its job).
+
+### Verified at three breakpoints
+
+| Viewport  | App width | Stage      | REC bottom | Aspect  |
+|-----------|-----------|------------|------------|---------|
+| 1920×1080 | 1760 cap  | 1174 × 660 | 1071 ≤ 1080 ✓ | 1.778 ✓ |
+| 1600×900  | 1563 fluid| 960 × 540  | 891 ≤ 900 ✓   | 1.778 ✓ |
+| 1366×768  | 1329 fluid| 725 × 408  | 759 ≤ 768 ✓   | 1.778 ✓ |
+
+All three show perfect 16:9 canvas, REC button above the fold, and
+sidebars scrolling internally when content overflows.
+
 ## v0.2.3 — 2026-04-11
 
 Cosmetic pass on the splash. Three user-reported issues from the GitHub

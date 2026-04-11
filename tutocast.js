@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.2.3 — kids-friendly multi-cam screen recorder
+   TutoCast v0.2.4 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.2.3';
+const APP_VERSION = '0.2.4';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -170,6 +170,11 @@ const LANG = {
     news_023_1: "Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)",
     news_023_2: "Nouveau slogan : « Lumière, caméra, ROBOT ! »",
     news_023_3: "Badge workshop-diy.org dans le splash et le footer",
+    news_024: "Zone de travail élargie (vraiment) 📺",
+    news_024_1: "Largeur de l'app : 1240 → fluide jusqu'à 1760 px",
+    news_024_2: "Grille studio : sidebars 240 px + minmax(0,1fr) pour le canvas",
+    news_024_3: "Canvas plafonné par la hauteur du viewport — 16:9 parfait à 1920/1600/1366",
+    news_024_4: "Sidebars scrollables en interne pour garder le bouton REC au-dessus de la ligne de flottaison",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -355,6 +360,11 @@ const LANG = {
     news_023_1: "Fixed logo-overlaps-title bug (container 120×65 → 140×140)",
     news_023_2: "New slogan: \"Lights, camera, ROBOT!\"",
     news_023_3: "workshop-diy.org badge on splash and footer",
+    news_024: "Working area actually widened 📺",
+    news_024_1: "App width: 1240 → fluid up to 1760 px",
+    news_024_2: "Studio grid: 240 px sidebars + minmax(0,1fr) canvas column",
+    news_024_3: "Canvas capped by viewport height — perfect 16:9 at 1920/1600/1366",
+    news_024_4: "Sidebars scroll internally so the REC button stays above the fold",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -528,6 +538,11 @@ const LANG = {
     news_023_1: "إصلاح تداخل الشعار مع العنوان (الحاوية 120×65 → 140×140)",
     news_023_2: "شعار جديد: «أضواء، كاميرا، روبوت!»",
     news_023_3: "شارة workshop-diy.org على شاشة البداية والتذييل",
+    news_024: "توسيع منطقة العمل فعليًا 📺",
+    news_024_1: "عرض التطبيق: 1240 → مرن حتى 1760 بكسل",
+    news_024_2: "شبكة الاستوديو: أشرطة جانبية 240 بكسل + minmax(0,1fr) لمنطقة الكانفاس",
+    news_024_3: "الكانفاس محدود بارتفاع منفذ العرض — 16:9 مثالي عند 1920/1600/1366",
+    news_024_4: "الأشرطة الجانبية قابلة للتمرير داخليًا لإبقاء زر التسجيل مرئيًا",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",

@@ -1250,7 +1250,10 @@ body.log-open .app {
    TUTOCAST — Studio, sources, scenes, rec bar, ticker, overlays
    ═══════════════════════════════════════════════════════════════════ */
 
-.app { max-width: 1240px; }
+/* TutoCast needs more room than the base template — widen aggressively.
+   On <1280px viewports we still fill the width; on wide monitors we cap
+   at 1760px so the sidebars don't stretch absurdly far from the canvas. */
+.app { max-width: min(1760px, calc(100vw - 24px)); }
 
 /* Header logo wrap */
 .tc-logo-wrap {
@@ -1284,9 +1287,12 @@ body.log-open .app {
 .tc-studio { padding-bottom: 12px; }
 .tc-studio-grid {
   display: grid;
-  grid-template-columns: 220px 1fr 220px;
-  gap: 12px;
-  padding: 12px 14px;
+  /* minmax(0, 1fr) is critical: without it, the grid item refuses to
+     shrink below the canvas's intrinsic size and the layout blows out. */
+  grid-template-columns: 240px minmax(0, 1fr) 240px;
+  gap: 16px;
+  padding: 14px 18px;
+  align-items: start;
 }
 @media (max-width: 1080px) {
   .tc-studio-grid { grid-template-columns: 1fr; }
@@ -1326,8 +1332,19 @@ body.log-open .app {
   border-radius: 14px;
   padding: 12px;
   display: flex; flex-direction: column; gap: 10px;
-  min-height: 360px;
+  min-height: 0;
+  /* Cap sidebar height to the stage's effective height so the REC button
+     stays above the fold. Internal scroll when content exceeds. */
+  max-height: calc(100vh - 360px);
+  overflow-y: auto;
 }
+.tc-sidebar::-webkit-scrollbar { width: 8px; }
+.tc-sidebar::-webkit-scrollbar-track { background: transparent; }
+.tc-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(163,230,53,.18);
+  border-radius: 4px;
+}
+.tc-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(163,230,53,.35); }
 .tc-side-title {
   font-family: var(--font-h);
   font-size: .9rem;
@@ -1409,11 +1426,19 @@ body.log-open .app {
 /* ─── Stage (canvas preview) ─── */
 .tc-stage-wrap {
   display: flex; align-items: center; justify-content: center;
+  min-width: 0;       /* allow the grid cell to shrink */
+  width: 100%;
 }
 .tc-stage {
   position: relative;
   width: 100%;
   aspect-ratio: 16/9;
+  /* Cap the stage height so the REC button + step strip stay above the
+     fold on typical laptop screens. 100vh - header - controls - padding. */
+  max-height: calc(100vh - 360px);
+  /* When the max-height kicks in, keep the aspect ratio by shrinking width. */
+  max-width: calc((100vh - 360px) * 16 / 9);
+  margin: 0 auto;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
