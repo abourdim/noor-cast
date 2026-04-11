@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.92';
+const APP_VERSION = '0.7.93';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 12:15';
+const BUILD_DATE = '2026-04-12 12:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -315,6 +315,8 @@ const LANG = {
     dashFavDay: 'favori',
     dash7Days: '7 derniers jours',
     dashPauses: 'pauses/take',
+    dashAvgRating: 'note moy.',
+    takeRating: 'Note ce tuto :',
     manyPauses: 'Tu as fait beaucoup de pauses — essaie Shift+R pour démarrer direct',
     dashNote: '💡 Stats calculées sur les 10 derniers tutos',
     setSecDanger: '♻ Maintenance',
@@ -910,6 +912,8 @@ const LANG = {
     dashFavDay: 'favorite day',
     dash7Days: 'last 7 days',
     dashPauses: 'pauses/take',
+    dashAvgRating: 'avg rating',
+    takeRating: 'Rate this take:',
     manyPauses: 'You paused a lot — try Shift+R for instant start',
     dashNote: '💡 Stats from the last 10 tutorials',
     setSecDanger: '♻ Maintenance',
@@ -1497,6 +1501,8 @@ const LANG = {
     dashFavDay: 'اليوم المفضل',
     dash7Days: 'آخر 7 أيام',
     dashPauses: 'إيقاف/درس',
+    dashAvgRating: 'متوسط التقييم',
+    takeRating: 'قيّم هذا الدرس:',
     manyPauses: 'لقد أوقفت كثيرًا — جرّب Shift+R للبدء الفوري',
     dashNote: '💡 إحصاءات آخر 10 دروس',
     setSecDanger: '♻ الصيانة',
@@ -4563,6 +4569,9 @@ const Recorder = {
       size: blob.size,
       pauses: this.pauseCount || 0,  // v0.7.88
     });
+    // v0.7.93: reset + render the 1-5 star rating widget for this take
+    TakeRating.reset();
+    TakeRating.render();
     // v0.7.88: friendly nudge if the user paused a lot
     if ((this.pauseCount || 0) > 5) {
       setTimeout(() => {
@@ -8704,6 +8713,44 @@ const History = {
   },
 };
 
+/* v0.7.93 — 1-5 star rating widget for the just-finished take.
+   Renders 5 buttons next to the download buttons. Click → writes
+   the rating onto the most recent History entry and re-renders the
+   filled-star visuals. Reset on every new take. */
+const TakeRating = {
+  current: 0,
+
+  render() {
+    const host = $('tcTakeRating');
+    if (!host) return;
+    host.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      const b = document.createElement('button');
+      b.className = 'tc-rating-star' + (i <= this.current ? ' filled' : '');
+      b.textContent = '★';
+      b.dataset.value = i;
+      b.addEventListener('click', () => this.set(i));
+      host.appendChild(b);
+    }
+  },
+
+  set(value) {
+    this.current = value;
+    // Write back to the most recent History entry
+    if (History.entries && History.entries.length > 0) {
+      History.entries[0].rating = value;
+      History.save();
+    }
+    this.render();
+    showToast(`⭐ ${value}/5`, 1200);
+  },
+
+  reset() {
+    this.current = 0;
+    this.render();
+  },
+};
+
 /* v0.7.86 — daily-goal celebration + streak toast. Reads History.entries
    but doesn't mutate it. Uses a separate localStorage key (tc-last-rec-day)
    so the "first today?" check is O(1) and doesn't depend on Dashboard. */
@@ -8805,6 +8852,10 @@ const Dashboard = {
     const totalPauses = entries.reduce((s, e) => s + (e.pauses || 0), 0);
     const avgPauses = entries.length > 0 ? (totalPauses / entries.length).toFixed(1) : '0';
 
+    // v0.7.93: average star rating across history entries that have one
+    const rated = entries.filter(e => typeof e.rating === 'number' && e.rating > 0);
+    const avgRating = rated.length > 0 ? (rated.reduce((s, e) => s + e.rating, 0) / rated.length).toFixed(1) : '—';
+
     const fmtDur = secs => {
       const s = Math.max(0, Math.floor(secs || 0));
       const h = Math.floor(s / 3600);
@@ -8847,6 +8898,10 @@ const Dashboard = {
         <div class="tc-dash-stat">
           <div class="tc-dash-value">${avgPauses}</div>
           <div class="tc-dash-label" data-i18n="dashPauses">${t('dashPauses')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${avgRating} ${rated.length ? '⭐' : ''}</div>
+          <div class="tc-dash-label" data-i18n="dashAvgRating">${t('dashAvgRating')}</div>
         </div>
       </div>
       <div class="tc-dash-chart">

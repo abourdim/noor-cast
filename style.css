@@ -1950,6 +1950,38 @@ body.log-open .app {
 }
 .tc-take-actions a, .tc-take-actions button { text-decoration: none; }
 
+/* v0.7.93 — 1-5 star rating row shown next to the download buttons */
+.tc-take-rating-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+.tc-take-rating-label {
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: .8rem;
+  color: rgba(255, 255, 255, .75);
+}
+.tc-take-rating {
+  display: flex;
+  gap: 4px;
+}
+.tc-rating-star {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, .2);
+  transition: color .12s, transform .12s;
+  padding: 0 2px;
+}
+.tc-rating-star:hover { color: #fbbf24; transform: scale(1.15); }
+.tc-rating-star.filled { color: #fbbf24; }
+
 /* ─── Badges ─── */
 .tc-badges {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
