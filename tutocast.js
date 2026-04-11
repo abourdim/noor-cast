@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.33 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.34 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.33';
+const APP_VERSION = '0.7.34';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 21:15';
+const BUILD_DATE = '2026-04-11 21:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -2988,6 +2988,8 @@ const Recorder = {
 
     // v0.7.31: render clickable chapter list under the take video
     ChapterList.render(Chapters.items, $('tcTakeVideo'));
+    // v0.7.34: decode + render audio waveform strip (async)
+    Waveform.render(blob, $('tcTakeVideo'));
 
     // v0.7.28: push this take to the history log. Metadata only (name,
     // duration, size, badge/scene counts). No blob, no frames — tiny
@@ -3106,6 +3108,106 @@ const Chapters = {
     Recorder._pulseUntil = Date.now() + Recorder._pulseDur;
     Badges.unlockMarker(this.items.length);
   }
+};
+
+/* v0.7.34: Waveform — decode the take blob's audio, render an
+   envelope (peak per column) under the take video, support
+   click-to-seek and a playhead that tracks currentTime.
+   OfflineAudioContext for the decode, so it runs without hijacking
+   the live AudioContext / MediaRecorder. */
+const Waveform = {
+  peaks: null,
+  duration: 0,
+  _rafId: null,
+
+  async render(blob, videoEl) {
+    const wrap = $('tcWaveformWrap');
+    const canvas = $('tcWaveform');
+    if (!wrap || !canvas || !blob) return;
+    this.stop();
+    try {
+      // decodeAudioData wants an ArrayBuffer. Works with webm/mp4 blobs.
+      const buf = await blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuf = await ac.decodeAudioData(buf.slice(0));
+      this.duration = audioBuf.duration;
+      const ch = audioBuf.getChannelData(0);
+      const W = canvas.width;
+      const step = Math.max(1, Math.floor(ch.length / W));
+      const peaks = new Float32Array(W);
+      for (let col = 0; col < W; col++) {
+        let peak = 0;
+        const start = col * step;
+        const end = Math.min(start + step, ch.length);
+        for (let i = start; i < end; i++) {
+          const a = Math.abs(ch[i]);
+          if (a > peak) peak = a;
+        }
+        peaks[col] = peak;
+      }
+      this.peaks = peaks;
+      try { await ac.close(); } catch {}
+      wrap.style.display = '';
+      this._draw(videoEl);
+      // Click-to-seek
+      canvas.onclick = (e) => {
+        if (!videoEl || !this.duration) return;
+        const r = canvas.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const t = (x / r.width) * this.duration;
+        try { videoEl.currentTime = t; videoEl.play().catch(() => {}); } catch {}
+      };
+      // Playhead tracker via rAF
+      const tick = () => {
+        if (!this.peaks) return;
+        this._draw(videoEl);
+        this._rafId = requestAnimationFrame(tick);
+      };
+      this._rafId = requestAnimationFrame(tick);
+    } catch (e) {
+      log(`⚠ waveform decode failed: ${e.message}`, 'error');
+      wrap.style.display = 'none';
+    }
+  },
+
+  stop() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    this.peaks = null;
+    this.duration = 0;
+  },
+
+  _draw(videoEl) {
+    const canvas = $('tcWaveform');
+    if (!canvas || !this.peaks) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0, 0, 0, .4)';
+    ctx.fillRect(0, 0, W, H);
+    // Centerline
+    const mid = H / 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, .1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, mid);
+    ctx.lineTo(W, mid);
+    ctx.stroke();
+    // Peaks — mirror around center, theme-accent fill
+    const accent = (Engine && Engine._accentColor) || '#a3e635';
+    ctx.fillStyle = accent;
+    for (let col = 0; col < W; col++) {
+      const p = this.peaks[col];
+      const half = p * (mid - 2);
+      ctx.fillRect(col, mid - half, 1, half * 2);
+    }
+    // Playhead
+    if (videoEl && this.duration > 0 && isFinite(videoEl.currentTime)) {
+      const px = (videoEl.currentTime / this.duration) * W;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, 0, 2, H);
+    }
+  },
 };
 
 /* v0.7.31: ChapterList — render Chapters.items as a clickable list

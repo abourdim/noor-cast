@@ -2517,6 +2517,23 @@ body.log-open .app {
   pointer-events: none;
 }
 
+/* v0.7.34: Audio waveform strip below the take video */
+.tc-waveform-wrap {
+  margin: 8px 0 6px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+.tc-waveform-wrap canvas {
+  width: 100%;
+  height: 56px;
+  display: block;
+  border-radius: 4px;
+  background: #000;
+  cursor: pointer;
+}
+
 /* v0.7.31: Clickable chapter list in the take panel */
 .tc-chapter-list {
   margin: 12px 0 8px;
