@@ -687,6 +687,13 @@ details.collapsible > .card { margin-top: 8px; }
    FOOTER
    ═══════════════════════════════════════════════════════════════════ */
 
+.footer-logo {
+  width: 14px; height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline-end: 6px;
+  color: var(--accent);
+}
 .app-footer {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 12px 16px;
@@ -718,25 +725,60 @@ details.collapsible > .card { margin-top: 8px; }
 }
 .splash.hidden { opacity: 0; pointer-events: none; }
 
-.splash-inner { text-align: center; animation: splashFadeIn .8s ease-out; }
+.splash-inner {
+  text-align: center;
+  animation: splashFadeIn .8s ease-out;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px;
+}
 
-.splash-logo { width: 120px; height: 65px; margin: 0 auto 16px; color: var(--accent); }
-.splash-logo svg { width: 100%; height: 100%; }
+.splash-logo {
+  width: 140px; height: 140px;
+  margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.splash-logo img,
+.splash-logo svg {
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: contain;
+}
 
 .splash-title {
-  font-family: var(--font-h); font-size: 1.8rem;
+  font-family: var(--font-h); font-size: 2.4rem;
   letter-spacing: .08em; text-transform: uppercase;
   background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent));
   background-size: 200% 200%;
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradShift 3s ease infinite;
+  margin: 0;
+  line-height: 1.1;
 }
 
 .splash-sub {
-  font-size: .85rem; color: var(--text-muted);
-  margin-top: 6px; letter-spacing: .04em;
+  font-size: .95rem; color: var(--text-muted);
+  margin-top: 10px; letter-spacing: .04em;
+  max-width: 420px;
 }
+
+.splash-credit {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 22px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(163,230,53,.06);
+  border: 1px solid rgba(163,230,53,.18);
+  font-size: .65rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  opacity: .75;
+  transition: opacity .15s, border-color .15s;
+}
+.splash-credit:hover { opacity: 1; border-color: rgba(163,230,53,.4); }
+.splash-credit svg { width: 14px; height: 14px; display: block; }
 
 .splash-hint {
   font-size: .65rem; color: var(--text-muted); opacity: .4;

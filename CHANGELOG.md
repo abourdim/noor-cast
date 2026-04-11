@@ -3,6 +3,52 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.2.3 — 2026-04-11
+
+Cosmetic pass on the splash. Three user-reported issues from the GitHub
+Pages deployment.
+
+### Fixed
+- **Splash logo overlapping the title.** `.splash-logo` container was
+  sized `120×65px` but its `<img>` child was intrinsically `128×128`, so
+  the image overflowed 63px below the container and sat on top of the
+  `.splash-title` text beneath it. The CSS at line 724 targeted
+  `.splash-logo svg` (a selector that never matched since the child is
+  an `<img>` element), so the `width:100%;height:100%` rule never
+  applied. Fixed by sizing the container as a proper `140×140` square,
+  setting `display:flex;align-items:center;justify-content:center` on
+  it, and adding a `.splash-logo img, .splash-logo svg` rule that
+  applies `width:100%;height:100%;object-fit:contain` to either child
+  element type.
+- **Splash-inner layout.** Converted to `display:flex;flex-direction:column;align-items:center`
+  with explicit `padding` so every child element has clean vertical
+  spacing instead of relying on legacy margins that didn't account for
+  the squashed logo.
+
+### Added
+- **workshop-diy.org badge** (inline SVG link-chain icon) in two places:
+  - A pill in the splash screen (`.splash-credit`) linking to
+    workshop-diy.org, with a subtle pulse background.
+  - Upgraded the footer link from plain text to text+icon using the same
+    inline SVG.
+  Both use `stopPropagation` on the splash so clicking the badge opens
+  the workshop-diy site without dismissing the splash.
+- **New slogan:** `🎬 Lumière, caméra, ROBOT !` (FR) / `🎬 Lights,
+  camera, ROBOT!` (EN) / `🎬 أضواء، كاميرا، روبوت!` (AR).
+  The old slogan was `Crée tes tutos comme un pro !` which read like a
+  corporate SaaS pitch — wrong register for a kids' app about teaching
+  code with robots. The new one is on-brand (the product IS for
+  teaching with robots) and catchier. Applied to: splash, header
+  subtitle, `<title>`, OpenGraph tag, FR/EN/AR i18n keys.
+
+### Visual verification
+- Measured via iframe probe after a cache-busted reload:
+  - logo container: 140×140 ✓
+  - image box: 140×140 ✓ (perfectly fits container, no overflow)
+  - stack order: logo → title → sub → credit → hint ✓
+  - no element's bottom edge falls below the next element's top
+- All three passes green.
+
 ## v0.2.2 — 2026-04-11 (real hotfix, validated)
 
 **v0.2.1 didn't actually fix the 0-byte recording bug.** I guessed five

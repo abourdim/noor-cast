@@ -8,7 +8,7 @@
   <meta name="author" content="Workshop-DIY — abourdim" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="TutoCast — Crée tes tutos comme un pro !" />
+  <meta property="og:title" content="TutoCast — Lumière, caméra, ROBOT !" />
   <meta property="og:description" content="Enregistre des tutos vidéo multi-caméras directement depuis ton navigateur." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="icon.svg" />
@@ -27,10 +27,16 @@
   <div class="splash" id="splash" onclick="dismissSplash()">
     <div class="splash-inner">
       <div class="splash-logo" id="splashLogo">
-        <img src="logo.svg" alt="TutoCast" width="128" height="128" />
+        <img src="logo.svg" alt="TutoCast" width="140" height="140" />
       </div>
       <div class="splash-title">TutoCast</div>
-      <div class="splash-sub" data-i18n="slogan">🎬 Crée tes tutos comme un pro !</div>
+      <div class="splash-sub" data-i18n="slogan">🎬 Lumière, caméra, ROBOT !</div>
+      <a class="splash-credit" href="https://workshop-diy.org" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+        <span>by workshop-diy.org</span>
+      </a>
       <div class="splash-hint" data-i18n="splashHint">tap to skip</div>
     </div>
   </div>
@@ -48,7 +54,7 @@
           </div>
           <div>
             <h1 data-i18n="title">TutoCast</h1>
-            <div class="subtitle" data-i18n="slogan">🎬 Crée tes tutos comme un pro !</div>
+            <div class="subtitle" data-i18n="slogan">🎬 Lumière, caméra, ROBOT !</div>
           </div>
         </div>
 
@@ -103,7 +109,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.2.2</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.2.3</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -219,7 +225,12 @@
 
     <!-- ═══════════════════ FOOTER ═══════════════════ -->
     <footer class="app-footer">
-      <span class="footer-text">powered by <a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></span>
+      <a class="footer-text" href="https://workshop-diy.org" target="_blank" rel="noopener">
+        <svg class="footer-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+        <span>powered by workshop-diy.org</span>
+      </a>
     </footer>
 
     <div class="deco-band bottom-band" aria-hidden="true"></div>
@@ -323,6 +334,15 @@
       <!-- News / Changelog -->
       <div class="help-content" id="helpNews">
         <div class="wiki-entry">
+          <h3>🎬 v0.2.3 — 11 avril 2026</h3>
+          <p data-i18n="news_023">Splash rafraîchi + nouveau slogan 🎬</p>
+          <ul>
+            <li data-i18n="news_023_1">Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)</li>
+            <li data-i18n="news_023_2">Nouveau slogan : « Lumière, caméra, ROBOT ! »</li>
+            <li data-i18n="news_023_3">Badge workshop-diy.org dans le splash et le footer</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
           <h3>🎯 v0.2.2 — 11 avril 2026</h3>
           <p data-i18n="news_022">VRAI fix des fichiers 0 octet 🎯</p>
           <ul>
@@ -396,7 +416,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.2.2</strong></span>
+      <span class="badge"><strong>v0.2.3</strong></span>
     </div>
   </aside>
 
@@ -452,7 +472,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.2.2</strong></span>
+      <span class="badge"><strong>v0.2.3</strong></span>
     </div>
   </aside>
 
@@ -484,7 +504,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.2.2</strong></span>
+      <span class="badge"><strong>v0.2.3</strong></span>
     </div>
   </aside>
 

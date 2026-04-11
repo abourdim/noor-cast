@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.2.2 — kids-friendly multi-cam screen recorder
+   TutoCast v0.2.3 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,14 +13,14 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.2.2';
+const APP_VERSION = '0.2.3';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
 
 const LANG = {
   fr: {
-    title: 'TutoCast', slogan: '🎬 Crée tes tutos comme un pro !',
+    title: 'TutoCast', slogan: '🎬 Lumière, caméra, ROBOT !',
     statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
     sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
@@ -166,6 +166,10 @@ const LANG = {
     news_022_2: "Correctif : ConstantSourceNode silencieux connecté en permanence",
     news_022_3: "Vérifié par test runtime headless complet (tous les boutons, toutes les scènes, tous les outils)",
     news_022_4: "Bouton 'Vierge' efface désormais le template actif",
+    news_023: "Splash rafraîchi + nouveau slogan 🎬",
+    news_023_1: "Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)",
+    news_023_2: "Nouveau slogan : « Lumière, caméra, ROBOT ! »",
+    news_023_3: "Badge workshop-diy.org dans le splash et le footer",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -201,7 +205,7 @@ const LANG = {
     t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
   },
   en: {
-    title: 'TutoCast', slogan: '🎬 Make your tutorials like a pro!',
+    title: 'TutoCast', slogan: '🎬 Lights, camera, ROBOT!',
     statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
     sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
@@ -347,6 +351,10 @@ const LANG = {
     news_022_2: "Fix: permanent silent ConstantSourceNode keeps the audio track alive",
     news_022_3: "Verified by full headless runtime test (every button, scene, tool)",
     news_022_4: "Blank template button now clears any active template",
+    news_023: "Splash refresh + new slogan 🎬",
+    news_023_1: "Fixed logo-overlaps-title bug (container 120×65 → 140×140)",
+    news_023_2: "New slogan: \"Lights, camera, ROBOT!\"",
+    news_023_3: "workshop-diy.org badge on splash and footer",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -382,7 +390,7 @@ const LANG = {
     t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
   },
   ar: {
-    title: 'TutoCast', slogan: '🎬 اصنع دروسك كالمحترفين!',
+    title: 'TutoCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
     statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
     sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
@@ -516,6 +524,10 @@ const LANG = {
     news_022_2: "الإصلاح: ConstantSourceNode صامت متصل بشكل دائم",
     news_022_3: "تم التحقق عبر اختبار تشغيل كامل بدون واجهة (كل الأزرار والمشاهد والأدوات)",
     news_022_4: "زر 'فارغ' يمسح الآن أي قالب نشط",
+    news_023: "تحديث شاشة البداية + شعار جديد 🎬",
+    news_023_1: "إصلاح تداخل الشعار مع العنوان (الحاوية 120×65 → 140×140)",
+    news_023_2: "شعار جديد: «أضواء، كاميرا، روبوت!»",
+    news_023_3: "شارة workshop-diy.org على شاشة البداية والتذييل",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",
