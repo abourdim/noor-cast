@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.2.4 — kids-friendly multi-cam screen recorder
+   TutoCast v0.3.0 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.2.4';
+const APP_VERSION = '0.3.0';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -90,6 +90,17 @@ const LANG = {
     recorderError: '✗ Erreur d\'enregistrement (voir le journal)',
     recEmpty: '⚠️ Fichier vide — l\'encodeur n\'a rien produit. Ouvre le journal 📜 pour le détail.',
     recNoStream: '✗ Pas de flux vidéo — relance la page',
+    zoom: 'Zoom', zoomOn: '🔍 Zoom activé', zoomOff: '🔍 Zoom désactivé',
+    outputFormat: '🎞 Format de sortie',
+    formatAuto: 'Auto (MP4 si possible)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    trim: 'Couper', trimTitle: 'Couper le tuto',
+    trimIn: 'Début', trimOut: 'Fin', trimDuration: 'Durée finale :',
+    trimPreviewIn: '▶ début', trimPreviewOut: '▶ fin',
+    trimEncoding: 'Encodage en cours…',
+    trimExport: 'Exporter le tuto coupé', trimExported: 'Tuto coupé exporté',
+    trimNoTake: '⚠️ Aucun tuto enregistré à couper',
+    trimTooShort: '⚠️ Sélection trop courte (minimum 0.2 s)',
+    cancel: 'Annuler',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -175,6 +186,12 @@ const LANG = {
     news_024_2: "Grille studio : sidebars 240 px + minmax(0,1fr) pour le canvas",
     news_024_3: "Canvas plafonné par la hauteur du viewport — 16:9 parfait à 1920/1600/1366",
     news_024_4: "Sidebars scrollables en interne pour garder le bouton REC au-dessus de la ligne de flottaison",
+    news_030: "Trim + Zoom + MP4 ✂️🔍📼",
+    news_030_1: "Outil de trim non destructif : deux curseurs, un bouton d'export, nouveau fichier avec chapitres ajustés",
+    news_030_2: "Zoom manuel fluide sur Z (ou bouton A du micro:bit) pour les moments de focus",
+    news_030_3: "Export MP4 natif quand le navigateur le supporte (Chrome 126+, Safari, Edge)",
+    news_030_4: "Préférence de format dans les Paramètres : Auto / MP4 / WebM",
+    news_030_5: "Trim réencode via offscreen canvas + MediaRecorder — zéro dépendance, zéro cloud",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -280,6 +297,17 @@ const LANG = {
     recorderError: '✗ Recording error (see the log)',
     recEmpty: '⚠️ Empty file — the encoder produced nothing. Open the log 📜 for details.',
     recNoStream: '✗ No video stream — reload the page',
+    zoom: 'Zoom', zoomOn: '🔍 Zoom on', zoomOff: '🔍 Zoom off',
+    outputFormat: '🎞 Output format',
+    formatAuto: 'Auto (MP4 if possible)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    trim: 'Trim', trimTitle: 'Trim the tutorial',
+    trimIn: 'Start', trimOut: 'End', trimDuration: 'Final duration:',
+    trimPreviewIn: '▶ start', trimPreviewOut: '▶ end',
+    trimEncoding: 'Encoding…',
+    trimExport: 'Export trimmed tutorial', trimExported: 'Trimmed tutorial exported',
+    trimNoTake: '⚠️ No tutorial recorded to trim',
+    trimTooShort: '⚠️ Selection too short (minimum 0.2 s)',
+    cancel: 'Cancel',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -365,6 +393,12 @@ const LANG = {
     news_024_2: "Studio grid: 240 px sidebars + minmax(0,1fr) canvas column",
     news_024_3: "Canvas capped by viewport height — perfect 16:9 at 1920/1600/1366",
     news_024_4: "Sidebars scroll internally so the REC button stays above the fold",
+    news_030: "Trim + Zoom + MP4 ✂️🔍📼",
+    news_030_1: "Non-destructive trim tool: two handles, export button, new file with adjusted chapters",
+    news_030_2: "Smooth manual zoom on Z (or micro:bit button A) for code focus moments",
+    news_030_3: "Native MP4 export where the browser supports it (Chrome 126+, Safari, Edge)",
+    news_030_4: "Output format preference in Settings: Auto / MP4 / WebM",
+    news_030_5: "Trim re-encodes via offscreen canvas + MediaRecorder — zero deps, zero cloud",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -462,6 +496,17 @@ const LANG = {
     recorderError: '✗ خطأ في التسجيل (راجع السجل)',
     recEmpty: '⚠️ ملف فارغ — لم ينتج المُرمِّز شيئًا. افتح السجل 📜 للتفاصيل.',
     recNoStream: '✗ لا يوجد تدفق فيديو — أعد تحميل الصفحة',
+    zoom: 'تكبير', zoomOn: '🔍 تم التكبير', zoomOff: '🔍 تم الإلغاء',
+    outputFormat: '🎞 تنسيق الإخراج',
+    formatAuto: 'تلقائي (MP4 إن أمكن)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    trim: 'قص', trimTitle: 'قص الدرس',
+    trimIn: 'البداية', trimOut: 'النهاية', trimDuration: 'المدة النهائية:',
+    trimPreviewIn: '▶ البداية', trimPreviewOut: '▶ النهاية',
+    trimEncoding: 'جارٍ الترميز…',
+    trimExport: 'تصدير الدرس المقصوص', trimExported: 'تم تصدير الدرس المقصوص',
+    trimNoTake: '⚠️ لا يوجد درس مسجّل للقص',
+    trimTooShort: '⚠️ التحديد قصير جدًا (الحد الأدنى 0.2 ث)',
+    cancel: 'إلغاء',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -543,6 +588,12 @@ const LANG = {
     news_024_2: "شبكة الاستوديو: أشرطة جانبية 240 بكسل + minmax(0,1fr) لمنطقة الكانفاس",
     news_024_3: "الكانفاس محدود بارتفاع منفذ العرض — 16:9 مثالي عند 1920/1600/1366",
     news_024_4: "الأشرطة الجانبية قابلة للتمرير داخليًا لإبقاء زر التسجيل مرئيًا",
+    news_030: "قص + تكبير + MP4 ✂️🔍📼",
+    news_030_1: "أداة قص غير مدمرة: مقبضان، زر تصدير، ملف جديد مع فصول معدّلة",
+    news_030_2: "تكبير يدوي سلس بمفتاح Z (أو زر A في micro:bit) للحظات التركيز",
+    news_030_3: "تصدير MP4 أصلي عند دعم المتصفح (Chrome 126+، Safari، Edge)",
+    news_030_4: "تفضيل تنسيق الإخراج في الإعدادات: تلقائي / MP4 / WebM",
+    news_030_5: "القص يعيد الترميز عبر canvas بدون شاشة + MediaRecorder — بلا تبعيات، بلا سحابة",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",
@@ -720,6 +771,18 @@ const Engine = {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
 
+    // Apply the zoom transform around its focus point for sources + overlays.
+    // Text overlays and sensor HUD remain at 1x so they stay readable.
+    Zoom.tick();
+    const z = Zoom.current;
+    const zoomed = z > 1.001;
+    if (zoomed) {
+      ctx.save();
+      ctx.translate(Zoom.cx, Zoom.cy);
+      ctx.scale(z, z);
+      ctx.translate(-Zoom.cx, -Zoom.cy);
+    }
+
     if (Recorder.frozen && this.frozenFrame) {
       ctx.putImageData(this.frozenFrame, 0, 0);
     } else {
@@ -728,10 +791,12 @@ const Engine = {
       visible.forEach(src => this.drawSource(src));
     }
 
-    // draw text overlays
+    if (zoomed) ctx.restore();
+
+    // draw text overlays (unscaled so they stay readable)
     TextOverlays.drawAll(ctx);
 
-    // draw sensor overlay if active
+    // draw sensor overlay if active (unscaled)
     Sensors.drawOverlay(ctx);
 
     // Whiteboard strokes (persist across frames)
@@ -1364,15 +1429,35 @@ const Recorder = {
   },
 
   pickMime() {
-    const candidates = [
+    // User preference: 'mp4', 'webm', or 'auto' (= first supported, MP4-first).
+    // Stored in localStorage via the settings panel.
+    let pref = 'auto';
+    try { pref = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    const mp4 = [
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/mp4',
+    ];
+    const webm = [
       'video/webm;codecs=vp9,opus',
       'video/webm;codecs=vp8,opus',
       'video/webm',
     ];
-    for (const m of candidates) {
+    const order = pref === 'mp4' ? [...mp4, ...webm]
+                : pref === 'webm' ? [...webm, ...mp4]
+                : [...mp4, ...webm];  // auto — MP4 first when available
+    for (const m of order) {
       if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
     }
     return '';
+  },
+
+  /* Derive the output filename extension from the actual mime type chosen
+     by MediaRecorder. Cheaper and more accurate than trusting the preference. */
+  extForMime(mime) {
+    if (!mime) return 'webm';
+    if (mime.startsWith('video/mp4')) return 'mp4';
+    return 'webm';
   },
 
   async countdown() {
@@ -1417,7 +1502,8 @@ const Recorder = {
 
   finish() {
     log(`🏁 finish: ${this.chunks.length} chunks, ${this._totalBytes || 0} B total`, 'info');
-    const blob = new Blob(this.chunks, { type: this.chunks[0]?.type || 'video/webm' });
+    const mimeType = this.chunks[0]?.type || 'video/webm';
+    const blob = new Blob(this.chunks, { type: mimeType });
 
     // v0.2.1: catch empty recordings loudly instead of silently downloading 0 B.
     if (blob.size === 0) {
@@ -1433,13 +1519,17 @@ const Recorder = {
     // revoke previous take URLs if any
     if (this._prevUrls) this._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
     this._prevUrls = [url];
+    // Stash the raw take for the trim feature
+    this._lastBlob = blob;
+    this._lastMime = mimeType;
     video.src = url;
     $('tcTake').style.display = 'block';
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    const ext = this.extForMime(mimeType);
     const dl = $('tcDownloadBtn');
-    dl.href = url; dl.download = `${fname}.webm`;
+    dl.href = url; dl.download = `${fname}.${ext}`;
     // Chapters VTT
     const vtt = Chapters.toVTT();
     const vttBlob = new Blob([vtt], { type: 'text/vtt' });
@@ -1656,6 +1746,39 @@ const Whiteboard = {
   clear() { Engine.overlayCtx.clearRect(0, 0, Engine.width, Engine.height); }
 };
 
+/* Zoom — smooth canvas transform for code-tutorial "focus moments".
+   Triggered by the Z hotkey or by micro:bit button A. Current zoom level
+   eases toward the target each frame via Engine.render calling Zoom.tick. */
+const Zoom = {
+  on: false,
+  current: 1,          // live scale, eased
+  target: 1,           // destination scale
+  maxScale: 1.8,       // how far in we zoom
+  cx: 960, cy: 540,    // focus center (canvas coords, default = middle)
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    // Track the cursor so the next zoom-in pivots around where the teacher is looking
+    stage.addEventListener('mousemove', (e) => {
+      const r = stage.getBoundingClientRect();
+      this.cx = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.cy = ((e.clientY - r.top) / r.height) * Engine.height;
+    });
+  },
+  tick() {
+    // Exponential ease toward target; ~98% there after ~200ms at 60fps
+    this.current += (this.target - this.current) * 0.18;
+    if (Math.abs(this.current - this.target) < 0.002) this.current = this.target;
+  },
+  toggle() {
+    this.on = !this.on;
+    this.target = this.on ? this.maxScale : 1;
+    $('tcZoomBtn')?.classList.toggle('active', this.on);
+    log(this.on ? t('zoomOn') : t('zoomOff'), 'info');
+    Sfx.play('click');
+  },
+};
+
 /* Teleprompter — overlay visible on stage only, NOT drawn to canvas */
 const Teleprompter = {
   on: false, _userEdited: false,
@@ -1675,6 +1798,217 @@ const Teleprompter = {
     log(this.on ? t('teleOn') : t('teleOff'), 'info');
   },
   hasUserText() { return this._userEdited; }
+};
+
+/* ─────────── Trim — non-destructive take shortening ───────────
+
+   The user opens the Take panel, clicks Trim, drags two handles
+   over the preview scrubber to pick inTime/outTime, then clicks
+   Export. We re-encode by playing the source video to an offscreen
+   canvas and piping that canvas (+ a re-routed audio graph from the
+   same <video>) through a fresh MediaRecorder. One re-encode pass,
+   slight quality loss, full control over codec and output format.
+
+   No dependencies, no ffmpeg.wasm, no cloud. */
+const Trim = {
+  inTime: 0, outTime: 0, duration: 0,
+  encoding: false,
+  srcBlob: null, srcMime: null,
+
+  open() {
+    if (!Recorder._lastBlob) { showToast(t('trimNoTake'), 2500); return; }
+    this.srcBlob = Recorder._lastBlob;
+    this.srcMime = Recorder._lastMime || 'video/webm';
+    const video = $('tcTrimVideo');
+    video.src = URL.createObjectURL(this.srcBlob);
+    video.onloadedmetadata = () => {
+      // Some browsers report Infinity for blob duration until a seek nudge
+      if (!isFinite(video.duration)) {
+        video.currentTime = 1e9;
+        video.ontimeupdate = () => { video.ontimeupdate = null; video.currentTime = 0; this._setRange(video.duration); };
+      } else {
+        this._setRange(video.duration);
+      }
+    };
+    $('tcTrimModal').style.display = 'flex';
+  },
+
+  close() {
+    $('tcTrimModal').style.display = 'none';
+    const v = $('tcTrimVideo');
+    if (v.src) { try { URL.revokeObjectURL(v.src); } catch {} v.src = ''; }
+    this.encoding = false;
+    $('tcTrimProgress').style.display = 'none';
+  },
+
+  _setRange(dur) {
+    this.duration = dur || 0;
+    this.inTime = 0;
+    this.outTime = this.duration;
+    const inSlider = $('tcTrimIn'), outSlider = $('tcTrimOut');
+    inSlider.min = outSlider.min = 0;
+    inSlider.max = outSlider.max = this.duration;
+    inSlider.step = outSlider.step = 0.1;
+    inSlider.value = 0;
+    outSlider.value = this.duration;
+    this._updateLabels();
+  },
+
+  _updateLabels() {
+    const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+    $('tcTrimInLabel').textContent = fmt(this.inTime);
+    $('tcTrimOutLabel').textContent = fmt(this.outTime);
+    $('tcTrimDurationLabel').textContent = fmt(Math.max(0, this.outTime - this.inTime));
+  },
+
+  onInChange(v) {
+    this.inTime = Math.min(parseFloat(v), this.outTime - 0.5);
+    $('tcTrimIn').value = this.inTime;
+    $('tcTrimVideo').currentTime = this.inTime;
+    this._updateLabels();
+  },
+
+  onOutChange(v) {
+    this.outTime = Math.max(parseFloat(v), this.inTime + 0.5);
+    $('tcTrimOut').value = this.outTime;
+    $('tcTrimVideo').currentTime = this.outTime;
+    this._updateLabels();
+  },
+
+  previewIn()  { const v = $('tcTrimVideo'); v.currentTime = this.inTime; v.pause(); },
+  previewOut() { const v = $('tcTrimVideo'); v.currentTime = this.outTime; v.pause(); },
+
+  async exportTrimmed() {
+    if (this.encoding) return;
+    if (this.outTime - this.inTime < 0.2) { showToast(t('trimTooShort'), 2500); return; }
+    this.encoding = true;
+    const prog = $('tcTrimProgress');
+    const progBar = $('tcTrimProgressBar');
+    prog.style.display = 'block';
+    progBar.style.width = '0%';
+
+    const srcVideo = document.createElement('video');
+    srcVideo.src = URL.createObjectURL(this.srcBlob);
+    srcVideo.muted = true;   // routed via Web Audio, we don't want a speaker dupe
+    srcVideo.playsInline = true;
+    await new Promise(r => srcVideo.addEventListener('loadedmetadata', r, { once: true }));
+    // Nudge duration for blob URLs that report Infinity
+    if (!isFinite(srcVideo.duration)) {
+      srcVideo.currentTime = 1e9;
+      await new Promise(r => srcVideo.addEventListener('timeupdate', r, { once: true }));
+    }
+    const W = srcVideo.videoWidth || Engine.width;
+    const H = srcVideo.videoHeight || Engine.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Audio graph: re-route the source <video> through a dedicated AudioContext
+    // so the trimmed recording gets the source's audio. We can't touch
+    // Engine.audioCtx (it's already bound to the live pipeline).
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ac.createMediaElementSource(srcVideo);
+    const dest = ac.createMediaStreamDestination();
+    // Also keep a permanent silent ConstantSource in case the take is silent
+    // (same bug class as v0.2.2 — MediaRecorder stalls on samples-empty audio)
+    const silent = ac.createConstantSource();
+    const gain = ac.createGain();
+    gain.gain.value = 0;
+    silent.connect(gain).connect(dest);
+    silent.start();
+    src.connect(dest);
+
+    const videoStream = canvas.captureStream(30);
+    const stream = new MediaStream([
+      videoStream.getVideoTracks()[0],
+      dest.stream.getAudioTracks()[0],
+    ]);
+    const mime = Recorder.pickMime();  // honour current format preference
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+    } catch {
+      rec = new MediaRecorder(stream, { videoBitsPerSecond: 4_000_000 });
+    }
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const finished = new Promise(r => rec.onstop = r);
+    rec.onerror = (e) => log(`✗ trim recorder error: ${e.error || e}`, 'error');
+
+    srcVideo.currentTime = this.inTime;
+    await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+    rec.start(250);
+    await srcVideo.play();
+
+    const inT = this.inTime, outT = this.outTime;
+    const duration = outT - inT;
+    let rafId;
+    const loop = () => {
+      ctx.drawImage(srcVideo, 0, 0, W, H);
+      const progress = Math.min(1, (srcVideo.currentTime - inT) / duration);
+      progBar.style.width = (progress * 100).toFixed(1) + '%';
+      if (srcVideo.currentTime >= outT || srcVideo.ended) {
+        cancelAnimationFrame(rafId);
+        srcVideo.pause();
+        try { rec.requestData(); } catch {}
+        rec.stop();
+        return;
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+
+    await finished;
+    const outBlob = new Blob(chunks, { type: chunks[0]?.type || mime || 'video/webm' });
+
+    // Cleanup audio graph
+    try { silent.stop(); } catch {}
+    try { ac.close(); } catch {}
+    try { URL.revokeObjectURL(srcVideo.src); } catch {}
+
+    if (outBlob.size === 0) {
+      showToast(t('recEmpty'), 5000);
+      log('✗ trim produced 0-byte blob', 'error');
+      prog.style.display = 'none';
+      this.encoding = false;
+      return;
+    }
+
+    // Trigger download + updated VTT
+    const url = URL.createObjectURL(outBlob);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-trim`;
+    const ext = Recorder.extForMime(outBlob.type);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${fname}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+    // Adjust chapters: shift by -inTime, drop anything outside the new window
+    const adjusted = Chapters.items
+      .map(c => ({ time: c.time - inT, label: c.label }))
+      .filter(c => c.time >= 0 && c.time <= duration);
+    const vttItems = Chapters.items.slice();
+    Chapters.items = adjusted;
+    const vtt = Chapters.toVTT.call({ items: adjusted, fmtTime: Chapters.fmtTime });
+    Chapters.items = vttItems;  // restore
+    if (adjusted.length) {
+      const vttBlob = new Blob([vtt], { type: 'text/vtt' });
+      const vttUrl = URL.createObjectURL(vttBlob);
+      const va = document.createElement('a');
+      va.href = vttUrl; va.download = `${fname}.vtt`;
+      va.click();
+      setTimeout(() => URL.revokeObjectURL(vttUrl), 60_000);
+    }
+
+    log(`✂️ trim exported: ${(outBlob.size / 1024 / 1024).toFixed(1)} MB (${duration.toFixed(1)}s)`, 'success');
+    showToast(`✂️ ${t('trimExported')} — ${(outBlob.size / 1024 / 1024).toFixed(1)} MB`, 3000);
+    Sfx.play('stop');
+    progBar.style.width = '100%';
+    this.encoding = false;
+    setTimeout(() => this.close(), 800);
+  },
 };
 
 /* Snapshot — download current canvas as PNG */
@@ -1733,8 +2067,12 @@ const Sensors = {
         await aChar.startNotifications();
         aChar.addEventListener('characteristicvaluechanged', (e) => {
           this.values = this.values || {};
+          const prev = this.values.a || 0;
           this.values.a = e.target.value.getUint8(0);
           this.updatePanel();
+          // Edge-trigger: button A pressed (transition from 0 → non-zero) → toggle zoom.
+          // Lets teachers hit the real physical button on the micro:bit to zoom in/out.
+          if (prev === 0 && this.values.a !== 0) Zoom.toggle();
         });
         const bChar = await btnSvc.getCharacteristic('e95dda91-251d-470a-a062-fa1922dfa9a8');
         await bChar.startNotifications();
@@ -2024,6 +2362,7 @@ function setupHotkeys() {
     else if (k === 'l') { Laser.toggle(); e.preventDefault(); }
     else if (k === 'f') { Freeze.toggle(); e.preventDefault(); }
     else if (k === 'd') { Whiteboard.toggle(); e.preventDefault(); }
+    else if (k === 'z') { Zoom.toggle(); e.preventDefault(); }
     else if (k === 'escape') { closeAllPanels(); }
   });
 }
@@ -2066,6 +2405,16 @@ function wireEvents() {
     sndEl.addEventListener('change', (e) => Sfx.setEnabled(e.target.checked));
   }
 
+  // Output format preference (mp4 / webm / auto)
+  const fmtEl = $('tcFormatSelect');
+  if (fmtEl) {
+    try { fmtEl.value = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    fmtEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-format', e.target.value); } catch {}
+      log(`🎞 format preference: ${e.target.value}`, 'info');
+    });
+  }
+
   // Sources
   $('srcScreenBtn').addEventListener('click', () => Engine.addScreen());
   $('srcCamBtn').addEventListener('click', () => {
@@ -2089,6 +2438,7 @@ function wireEvents() {
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
+  $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
   $('tcTeleBtn').addEventListener('click', () => Teleprompter.toggle());
   $('tcSnapBtn').addEventListener('click', () => snapshot());
 
@@ -2108,6 +2458,16 @@ function wireEvents() {
       Recorder._prevUrls = null;
     }
   });
+
+  // Trim wiring
+  $('tcTrimBtn').addEventListener('click', () => Trim.open());
+  $('tcTrimClose').addEventListener('click', () => Trim.close());
+  $('tcTrimCancelBtn').addEventListener('click', () => Trim.close());
+  $('tcTrimExportBtn').addEventListener('click', () => Trim.exportTrimmed());
+  $('tcTrimIn').addEventListener('input', (e) => Trim.onInChange(e.target.value));
+  $('tcTrimOut').addEventListener('input', (e) => Trim.onOutChange(e.target.value));
+  $('tcTrimPreviewInBtn').addEventListener('click', () => Trim.previewIn());
+  $('tcTrimPreviewOutBtn').addEventListener('click', () => Trim.previewOut());
 
   // Ticker pause
   $('tcTickerPause').addEventListener('click', () => {
@@ -2137,6 +2497,7 @@ async function init() {
   Engine.init();
   Laser.setup();
   Whiteboard.setup();
+  Zoom.setup();
 
   renderScenes();
   renderTextPresets();

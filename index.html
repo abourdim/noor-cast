@@ -109,7 +109,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.2.4</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.3.0</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -177,6 +177,7 @@
             <button class="tc-btn-full" id="tcLaserBtn">🔴 <span data-i18n="laser">Laser</span> <kbd>L</kbd></button>
             <button class="tc-btn-full" id="tcFreezeBtn">❄️ <span data-i18n="freeze">Geler</span> <kbd>F</kbd></button>
             <button class="tc-btn-full" id="tcWhiteboardBtn">✏️ <span data-i18n="whiteboard">Dessiner</span> <kbd>D</kbd></button>
+            <button class="tc-btn-full" id="tcZoomBtn">🔍 <span data-i18n="zoom">Zoom</span> <kbd>Z</kbd></button>
             <button class="tc-btn-full" id="tcTeleBtn">📜 <span data-i18n="teleprompter">Teleprompter</span></button>
             <button class="tc-btn-full" id="tcSnapBtn">📸 <span data-i18n="snapshot">Capture photo</span> <kbd>S</kbd></button>
           </aside>
@@ -202,6 +203,7 @@
           <div class="tc-take-actions">
             <a class="tc-btn-full" id="tcDownloadBtn" download>⬇️ <span data-i18n="download">Télécharger</span></a>
             <a class="tc-btn-full" id="tcDownloadVtt" download>📝 <span data-i18n="downloadChapters">Chapitres (.vtt)</span></a>
+            <button class="tc-btn-full" id="tcTrimBtn">✂️ <span data-i18n="trim">Couper</span></button>
             <button class="tc-btn-full" id="tcNewTakeBtn">🎬 <span data-i18n="newTake">Nouveau tuto</span></button>
           </div>
         </div>
@@ -234,6 +236,43 @@
     </footer>
 
     <div class="deco-band bottom-band" aria-hidden="true"></div>
+  </div>
+
+  <!-- ═══════════════════ TRIM MODAL ═══════════════════ -->
+  <div class="tc-trim-modal" id="tcTrimModal" style="display:none">
+    <div class="tc-trim-card">
+      <div class="tc-trim-header">
+        <span class="tc-trim-title">✂️ <span data-i18n="trimTitle">Couper le tuto</span></span>
+        <button class="btn-icon-only" id="tcTrimClose" aria-label="Close">✕</button>
+      </div>
+      <video id="tcTrimVideo" controls class="tc-trim-video"></video>
+      <div class="tc-trim-controls">
+        <div class="tc-trim-slider-row">
+          <label data-i18n="trimIn">Début</label>
+          <input type="range" id="tcTrimIn" min="0" max="100" value="0" step="0.1" class="tc-trim-slider tc-trim-slider-in" />
+          <span class="tc-trim-val" id="tcTrimInLabel">0:00</span>
+          <button class="tc-trim-preview-btn" id="tcTrimPreviewInBtn" data-i18n="trimPreviewIn">▶ début</button>
+        </div>
+        <div class="tc-trim-slider-row">
+          <label data-i18n="trimOut">Fin</label>
+          <input type="range" id="tcTrimOut" min="0" max="100" value="100" step="0.1" class="tc-trim-slider tc-trim-slider-out" />
+          <span class="tc-trim-val" id="tcTrimOutLabel">0:00</span>
+          <button class="tc-trim-preview-btn" id="tcTrimPreviewOutBtn" data-i18n="trimPreviewOut">▶ fin</button>
+        </div>
+        <div class="tc-trim-duration">
+          <span data-i18n="trimDuration">Durée finale :</span>
+          <strong id="tcTrimDurationLabel">0:00</strong>
+        </div>
+      </div>
+      <div class="tc-trim-progress" id="tcTrimProgress" style="display:none">
+        <div class="tc-trim-progress-label" data-i18n="trimEncoding">Encodage en cours…</div>
+        <div class="tc-trim-progress-track"><div class="tc-trim-progress-bar" id="tcTrimProgressBar"></div></div>
+      </div>
+      <div class="tc-trim-footer">
+        <button class="tc-btn-full" id="tcTrimCancelBtn" data-i18n="cancel">Annuler</button>
+        <button class="tc-btn-full tc-trim-export" id="tcTrimExportBtn">⬇️ <span data-i18n="trimExport">Exporter le tuto coupé</span></button>
+      </div>
+    </div>
   </div>
 
   <!-- Confetti canvas (hidden by default, shown on recording complete) -->
@@ -334,6 +373,17 @@
       <!-- News / Changelog -->
       <div class="help-content" id="helpNews">
         <div class="wiki-entry">
+          <h3>✂️ v0.3.0 — 11 avril 2026</h3>
+          <p data-i18n="news_030">Trim + Zoom + MP4 ✂️🔍📼</p>
+          <ul>
+            <li data-i18n="news_030_1">Outil de trim non destructif : deux curseurs, un bouton d'export, nouveau fichier avec chapitres ajustés</li>
+            <li data-i18n="news_030_2">Zoom manuel fluide sur Z (ou bouton A du micro:bit) pour les moments de focus</li>
+            <li data-i18n="news_030_3">Export MP4 natif quand le navigateur le supporte (Chrome 126+, Safari, Edge)</li>
+            <li data-i18n="news_030_4">Préférence de format dans les Paramètres : Auto / MP4 / WebM</li>
+            <li data-i18n="news_030_5">Trim réencode via offscreen canvas + MediaRecorder — zéro dépendance, zéro cloud</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
           <h3>📺 v0.2.4 — 11 avril 2026</h3>
           <p data-i18n="news_024">Zone de travail élargie (vraiment) 📺</p>
           <ul>
@@ -426,7 +476,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.2.4</strong></span>
+      <span class="badge"><strong>v0.3.0</strong></span>
     </div>
   </aside>
 
@@ -478,11 +528,19 @@
           <span data-i18n="countdownOn">⏱ Compte à rebours 3-2-1</span>
         </label>
       </div>
+      <div class="sidebar-group">
+        <label class="sidebar-label" data-i18n="outputFormat">🎞 Format de sortie</label>
+        <select id="tcFormatSelect" class="sidebar-select" aria-label="Output format">
+          <option value="auto" data-i18n="formatAuto">Auto (MP4 si possible)</option>
+          <option value="mp4" data-i18n="formatMp4">MP4 (H.264/AAC)</option>
+          <option value="webm" data-i18n="formatWebm">WebM (VP9/Opus)</option>
+        </select>
+      </div>
     </div>
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.2.4</strong></span>
+      <span class="badge"><strong>v0.3.0</strong></span>
     </div>
   </aside>
 
@@ -514,7 +572,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.2.4</strong></span>
+      <span class="badge"><strong>v0.3.0</strong></span>
     </div>
   </aside>
 

@@ -3,6 +3,97 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.3.0 — 2026-04-11
+
+Three competitor-parity features, deliberately scoped tight. Built after
+an honest audit of what Descript / ScreenStudio / Loom / Camtasia have
+that TutoCast didn't — and what makes sense to build given the
+"100% local, zero dependencies, kids + robots + Chromebook" mission.
+
+### Added — ✂️ Trim (biggest feature)
+
+Non-destructive post-recording trim. Closes the "wait, let me start over"
+bounce reason that every screen recorder faces.
+
+- **Trim button** in the Take panel (shows after every recording).
+- **Modal UI**: the take's video, two draggable range sliders (green
+  for start, orange for end), live duration readout, preview buttons
+  that seek the player to each handle.
+- **Export**: re-encodes via an offscreen canvas fed by a `<video>`
+  element. Audio is routed through a dedicated `AudioContext` via
+  `createMediaElementSource` → `MediaStreamDestination` + a permanent
+  silent `ConstantSourceNode` (same keepalive pattern as v0.2.2 to
+  avoid the MediaRecorder samples-empty stall). One re-encode pass.
+  Slight quality loss, full codec control.
+- **VTT chapter adjustment**: existing scene/marker chapters are
+  shifted by `-inTime` and filtered to the new window. A new
+  `{filename}-trim.vtt` drops out alongside the trimmed video.
+- **Progress bar** during encoding (most visible on longer takes).
+- **Zero dependencies.** No ffmpeg.wasm, no WebCodecs, no cloud.
+
+Verified end-to-end via the Preview MCP harness:
+- Source: 395 KB MP4 `video/mp4;codecs=avc1.420028,mp4a.40.2`, 3.16 s
+- Trimmed: 112 KB MP4 `video/mp4`, 2.36 s (75% of original duration)
+- Blob non-zero ✓, valid video type ✓, smaller than source ✓
+
+### Added — 🔍 Manual zoom
+
+ScreenStudio's killer feature, adapted to a web sandbox where we can't
+capture clicks happening inside the shared screen window.
+
+- **`Z` hotkey** — toggles zoom on/off.
+- **Tools sidebar button** 🔍 Zoom.
+- **micro:bit button A** — pressing the physical A button on a
+  connected micro:bit toggles zoom (edge-triggered). Great for
+  "teacher holds the robot, taps A to zoom in on the code demo."
+- **Smooth ease**: the zoom level eases toward its target at ~18% per
+  frame. ~200 ms to settle. No jarring pops.
+- **Pivots around the cursor**: the zoom center is the last known
+  mouse position over the stage, so it focuses wherever you were
+  looking.
+- **Text overlays and sensor HUD stay at 1x** so they remain readable
+  while the sources are zoomed in.
+- **Max scale: 1.8x** — enough to make code readable on 1920×1080.
+
+Implemented as a canvas transform inside `Engine.render()`, applied
+around the source drawing pass only.
+
+### Added — 📼 Native MP4 export
+
+Probe test confirmed all 4 MP4 mime variants supported on the preview's
+Chromium. Safari has supported MP4 via MediaRecorder since 14.1.
+
+- **`Recorder.pickMime()`** now has a priority list: MP4 variants
+  before WebM when auto/user-picked, WebM-first when user prefers it.
+- **Settings panel** has a new "Output format" dropdown:
+  - Auto (MP4 if possible) — default
+  - MP4 (H.264/AAC)
+  - WebM (VP9/Opus)
+  Persisted in `tc-format` localStorage key.
+- **Filename extension** is derived from the actual chunk mime type
+  (`Recorder.extForMime`), not the preference — cheaper and more
+  accurate.
+
+### Dropped from roadmap
+- **AI transcript / speech chapters** — every local ASR option
+  (Web Speech sends to Google, Whisper.cpp is 40+ MB, Transformers.js
+  same) violates either the privacy-first or the zero-install mission.
+  Existing VTT chapters (scene + marker + template-step) are already
+  semantically richer for the kid+code+robot use case.
+- **RNNoise mic upgrade** — baseline noise suppression already enabled
+  via `getUserMedia({ audio: { noiseSuppression: true } })`. Not worth
+  the complexity unless a real user complains.
+
+### i18n
+- 14 new keys × 3 languages (zoom, trim, format labels).
+
+### Verified (Preview MCP, 1600×900)
+- MP4 probe: `pickMime(auto)` → `video/mp4;codecs=avc1.42E01E,mp4a.40.2`
+- Zoom: toggle on → ease to 1.800, toggle off → ease to 1.000
+- Trim: 395 KB source → 112 KB trimmed MP4, real blob download triggered
+- JS syntax: `node --check` OK
+- i18n balance: unchanged across FR/EN/AR
+
 ## v0.2.4 — 2026-04-11
 
 Reported: the working area is too small. Correct.

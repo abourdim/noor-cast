@@ -56,9 +56,18 @@ Switch between them in real time during the recording using number keys **1-6**.
 - **🔴 Laser pointer** (`L`) — your cursor becomes a glowing red dot, recorded in the video
 - **❄️ Screen freeze** (`F`) — freeze the screen capture while mic keeps recording, perfect for explaining a specific state
 - **✏️ Whiteboard** (`D`) — draw directly on the video with the mouse
+- **🔍 Smooth zoom** (`Z`, or micro:bit button A) — ease into a 1.8× focus on the cursor, tap again to zoom out
 - **📜 Teleprompter** — paste your script, it floats over the preview (**visible to you only**, NOT in the recording)
 - **📸 Snapshot** (`S`) — download a PNG of the current frame
 - **🏷 Markers** (`M`) — tag moments in the recording, exported as chapters
+
+### ✂️ Post-recording trim (v0.3.0)
+- Open the recorded take in the built-in trim modal
+- Drag two handles to pick the final start/end points
+- Preview each handle with a one-click seek
+- **Export** → new file with a single re-encode pass (offscreen canvas + MediaRecorder)
+- **VTT chapters automatically adjusted** and filtered to the new window
+- 100% local, zero deps, zero cloud — same engine as the main recorder
 
 ### ✏️ Text overlays
 - 10 preset kid-friendly texts: ⭐ Bravo, 🎯 Étape 1, 👀 Regarde, 💡 Astuce, 🙈 Oups, 💪 À toi, 🎉 Fini
@@ -151,9 +160,11 @@ python3 -m http.server 8000
 | `L` | Toggle laser pointer |
 | `F` | Freeze / unfreeze screen |
 | `D` | Toggle whiteboard drawing mode |
+| `Z` | Toggle smooth zoom (cursor-centered, 1.8×) |
 | `S` | Take a photo snapshot |
 | `Esc` | Close all panels |
 | `Ctrl+Shift+D` | Toggle debug HUD (FPS + memory) |
+| `micro:bit A` | Same as `Z` — toggle zoom from the physical robot button |
 
 ---
 
