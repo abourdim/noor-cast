@@ -194,6 +194,43 @@ and badge count. Metadata only (no video blobs), persisted as
 `tc-history` in localStorage. Aggregate "N · total duration" stat
 in the footer, plus a 🗑 Clear history button.
 
+### 🎁 Workshop batch (v0.7.29 → v0.7.39)
+
+A rapid-fire series of 11 usability and polish features:
+
+- **v0.7.29 Scene thumbnails** — each scene button shows a tiny 16:9
+  SVG schematic of its source layout, color-coded by type.
+- **v0.7.30 Snapshot gallery strip** — pressing `S` still downloads
+  the PNG AND pushes an 88×50 thumbnail into a scrollable strip
+  below the stage. Click to re-download, hover for delete ✕.
+- **v0.7.31 Clickable chapter list** — every marker / scene change
+  appears as a clickable row under the take video with `[index][mm:ss][label]`.
+- **v0.7.32 Drag-to-reorder scenes** — native HTML5 drag API;
+  the 1-9 hotkey mapping follows the saved order (persisted
+  in `tc-scene-order`).
+- **v0.7.33 Live stage minimap** — 192×108 canvas at the top of the
+  Sources sidebar always shows the current composition, color-coded,
+  selected source outlined in accent. 6 FPS to stay cheap.
+- **v0.7.34 Audio waveform strip** — envelope under the take video
+  with click-to-seek and an rAF playhead. See loud/quiet regions
+  before you trim.
+- **v0.7.35 Source context menu** — right-click any source for a
+  Canva-style menu: 👁 hide · 📌 pin · 🔄 duplicate · ⬛ shape
+  submenu (9 shapes) · ✕ delete.
+- **v0.7.36 First-time guided tour** — 5-step spotlight tour runs
+  automatically on first visit with Skip/Back/Next, gated on
+  `tc-tour-done` so it never replays.
+- **v0.7.37 Auto intro text on scene change** — opt-in setting that
+  overlays the scene icon + name at top-center of the canvas for 3s
+  on every scene switch, **baked into the recording**.
+- **v0.7.38 Retry 30s (soft rewind)** — `Ctrl+Z` during a recording
+  flags the last 30 seconds as a retry region. Markers are recorded
+  and shown with an orange tint in the chapter list; can be consumed
+  by the Trim editor later to auto-cut those regions.
+- **v0.7.39 Badge card URL** — teachers set a URL in Settings (e.g.
+  lesson repo, Canvas course). Every BadgeCard PNG generated after
+  a take includes the URL at the bottom in monospace.
+
 ### ✨ Effects (v0.4.0)
 - **Background blur** (🌫 per source) — sharp center, blurred edge ring, no ML model
 - **Theme-accent glow** around every visible source (follows the 8 themes)
