@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.76 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.77 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.76';
+const APP_VERSION = '0.7.77';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 08:15';
+const BUILD_DATE = '2026-04-12 08:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -294,6 +294,7 @@ const LANG = {
     dash7Days: '7 derniers jours',
     dashNote: '💡 Stats calculées sur les 10 derniers tutos',
     setSecDanger: '♻ Maintenance',
+    diagnostics: 'Diagnostics',
     resetBadges: 'Réinitialiser les badges',
     clearCache: 'Vider le cache complet',
     rebindBtn: 'Raccourcis clavier…',
@@ -851,6 +852,7 @@ const LANG = {
     dash7Days: 'last 7 days',
     dashNote: '💡 Stats from the last 10 tutorials',
     setSecDanger: '♻ Maintenance',
+    diagnostics: 'Diagnostics',
     resetBadges: 'Reset badges',
     clearCache: 'Clear all local data',
     rebindBtn: 'Keyboard shortcuts…',
@@ -1400,6 +1402,7 @@ const LANG = {
     dash7Days: 'آخر 7 أيام',
     dashNote: '💡 إحصاءات آخر 10 دروس',
     setSecDanger: '♻ الصيانة',
+    diagnostics: 'التشخيص',
     resetBadges: 'إعادة تعيين الشارات',
     clearCache: 'مسح جميع البيانات المحلية',
     rebindBtn: 'اختصارات لوحة المفاتيح…',
@@ -8786,6 +8789,44 @@ const Badges = {
   },
 };
 
+/* v0.7.77: Hardware / browser capability diagnostics — rendered into the
+   collapsible 🔧 Diagnostics block in Settings → Maintenance. Each check
+   handles "undefined" gracefully so we can ship the panel even when an
+   API is missing on the running browser (e.g. Safari has no Web BT). */
+const Diagnostics = {
+  checks() {
+    return [
+      { key: 'getUserMedia', label: '🎥 getUserMedia (mic/cam)', pass: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) },
+      { key: 'getDisplayMedia', label: '🖥 getDisplayMedia (screen capture)', pass: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) },
+      { key: 'mediaRecorder', label: '🎞 MediaRecorder', pass: typeof MediaRecorder !== 'undefined' },
+      { key: 'mp4', label: '📼 MP4 encoding', pass: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/mp4') },
+      { key: 'webm', label: '📼 WebM/VP9 encoding', pass: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') },
+      { key: 'bt', label: '📡 Web Bluetooth (micro:bit)', pass: !!navigator.bluetooth },
+      { key: 'speech', label: '💬 SpeechRecognition (captions)', pass: !!(window.SpeechRecognition || window.webkitSpeechRecognition) },
+      { key: 'pip', label: '📺 Picture-in-Picture', pass: !!document.pictureInPictureEnabled },
+      { key: 'clipboard', label: '📋 Clipboard paste', pass: typeof ClipboardEvent !== 'undefined' },
+      { key: 'fullscreen', label: '⛶ Fullscreen API', pass: !!(document.documentElement.requestFullscreen) },
+      { key: 'webgl', label: '🧊 WebGL (debug HUD)', pass: (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl') || c.getContext('experimental-webgl')); } catch { return false; } })() },
+      { key: 'pointerEvents', label: '👆 Pointer events (touch)', pass: 'PointerEvent' in window },
+    ];
+  },
+
+  render() {
+    const wrap = $('tcDiagList');
+    if (!wrap) return;
+    const rows = this.checks().map(c => {
+      const icon = c.pass ? '✅' : '❌';
+      const cls = c.pass ? 'pass' : 'fail';
+      return `<div class="tc-diag-row ${cls}"><span class="tc-diag-icon">${icon}</span><span class="tc-diag-label">${c.label}</span></div>`;
+    }).join('');
+    // Also show browser / platform info at the top
+    const ua = navigator.userAgent || '';
+    const brand = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'Unknown';
+    const header = `<div class="tc-diag-header">🌐 ${brand} · ${navigator.platform || 'unknown'}</div>`;
+    wrap.innerHTML = header + rows;
+  },
+};
+
 /* v0.7.72: Tip of the day — fires once per calendar day on first launch.
    Shows a deterministic kid-friendly tip (day-of-year % 20) as a toast a
    few seconds after init so it doesn't collide with the splash/onboard. */
@@ -9333,7 +9374,15 @@ function wireEvents() {
 
   // Panels
   $('helpBtn').addEventListener('click', () => openPanel('helpPanel'));
-  $('settingsBtn').addEventListener('click', () => openPanel('settingsPanel'));
+  $('settingsBtn').addEventListener('click', () => {
+    openPanel('settingsPanel');
+    try { Diagnostics.render(); } catch {}
+  });
+  // v0.7.77: re-render diagnostics every time the user expands the block
+  document.querySelector('.tc-diag-wrap')?.addEventListener('toggle', () => {
+    const w = document.querySelector('.tc-diag-wrap');
+    if (w && w.open) { try { Diagnostics.render(); } catch {} }
+  });
   $('logBtn').addEventListener('click', () => openPanel('logPanel'));
   $('helpCloseBtn').addEventListener('click', () => closePanel('helpPanel'));
   $('settingsCloseBtn').addEventListener('click', () => closePanel('settingsPanel'));

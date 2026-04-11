@@ -3971,3 +3971,59 @@ body.log-open .app {
   margin-top: 6px;
 }
 .tc-countdown-secs-row input { flex: 0 0 80px; }
+
+/* v0.7.77: hardware / browser capability diagnostics panel
+   Lives inside Settings → Maintenance as a collapsible <details> block.
+   Each row is a single ✅/❌ + label, color-coded so failing capabilities
+   pop visually for teachers debugging an unsupported browser. */
+.tc-diag-wrap {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, .02);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+.tc-diag-summary {
+  cursor: pointer;
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: .78rem;
+  color: rgba(255, 255, 255, .7);
+  list-style: none;
+}
+.tc-diag-summary::-webkit-details-marker { display: none; }
+.tc-diag-summary::before {
+  content: '▸';
+  display: inline-block;
+  font-size: .7rem;
+  margin-right: 6px;
+  opacity: .5;
+  transition: transform .15s;
+}
+.tc-diag-wrap[open] > .tc-diag-summary::before {
+  transform: rotate(90deg);
+}
+.tc-diag {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tc-diag-header {
+  font-family: ui-monospace, monospace;
+  font-size: .68rem;
+  color: rgba(255, 255, 255, .5);
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, .08);
+  margin-bottom: 6px;
+}
+.tc-diag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: .74rem;
+  border-radius: 4px;
+}
+.tc-diag-row.pass .tc-diag-label { color: rgba(255, 255, 255, .85); }
+.tc-diag-row.fail .tc-diag-label { color: rgba(252, 165, 165, .9); }
+.tc-diag-icon { font-size: .72rem; }
