@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.44 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.45 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.44';
+const APP_VERSION = '0.7.45';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 00:15';
+const BUILD_DATE = '2026-04-12 00:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -3728,6 +3728,7 @@ const Drag = {
   selectedSourceId: null,   // v0.7.2: track the last-clicked source for Delete-key removal
   SNAP_RADIUS: 60,
   CORNER_RADIUS: 36,
+  THRESHOLD_PX: 6,  // canvas pixels of mouse movement before a drag engages
   stage: null,
 
   setup() {
@@ -3911,6 +3912,14 @@ const Drag = {
       this.state = {
         kind, ref, mode: 'move', corner: -1,
         offsetX: mx - ref.x, offsetY: my - ref.y,
+        // v0.7.45: pending = true means we haven't crossed the drag
+        // threshold yet, so movements are absorbed. Set when the user
+        // clicks-drags less than THRESHOLD_PX canvas pixels. Uses
+        // downX/downY rather than startX/startY because the resize
+        // branch already uses those names for its own purpose.
+        pending: true,
+        downX: mx,
+        downY: my,
       };
       // Pin text overlays on first interaction so they don't auto-fade
       if (kind === 'text') TextOverlays.pin(ref.id);
@@ -3926,6 +3935,14 @@ const Drag = {
     const ref = s.ref;
 
     if (s.mode === 'move') {
+      // v0.7.45: drag threshold — absorb movement until we've moved
+      // more than THRESHOLD_PX canvas pixels from the mousedown point.
+      // Release before crossing = pure click, no move applied.
+      if (s.pending) {
+        const d2 = (mx - s.downX) ** 2 + (my - s.downY) ** 2;
+        if (d2 < this.THRESHOLD_PX * this.THRESHOLD_PX) return;
+        s.pending = false;  // drag engaged — fall through to the move logic
+      }
       let nx = mx - s.offsetX;
       let ny = my - s.offsetY;
       // Snap for sources only (keeps kid layouts clean)
@@ -4048,7 +4065,9 @@ const Drag = {
     // v0.7.41: if a real drag/resize just happened, capture a layout
     // snapshot so Ctrl+Z can undo. We only capture on actual transitions
     // (state was a move/resize, not a click).
-    const wasDragOrResize = this.state && (this.state.mode === 'move' || this.state.mode === 'resize');
+    const wasDragOrResize = this.state &&
+      ((this.state.mode === 'move' && !this.state.pending) ||
+       this.state.mode === 'resize');
     if (this.state) {
       this.state = null;
       if (this.stage) this.stage.classList.remove('dragging');
