@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.0 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.1 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.0';
+const APP_VERSION = '0.7.1';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -150,6 +150,8 @@ const LANG = {
     laserHint: '🔴 L = activer/désactiver · incline le micro:bit pour viser',
     freezeHint: '❄ F = geler/dégeler · parle encore pendant que l\'écran est gelé',
     drawHint: '✏ D = activer/désactiver · clique-glisse sur l\'aperçu pour dessiner',
+    layerForward: '⬆ Vers l\'avant',
+    layerBackward: '⬇ Vers l\'arrière',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -433,6 +435,8 @@ const LANG = {
     laserHint: '🔴 L = toggle · tilt the micro:bit to aim',
     freezeHint: '❄ F = freeze/unfreeze · keep talking while the screen is frozen',
     drawHint: '✏ D = toggle · click-drag on the preview to draw',
+    layerForward: '⬆ Forward',
+    layerBackward: '⬇ Backward',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -708,6 +712,8 @@ const LANG = {
     laserHint: '🔴 L = تفعيل/إلغاء · أمِل micro:bit للتصويب',
     freezeHint: '❄ F = تجميد/إلغاء · استمر في الكلام بينما الشاشة مجمّدة',
     drawHint: '✏ D = تفعيل/إلغاء · اسحب على المعاينة للرسم',
+    layerForward: '⬆ إلى الأمام',
+    layerBackward: '⬇ إلى الخلف',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -1043,6 +1049,10 @@ const Engine = {
     Laser.render();
     ctx.drawImage(this.laserCanvas, 0, 0);
 
+    // v0.7.1: reposition the floating text color toolbar each frame so it
+    // follows the selected overlay during drag/resize/rotation
+    TextToolbar.updatePosition();
+
     // update VU meter + FPS stats
     this.updateVU();
     this._fpsFrames++;
@@ -1066,14 +1076,24 @@ const Engine = {
       const phase = pulseT / Recorder._pulseDur;           // 1 → 0
       const amp = Math.sin(phase * Math.PI) * 0.05;         // ease bell
       const scale = 1 + amp;
-      const cx = x + w / 2, cy = y + h / 2;
+      const cx2 = x + w / 2, cy2 = y + h / 2;
       const newW = w * scale, newH = h * scale;
-      x = cx - newW / 2; y = cy - newH / 2;
+      x = cx2 - newW / 2; y = cy2 - newH / 2;
       w = newW; h = newH;
     }
 
     const cx = x + w / 2, cy = y + h / 2;
     const r = Math.min(w, h) / 2;
+
+    // --- Rotation wrapper (v0.7.1): rotate around the source center.
+    //     Applied globally so glow + clip + blur + title all rotate together.
+    const rot = src.rotation || 0;
+    if (rot !== 0) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      ctx.translate(-cx, -cy);
+    }
 
     // --- Glow border (always on, uses current theme accent) ---
     const accent = this._accentColor || '#a3e635';
@@ -1165,6 +1185,9 @@ const Engine = {
       ctx.fillText(src.title, tx + tw / 2, ty + th / 2);
       ctx.restore();
     }
+
+    // Close the rotation wrapper opened earlier
+    if (rot !== 0) ctx.restore();
   },
 
   /* Build a canvas path for the given shape. Centralized so glow + clip
@@ -1832,6 +1855,13 @@ const TextOverlays = {
       const cx = item.x + w / 2, cy = item.y + h / 2;
 
       ctx.save();
+      // v0.7.1: rotation around the text center
+      const rot = item.rotation || 0;
+      if (rot !== 0) {
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.translate(-cx, -cy);
+      }
       ctx.font = `800 ${item.size}px Bangers, Righteous, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -2561,6 +2591,7 @@ const Brand = {
   logoDataUrl: null,      // persisted in localStorage
   slogan: '',             // e.g. "code + robot + ☕"
   x: 40, y: 40, w: 180, h: 180,   // bounding box (top-left + size)
+  rotation: 0,
   effect: 'none',          // 'none'|'spin'|'pulse'|'bounce'|'wiggle'|'glow'|'rainbow'
 
   load() {
@@ -2669,6 +2700,12 @@ const Brand = {
     if (!this.visible()) return;
     ctx.save();
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
+    // v0.7.1: user rotation applied first, then the "fun effect"
+    if (this.rotation) {
+      ctx.translate(cx, cy);
+      ctx.rotate(this.rotation);
+      ctx.translate(-cx, -cy);
+    }
     this._applyEffect(ctx, cx, cy);
 
     // Logo
@@ -3341,6 +3378,75 @@ const BadgeCard = {
   },
 };
 
+/* TextToolbar — Canva-style floating action bar that appears above the
+   currently-selected text overlay. Color swatches, rotate, duplicate,
+   delete. HTML element positioned in stage coordinates, updated each
+   frame so it follows drag/resize/rotate. Not drawn on the canvas —
+   so it's teacher-only, never in the recording. */
+const TextToolbar = {
+  el: null,
+  setup() {
+    this.el = $('tcTextToolbar');
+    if (!this.el) return;
+    // Color swatches
+    this.el.querySelectorAll('.tc-swatch').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const item = this._selected();
+        if (item) item.color = btn.dataset.color;
+      });
+    });
+    // Rotate buttons
+    $('tcToolbarRotLeft')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = this._selected();
+      if (item) item.rotation = (item.rotation || 0) - Math.PI / 36;
+    });
+    $('tcToolbarRotRight')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = this._selected();
+      if (item) item.rotation = (item.rotation || 0) + Math.PI / 36;
+    });
+    // Duplicate
+    $('tcToolbarDup')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orig = this._selected();
+      if (!orig) return;
+      const copy = TextOverlays.add(orig.text, { ttl: 0, size: orig.size, color: orig.color, bg: orig.bg });
+      copy.x = orig.x + 30; copy.y = orig.y + 30;
+      copy.rotation = orig.rotation || 0;
+      TextOverlays.selectedId = copy.id;
+    });
+    // Delete
+    $('tcToolbarDel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId != null) TextOverlays.remove(TextOverlays.selectedId);
+    });
+  },
+
+  _selected() {
+    if (TextOverlays.selectedId == null) return null;
+    return TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+  },
+
+  updatePosition() {
+    if (!this.el) return;
+    const item = this._selected();
+    if (!item) { this.el.style.display = 'none'; return; }
+    const stage = $('tcStage');
+    if (!stage) return;
+    const r = stage.getBoundingClientRect();
+    // Map canvas coords to stage pixels
+    const cx = (item.x + item.w / 2) / Engine.width * r.width;
+    const topY = item.y / Engine.height * r.height;
+    // Place the toolbar 12px above the text, centered horizontally.
+    // We use stage-relative absolute positioning so it moves with the stage.
+    this.el.style.display = 'flex';
+    this.el.style.left = `${cx}px`;
+    this.el.style.top = `${Math.max(8, topY - 48)}px`;
+  },
+};
+
 /* Maximize mode (v0.7.0): hide sidebars/header/ticker and stretch the
    stage to the full viewport. Toggle with the ⛶ button. Also toggles
    browser-level fullscreen via the Fullscreen API for extra impact. */
@@ -3916,6 +4022,7 @@ function setupHotkeys() {
           const copy = TextOverlays.add(orig.text, { ttl: 0, size: orig.size, color: orig.color, bg: orig.bg });
           copy.x = orig.x + 30;
           copy.y = orig.y + 30;
+          copy.rotation = orig.rotation || 0;
           TextOverlays.selectedId = copy.id;
           showToast(t('overlayDuplicated'), 1500);
         }
@@ -3924,6 +4031,33 @@ function setupHotkeys() {
       return;
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Layer ordering for the selected text overlay: [ = backward, ] = forward,
+    // Shift+[ = send to back, Shift+] = bring to front. (v0.7.1)
+    if ((k === '[' || k === ']') && TextOverlays.selectedId != null) {
+      const items = TextOverlays.items;
+      const idx = items.findIndex(i => i.id === TextOverlays.selectedId);
+      if (idx < 0) return;
+      const item = items[idx];
+      items.splice(idx, 1);
+      let newIdx;
+      if (k === '[' && e.shiftKey)       newIdx = 0;
+      else if (k === ']' && e.shiftKey)  newIdx = items.length;
+      else if (k === '[')                newIdx = Math.max(0, idx - 1);
+      else                                newIdx = Math.min(items.length, idx + 1);
+      items.splice(newIdx, 0, item);
+      showToast(k === '[' ? t('layerBackward') : t('layerForward'), 1200);
+      e.preventDefault();
+      return;
+    }
+    // Rotation hotkeys for the selected text overlay: , = -5°, . = +5°, / = reset
+    if ((k === ',' || k === '.' || k === '/') && TextOverlays.selectedId != null) {
+      const item = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+      if (!item) return;
+      if (k === '/') item.rotation = 0;
+      else           item.rotation = (item.rotation || 0) + (k === ',' ? -Math.PI / 36 : Math.PI / 36);
+      e.preventDefault();
+      return;
+    }
     if (k >= '1' && k <= '9') {
       const idx = parseInt(k) - 1;
       if (Scenes.presets[idx]) { Scenes.switch(Scenes.presets[idx].key); e.preventDefault(); }
@@ -4140,6 +4274,7 @@ async function init() {
   Whiteboard.setup();
   Zoom.setup();
   Drag.setup();
+  TextToolbar.setup();
 
   renderScenes();
   renderTextPresets();

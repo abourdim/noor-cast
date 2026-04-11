@@ -109,7 +109,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.0</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.1</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -164,6 +164,20 @@
               </div>
               <!-- Silence warning chip — appears (teacher-only, never in the recording) when mic is quiet >1.8s -->
               <div class="tc-silence-chip" id="tcSilenceChip">⚠ <span data-i18n="silenceChip">Tu es silencieux…</span></div>
+              <!-- Floating color picker toolbar, shown above a selected text overlay (v0.7.1 Canva-style) -->
+              <div class="tc-text-toolbar" id="tcTextToolbar" style="display:none">
+                <button class="tc-swatch" data-color="#ffffff" style="background:#ffffff" title="white"></button>
+                <button class="tc-swatch" data-color="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+                <button class="tc-swatch" data-color="#fb923c" style="background:#fb923c" title="orange"></button>
+                <button class="tc-swatch" data-color="#ef4444" style="background:#ef4444" title="red"></button>
+                <button class="tc-swatch" data-color="#a3e635" style="background:#a3e635" title="lime"></button>
+                <button class="tc-swatch" data-color="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+                <span class="tc-toolbar-sep"></span>
+                <button class="tc-toolbar-btn" id="tcToolbarRotLeft" title=",">↺</button>
+                <button class="tc-toolbar-btn" id="tcToolbarRotRight" title=".">↻</button>
+                <button class="tc-toolbar-btn" id="tcToolbarDup" title="Ctrl+D">📋</button>
+                <button class="tc-toolbar-btn tc-toolbar-del" id="tcToolbarDel" title="Del">✕</button>
+              </div>
             </div>
           </div>
 
@@ -535,7 +549,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.0</strong></span>
+      <span class="badge"><strong>v0.7.1</strong></span>
     </div>
   </aside>
 
@@ -633,7 +647,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.0</strong></span>
+      <span class="badge"><strong>v0.7.1</strong></span>
     </div>
   </aside>
 
@@ -665,7 +679,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.0</strong></span>
+      <span class="badge"><strong>v0.7.1</strong></span>
     </div>
   </aside>
 

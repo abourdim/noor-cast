@@ -3,6 +3,39 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.1 — 2026-04-11 (Canva polish)
+
+The three Canva-inspired features I didn't fit into v0.7.0, shipped
+as a quick follow-up.
+
+### Added
+- **Rotation** on every layer (source, text, brand). Rendered via
+  `ctx.rotate` around the layer's center. Hotkeys for selected text
+  overlays: `,` = −5°, `.` = +5°, `/` = reset to 0°. Brand rotates
+  together with its "fun effect".
+- **Layer ordering hotkeys** for the selected text overlay:
+  - `[` / `]` move one step back/forward
+  - `Shift+[` / `Shift+]` send to back / bring to front
+- **Floating text color toolbar** (Canva-style), appears above the
+  currently-selected text overlay:
+  - 6 color swatches (white / yellow / orange / red / lime / cyan)
+  - ↺ / ↻ rotate buttons
+  - 📋 duplicate button
+  - ✕ delete button
+  - Position follows the selected layer each frame (Engine.render
+    calls `TextToolbar.updatePosition()`)
+  - HTML element, not drawn to canvas → teacher-only, invisible in
+    the recording
+
+### Verified (Preview MCP harness)
+- Rotation hotkeys: 0 → 0.0873 → 0.1745 rad, reset → 0 ✓
+- Layer ordering: `A,B,C` → `]` → `B,A,C` → `Shift+]` → `B,C,A` →
+  `Shift+[` → `A,B,C` ✓
+- Color swatch click: `item.color === '#fb923c'` ✓
+- Toolbar rotate button updates rotation ✓
+- Toolbar positions correctly above selected text ✓
+- Toolbar hides on deselect ✓
+
 ## v0.7.0 — 2026-04-11
 
 **Direct response to real user feedback** — finally got the smoke-test
