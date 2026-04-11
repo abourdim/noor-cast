@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.3.0 — kids-friendly multi-cam screen recorder
+   TutoCast v0.4.0 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -101,6 +101,12 @@ const LANG = {
     trimNoTake: '⚠️ Aucun tuto enregistré à couper',
     trimTooShort: '⚠️ Sélection trop courte (minimum 0.2 s)',
     cancel: 'Annuler',
+    pinSource: '📌 Épingler (garder la position entre les scènes)',
+    unpinSource: '🔓 Détacher (la scène reprend le contrôle)',
+    toggleBlur: '🌫 Flou arrière-plan',
+    removeSource: '✕ Retirer',
+    resetLayout: '🔓 Réinitialiser la disposition',
+    layoutReset: '🔓 Disposition réinitialisée',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -192,6 +198,13 @@ const LANG = {
     news_030_3: "Export MP4 natif quand le navigateur le supporte (Chrome 126+, Safari, Edge)",
     news_030_4: "Préférence de format dans les Paramètres : Auto / MP4 / WebM",
     news_030_5: "Trim réencode via offscreen canvas + MediaRecorder — zéro dépendance, zéro cloud",
+    news_040: "Drag-drop + effets 🖐✨",
+    news_040_1: "Drag-drop : déplace n'importe quelle source directement sur le canvas, elle est épinglée automatiquement",
+    news_040_2: "Aimantation à 7 ancres (coins, centres d'arêtes, centre) dans un rayon de 60 px",
+    news_040_3: "Bouton 📌 / 🔓 dans chaque source pour épingler manuellement, et « Réinitialiser la disposition » pour tout relâcher",
+    news_040_4: "Flou arrière-plan par source (🌫) — net au centre, flou dégradé aux bords",
+    news_040_5: "Halo de couleur thème toujours actif autour des sources visibles",
+    news_040_6: "Pulse visuelle sur chaque marker (M) — retour visible que la marque est enregistrée",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -308,6 +321,12 @@ const LANG = {
     trimNoTake: '⚠️ No tutorial recorded to trim',
     trimTooShort: '⚠️ Selection too short (minimum 0.2 s)',
     cancel: 'Cancel',
+    pinSource: '📌 Pin (keep position across scenes)',
+    unpinSource: '🔓 Unpin (scene controls position again)',
+    toggleBlur: '🌫 Background blur',
+    removeSource: '✕ Remove',
+    resetLayout: '🔓 Reset layout',
+    layoutReset: '🔓 Layout reset',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -399,6 +418,13 @@ const LANG = {
     news_030_3: "Native MP4 export where the browser supports it (Chrome 126+, Safari, Edge)",
     news_030_4: "Output format preference in Settings: Auto / MP4 / WebM",
     news_030_5: "Trim re-encodes via offscreen canvas + MediaRecorder — zero deps, zero cloud",
+    news_040: "Drag-drop + effects 🖐✨",
+    news_040_1: "Drag-drop: move any source directly on the canvas, it's auto-pinned",
+    news_040_2: "Snaps to 7 anchors (corners, edge centers, dead center) within a 60-px radius",
+    news_040_3: "Per-source 📌 / 🔓 button to pin manually, and \"Reset layout\" to release them all",
+    news_040_4: "Per-source background blur (🌫) — sharp center, blurred edge ring",
+    news_040_5: "Theme-accent glow halo around every visible source (always on)",
+    news_040_6: "Visible pulse on every marker (M) — the teacher gets instant confirmation",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -507,6 +533,12 @@ const LANG = {
     trimNoTake: '⚠️ لا يوجد درس مسجّل للقص',
     trimTooShort: '⚠️ التحديد قصير جدًا (الحد الأدنى 0.2 ث)',
     cancel: 'إلغاء',
+    pinSource: '📌 تثبيت (الاحتفاظ بالموضع بين المشاهد)',
+    unpinSource: '🔓 فك التثبيت (المشهد يتحكم في الموضع)',
+    toggleBlur: '🌫 تمويه الخلفية',
+    removeSource: '✕ إزالة',
+    resetLayout: '🔓 إعادة ضبط التخطيط',
+    layoutReset: '🔓 تمت إعادة ضبط التخطيط',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -594,6 +626,13 @@ const LANG = {
     news_030_3: "تصدير MP4 أصلي عند دعم المتصفح (Chrome 126+، Safari، Edge)",
     news_030_4: "تفضيل تنسيق الإخراج في الإعدادات: تلقائي / MP4 / WebM",
     news_030_5: "القص يعيد الترميز عبر canvas بدون شاشة + MediaRecorder — بلا تبعيات، بلا سحابة",
+    news_040: "السحب والإفلات + تأثيرات 🖐✨",
+    news_040_1: "السحب والإفلات: حرّك أي مصدر مباشرة على الكانفاس، يُثبّت تلقائيًا",
+    news_040_2: "انجذاب إلى 7 نقاط (زوايا، مراكز الحواف، المركز) ضمن نصف قطر 60 بكسل",
+    news_040_3: "زر 📌 / 🔓 في كل مصدر للتثبيت يدويًا، و«إعادة ضبط التخطيط» لتحرير الكل",
+    news_040_4: "تمويه خلفية لكل مصدر (🌫) — واضح في الوسط، مموّه عند الحواف",
+    news_040_5: "هالة بلون المظهر حول كل مصدر مرئي (دائمًا مفعّلة)",
+    news_040_6: "نبضة بصرية عند كل علامة (M) — تأكيد فوري للمعلّم",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",
@@ -672,6 +711,10 @@ window.dismissSplash = dismissSplash;
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('tc-theme', name); } catch {}
+  // Give the browser one tick to apply the new :root vars, then re-cache.
+  if (typeof Engine !== 'undefined' && Engine.canvas) {
+    setTimeout(() => Engine.refreshAccent(), 20);
+  }
 }
 
 const logHistory = [];
@@ -721,6 +764,7 @@ const Engine = {
   frozenFrame: null,  // ImageData when frozen
   audioCtx: null, audioDest: null, analyser: null,
   _canvasStream: null,   // cached captureStream (v0.2.1: fix multiple-capture races)
+  _accentColor: '#a3e635', // cached from CSS var, refreshed on theme change
   fps: 0, _fpsFrames: 0, _fpsLast: 0,
 
   init() {
@@ -753,6 +797,7 @@ const Engine = {
     silentSrc.start();
     this._silentKeepalive = silentSrc;
 
+    this.refreshAccent();
     this._fpsLast = performance.now();
     this.loop();
     // Draw one forced frame synchronously so captureStream() has something
@@ -820,28 +865,99 @@ const Engine = {
 
   drawSource(src) {
     const { ctx } = this;
-    const { video, x, y, w, h, shape, mirrored } = src;
-    ctx.save();
-    if (shape === 'circle') {
-      ctx.beginPath();
-      ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
+    const { video, shape, mirrored } = src;
+    let { x, y, w, h } = src;
+
+    // --- Marker pulse: briefly scale all sources up 5% on Chapters.addMarker ---
+    const pulseT = Recorder._pulseUntil ? Math.max(0, Recorder._pulseUntil - Date.now()) : 0;
+    if (pulseT > 0) {
+      const phase = pulseT / Recorder._pulseDur;           // 1 → 0
+      const amp = Math.sin(phase * Math.PI) * 0.05;         // ease bell
+      const scale = 1 + amp;
+      const cx = x + w / 2, cy = y + h / 2;
+      const newW = w * scale, newH = h * scale;
+      x = cx - newW / 2; y = cy - newH / 2;
+      w = newW; h = newH;
     }
+
+    const cx = x + w / 2, cy = y + h / 2;
+    const r = Math.min(w, h) / 2;
+
+    // --- Glow border (always on, uses current theme accent) ---
+    const accent = this._accentColor || '#a3e635';
+    ctx.save();
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 30;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    if (shape === 'circle') ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    else                    ctx.rect(x, y, w, h);
+    ctx.stroke();
+    ctx.stroke();  // double-stroke for a stronger halo
+    ctx.restore();
+
+    // --- Main fill with optional background blur ---
+    if (src.blur) {
+      // Pass 1: blurred outer layer, clipped to the source shape.
+      // Over-draws by 12px all around to hide the blur-filter edge artifacts.
+      ctx.save();
+      if (shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+      } else {
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+      }
+      ctx.filter = 'blur(24px)';
+      this._drawVideoRespectingMirror(video, x - 12, y - 12, w + 24, h + 24, mirrored);
+      ctx.filter = 'none';
+      ctx.restore();
+
+      // Pass 2: sharp inner region (72% of the outer shape) — centered.
+      // For a face-cam, this keeps the face crisp while the edges stay blurred.
+      ctx.save();
+      const sharpRatio = 0.72;
+      if (shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * sharpRatio, 0, Math.PI * 2);
+        ctx.clip();
+      } else {
+        const mx = (w * (1 - sharpRatio)) / 2;
+        const my = (h * (1 - sharpRatio)) / 2;
+        ctx.beginPath();
+        ctx.rect(x + mx, y + my, w - mx * 2, h - my * 2);
+        ctx.clip();
+      }
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored);
+      ctx.restore();
+    } else {
+      // Default path: single pass with shape clip
+      ctx.save();
+      if (shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+      }
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored);
+      ctx.restore();
+    }
+  },
+
+  /* Draw a video frame honouring the mirrored flag. Extracted because the
+     blur path needs two draws and duplicating the transform is ugly. */
+  _drawVideoRespectingMirror(video, x, y, w, h, mirrored) {
+    const ctx = this.ctx;
     if (mirrored) {
+      ctx.save();
       ctx.translate(x + w, y);
       ctx.scale(-1, 1);
       ctx.drawImage(video, 0, 0, w, h);
+      ctx.restore();
     } else {
       ctx.drawImage(video, x, y, w, h);
-    }
-    ctx.restore();
-    // subtle border for visibility
-    if (shape === 'circle') {
-      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
-      ctx.stroke();
     }
   },
 
@@ -937,6 +1053,15 @@ const Engine = {
     }
   },
 
+  /* Re-read the current theme's --accent CSS variable and cache it for the
+     glow border. Called at init and after every setTheme. */
+  refreshAccent() {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      if (v) this._accentColor = v;
+    } catch {}
+  },
+
   /* Refresh the camera and mic dropdowns.
      Labels are only populated after at least one getUserMedia permission
      has been granted, so we call this after addCamera / setMic succeeds. */
@@ -997,9 +1122,37 @@ const Engine = {
         const icon = s.type === 'screen' ? '🖥' : s.type === 'cam' ? '🎥' : '🎤';
         const iconEl = document.createElement('span'); iconEl.textContent = icon;
         const nameEl = document.createElement('span'); nameEl.className = 'tc-src-name'; nameEl.textContent = s.label;
-        const btn = document.createElement('button'); btn.title = 'Remove'; btn.textContent = '✕';
-        btn.addEventListener('click', () => this.removeSource(s.id));
-        li.append(iconEl, nameEl, btn);
+        li.append(iconEl, nameEl);
+
+        // Video sources get pin + blur toggles (mic doesn't)
+        if (s.type !== 'mic') {
+          const pin = document.createElement('button');
+          pin.className = 'tc-src-icon-btn' + (s.custom ? ' active' : '');
+          pin.textContent = s.custom ? '📌' : '🔓';
+          pin.title = s.custom ? t('unpinSource') : t('pinSource');
+          pin.addEventListener('click', (e) => { e.stopPropagation(); Drag.togglePin(s.id); });
+          li.appendChild(pin);
+
+          const blur = document.createElement('button');
+          blur.className = 'tc-src-icon-btn' + (s.blur ? ' active' : '');
+          blur.textContent = '🌫';
+          blur.title = t('toggleBlur');
+          blur.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.blur = !s.blur;
+            this.onSourcesChanged();
+            log(`🌫 blur ${s.blur ? 'on' : 'off'}: ${s.label}`, 'info');
+          });
+          li.appendChild(blur);
+        }
+
+        const rm = document.createElement('button');
+        rm.className = 'tc-src-icon-btn';
+        rm.title = t('removeSource');
+        rm.textContent = '✕';
+        rm.addEventListener('click', (e) => { e.stopPropagation(); this.removeSource(s.id); });
+        li.appendChild(rm);
+
         list.appendChild(li);
       });
     }
@@ -1099,13 +1252,16 @@ const Scenes = {
 };
 
 function setLayout(engine, layout) {
-  // facecam = last camera added (usually the "you" cam)
-  const cams = engine.sources.filter(s => s.type === 'cam');
-  const screen = engine.sources.find(s => s.type === 'screen');
+  // v0.4.0: sources flagged .custom (user has drag-positioned them) are
+  // left alone entirely — position, size, shape, visibility, all preserved.
+  // Free sources are hidden at the start and then the scene's layout rules
+  // pick who to show and where.
+  const freeCams   = engine.sources.filter(s => s.type === 'cam'    && !s.custom);
+  const freeScreen = engine.sources.find(s => s.type === 'screen' && !s.custom);
   const W = engine.width, H = engine.height;
 
-  // Hide all
-  engine.sources.forEach(s => { if (s.type !== 'mic') s.visible = false; });
+  // Hide all non-custom, non-mic sources; custom keep their visibility
+  engine.sources.forEach(s => { if (s.type !== 'mic' && !s.custom) s.visible = false; });
 
   const place = (src, pos) => {
     if (!src) return;
@@ -1116,14 +1272,14 @@ function setLayout(engine, layout) {
     else if (pos === 'br')   { src.x = W - 440; src.y = H - 340; src.w = 400; src.h = 300; src.shape = 'circle'; }
   };
 
-  if (layout.screen) place(screen, layout.screen);
-  if (layout.firstCam && cams[0]) place(cams[0], layout.firstCam);
-  if (layout.secondCam && cams[1]) place(cams[1], layout.secondCam);
-  const faceCam = cams[cams.length - 1];
+  if (layout.screen) place(freeScreen, layout.screen);
+  if (layout.firstCam && freeCams[0]) place(freeCams[0], layout.firstCam);
+  if (layout.secondCam && freeCams[1]) place(freeCams[1], layout.secondCam);
+  const faceCam = freeCams[freeCams.length - 1];
   if (layout.facecam && faceCam) place(faceCam, layout.facecam);
 
   if (layout.grid) {
-    const items = [screen, cams[0], cams[1]].filter(Boolean);
+    const items = [freeScreen, freeCams[0], freeCams[1]].filter(Boolean);
     const cellW = W / 2, cellH = H / 2;
     items.forEach((s, i) => {
       s.visible = true; s.shape = 'rect';
@@ -1345,6 +1501,7 @@ function renderTextPresets() {
 const Recorder = {
   recorder: null, chunks: [], startTime: 0, pausedDuration: 0, pausedAt: 0,
   timerId: null, state: 'idle', frozen: false,
+  _pulseUntil: 0, _pulseDur: 800,  // marker-pulse animation state (ms)
 
   async start() {
     if (this.state !== 'idle' || this._starting) {
@@ -1637,6 +1794,8 @@ const Chapters = {
     this.items.push({ time: Recorder.elapsed() / 1000, label });
     log(`${t('markerAdded')} — ${label}`, 'info');
     Sfx.play('mark');
+    // Trigger the visual pulse animation on all visible sources
+    Recorder._pulseUntil = Date.now() + Recorder._pulseDur;
     Badges.unlockMarker(this.items.length);
   }
 };
@@ -1744,6 +1903,125 @@ const Whiteboard = {
     log(this.on ? t('drawOn') : t('drawOff'), 'info');
   },
   clear() { Engine.overlayCtx.clearRect(0, 0, Engine.width, Engine.height); }
+};
+
+/* Drag — click-drag a source on the stage to reposition it. Marks the
+   source as .custom so that subsequent scene switches don't override its
+   position (setLayout explicitly skips custom sources). A "📌 Pin" toggle
+   in the Active Sources list flips this manually, and a "Reset layout"
+   button in the scenes sidebar clears all custom flags at once. */
+const Drag = {
+  dragId: null, offsetX: 0, offsetY: 0,
+  SNAP_RADIUS: 60,   // in canvas (1920×1080) coords
+  stage: null,
+
+  setup() {
+    this.stage = $('tcStage');
+    if (!this.stage) return;
+    // Mouse handlers bound to the stage itself. Whiteboard/laser already
+    // own different events; we only consume mousedown if we actually hit
+    // a source AND whiteboard mode is off.
+    this.stage.addEventListener('mousedown', (e) => this._onDown(e));
+    window.addEventListener('mousemove', (e) => this._onMove(e));
+    window.addEventListener('mouseup', (e) => this._onUp(e));
+  },
+
+  _stageToCanvas(e) {
+    const r = this.stage.getBoundingClientRect();
+    return [
+      ((e.clientX - r.left) / r.width) * Engine.width,
+      ((e.clientY - r.top)  / r.height) * Engine.height,
+    ];
+  },
+
+  /* Topmost-first hit test over visible video sources. Last-drawn = topmost
+     in the array, so iterate in reverse. */
+  _hitTest(mx, my) {
+    const srcs = Engine.sources;
+    for (let i = srcs.length - 1; i >= 0; i--) {
+      const s = srcs[i];
+      if (s.type === 'mic' || !s.visible || !s.video) continue;
+      const { x, y, w, h, shape } = s;
+      if (shape === 'circle') {
+        const cx = x + w / 2, cy = y + h / 2;
+        const r = Math.min(w, h) / 2;
+        if ((mx - cx) ** 2 + (my - cy) ** 2 <= r * r) return s;
+      } else {
+        if (mx >= x && mx <= x + w && my >= y && my <= y + h) return s;
+      }
+    }
+    return null;
+  },
+
+  _onDown(e) {
+    if (e.button !== 0) return;
+    if (Whiteboard.on) return;   // whiteboard owns the mousedown
+    const [mx, my] = this._stageToCanvas(e);
+    const hit = this._hitTest(mx, my);
+    if (!hit) return;
+    this.dragId = hit.id;
+    this.offsetX = mx - hit.x;
+    this.offsetY = my - hit.y;
+    this.stage.classList.add('dragging');
+    e.preventDefault();
+  },
+
+  _onMove(e) {
+    if (this.dragId == null) return;
+    const src = Engine.sources.find(s => s.id === this.dragId);
+    if (!src) { this.dragId = null; return; }
+    const [mx, my] = this._stageToCanvas(e);
+    let nx = mx - this.offsetX;
+    let ny = my - this.offsetY;
+    // Snap to one of 7 anchors (4 corners, 3 center-line points)
+    const W = Engine.width, H = Engine.height, M = 40;
+    const anchors = [
+      [M,               M],                  // TL
+      [W - src.w - M,   M],                  // TR
+      [M,               H - src.h - M],      // BL
+      [W - src.w - M,   H - src.h - M],      // BR
+      [(W - src.w) / 2, M],                  // top-center
+      [(W - src.w) / 2, H - src.h - M],      // bottom-center
+      [(W - src.w) / 2, (H - src.h) / 2],    // dead-center
+    ];
+    const r2 = this.SNAP_RADIUS * this.SNAP_RADIUS;
+    for (const [ax, ay] of anchors) {
+      if ((nx - ax) ** 2 + (ny - ay) ** 2 < r2) { nx = ax; ny = ay; break; }
+    }
+    // Keep the source fully inside the canvas
+    nx = Math.max(0, Math.min(W - src.w, nx));
+    ny = Math.max(0, Math.min(H - src.h, ny));
+    src.x = nx; src.y = ny;
+    src.custom = true;                    // mark as user-positioned
+    Engine.onSourcesChanged();            // refresh the pin icon in the list
+  },
+
+  _onUp() {
+    if (this.dragId != null) {
+      this.dragId = null;
+      if (this.stage) this.stage.classList.remove('dragging');
+    }
+  },
+
+  /* Flip the custom flag on a source; if re-pinned to scene control,
+     re-run the active scene so it gets re-positioned. */
+  togglePin(id) {
+    const src = Engine.sources.find(s => s.id === id);
+    if (!src) return;
+    src.custom = !src.custom;
+    Engine.onSourcesChanged();
+    if (!src.custom) Scenes.reapply();
+    log(src.custom ? `📌 pinned: ${src.label}` : `🔓 unpinned: ${src.label}`, 'info');
+  },
+
+  /* Clear .custom on every source and re-run the active scene. */
+  resetAll() {
+    Engine.sources.forEach(s => { s.custom = false; });
+    Scenes.reapply();
+    Engine.onSourcesChanged();
+    log('🔓 layout reset', 'info');
+    showToast(t('layoutReset'), 1800);
+  },
 };
 
 /* Zoom — smooth canvas transform for code-tutorial "focus moments".
@@ -2459,6 +2737,10 @@ function wireEvents() {
     }
   });
 
+  // Reset Layout — clears all .custom flags and re-runs the active scene
+  const resetBtn = $('tcResetLayoutBtn');
+  if (resetBtn) resetBtn.addEventListener('click', () => Drag.resetAll());
+
   // Trim wiring
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
   $('tcTrimClose').addEventListener('click', () => Trim.close());
@@ -2498,6 +2780,7 @@ async function init() {
   Laser.setup();
   Whiteboard.setup();
   Zoom.setup();
+  Drag.setup();
 
   renderScenes();
   renderTextPresets();

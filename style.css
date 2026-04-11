@@ -1385,18 +1385,59 @@ body.log-open .app {
 
 .tc-src-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .tc-src-list li {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 4px;
   padding: 6px 8px;
   background: rgba(0,0,0,.3);
   border-radius: 8px;
   font-size: .8rem;
 }
 .tc-src-list li .tc-src-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tc-src-list li button {
-  background: none; border: 0; color: var(--text-muted); cursor: pointer; padding: 2px 6px;
-  border-radius: 4px; font-size: .85rem;
+
+/* Compact icon-button cluster (pin / blur / remove) inside each source row.
+   Layered as a flex row with subtle backgrounds so they don't disappear
+   into the list item. */
+.tc-src-icon-btn {
+  background: rgba(255,255,255,.04);
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: .85rem;
+  line-height: 1;
+  transition: background .12s, border-color .12s, color .12s;
 }
-.tc-src-list li button:hover { color: #ef4444; background: rgba(239,68,68,.1); }
+.tc-src-icon-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.18);
+  color: var(--text);
+}
+.tc-src-icon-btn.active {
+  background: rgba(163,230,53,.15);
+  border-color: rgba(163,230,53,.4);
+  color: var(--accent);
+}
+/* The remove ✕ stays red on hover for destructive intent */
+.tc-src-icon-btn:last-child:hover {
+  background: rgba(239,68,68,.15);
+  border-color: rgba(239,68,68,.45);
+  color: #fca5a5;
+}
+
+/* Reset-layout button in the scenes sidebar */
+.tc-reset-layout {
+  margin-top: 8px;
+  background: rgba(163,230,53,.05);
+  border: 1px dashed rgba(163,230,53,.3);
+  font-size: .75rem;
+  opacity: .8;
+  transition: opacity .12s;
+}
+.tc-reset-layout:hover { opacity: 1; }
+
+/* Dragging cursor on the stage while moving a source */
+.tc-stage.dragging { cursor: grabbing !important; }
+.tc-stage.dragging canvas { cursor: grabbing !important; }
 
 /* VU meter */
 .tc-vu {

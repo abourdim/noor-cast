@@ -61,6 +61,18 @@ Switch between them in real time during the recording using number keys **1-6**.
 - **📸 Snapshot** (`S`) — download a PNG of the current frame
 - **🏷 Markers** (`M`) — tag moments in the recording, exported as chapters
 
+### 🖐 Drag & drop layout (v0.4.0)
+- **Click-drag any source** on the stage to reposition it
+- **Auto-pins** the source so scene switches won't move it back
+- **Snaps to 7 anchors** (corners + edge centers + center) within 60 px
+- **📌 / 🔓 toggle** per source to pin / unpin manually
+- **Reset layout** button to release every source back to scene control
+
+### ✨ Effects (v0.4.0)
+- **Background blur** (🌫 per source) — sharp center, blurred edge ring, no ML model
+- **Theme-accent glow** around every visible source (follows the 8 themes)
+- **Marker pulse** — sources briefly scale on every `M` keypress
+
 ### ✂️ Post-recording trim (v0.3.0)
 - Open the recorded take in the built-in trim modal
 - Drag two handles to pick the final start/end points

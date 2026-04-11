@@ -3,6 +3,114 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.4.0 — 2026-04-11
+
+Drag-drop + three effects landed in one session. All verified end-to-end
+via the Preview MCP harness.
+
+### Added — 🖐 Drag-drop source repositioning
+
+Every competitor has it. TutoCast now does too, with a twist that fits
+the scene-based workflow.
+
+- **Click-drag any visible source** (screen or cam) on the stage to
+  reposition it. Hit-test iterates visible sources in reverse z-order
+  (topmost first) with a proper circle/rect containment test.
+- **Snaps to 7 anchors** (4 corners at 40 px margin, top-center,
+  bottom-center, dead-center) within a 60 px radius. Keeps kid layouts
+  clean without pixel-hunting.
+- **Auto-pin on drag**: the moment you drag a source, it gets a
+  `custom: true` flag. `setLayout` then explicitly skips it on every
+  subsequent scene switch — so your carefully-placed facecam stays
+  put when you press `1`, `2`, `3`, `4`, `5`, `6`.
+- **Per-source 📌 / 🔓 toggle** in the Active Sources list to pin or
+  unpin manually. Unpinning re-applies the current scene so the
+  source snaps back to its template position.
+- **"🔓 Reset layout" button** in the scenes sidebar clears every
+  `custom` flag at once and re-runs the active scene, for when the
+  user wants to start the layout over.
+- **Constrained to canvas bounds** — sources can't be dragged off the
+  1920×1080 frame.
+- **Does not conflict with the whiteboard** — drag is silently
+  suppressed while `Whiteboard.on` is true.
+
+### Added — 📷 Background blur (per source)
+
+Zoom-style virtual background, adapted for a web sandbox where we can't
+ship a segmentation model.
+
+- **Technique**: render the source twice when `src.blur` is true:
+  1. Pass 1: blurred outer ring, clipped to the source shape,
+     over-drawn by 12 px to hide `ctx.filter = 'blur(24px)'` edge
+     artifacts.
+  2. Pass 2: sharp inner 72% of the shape.
+  For circular face-cams this fakes the "sharp face, blurred edges"
+  look that webcam bokeh is supposed to produce. Not scientifically
+  segmented — but for a centered face in a circle PIP it's a
+  noticeable improvement against a busy background.
+- **Per-source 🌫 toggle** in the Active Sources list.
+- **No dependencies.** Uses only the standard Canvas2D `ctx.filter`
+  property (Firefox 53+, Chrome 52+, Safari 9.1+).
+
+### Added — ✨ Theme-accent glow (always on)
+
+Replaces the old `rgba(255,255,255,.3)` 4-px stroke that was barely
+visible. Now every source gets:
+
+- A cached `--accent` color value from the active theme
+- `ctx.shadowColor + shadowBlur: 30` around a double-stroked outline
+- Refreshed automatically on theme change (`setTheme` triggers
+  `Engine.refreshAccent()` after one tick so `:root` vars are applied)
+
+Works for both circular and rectangular sources. Matches the 8 theme
+palettes (jungle green, mosque gold, zellige, andalus, riad, medina,
+space, robot).
+
+### Added — 💓 Marker pulse
+
+When the teacher hits `M` (or the Marker button) during recording, the
+visible sources briefly scale up 5% and ease back over 800 ms. Sine
+bell shape. Gives instant visual confirmation that the marker was
+registered, reinforces the existing audio `Sfx.play('mark')` beep.
+
+- `Recorder._pulseUntil` + `_pulseDur` state; `Chapters.addMarker()`
+  sets the deadline.
+- `Engine.drawSource()` computes `sin(phase * π) * 0.05` and applies
+  it per-source.
+
+### Changed — `Engine.drawSource` rewritten
+
+The old version was 25 lines. The new one handles:
+
+- Marker pulse scale
+- Theme accent glow
+- Optional background blur (two-pass with shape clipping)
+- Mirror flag (extracted into `_drawVideoRespectingMirror` helper)
+- Shape clip (rect or circle)
+
+Still ~80 lines including the helper. No dependencies added.
+
+### Changed — `setLayout` respects custom sources
+
+Filters out `custom` sources at the top (`freeCams`, `freeScreen`)
+instead of iterating all sources. Custom sources keep their visibility,
+position, size, and shape across scene switches.
+
+### Verified (Preview MCP harness, 1600×900)
+- **Drag**: cam placed at (1480, 740) → dragged to (299, 300), `custom: true`
+- **Snap**: target (50, 45) → snapped to (40, 40) TL corner ✓
+- **Scene persistence**: scene switched to `robot`, dragged source stayed at (299, 300) ✓
+- **Pin toggle**: flips `custom` flag ✓
+- **Reset all**: clears `custom` on every source ✓
+- **Blur toggle**: flips `src.blur` on/off ✓
+- **Glow**: accent cached as `#a3e635` (jungle theme) ✓
+- **Pulse**: `addMarker()` during recording sets `_pulseUntil` in the future ✓
+- **Source list**: 3 icon buttons per row (pin, blur, remove) ✓
+- **Reset layout button**: present in the scenes sidebar ✓
+
+### i18n
+- 6 new keys × 3 languages (pin/unpin/blur/remove/reset labels) + 7 news_040 keys × 3 langs.
+
 ## v0.3.0 — 2026-04-11
 
 Three competitor-parity features, deliberately scoped tight. Built after
