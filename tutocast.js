@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.84 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.85 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.84';
+const APP_VERSION = '0.7.85';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 10:15';
+const BUILD_DATE = '2026-04-12 10:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -242,6 +242,7 @@ const LANG = {
     captionsOff: 'Sous-titres off',
     cheatScenes: '🎭 Scènes',
     cheatScene: 'Changer de scène',
+    cheatSceneMove: 'Réordonner la scène active',
     cheatText: '✏️ Texte sélectionné',
     cheatTextDup: 'Dupliquer le texte',
     cheatTextRotL: 'Rotation −5°',
@@ -814,6 +815,7 @@ const LANG = {
     captionsOff: 'Captions off',
     cheatScenes: '🎭 Scenes',
     cheatScene: 'Switch scene',
+    cheatSceneMove: 'Reorder the active scene',
     cheatText: '✏️ Selected text',
     cheatTextDup: 'Duplicate text',
     cheatTextRotL: 'Rotate −5°',
@@ -1378,6 +1380,7 @@ const LANG = {
     captionsOff: 'ترجمات مُعطَّلة',
     cheatScenes: '🎭 المشاهد',
     cheatScene: 'تغيير المشهد',
+    cheatSceneMove: 'إعادة ترتيب المشهد النشط',
     cheatText: '✏️ النص المحدد',
     cheatTextDup: 'تكرار النص',
     cheatTextRotL: 'دوران −5°',
@@ -9698,6 +9701,22 @@ function setupHotkeys() {
         Recorder.softRewind();
       } else {
         LayoutHistory.undo();
+      }
+      e.preventDefault();
+      return;
+    }
+    // v0.7.85: Shift+Alt+ArrowLeft/Right = move active scene in the grid
+    if (e.shiftKey && e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const presets = Scenes.presets;
+      const idx = presets.findIndex(p => p.key === Scenes.active);
+      if (idx < 0) { e.preventDefault(); return; }
+      const newIdx = e.key === 'ArrowLeft' ? Math.max(0, idx - 1) : Math.min(presets.length - 1, idx + 1);
+      if (newIdx !== idx) {
+        const [moved] = presets.splice(idx, 1);
+        presets.splice(newIdx, 0, moved);
+        Scenes.saveOrder();
+        Scenes.render();
+        showToast('🎭 ' + (t('sceneReordered') || 'Scene reordered'), 900);
       }
       e.preventDefault();
       return;
