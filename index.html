@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.89</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.90</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -1001,7 +1001,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.89</strong></span>
+      <span class="badge"><strong>v0.7.90</strong></span>
     </div>
   </aside>
 
@@ -1134,6 +1134,17 @@
                 <span data-i18n="timeGoalAutoStop">Arrêt automatique à l'objectif</span>
               </label>
             </div>
+          </div>
+          <!-- v0.7.90: opt-in on-canvas clock overlay -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcClockToggle" class="checkbox-ctrl" />
+              <span data-i18n="clockLabel">🕐 Afficher l'heure dans un coin</span>
+            </label>
+            <label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem">
+              <input type="checkbox" id="tcClockDateToggle" class="checkbox-ctrl" checked />
+              <span data-i18n="clockDateLabel">+ date</span>
+            </label>
           </div>
           <!-- v0.7.34: cinematic intro/outro cards baked into the recording -->
           <div class="sidebar-group">
@@ -1341,7 +1352,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.89</strong></span>
+      <span class="badge"><strong>v0.7.90</strong></span>
     </div>
   </aside>
 
@@ -1373,7 +1384,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.89</strong></span>
+      <span class="badge"><strong>v0.7.90</strong></span>
     </div>
   </aside>
 

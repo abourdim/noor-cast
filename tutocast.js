@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.89 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.90 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.89';
+const APP_VERSION = '0.7.90';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 11:30';
+const BUILD_DATE = '2026-04-12 11:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -176,6 +176,8 @@ const LANG = {
     timeGoalAutoStop: "Arrêt automatique à l'objectif",
     timeGoalReached: '⏳ Objectif atteint',
     timeGoalStop: '⏳ Objectif atteint — arrêt auto',
+    clockLabel: '🕐 Afficher l\'heure dans un coin',
+    clockDateLabel: '+ date',
     badgeBtn: 'Carte badge',
     badgeHeadline: 'Tuto enregistré !',
     badgeStatDuration: 'Durée',
@@ -758,6 +760,8 @@ const LANG = {
     timeGoalAutoStop: 'Auto-stop at goal',
     timeGoalReached: '⏳ Goal reached',
     timeGoalStop: '⏳ Goal reached — auto-stop',
+    clockLabel: '🕐 Show clock in a corner',
+    clockDateLabel: '+ date',
     badgeBtn: 'Badge card',
     badgeHeadline: 'Tutorial recorded!',
     badgeStatDuration: 'Duration',
@@ -1332,6 +1336,8 @@ const LANG = {
     timeGoalAutoStop: 'إيقاف تلقائي عند الهدف',
     timeGoalReached: '⏳ تم بلوغ الهدف',
     timeGoalStop: '⏳ تم بلوغ الهدف — إيقاف تلقائي',
+    clockLabel: '🕐 إظهار الساعة في زاوية',
+    clockDateLabel: '+ التاريخ',
     badgeBtn: 'بطاقة شارة',
     badgeHeadline: 'تم تسجيل الدرس!',
     badgeStatDuration: 'المدة',
@@ -2366,6 +2372,10 @@ const Engine = {
 
     // v0.7.64: scene transition fade overlay (drawn on top of everything)
     SceneTransition.render(ctx, width, height);
+
+    // v0.7.90: opt-in on-canvas clock for time-stamped lesson recordings.
+    // Drawn after the transition so the fade can dim it; baked into output.
+    ClockOverlay.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -8188,6 +8198,81 @@ const GuidedTour = {
   },
 };
 
+/* ─────────── ClockOverlay — v0.7.90 opt-in on-canvas clock for time-stamped takes
+
+   Useful for lesson recordings where you want to show when it happened or
+   to date-stamp tutorials. Drawn inside Engine.render so it's baked into
+   the recording, not a DOM chip. Top-right corner, 40px from edges. */
+const ClockOverlay = {
+  enabled: false,
+  showDate: true,
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-clock') === '1';
+      this.showDate = localStorage.getItem('tc-clock-date') !== '0';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-clock', v ? '1' : '0'); } catch {}
+  },
+  setShowDate(v) {
+    this.showDate = !!v;
+    try { localStorage.setItem('tc-clock-date', v ? '1' : '0'); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const date = this.showDate
+      ? `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`
+      : '';
+    ctx.save();
+    // Position top-right, 40px from edges
+    const padX = 40, padY = 40;
+    const timeSize = 42;
+    const dateSize = 22;
+    ctx.font = `700 ${timeSize}px ui-monospace, monospace`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    // Measure widest
+    const tw = ctx.measureText(time).width;
+    let dw = 0;
+    if (date) {
+      ctx.font = `400 ${dateSize}px ui-monospace, monospace`;
+      dw = ctx.measureText(date).width;
+    }
+    const boxW = Math.max(tw, dw) + 24;
+    const boxH = (date ? timeSize + dateSize + 10 : timeSize) + 16;
+    const boxX = W - padX - boxW;
+    const boxY = padY;
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, .6)';
+    ctx.beginPath();
+    const r = 10;
+    ctx.moveTo(boxX + r, boxY);
+    ctx.lineTo(boxX + boxW - r, boxY); ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+    ctx.lineTo(boxX + boxW, boxY + boxH - r); ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+    ctx.lineTo(boxX + r, boxY + boxH); ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+    ctx.lineTo(boxX, boxY + r); ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+    ctx.fill();
+    // Time
+    ctx.font = `700 ${timeSize}px ui-monospace, monospace`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(time, boxX + boxW - 12, boxY + 8);
+    // Date
+    if (date) {
+      ctx.font = `400 ${dateSize}px ui-monospace, monospace`;
+      ctx.fillStyle = 'rgba(255, 255, 255, .7)';
+      ctx.fillText(date, boxX + boxW - 12, boxY + 8 + timeSize + 4);
+    }
+    ctx.restore();
+  },
+};
+
 /* ─────────── SilenceWatch — flash a ⚠ chip when the mic has been quiet too long
 
    The cheap-and-honest alternative to "uh/um detection". We can't run
@@ -10475,6 +10560,18 @@ function wireEvents() {
     tgAuto.addEventListener('change', (e) => TimeGoal.setAutoStop(e.target.checked));
   }
 
+  // v0.7.90: opt-in on-canvas clock overlay (HH:MM:SS + optional date)
+  const clkEl = $('tcClockToggle');
+  if (clkEl) {
+    clkEl.checked = ClockOverlay.enabled;
+    clkEl.addEventListener('change', (e) => ClockOverlay.setEnabled(e.target.checked));
+  }
+  const clkDateEl = $('tcClockDateToggle');
+  if (clkDateEl) {
+    clkDateEl.checked = ClockOverlay.showDate;
+    clkDateEl.addEventListener('change', (e) => ClockOverlay.setShowDate(e.target.checked));
+  }
+
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');
   if (ioEl) {
@@ -10607,6 +10704,7 @@ async function init() {
   MicBoost.load();  // v0.7.69
   VolumeDuck.load();  // v0.7.83
   TimeGoal.load();
+  ClockOverlay.load();  // v0.7.90
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();
