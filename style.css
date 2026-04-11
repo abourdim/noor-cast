@@ -2434,6 +2434,85 @@ body.log-open .app {
   animation: splashFadeIn .2s ease-out;
 }
 
+/* v0.7.28: My tutorials history — compact list of the last 10 takes */
+.tc-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.tc-history-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: .85rem;
+  color: rgba(255, 255, 255, .5);
+  font-style: italic;
+}
+.tc-history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 8px;
+  transition: background .15s;
+}
+.tc-history-row:hover {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .14);
+}
+.tc-history-main { flex: 1; min-width: 0; }
+.tc-history-name {
+  font-family: var(--font-h), Righteous, sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-history-meta {
+  font-size: .68rem;
+  font-family: ui-monospace, monospace;
+  color: rgba(255, 255, 255, .55);
+  margin-top: 2px;
+}
+.tc-history-tags {
+  font-size: .72rem;
+  color: rgba(255, 255, 255, .75);
+  white-space: nowrap;
+}
+.tc-history-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, .1);
+}
+.tc-history-stats {
+  font-family: ui-monospace, monospace;
+  font-size: .72rem;
+  color: rgba(255, 255, 255, .55);
+}
+.tc-history-clear {
+  background: rgba(239, 68, 68, .1);
+  border: 1px solid rgba(239, 68, 68, .3);
+  color: #fca5a5;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .72rem;
+  font-family: var(--font-h), Righteous, sans-serif;
+}
+.tc-history-clear:hover {
+  background: rgba(239, 68, 68, .22);
+  border-color: rgba(239, 68, 68, .55);
+  color: #fff;
+}
+
 /* v0.7.27: Sensor timeline mini-chart in the take panel */
 .tc-sensor-chart-wrap {
   margin: 12px 0 8px;

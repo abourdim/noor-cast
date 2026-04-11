@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.27 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.28 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.27';
+const APP_VERSION = '0.7.28';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 19:45';
+const BUILD_DATE = '2026-04-11 20:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -199,6 +199,11 @@ const LANG = {
     autoResumed: '▶ Enregistrement repris',
     sensorChartTitle: 'Capteurs micro:bit',
     sensorBtnsLegend: 'Boutons',
+    historyTitle: 'Mes tutos',
+    historyEmpty: 'Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !',
+    historyClear: "🗑 Vider l'historique",
+    historyConfirmClear: "Vider l'historique des tutos ?",
+    historyCleared: '🗑 Historique vidé',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Réinitialiser les badges',
     clearCache: 'Vider le cache complet',
@@ -600,6 +605,11 @@ const LANG = {
     autoResumed: '▶ Recording resumed',
     sensorChartTitle: 'micro:bit sensors',
     sensorBtnsLegend: 'Buttons',
+    historyTitle: 'My tutorials',
+    historyEmpty: 'No tutorial yet. Click 🔴 RECORD to start!',
+    historyClear: '🗑 Clear history',
+    historyConfirmClear: 'Clear tutorial history?',
+    historyCleared: '🗑 History cleared',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Reset badges',
     clearCache: 'Clear all local data',
@@ -993,6 +1003,11 @@ const LANG = {
     autoResumed: '▶ استُؤنف التسجيل',
     sensorChartTitle: 'مستشعرات micro:bit',
     sensorBtnsLegend: 'الأزرار',
+    historyTitle: 'دروسي',
+    historyEmpty: 'لا دروس بعد. اضغط 🔴 تسجيل للبدء!',
+    historyClear: '🗑 مسح السجل',
+    historyConfirmClear: 'مسح سجل الدروس؟',
+    historyCleared: '🗑 تم مسح السجل',
     setSecDanger: '♻ الصيانة',
     resetBadges: 'إعادة تعيين الشارات',
     clearCache: 'مسح جميع البيانات المحلية',
@@ -2777,6 +2792,18 @@ const Recorder = {
 
     // v0.6.0: snapshot stats for the BadgeCard generator
     BadgeCard.capture(blob, this.elapsed());
+
+    // v0.7.28: push this take to the history log. Metadata only (name,
+    // duration, size, badge/scene counts). No blob, no frames — tiny
+    // localStorage footprint.
+    History.add({
+      at: Date.now(),
+      name: fname,
+      durSec: Math.round(this.elapsed() / 1000),
+      scenes: Badges.scenesUsed ? Badges.scenesUsed.size : 0,
+      badges: Badges.unlocked ? Badges.unlocked.size : 0,
+      size: blob.size,
+    });
 
     // trigger auto-download of webm
     setTimeout(() => dl.click(), 200);
@@ -5077,6 +5104,98 @@ const SensorTimeline = {
   },
 };
 
+/* v0.7.28: History — track the last 10 finished takes (metadata only)
+   and render them into the "📊 Mes tutos" collapsible section below
+   Badges. Data persisted in localStorage tc-history as an array of
+   small entries: { at, name, durSec, scenes, badges, size }. */
+const History = {
+  MAX: 10,
+  entries: [],
+
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-history');
+      this.entries = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(this.entries)) this.entries = [];
+    } catch { this.entries = []; }
+  },
+
+  save() {
+    try { localStorage.setItem('tc-history', JSON.stringify(this.entries)); } catch {}
+  },
+
+  add(entry) {
+    // Newest first
+    this.entries.unshift(entry);
+    if (this.entries.length > this.MAX) this.entries = this.entries.slice(0, this.MAX);
+    this.save();
+    this.render();
+  },
+
+  clear() {
+    this.entries = [];
+    this.save();
+    this.render();
+  },
+
+  _fmtDur(secs) {
+    const s = Math.max(0, Math.floor(secs || 0));
+    const m = Math.floor(s / 60);
+    return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  },
+  _fmtDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString(undefined, {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  },
+  _fmtSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  },
+
+  render() {
+    const el = $('tcHistory');
+    const stats = $('tcHistoryStats');
+    if (!el) return;
+    if (this.entries.length === 0) {
+      el.innerHTML = `<div class="tc-history-empty">${t('historyEmpty')}</div>`;
+      if (stats) stats.textContent = '';
+      return;
+    }
+    // Build rows
+    const rows = this.entries.map(e => {
+      const dur = this._fmtDur(e.durSec);
+      const date = this._fmtDate(e.at);
+      const size = this._fmtSize(e.size);
+      const badges = (e.badges || 0) > 0 ? `🏆 ${e.badges}` : '';
+      const scenes = (e.scenes || 0) > 0 ? `🎭 ${e.scenes}` : '';
+      return `
+        <div class="tc-history-row">
+          <div class="tc-history-main">
+            <div class="tc-history-name">${this._escape(e.name || 'take')}</div>
+            <div class="tc-history-meta">${date} · ${dur}${size ? ' · ' + size : ''}</div>
+          </div>
+          <div class="tc-history-tags">${badges}${badges && scenes ? ' ' : ''}${scenes}</div>
+        </div>
+      `;
+    }).join('');
+    el.innerHTML = rows;
+    if (stats) {
+      const totalSecs = this.entries.reduce((s, e) => s + (e.durSec || 0), 0);
+      stats.textContent = `${this.entries.length} · ${this._fmtDur(totalSecs)}`;
+    }
+  },
+
+  _escape(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  },
+};
+
 /* v0.7.27: SensorChart — renders the SensorTimeline samples into the
    take panel's mini-chart canvas. X/Y/Z accelerometer lines over time,
    button A/B presses as short vertical marks at the bottom. Purely
@@ -6104,6 +6223,13 @@ function wireEvents() {
       try { localStorage.setItem('tc-auto-pause', e.target.checked ? '1' : '0'); } catch {}
     });
   }
+  // v0.7.28: History clear button
+  $('tcHistoryClearBtn')?.addEventListener('click', () => {
+    if (History.entries.length === 0) return;
+    if (!confirm(t('historyConfirmClear') || "Vider l'historique des tutos ?")) return;
+    History.clear();
+    showToast(t('historyCleared') || '🗑 Historique vidé', 1400);
+  });
 
   // Sensor-triggered overlay toggle (v0.5.0) — opt-in in Settings
   const sensorOverlayEl = $('tcSensorOverlayToggle');
@@ -6151,6 +6277,7 @@ async function init() {
   Sfx.load();
   Jingle.load();
   IntroOutro.load();
+  History.load();
   Brand.load();
   Badges.load();
 
@@ -6173,6 +6300,7 @@ async function init() {
   renderScenes();
   renderTextPresets();
   renderBadges();
+  History.render();
   renderTicker();
   Templates.renderStepStrip();
 
