@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.56 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.57 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.56';
+const APP_VERSION = '0.7.57';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 03:15';
+const BUILD_DATE = '2026-04-12 03:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -213,6 +213,7 @@ const LANG = {
     outroTagline: 'Ton tuto est prêt',
     outroPlaying: '🎬 Outro en cours…',
     autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
+    captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
@@ -711,6 +712,7 @@ const LANG = {
     outroTagline: 'Your tutorial is ready',
     outroPlaying: '🎬 Outro playing…',
     autoPauseLabel: '⏸ Auto-pause when you switch tab',
+    captionsLabel: '💬 Live captions (Chrome/Edge)',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
@@ -1201,6 +1203,7 @@ const LANG = {
     outroTagline: 'درسك جاهز',
     outroPlaying: '🎬 الخاتمة قيد التشغيل…',
     autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
+    captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
@@ -1737,6 +1740,9 @@ const Engine = {
 
     // draw text overlays (unscaled so they stay readable)
     TextOverlays.drawAll(ctx);
+
+    // v0.7.57: live captions overlay
+    LiveCaptions.render(ctx, width, height);
 
     // draw sensor overlay if active (unscaled)
     Sensors.drawOverlay(ctx);
@@ -3321,6 +3327,7 @@ const Recorder = {
       Chapters.add(t('scene_' + Scenes.active));
       SensorTimeline.start();
       SilenceWatch.start();
+      LiveCaptions.start();
       this.updateUI();
       this.startTimer();
       log(t('recStarted'), 'success');
@@ -3486,6 +3493,7 @@ const Recorder = {
     this.stopTimer();
     SensorTimeline.stop();
     SilenceWatch.stop();
+    LiveCaptions.stop();
   },
 
   finish() {
@@ -6951,6 +6959,122 @@ const SilenceWatch = {
   },
 };
 
+/* ─────────── LiveCaptions — v0.7.57 opt-in WebSpeech live subtitles
+
+   Uses the browser's built-in SpeechRecognition (Chrome/Edge webkit
+   prefix) to transcribe what the teacher is saying and draw it on
+   the bottom of the canvas as a white-on-black subtitle card.
+   Drawn ON the canvas (inside Engine.render) so it ends up IN the
+   recording — not teacher-only like the teleprompter. Zero network,
+   zero external API, no training data. Auto-restarts when Chrome
+   hits its ~50s silence timeout. */
+const LiveCaptions = {
+  enabled: false,
+  running: false,
+  recognition: null,
+  current: '',       // interim transcript currently displayed
+  _lastFinalAt: 0,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-captions') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-captions', v ? '1' : '0'); } catch {}
+    if (!v && this.running) this.stop();
+  },
+
+  supported() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  },
+
+  start() {
+    if (!this.supported() || !this.enabled || this.running) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SR();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    // Pick language from the current i18n setting
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    this.recognition.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    this.recognition.onresult = (ev) => {
+      let interim = '', finalT = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (r.isFinal) finalT += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      if (finalT) {
+        this.current = finalT.trim();
+        this._lastFinalAt = performance.now();
+      } else if (interim) {
+        this.current = interim.trim();
+      }
+      // Clamp display length
+      if (this.current.length > 80) this.current = '…' + this.current.slice(-80);
+    };
+    this.recognition.onerror = (e) => {
+      log('caption error: ' + e.error, 'error');
+      this.running = false;
+    };
+    this.recognition.onend = () => {
+      // Chrome auto-stops after ~50s of silence. Restart if still enabled.
+      if (this.running && this.enabled) {
+        try { this.recognition.start(); } catch {}
+      }
+    };
+    try {
+      this.recognition.start();
+      this.running = true;
+    } catch (e) {
+      log('caption start failed: ' + e.message, 'error');
+    }
+  },
+
+  stop() {
+    this.running = false;
+    try { this.recognition && this.recognition.stop(); } catch {}
+    this.recognition = null;
+    this.current = '';
+  },
+
+  // Called from Engine.render() each frame to draw the current caption
+  // at the bottom of the canvas. Fades out 3s after last final result.
+  render(ctx, W, H) {
+    if (!this.running || !this.current) return;
+    const age = performance.now() - this._lastFinalAt;
+    const alpha = age < 3000 ? 1 : Math.max(0, 1 - (age - 3000) / 500);
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = '800 54px Righteous, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    // Measure + draw a black rounded-rect background with padding
+    const metrics = ctx.measureText(this.current);
+    const padX = 28, padY = 16;
+    const boxW = Math.min(W - 80, metrics.width + padX * 2);
+    const boxH = 54 * 1.2 + padY * 2;
+    const boxX = (W - boxW) / 2;
+    const boxY = H - boxH - 40;
+    ctx.fillStyle = 'rgba(0, 0, 0, .8)';
+    ctx.beginPath();
+    const r = 14;
+    ctx.moveTo(boxX + r, boxY);
+    ctx.lineTo(boxX + boxW - r, boxY); ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+    ctx.lineTo(boxX + boxW, boxY + boxH - r); ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+    ctx.lineTo(boxX + r, boxY + boxH); ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+    ctx.lineTo(boxX, boxY + r); ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+    ctx.fill();
+    // Text
+    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+    ctx.strokeText(this.current, W / 2, boxY + boxH - padY);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(this.current, W / 2, boxY + boxH - padY);
+    ctx.restore();
+  },
+};
+
 /* ─────────── SensorTimeline — record micro:bit samples to CSV ───────────
 
    Unique to TutoCast: because we read the micro:bit's accelerometer and
@@ -8415,6 +8539,18 @@ function wireEvents() {
     ioEl.checked = IntroOutro.enabled;
     ioEl.addEventListener('change', (e) => IntroOutro.setEnabled(e.target.checked));
   }
+  // v0.7.57: Live captions toggle — opt-in in Settings
+  const capEl = $('tcCaptionsToggle');
+  if (capEl) {
+    capEl.checked = LiveCaptions.enabled;
+    capEl.disabled = !LiveCaptions.supported();
+    if (!LiveCaptions.supported()) {
+      capEl.parentElement.style.opacity = '.5';
+      capEl.parentElement.title = 'Not supported in this browser';
+    }
+    capEl.addEventListener('change', (e) => LiveCaptions.setEnabled(e.target.checked));
+  }
+
   // v0.7.26: Auto-pause on tab focus loss — opt-in in Settings.
   // Reads localStorage directly in the visibilitychange listener so
   // no dedicated object is needed.
@@ -8495,6 +8631,7 @@ async function init() {
 
   Sfx.load();
   Jingle.load();
+  LiveCaptions.load();
   SceneIntroText.load();
   IntroOutro.load();
   History.load();
