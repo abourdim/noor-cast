@@ -3,6 +3,77 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.2.1 — 2026-04-11 (hotfix)
+
+**Critical hotfix: the recording pipeline has been producing 0-byte webms
+since v0.1.0.** Every "successful" recording since the initial release
+silently wrote an empty file to disk. The preview canvas always worked,
+the snapshot tool always worked, the REC button lit up, the timer ticked,
+the chapter markers got created, the success toast and confetti fired —
+but the downloaded `.webm` was 0 bytes every time. Surfaced the moment
+a human actually tried to record something end-to-end instead of trusting
+the UI state.
+
+### Fixed
+- **`Engine.getMasterStream()` called `canvas.captureStream(30)` fresh on
+  every `Recorder.start()`**, which is a well-documented anti-pattern in
+  both Chrome and Firefox: successive `captureStream()` invocations on
+  the same canvas can hand back a video track that never delivers frames
+  to `MediaRecorder`. Now cached in `Engine._canvasStream` on first use
+  and the same video track is reused forever.
+- **`MediaRecorder` had no `onerror` handler.** Any encoder failure
+  (codec mismatch, stream issue, browser bug) was silently swallowed.
+  Now logged to the activity panel and surfaced as a toast.
+- **`ondataavailable` discarded zero-size chunks without logging them**,
+  making it impossible to tell whether the encoder was never starting
+  or starting-and-failing. Now every chunk is counted and the first
+  three plus every 20th are logged with their size.
+- **`Recorder.finish()` never checked `blob.size`.** A 0-byte blob was
+  happily written to disk and announced as a success. Now detects it,
+  shows `recEmpty` toast directing the user to the activity log, and
+  aborts the download.
+- **`Recorder.stop()` didn't force a final data flush.** Firefox has a
+  history of unreliable implicit flushes at stop. Now calls
+  `recorder.requestData()` right before `recorder.stop()`.
+- **`recorder.start(1000)` timeslice was too large.** Recordings shorter
+  than 1s would buffer nothing and the implicit flush at stop() — if it
+  even happened — was the only chance to capture data. Reduced to 250 ms
+  so even a 500 ms take produces multiple chunks.
+- **`AudioContext` was never resumed.** Chrome and Firefox start the
+  audio context in `suspended` state until the user triggers it. The
+  audio destination in `Engine.audioDest` therefore produced a silent
+  but structurally-valid audio track, which is a known trigger for
+  MediaRecorder to delay or skip the first keyframe. `Recorder.start()`
+  now calls `Engine.audioCtx.resume()` before anything else.
+- **Double-`start()` race during the 3-2-1 countdown.** The hotkey
+  handler's `state === 'idle' ? start : stop` branch could trigger two
+  parallel `start()` calls if the user pressed `R` twice during countdown
+  (state was still `'idle'` during the countdown `await`). Now guarded
+  by a `_starting` latch and an explicit state check.
+
+### Added
+- **Startup diagnostic logging**: canvas stream track counts, mime type
+  chosen, video track ready-state, per-chunk byte counts, total bytes
+  at finish, and final file size in MB on success. All visible in the
+  📜 Activity Log panel. If this still produces an empty file on someone's
+  machine, the log will tell us exactly which stage is failing.
+- **`recorderError`, `recEmpty`, `recNoStream` i18n keys** in FR/EN/AR.
+- **`Engine.init()` now calls `this.render()` once synchronously** after
+  setting up canvases, so the first frame is committed to the canvas
+  before `captureStream()` is first invoked by the recorder. Also
+  protects against a theoretical race where the recorder starts before
+  the RAF loop has produced its first frame.
+
+### How to verify the fix
+1. Open the app, grant camera/screen permissions.
+2. Pick any template or add a screen + cam manually.
+3. Hit the big REC button, wait 5 seconds, press STOP.
+4. Expected: the download is a non-zero `.webm` file, the activity log
+   shows chunk events like `📦 chunk #1: 14523 B (total 14523 B)`, and
+   the finish line says `⏹ ... — X.Y MB`.
+5. If it's still 0 bytes: open 📜 Activity Log, copy the lines, and hand
+   them over. The diagnostic output will pinpoint the broken stage.
+
 ## v0.2.0 — 2026-04-11
 
 First real product lever: **guided templates**. The biggest drop-off point

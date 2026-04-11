@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.2.0 — kids-friendly multi-cam screen recorder
+   TutoCast v0.2.1 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.2.1';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -87,6 +87,9 @@ const LANG = {
     btError: '❌ Connexion micro:bit échouée',
     permissionDenied: '🔒 Permission refusée. Autorise la caméra dans les réglages du navigateur.',
     needCamSelected: '⚠️ Choisis une caméra dans la liste d\'abord',
+    recorderError: '✗ Erreur d\'enregistrement (voir le journal)',
+    recEmpty: '⚠️ Fichier vide — l\'encodeur n\'a rien produit. Ouvre le journal 📜 pour le détail.',
+    recNoStream: '✗ Pas de flux vidéo — relance la page',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -152,6 +155,12 @@ const LANG = {
     news_020_3: "Clic sur une étape = changement de scène + marker chapitre",
     news_020_4: "Les caméras ajoutées après sélection d'un template héritent du layout",
     news_020_5: "Ouverture automatique au premier lancement (remplace l'ancienne onboarding)",
+    news_021: "Hotfix critique : fichiers 0 octet corrigés 🚨",
+    news_021_1: "canvas.captureStream mis en cache (évite une race connue Chrome/Firefox)",
+    news_021_2: "Gestionnaire d'erreur MediaRecorder + logs détaillés dans le journal",
+    news_021_3: "Détection des enregistrements vides — plus de téléchargement fantôme",
+    news_021_4: "Timeslice ramené de 1000 à 250 ms pour les prises courtes",
+    news_021_5: "AudioContext repris au début de l'enregistrement",
     tplTitle: "Choisis comment tu commences",
     tplSubtitle: "Chaque template te guide étape par étape",
     tplChoose: "Choisir un template",
@@ -254,6 +263,9 @@ const LANG = {
     btError: '❌ micro:bit connection failed',
     permissionDenied: '🔒 Permission denied. Allow camera in browser settings.',
     needCamSelected: '⚠️ Pick a camera from the list first',
+    recorderError: '✗ Recording error (see the log)',
+    recEmpty: '⚠️ Empty file — the encoder produced nothing. Open the log 📜 for details.',
+    recNoStream: '✗ No video stream — reload the page',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -319,6 +331,12 @@ const LANG = {
     news_020_3: "Clicking a step switches scene + adds a chapter marker",
     news_020_4: "Cams added after picking a template inherit the layout",
     news_020_5: "Opens automatically on first launch (replaces old onboarding)",
+    news_021: "Critical hotfix: zero-byte webm files fixed 🚨",
+    news_021_1: "canvas.captureStream is now cached (avoids a known Chrome/Firefox race)",
+    news_021_2: "MediaRecorder error handler + detailed logging in the activity panel",
+    news_021_3: "Empty recordings are detected — no more phantom downloads",
+    news_021_4: "Timeslice reduced from 1000 ms to 250 ms for short takes",
+    news_021_5: "AudioContext is resumed on recording start",
     tplTitle: "Pick how you start",
     tplSubtitle: "Each template guides you step by step",
     tplChoose: "Pick a template",
@@ -413,6 +431,9 @@ const LANG = {
     btConnected: '📡 micro:bit متصل!', btError: '❌ فشل الاتصال',
     permissionDenied: '🔒 تم رفض الإذن.',
     needCamSelected: '⚠️ اختر كاميرا من القائمة أولاً',
+    recorderError: '✗ خطأ في التسجيل (راجع السجل)',
+    recEmpty: '⚠️ ملف فارغ — لم ينتج المُرمِّز شيئًا. افتح السجل 📜 للتفاصيل.',
+    recNoStream: '✗ لا يوجد تدفق فيديو — أعد تحميل الصفحة',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -474,6 +495,12 @@ const LANG = {
     news_020_3: "النقر على خطوة = تغيير المشهد + إضافة علامة فصل",
     news_020_4: "الكاميرات المضافة بعد اختيار قالب ترث التخطيط",
     news_020_5: "يفتح تلقائيًا عند أول تشغيل (يستبدل الإرشاد القديم)",
+    news_021: "إصلاح حرج: ملفات webm بحجم صفر 🚨",
+    news_021_1: "تخزين canvas.captureStream مسبقًا (يتجنب مشكلة معروفة في Chrome/Firefox)",
+    news_021_2: "معالج أخطاء MediaRecorder + سجلات تفصيلية في لوحة النشاط",
+    news_021_3: "اكتشاف التسجيلات الفارغة — لا مزيد من التنزيلات الوهمية",
+    news_021_4: "تقليل الشريحة الزمنية من 1000 إلى 250 مللي ثانية للتسجيلات القصيرة",
+    news_021_5: "استئناف AudioContext عند بدء التسجيل",
     tplTitle: "اختر كيف تبدأ",
     tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
     tplChoose: "اختر قالبًا",
@@ -600,7 +627,7 @@ const Engine = {
   rafId: null,
   frozenFrame: null,  // ImageData when frozen
   audioCtx: null, audioDest: null, analyser: null,
-  masterStream: null,
+  _canvasStream: null,   // cached captureStream (v0.2.1: fix multiple-capture races)
   fps: 0, _fpsFrames: 0, _fpsLast: 0,
 
   init() {
@@ -619,6 +646,9 @@ const Engine = {
     this.analyser.fftSize = 256;
     this._fpsLast = performance.now();
     this.loop();
+    // Draw one forced frame synchronously so captureStream() has something
+    // to grab on its first activation.
+    this.render();
   },
 
   loop() {
@@ -854,10 +884,26 @@ const Engine = {
     if (stage) stage.classList.toggle('has-sources', this.sources.some(s => s.type !== 'mic'));
   },
 
+  /* v0.2.1 FIX: captureStream() must be called once and the resulting video
+     track reused for every recording. Both Chrome and Firefox have races where
+     fresh-per-start captureStream() calls on the same canvas can hand back a
+     track that never delivers frames to MediaRecorder, producing zero-byte
+     webms. We now cache the stream on first use and re-use the same video
+     track forever. */
   getMasterStream() {
-    const videoTrack = this.canvas.captureStream(30).getVideoTracks()[0];
+    if (!this._canvasStream) {
+      this._canvasStream = this.canvas.captureStream(30);
+      log(`🎥 canvas stream: ${this._canvasStream.getVideoTracks().length}v ${this._canvasStream.getAudioTracks().length}a`, 'info');
+    }
+    const videoTrack = this._canvasStream.getVideoTracks()[0];
     const audioTrack = this.audioDest.stream.getAudioTracks()[0];
-    const tracks = [videoTrack];
+    if (!videoTrack) {
+      log('✗ captureStream returned no video track — recording will fail', 'error');
+    } else if (videoTrack.readyState !== 'live') {
+      log(`✗ video track state is ${videoTrack.readyState}`, 'error');
+    }
+    const tracks = [];
+    if (videoTrack) tracks.push(videoTrack);
     if (audioTrack) tracks.push(audioTrack);
     return new MediaStream(tracks);
   },
@@ -1178,41 +1224,85 @@ const Recorder = {
   timerId: null, state: 'idle', frozen: false,
 
   async start() {
+    if (this.state !== 'idle' || this._starting) {
+      log('✗ start() called while already starting/recording — ignored', 'error');
+      return;
+    }
     if (Engine.sources.filter(s => s.type !== 'mic').length === 0) {
       showToast(t('needSources'), 2500);
       return;
     }
-    // countdown
-    if ($('tcCountdownEnabled').checked) {
-      await this.countdown();
-    }
-    const stream = Engine.getMasterStream();
-    const mime = this.pickMime();
-    const bitrate = 4_000_000;
+    this._starting = true;
     try {
-      this.recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
-    } catch (e) {
-      // Try again without mimeType but keep the bitrate target
-      try {
-        this.recorder = new MediaRecorder(stream, { videoBitsPerSecond: bitrate });
-      } catch (e2) {
-        this.recorder = new MediaRecorder(stream);
+      // Chrome/Firefox start the AudioContext in 'suspended' state until
+      // a user gesture. Resume here so the audio track actually carries
+      // data (otherwise MediaRecorder can refuse to emit chunks).
+      if (Engine.audioCtx && Engine.audioCtx.state === 'suspended') {
+        try { await Engine.audioCtx.resume(); } catch {}
       }
+      // Countdown
+      if ($('tcCountdownEnabled').checked) {
+        await this.countdown();
+      }
+      const stream = Engine.getMasterStream();
+      const videoTracks = stream.getVideoTracks();
+      const audioTracks = stream.getAudioTracks();
+      log(`🎬 master stream: ${videoTracks.length}v ${audioTracks.length}a`, 'info');
+      if (videoTracks.length === 0) {
+        showToast(t('recNoStream'), 4000);
+        log('✗ no video track in master stream — aborting recording', 'error');
+        return;
+      }
+      const mime = this.pickMime();
+      log(`🎞 codec: ${mime || '(browser default)'}`, 'info');
+      const bitrate = 4_000_000;
+      try {
+        this.recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
+      } catch (e) {
+        log(`⚠ MediaRecorder fallback (no mime): ${e.message}`, 'error');
+        try {
+          this.recorder = new MediaRecorder(stream, { videoBitsPerSecond: bitrate });
+        } catch (e2) {
+          log(`⚠ MediaRecorder fallback (defaults): ${e2.message}`, 'error');
+          this.recorder = new MediaRecorder(stream);
+        }
+      }
+      this.chunks = [];
+      this._chunkCount = 0;
+      this._totalBytes = 0;
+      this.recorder.ondataavailable = e => {
+        this._chunkCount++;
+        const sz = e.data ? e.data.size : 0;
+        this._totalBytes += sz;
+        if (sz > 0) this.chunks.push(e.data);
+        // Log every chunk during the first few, then occasionally
+        if (this._chunkCount <= 3 || this._chunkCount % 20 === 0) {
+          log(`📦 chunk #${this._chunkCount}: ${sz} B (total ${this._totalBytes} B)`, sz > 0 ? 'info' : 'error');
+        }
+      };
+      this.recorder.onerror = (e) => {
+        const err = e && e.error ? e.error : e;
+        log(`✗ MediaRecorder error: ${err && err.name || ''} ${err && err.message || err}`, 'error');
+        showToast(t('recorderError'), 4000);
+      };
+      this.recorder.onstop = () => this.finish();
+      // 250 ms timeslice so even a 1-second recording buffers multiple chunks.
+      // Firefox has historically been unreliable with the final flush at stop();
+      // smaller slices reduce that risk.
+      this.recorder.start(250);
+      this.startTime = Date.now();
+      this.pausedDuration = 0;
+      this.state = 'recording';
+      Chapters.reset();
+      Chapters.add(t('scene_' + Scenes.active));
+      this.updateUI();
+      this.startTimer();
+      log(t('recStarted'), 'success');
+      showToast(t('recStarted'), 1500);
+      Sfx.play('start');
+    } finally {
+      this._starting = false;
     }
-    this.chunks = [];
-    this.recorder.ondataavailable = e => { if (e.data && e.data.size) this.chunks.push(e.data); };
-    this.recorder.onstop = () => this.finish();
-    this.recorder.start(1000);
-    this.startTime = Date.now();
-    this.pausedDuration = 0;
-    this.state = 'recording';
-    Chapters.reset();
-    Chapters.add(t('scene_' + Scenes.active));
-    this.updateUI();
-    this.startTimer();
-    log(t('recStarted'), 'success');
-    showToast(t('recStarted'), 1500);
-    Sfx.play('start');
   },
 
   pickMime() {
@@ -1259,13 +1349,27 @@ const Recorder = {
 
   stop() {
     if (!this.recorder) return;
-    try { this.recorder.stop(); } catch {}
+    // Force a final ondataavailable flush before stopping. Firefox has
+    // historically been unreliable with the implicit flush at stop().
+    try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch {}
+    try { this.recorder.stop(); } catch (e) { log(`✗ recorder.stop: ${e.message}`, 'error'); }
     this.state = 'idle';
     this.stopTimer();
   },
 
   finish() {
+    log(`🏁 finish: ${this.chunks.length} chunks, ${this._totalBytes || 0} B total`, 'info');
     const blob = new Blob(this.chunks, { type: this.chunks[0]?.type || 'video/webm' });
+
+    // v0.2.1: catch empty recordings loudly instead of silently downloading 0 B.
+    if (blob.size === 0) {
+      log('✗ 0-byte recording — pipeline produced no data', 'error');
+      showToast(t('recEmpty'), 5000);
+      this.updateUI();
+      this.resetSceneState();
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
     const video = $('tcTakeVideo');
     // revoke previous take URLs if any
@@ -1287,7 +1391,7 @@ const Recorder = {
     dlVtt.href = vttUrl; dlVtt.download = `${fname}.vtt`;
     // trigger auto-download of webm
     setTimeout(() => dl.click(), 200);
-    log(t('recStopped'), 'success');
+    log(`${t('recStopped')} — ${(blob.size / 1024 / 1024).toFixed(1)} MB`, 'success');
     showToast('🎉 ' + t('recStopped'), 2500);
     Sfx.play('stop');
     Confetti.burst();
