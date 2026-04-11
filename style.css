@@ -1909,6 +1909,28 @@ body.log-open .app {
   box-shadow: 0 0 0 2px rgba(163, 230, 53, .35);
 }
 
+/* v0.7.8 — custom ticker messages textarea */
+.tc-ticker-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: .8rem;
+  line-height: 1.4;
+  background: rgba(0, 0, 0, .4);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 6px;
+}
+.tc-ticker-textarea:focus { outline: none; border-color: var(--accent); }
+.tc-ticker-hint {
+  font-size: .7rem;
+  opacity: .6;
+  margin-top: 4px;
+}
+
 .tc-file-btn {
   display: flex;
   align-items: center;

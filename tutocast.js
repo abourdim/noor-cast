@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.7 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.8 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.7';
+const APP_VERSION = '0.7.8';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -140,6 +140,8 @@ const LANG = {
     brandSloganColor: '🎨 Couleur du slogan',
     brandLogoOpacity: '💧 Transparence du logo',
     brandLogoFilter: '🎨 Filtre du logo',
+    tickerCustomLabel: '📰 Messages du ticker (un par ligne)',
+    tickerCustomHint: 'Laisse vide pour utiliser les 10 conseils par défaut.',
     sourceTitlePh: 'Titre (ex: 💻 Mon code)',
     sourceShape: 'Forme',
     filter_none: '— Filtre —',
@@ -444,6 +446,8 @@ const LANG = {
     brandSloganColor: '🎨 Slogan color',
     brandLogoOpacity: '💧 Logo opacity',
     brandLogoFilter: '🎨 Logo filter',
+    tickerCustomLabel: '📰 Ticker messages (one per line)',
+    tickerCustomHint: 'Leave empty to use the 10 default tips.',
     sourceTitlePh: 'Title (e.g. 💻 My code)',
     sourceShape: 'Shape',
     filter_none: '— Filter —',
@@ -740,6 +744,8 @@ const LANG = {
     brandSloganColor: '🎨 لون الشعار النصي',
     brandLogoOpacity: '💧 شفافية الشعار',
     brandLogoFilter: '🎨 فلتر الشعار',
+    tickerCustomLabel: '📰 رسائل الشريط (سطر لكل رسالة)',
+    tickerCustomHint: 'اتركه فارغًا لاستخدام النصائح العشر الافتراضية.',
     sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
     sourceShape: 'الشكل',
     filter_none: '— فلتر —',
@@ -4375,8 +4381,17 @@ const Confetti = {
 
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
-  const items = [];
-  for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+  // v0.7.8: prefer user-defined custom messages from localStorage (one per
+  // line). Falls back to the 10 built-in tip_* translations if empty.
+  let items = [];
+  try {
+    const custom = localStorage.getItem('tc-ticker-custom') || '';
+    const lines = custom.split('\n').map(s => s.trim()).filter(Boolean);
+    if (lines.length) items = lines;
+  } catch {}
+  if (!items.length) {
+    for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+  }
   // duplicate to keep the scroll feeling continuous
   el.textContent = items.join('    •    ') + '    •    ' + items.join('    •    ');
 }
@@ -4651,6 +4666,17 @@ function wireEvents() {
   if (logoFilterSel) {
     logoFilterSel.value = Brand.logo.filter || 'none';
     logoFilterSel.addEventListener('change', (e) => Brand.setLogoFilter(e.target.value));
+  }
+  // Custom ticker messages (v0.7.8)
+  const tickerTA = $('tcTickerCustomInput');
+  if (tickerTA) {
+    try { tickerTA.value = localStorage.getItem('tc-ticker-custom') || ''; } catch {}
+    let tDebounce;
+    tickerTA.addEventListener('input', (e) => {
+      try { localStorage.setItem('tc-ticker-custom', e.target.value); } catch {}
+      clearTimeout(tDebounce);
+      tDebounce = setTimeout(() => renderTicker(), 200);
+    });
   }
   // Slogan color swatches (v0.7.4)
   document.querySelectorAll('#tcBrandColorRow .tc-brand-swatch').forEach(btn => {
