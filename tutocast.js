@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.51 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.52 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.51';
+const APP_VERSION = '0.7.52';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 02:00';
+const BUILD_DATE = '2026-04-12 02:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -238,6 +238,8 @@ const LANG = {
     bundleBadFormat: '❌ Format invalide',
     bundleConfirm: 'Remplacer tes données locales par cette session ?',
     buildMeta: 'Compilé',
+    badgeUnlockTitle: '🏆 Badge débloqué !',
+    badgeUnlockContinue: 'Continuer',
     faq_q9: '🏆 C\'est quoi les badges ?',
     faq_a9: 'Des petits trophées locaux qui se débloquent au fur et à mesure : 🎬 Premier tuto (1re prise finie), ⏱ Plus de 5 min (prise de plus de 5 minutes), 🎥 Multi-caméras (2+ cams en même temps), 🎭 Toutes les scènes (toutes utilisées), 🏷 Roi des markers (5+ dans une prise), 🤖 micro:bit branché (1re connexion BT). Tout est stocké localement (localStorage), rien n\'est envoyé nulle part.',
     faq_q10: '♻ Comment remettre à zéro mes données ?',
@@ -716,6 +718,8 @@ const LANG = {
     bundleBadFormat: '❌ Invalid format',
     bundleConfirm: 'Replace your local data with this session?',
     buildMeta: 'Built',
+    badgeUnlockTitle: '🏆 Badge unlocked!',
+    badgeUnlockContinue: 'Continue',
     faq_q9: '🏆 What are the badges?',
     faq_a9: 'Small local trophies that unlock as you go: 🎬 First tutorial (first take finished), ⏱ Over 5 min (take longer than 5 minutes), 🎥 Multi-camera (2+ cams at once), 🎭 All scenes (every preset used), 🏷 Marker king (5+ markers in one take), 🤖 micro:bit plugged (first BT connection). Everything is stored locally (localStorage), nothing is ever sent anywhere.',
     faq_q10: '♻ How do I reset my data?',
@@ -1186,6 +1190,8 @@ const LANG = {
     bundleBadFormat: '❌ تنسيق غير صالح',
     bundleConfirm: 'استبدال بياناتك المحلية بهذه الجلسة؟',
     buildMeta: 'تم البناء',
+    badgeUnlockTitle: '🏆 شارة مُفتوحة!',
+    badgeUnlockContinue: 'متابعة',
     faq_q9: '🏆 ما هي الشارات؟',
     faq_a9: 'كؤوس محلية صغيرة تُفتح تدريجيًا: 🎬 أول درس (أول تسجيل منتهٍ)، ⏱ أكثر من 5 دقائق (تسجيل يتجاوز 5 دقائق)، 🎥 كاميرات متعددة (2+ كاميرات معًا)، 🎭 جميع المشاهد (استعمال كل المشاهد)، 🏷 ملك العلامات (5+ علامات في تسجيل واحد)، 🤖 micro:bit موصول (أول اتصال BT). كل شيء مخزّن محليًا، لا يُرسل شيء إلى أي مكان.',
     faq_q10: '♻ كيف أعيد تعيين بياناتي؟',
@@ -7429,6 +7435,11 @@ const Badges = {
     this.unlocked.add(k);
     this.save();
     renderBadges();
+    // v0.7.52: celebrate with a confetti burst + modal card instead of just a toast
+    const badge = this.list.find(b => b.key === k);
+    if (badge) BadgeUnlockCard.show(badge);
+    try { Confetti.fire ? Confetti.fire() : Confetti.burst ? Confetti.burst() : null; } catch {}
+    // Fallback toast is still nice (appears behind the modal)
     showToast(`🏆 ${t('badge_' + k)}`, 2200);
   },
   unlockFirst() { this.unlock('first'); },
@@ -7440,6 +7451,53 @@ const Badges = {
   },
   unlockMarker(n) { if (n >= 5) this.unlock('marker_king'); },
   unlockMicrobit() { this.unlock('micro'); },
+};
+
+/* v0.7.52: Modal celebration card shown when a badge unlocks. */
+const BadgeUnlockCard = {
+  el: null,
+  _hideTimer: null,
+
+  show(badge) {
+    if (!this.el) this._build();
+    const icon = this.el.querySelector('.tc-buc-icon');
+    const label = this.el.querySelector('.tc-buc-label');
+    const title = this.el.querySelector('.tc-buc-title');
+    const btn = this.el.querySelector('.tc-buc-btn');
+    if (icon) icon.textContent = badge.icon || '🏆';
+    if (label) label.textContent = t(badge.i18n) || badge.key;
+    if (title) title.textContent = t('badgeUnlockTitle') || 'Badge débloqué !';
+    if (btn) btn.textContent = t('badgeUnlockContinue') || 'Continuer';
+    this.el.style.display = 'flex';
+    requestAnimationFrame(() => this.el.classList.add('visible'));
+    clearTimeout(this._hideTimer);
+    this._hideTimer = setTimeout(() => this.hide(), 4500);
+    try { Sfx.play('mark'); } catch {}
+  },
+
+  hide() {
+    if (!this.el) return;
+    this.el.classList.remove('visible');
+    setTimeout(() => { this.el.style.display = 'none'; }, 300);
+    clearTimeout(this._hideTimer);
+  },
+
+  _build() {
+    this.el = document.createElement('div');
+    this.el.className = 'tc-badge-unlock';
+    this.el.innerHTML = `
+      <div class="tc-buc-card">
+        <div class="tc-buc-title"></div>
+        <div class="tc-buc-icon">🏆</div>
+        <div class="tc-buc-label"></div>
+        <button class="tc-buc-btn">Continuer</button>
+      </div>
+    `;
+    this.el.addEventListener('click', (e) => {
+      if (e.target === this.el || e.target.classList.contains('tc-buc-btn')) this.hide();
+    });
+    document.body.appendChild(this.el);
+  },
 };
 
 function renderBadges() {

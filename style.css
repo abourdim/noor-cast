@@ -3668,3 +3668,76 @@ body.log-open .app {
   .tc-tpl-step-l { display: none; }
   .tc-tpl-step { padding: 4px 6px; }
 }
+
+/* v0.7.52 — Badge unlock celebration modal card */
+.tc-badge-unlock {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .72);
+  opacity: 0;
+  transition: opacity .3s;
+  backdrop-filter: blur(4px);
+}
+.tc-badge-unlock.visible { opacity: 1; }
+.tc-buc-card {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent2, #fb923c) 15%, var(--panel, #0c1f0a)),
+    var(--panel, #0c1f0a));
+  border: 3px solid var(--accent, #a3e635);
+  border-radius: 22px;
+  padding: 32px 44px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .7), 0 0 0 6px rgba(163, 230, 53, .12);
+  animation: tcBucPop .5s cubic-bezier(.3, 1.6, .5, 1);
+  max-width: 400px;
+}
+@keyframes tcBucPop {
+  0%   { transform: scale(.3) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.tc-buc-title {
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent, #a3e635);
+  margin-bottom: 14px;
+}
+.tc-buc-icon {
+  font-size: 5rem;
+  line-height: 1;
+  margin: 10px 0 16px;
+  animation: tcBucSpin 1.8s ease-out;
+}
+@keyframes tcBucSpin {
+  0%   { transform: rotate(-180deg) scale(0); }
+  100% { transform: rotate(0) scale(1); }
+}
+.tc-buc-label {
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 22px;
+}
+.tc-buc-btn {
+  background: var(--accent, #a3e635);
+  color: var(--bg, #000);
+  border: none;
+  padding: 10px 28px;
+  border-radius: 10px;
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: .95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent, #a3e635) 50%, black);
+  transition: transform .1s, box-shadow .1s;
+}
+.tc-buc-btn:hover { transform: translateY(-1px); }
+.tc-buc-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent, #a3e635) 50%, black); }
