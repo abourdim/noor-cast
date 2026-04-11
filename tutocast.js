@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.45 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.46 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.45';
+const APP_VERSION = '0.7.46';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 00:30';
+const BUILD_DATE = '2026-04-12 00:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -192,6 +192,7 @@ const LANG = {
     cheatTextDel: 'Supprimer sélection',
     cheatMisc: '✨ Divers',
     cheatMiscFree: "Étire libre d'une source",
+    cheatMiscGrid: 'Snap à la grille',
     cheatMiscThis: 'Afficher ce panneau',
     cheatMiscEsc: 'Fermer panneaux',
     cheatMiscDebug: 'Debug HUD',
@@ -658,6 +659,7 @@ const LANG = {
     cheatTextDel: 'Delete selection',
     cheatMisc: '✨ Misc',
     cheatMiscFree: 'Free stretch a source',
+    cheatMiscGrid: 'Snap to grid',
     cheatMiscThis: 'Show this panel',
     cheatMiscEsc: 'Close panels',
     cheatMiscDebug: 'Debug HUD',
@@ -1116,6 +1118,7 @@ const LANG = {
     cheatTextDel: 'حذف المحدد',
     cheatMisc: '✨ متنوع',
     cheatMiscFree: 'تمدد حر لمصدر',
+    cheatMiscGrid: 'التقاط بالشبكة',
     cheatMiscThis: 'عرض هذه اللوحة',
     cheatMiscEsc: 'إغلاق اللوحات',
     cheatMiscDebug: 'Debug HUD',
@@ -1596,6 +1599,23 @@ const Engine = {
 
     // Brand watermark (logo + slogan + fun effect) — always on top of overlays
     Brand.draw(ctx);
+
+    // v0.7.46: grid overlay — shown only while Alt-drag is active
+    if (Drag._gridVisible) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, .08)';
+      ctx.lineWidth = 1;
+      const step = Drag.GRID_PX;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += step) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, height);
+      }
+      for (let y = 0; y <= height; y += step) {
+        ctx.moveTo(0, y); ctx.lineTo(width, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // v0.7.42: smart alignment guides — bright lines drawn while
     // the user is actively dragging a source. Cleared on drag-end.
@@ -3728,7 +3748,7 @@ const Drag = {
   selectedSourceId: null,   // v0.7.2: track the last-clicked source for Delete-key removal
   SNAP_RADIUS: 60,
   CORNER_RADIUS: 36,
-  THRESHOLD_PX: 6,  // canvas pixels of mouse movement before a drag engages
+  GRID_PX: 48,  // canvas pixels between grid anchors when Alt is held during drag
   stage: null,
 
   setup() {
@@ -3945,6 +3965,15 @@ const Drag = {
       }
       let nx = mx - s.offsetX;
       let ny = my - s.offsetY;
+      // v0.7.46: Alt-held = snap position to a 48px grid
+      if (e.altKey && s.kind === 'source') {
+        nx = Math.round(nx / this.GRID_PX) * this.GRID_PX;
+        ny = Math.round(ny / this.GRID_PX) * this.GRID_PX;
+        // Show a visible grid overlay while Alt is held (cleared on drag-end or alt-release)
+        Drag._gridVisible = true;
+      } else {
+        Drag._gridVisible = false;
+      }
       // Snap for sources only (keeps kid layouts clean)
       if (s.kind === 'source') {
         const W = Engine.width, H = Engine.height, M = 40;
@@ -4073,6 +4102,7 @@ const Drag = {
       if (this.stage) this.stage.classList.remove('dragging');
     }
     Drag._activeGuides = null;  // v0.7.42: clear alignment guides on drag-end
+    Drag._gridVisible = false;  // v0.7.46: clear grid overlay on drag-end
     if (wasDragOrResize) LayoutHistory.capture();
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
