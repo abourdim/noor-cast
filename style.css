@@ -1700,6 +1700,29 @@ body.log-open .app {
 .tc-tele-inner::-webkit-scrollbar-track { background: rgba(255,255,255,.04); border-radius: 4px; }
 .tc-tele-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; }
 
+/* v0.7.89 — broadcast-style reading line: a 2px accent gradient bar
+   pinned to the vertical midpoint of the teleprompter card. The script
+   scrolls past it; the line at the bar is the one being read. Visibility
+   is gated on .reading-line-on which Teleprompter.toggle() flips. */
+.tc-tele-reading-line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--accent, #a3e635) 70%, transparent),
+    transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s;
+  z-index: 1;
+}
+.tc-teleprompter.reading-line-on .tc-tele-reading-line {
+  opacity: 1;
+}
+
 /* ─── Scenes panel ─── */
 .tc-scenes {
   display: grid; grid-template-columns: 1fr 1fr;

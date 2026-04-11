@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.88 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.89 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.88';
+const APP_VERSION = '0.7.89';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 11:15';
+const BUILD_DATE = '2026-04-12 11:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -6183,7 +6183,10 @@ const Teleprompter = {
   toggle() {
     this.on = !this.on;
     const el = $('tcTeleprompter');
-    if (el) el.style.display = this.on ? 'flex' : 'none';
+    if (el) {
+      el.style.display = this.on ? 'flex' : 'none';
+      el.classList.toggle('reading-line-on', this.on);  // v0.7.89
+    }
     $('tcTeleBtn')?.classList.toggle('active', this.on);
     // Auto-pause scroll if we're hiding
     if (!this.on) this.pause();
