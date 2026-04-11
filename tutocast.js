@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.64 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.65 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.64';
+const APP_VERSION = '0.7.65';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 05:15';
+const BUILD_DATE = '2026-04-12 05:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -139,6 +139,11 @@ const LANG = {
     quizPromptLabel: 'Quelle question veux-tu poser à tes élèves ?',
     sensorOverlayLabel: '🤖 Overlay auto si le robot bouge fort',
     jingleLabel: '🎵 Jingle d\'intro (1.5s)',
+    timeGoalLabel: '⏳ Objectif de durée',
+    timeGoalMinutes: 'Minutes :',
+    timeGoalAutoStop: "Arrêt automatique à l'objectif",
+    timeGoalReached: '⏳ Objectif atteint',
+    timeGoalStop: '⏳ Objectif atteint — arrêt auto',
     badgeBtn: 'Carte badge',
     badgeHeadline: 'Tuto enregistré !',
     badgeStatDuration: 'Durée',
@@ -650,6 +655,11 @@ const LANG = {
     quizPromptLabel: 'What question do you want to ask your students?',
     sensorOverlayLabel: '🤖 Auto-overlay when the robot jolts',
     jingleLabel: '🎵 Intro jingle (1.5s)',
+    timeGoalLabel: '⏳ Duration goal',
+    timeGoalMinutes: 'Minutes:',
+    timeGoalAutoStop: 'Auto-stop at goal',
+    timeGoalReached: '⏳ Goal reached',
+    timeGoalStop: '⏳ Goal reached — auto-stop',
     badgeBtn: 'Badge card',
     badgeHeadline: 'Tutorial recorded!',
     badgeStatDuration: 'Duration',
@@ -1153,6 +1163,11 @@ const LANG = {
     quizPromptLabel: 'ما السؤال الذي تريد طرحه على طلابك؟',
     sensorOverlayLabel: '🤖 طبقة تلقائية عند اهتزاز الروبوت',
     jingleLabel: '🎵 جينغل المقدمة (1.5ث)',
+    timeGoalLabel: '⏳ هدف المدة',
+    timeGoalMinutes: 'الدقائق:',
+    timeGoalAutoStop: 'إيقاف تلقائي عند الهدف',
+    timeGoalReached: '⏳ تم بلوغ الهدف',
+    timeGoalStop: '⏳ تم بلوغ الهدف — إيقاف تلقائي',
     badgeBtn: 'بطاقة شارة',
     badgeHeadline: 'تم تسجيل الدرس!',
     badgeStatDuration: 'المدة',
@@ -3564,6 +3579,7 @@ const Recorder = {
       Chapters.add(t('scene_' + Scenes.active));
       SensorTimeline.start();
       SilenceWatch.start();
+      TimeGoal.start();
       LiveCaptions.start();
       this.updateUI();
       this.startTimer();
@@ -3745,6 +3761,7 @@ const Recorder = {
     this.stopTimer();
     SensorTimeline.stop();
     SilenceWatch.stop();
+    TimeGoal.stop();
     LiveCaptions.stop();
   },
 
@@ -7344,6 +7361,82 @@ const SilenceWatch = {
   },
 };
 
+/* ─────────── TimeGoal — v0.7.65 optional recording duration goal + auto-stop
+
+   Teachers often want to stay under a social-media / class-clip time limit.
+   When enabled, a countdown chip sits next to the REC timer, turns yellow
+   under 30s, then "trips" at 0s — either toasting + playing the mark SFX
+   (soft mode) or firing Recorder.stop() (hard auto-stop mode). All state
+   is persisted in localStorage so the next session reopens with the same
+   target. Default OFF. */
+const TimeGoal = {
+  enabled: false,
+  autoStop: false,
+  minutes: 5,        // target minutes
+  _rafId: null,
+  _tripped: false,
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-timegoal') === '1';
+      this.autoStop = localStorage.getItem('tc-timegoal-autostop') === '1';
+      const m = parseFloat(localStorage.getItem('tc-timegoal-min'));
+      if (!isNaN(m)) this.minutes = Math.max(0.5, Math.min(60, m));
+    } catch {}
+  },
+  setEnabled(v) { this.enabled = !!v; try { localStorage.setItem('tc-timegoal', v ? '1' : '0'); } catch {} },
+  setAutoStop(v) { this.autoStop = !!v; try { localStorage.setItem('tc-timegoal-autostop', v ? '1' : '0'); } catch {} },
+  setMinutes(m) {
+    this.minutes = Math.max(0.5, Math.min(60, parseFloat(m) || 5));
+    try { localStorage.setItem('tc-timegoal-min', String(this.minutes)); } catch {}
+  },
+
+  start() {
+    if (!this.enabled) return;
+    this._tripped = false;
+    this._tick();
+    const chip = $('tcTimeGoalChip');
+    if (chip) chip.style.display = '';
+  },
+  stop() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    const chip = $('tcTimeGoalChip');
+    if (chip) chip.style.display = 'none';
+  },
+
+  _tick() {
+    if (!this.enabled || Recorder.state !== 'recording') {
+      this.stop();
+      return;
+    }
+    const elapsedSec = Recorder.elapsed() / 1000;
+    const targetSec = this.minutes * 60;
+    const remaining = Math.max(0, targetSec - elapsedSec);
+    const chip = $('tcTimeGoalChip');
+    if (chip) {
+      const m = Math.floor(remaining / 60);
+      const s = Math.floor(remaining % 60);
+      chip.textContent = `⏳ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      chip.classList.toggle('warn', remaining < 30 && remaining > 0);
+      chip.classList.toggle('over', remaining <= 0);
+    }
+    if (remaining <= 0 && !this._tripped) {
+      this._tripped = true;
+      if (this.autoStop) {
+        showToast(t('timeGoalStop') || '⏳ Objectif atteint — arrêt auto', 2200);
+        Recorder.stop();
+        this.stop();
+        return;
+      } else {
+        showToast(t('timeGoalReached') || '⏳ Objectif atteint', 2000);
+        Sfx.play('mark');
+      }
+    }
+    this._rafId = requestAnimationFrame(() => this._tick());
+  },
+};
+
 /* ─────────── LiveCaptions — v0.7.57 opt-in WebSpeech live subtitles
 
    Uses the browser's built-in SpeechRecognition (Chrome/Edge webkit
@@ -9018,6 +9111,28 @@ function wireEvents() {
     jingleEl.addEventListener('change', (e) => Jingle.setEnabled(e.target.checked));
   }
 
+  // v0.7.65: recording time goal + optional auto-stop
+  const tgEl = $('tcTimeGoalToggle');
+  const tgOpts = $('tcTimeGoalOptions');
+  const tgMin = $('tcTimeGoalMinutes');
+  const tgAuto = $('tcTimeGoalAutoStop');
+  if (tgEl) {
+    tgEl.checked = TimeGoal.enabled;
+    if (tgOpts) tgOpts.style.display = TimeGoal.enabled ? 'block' : 'none';
+    tgEl.addEventListener('change', (e) => {
+      TimeGoal.setEnabled(e.target.checked);
+      if (tgOpts) tgOpts.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  if (tgMin) {
+    tgMin.value = TimeGoal.minutes;
+    tgMin.addEventListener('input', (e) => TimeGoal.setMinutes(e.target.value));
+  }
+  if (tgAuto) {
+    tgAuto.checked = TimeGoal.autoStop;
+    tgAuto.addEventListener('change', (e) => TimeGoal.setAutoStop(e.target.checked));
+  }
+
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');
   if (ioEl) {
@@ -9122,6 +9237,7 @@ async function init() {
 
   Sfx.load();
   Jingle.load();
+  TimeGoal.load();
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();

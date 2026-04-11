@@ -1389,6 +1389,35 @@ body.log-open .app {
   50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
 }
 
+/* v0.7.65: optional recording time-goal countdown chip next to the REC timer */
+.tc-time-goal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  font-family: 'Orbitron', ui-monospace, monospace;
+  font-size: .95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, .85);
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 18px;
+}
+.tc-time-goal-chip.warn {
+  color: #fbbf24;
+  border-color: #fbbf24;
+  animation: tcTimeGoalPulse 1s ease-in-out infinite;
+}
+.tc-time-goal-chip.over {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, .15);
+}
+@keyframes tcTimeGoalPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+
 /* ─── Sidebars ─── */
 .tc-sidebar {
   background: rgba(0,0,0,.2);

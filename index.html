@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.64</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.65</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -372,6 +372,8 @@
             <span class="tc-rec-dot"></span>
             <span class="tc-rec-time" id="tcRecTime">00:00</span>
           </div>
+          <!-- v0.7.65: optional countdown chip when a time goal is set -->
+          <span class="tc-time-goal-chip" id="tcTimeGoalChip" style="display:none">⏳ 00:00</span>
           <!-- v0.7.42: LED-style live audio level meter next to the REC button.
                10 segments, color-coded green/yellow/red. Driven by Engine.updateVU. -->
           <div class="tc-led-meter" id="tcLedMeter" title="Audio level">
@@ -967,7 +969,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.64</strong></span>
+      <span class="badge"><strong>v0.7.65</strong></span>
     </div>
   </aside>
 
@@ -1059,6 +1061,21 @@
               <input type="checkbox" id="tcJingleToggle" class="checkbox-ctrl" />
               <span data-i18n="jingleLabel">🎵 Jingle d'intro (1.5s)</span>
             </label>
+          </div>
+          <!-- v0.7.65: recording time goal -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcTimeGoalToggle" class="checkbox-ctrl" />
+              <span data-i18n="timeGoalLabel">⏳ Objectif de durée</span>
+            </label>
+            <div id="tcTimeGoalOptions" style="display:none; margin-top:6px">
+              <label class="sidebar-label" data-i18n="timeGoalMinutes">Minutes :</label>
+              <input type="number" id="tcTimeGoalMinutes" class="sidebar-select" min="0.5" max="60" step="0.5" value="5" />
+              <label class="toggle-ctrl" style="margin-top:6px">
+                <input type="checkbox" id="tcTimeGoalAutoStop" class="checkbox-ctrl" />
+                <span data-i18n="timeGoalAutoStop">Arrêt automatique à l'objectif</span>
+              </label>
+            </div>
           </div>
           <!-- v0.7.34: cinematic intro/outro cards baked into the recording -->
           <div class="sidebar-group">
@@ -1233,7 +1250,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.64</strong></span>
+      <span class="badge"><strong>v0.7.65</strong></span>
     </div>
   </aside>
 
@@ -1265,7 +1282,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.64</strong></span>
+      <span class="badge"><strong>v0.7.65</strong></span>
     </div>
   </aside>
 
