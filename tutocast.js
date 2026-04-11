@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.14 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.15 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.14';
+const APP_VERSION = '0.7.15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -1347,7 +1347,8 @@ const Engine = {
   },
 
   /* Build a canvas path for the given shape. Centralized so glow + clip
-     + background-blur all use the exact same geometry. */
+     + background-blur all use the exact same geometry.
+     v0.7.15: added hexagon, octagon, diamond, star, heart, pill. */
   _pathForShape(ctx, shape, x, y, w, h, cx, cy, r) {
     ctx.beginPath();
     if (shape === 'circle') {
@@ -1362,6 +1363,57 @@ const Engine = {
       ctx.lineTo(x + w, y + h - rr); ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
       ctx.lineTo(x + rr, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
       ctx.lineTo(x, y + rr); ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'pill') {
+      // Full-height pill (stadium): two semicircles on the short sides
+      const rr = Math.min(w, h) / 2;
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y);
+      ctx.arc(x + w - rr, y + rr, rr, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x + rr, y + h);
+      ctx.arc(x + rr, y + rr, rr, Math.PI / 2, -Math.PI / 2);
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'hexagon' || shape === 'octagon' || shape === 'diamond') {
+      const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : 4;
+      const rot = shape === 'diamond' ? -Math.PI / 2 : shape === 'hexagon' ? 0 : Math.PI / 8;
+      // Fit polygon inside the w×h box
+      const rx = w / 2, ry = h / 2;
+      for (let i = 0; i < sides; i++) {
+        const a = rot + (i * 2 * Math.PI) / sides;
+        const px = cx + Math.cos(a) * rx;
+        const py = cy + Math.sin(a) * ry;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'star') {
+      // 5-point star, fitted to the w×h box
+      const spikes = 5;
+      const outerX = w / 2, outerY = h / 2;
+      const innerX = outerX * 0.4, innerY = outerY * 0.4;
+      let a = -Math.PI / 2;
+      const step = Math.PI / spikes;
+      ctx.moveTo(cx + Math.cos(a) * outerX, cy + Math.sin(a) * outerY);
+      for (let i = 0; i < spikes; i++) {
+        a += step;
+        ctx.lineTo(cx + Math.cos(a) * innerX, cy + Math.sin(a) * innerY);
+        a += step;
+        ctx.lineTo(cx + Math.cos(a) * outerX, cy + Math.sin(a) * outerY);
+      }
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'heart') {
+      // Classic heart, fitted to w×h box using two Bézier curves
+      const topY = y + h * 0.25;
+      ctx.moveTo(cx, y + h);
+      ctx.bezierCurveTo(x - w * 0.05, y + h * 0.65, x, topY - h * 0.05, cx, topY);
+      ctx.bezierCurveTo(x + w, topY - h * 0.05, x + w + w * 0.05, y + h * 0.65, cx, y + h);
       ctx.closePath();
       return;
     }
@@ -3899,15 +3951,15 @@ const SourceToolbar = {
       showToast(s.pinned ? '📌 pinned' : '🔓 unpinned', 1400);
       Engine.onSourcesChanged();
     });
-    $('tcSrcToolbarShape')?.addEventListener('click', (e) => {
+    // v0.7.15: shape picker is now a <select>, not a cycle button
+    $('tcSrcToolbarShape')?.addEventListener('change', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
-      const shapes = ['rect', 'rounded', 'circle'];
-      const i = shapes.indexOf(s.shape || 'rect');
-      s.shape = shapes[(i + 1) % shapes.length];
+      s.shape = e.target.value;
       showToast('◻ ' + s.shape, 1200);
       Engine.onSourcesChanged();
     });
+    $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -3934,6 +3986,11 @@ const SourceToolbar = {
     this.el.style.display = 'flex';
     this.el.style.left = `${vpLeft}px`;
     this.el.style.top = `${vpTop}px`;
+    // v0.7.15: sync the shape select to the current source shape
+    const shapeSel = $('tcSrcToolbarShape');
+    if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
+      shapeSel.value = s.shape || 'rect';
+    }
   },
 };
 

@@ -1880,6 +1880,31 @@ body.log-open .app {
   padding: 4px 10px;
   font-size: 1rem;
 }
+/* v0.7.15: shape <select> inside the source toolbar */
+.tc-toolbar-select {
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .2);
+  color: #e5e7eb;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 14px;
+  font-size: .82rem;
+  line-height: 1;
+  min-height: 30px;
+  font-family: inherit;
+}
+.tc-toolbar-select:hover {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .4);
+}
+.tc-toolbar-select:focus {
+  outline: 2px solid rgba(163, 230, 53, .5);
+  outline-offset: 1px;
+}
+.tc-toolbar-select option {
+  background: #0c1f0a;
+  color: #e5e7eb;
+}
 
 /* v0.7.14: Settings panel sections (collapsible via <details>).
    Each section has a bold summary header and an indented body. */

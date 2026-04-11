@@ -3,6 +3,44 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.15 — 2026-04-11 (Shapes as an option)
+
+### Added
+- **6 new source shapes** for video/screen layers: **pill**, **hexagon**,
+  **octagon**, **diamond**, **star**, **heart**. Joined the existing
+  `rect` / `rounded` / `circle`. All nine share the same centralized
+  `_pathForShape` so the glow, background-blur ring, and clipping all
+  use the exact same geometry.
+  - Diamond / hexagon / octagon share a single regular-polygon branch
+    parameterized by side count and rotation.
+  - Star is a 5-point classic star with inner radius at 0.4× outer.
+  - Heart is drawn with two cubic Béziers around a center notch.
+  - Pill is a stadium shape (two semicircles on the short sides).
+- **Shape picker dropdown** in the floating `SourceToolbar`, replacing
+  the old `⬛ Shape` cycle button. `<select id="tcSrcToolbarShape">`
+  with emoji-labelled options, synced to `s.shape` each frame via
+  `updatePosition`, fires on `change`, stops click propagation so the
+  drag layer doesn't steal the event. Styled via new `.tc-toolbar-select`.
+
+### Verified (Preview MCP harness)
+- Rasterized each shape into a 200×200 offscreen canvas at bbox 160×160
+  and counted filled pixels to confirm distinct geometry:
+
+    | shape    | filled px | notes                |
+    |----------|-----------|----------------------|
+    | rect     | 25600     | full bbox            |
+    | rounded  | 25408     | ~1% corner rounding  |
+    | circle   | 20343     | π×80² ≈ 20106        |
+    | pill     | 20343     | degenerates to circle at w=h |
+    | hexagon  | 16930     | ~66% of bbox         |
+    | octagon  | 18294     | ~71% of bbox         |
+    | diamond  | 12960     | 50% (rhombus)        |
+    | star     |  7848     | ~31% (5-point)       |
+    | heart    | 11163     | ~44%                 |
+
+- Shape select is a `SELECT` element with 9 options.
+- No console errors on load.
+
 ## v0.7.14 — 2026-04-11 (Settings sections + visible resize handles + text font picker)
 
 Three live-feedback fixes pushed together.
