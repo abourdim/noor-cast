@@ -3,6 +3,39 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.2.0 — 2026-04-11
+
+First real product lever: **guided templates**. The biggest drop-off point
+was the blank canvas on first launch. Templates replace "figure out which
+scene goes where" with a 10-second checklist.
+
+### Added
+- **3 guided templates** with a 5-step sequence each:
+  - 📚 **Cours complet** — Intro → Théorie → Démo → Exercice → Conclusion
+  - 🤖 **Démo robot** — Présentation → Code → Robot → Capteurs → Bilan
+  - 🔧 **Correction** — Bug → Analyse → Fix → Test → OK
+- **Template picker card** that opens on first launch (replaces the old
+  generic 4-step onboarding). Also reopenable via the "Pick a template"
+  pill below the studio.
+- **Persistent step strip** below the studio grid. Shows the 5 steps as
+  clickable chips, highlights the current step, marks previous steps as
+  done. Clicking a step:
+  - switches to that step's suggested scene
+  - adds a chapter marker with the step's label if recording is live
+- **`Scenes.reapply()`** — re-applies the active scene layout to newly
+  added sources. So you can pick a template *before* plugging a cam and
+  the cam still lands in the template's slot when added.
+- **30 new i18n keys × 3 languages** for all template labels, step names,
+  intro texts, and the picker UI.
+
+### Changed
+- **Legacy onboarding card removed** from the HTML. The `tc-onboarded`
+  localStorage key is reused by the template picker to track first launch.
+  The legacy `onb*` i18n keys are kept (harmless) for now.
+- **Source addition now auto-positions** by re-applying the current scene.
+  Previously, adding a cam after picking a scene left it at its default
+  stagger position regardless of the scene's layout.
+
 ## v0.1.2 — 2026-04-11
 
 Full code audit pass. One critical runtime bug, several i18n/UX gaps, and

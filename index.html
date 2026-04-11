@@ -65,21 +65,37 @@
         </div>
       </div>
 
-      <!-- ═══════════════════ ONBOARDING CARD (first launch) ═══════════════════ -->
-      <div class="card tc-onboarding" id="tcOnboarding" style="display:none">
+      <!-- ═══════════════════ TEMPLATE PICKER (first launch + reopenable) ═══════════════════ -->
+      <div class="card tc-templates" id="tcTemplates" style="display:none">
         <div class="card-header">
           <div>
-            <div class="card-title"><span class="icon">👋</span> <span data-i18n="onbTitle">Salut ! Prêt à faire ton premier tuto ?</span></div>
+            <div class="card-title"><span class="icon">🎬</span> <span data-i18n="tplTitle">Choisis comment tu commences</span></div>
+            <div class="card-subtitle" data-i18n="tplSubtitle">Chaque template te guide étape par étape</div>
           </div>
-          <button class="btn-icon-only" id="tcOnboardingClose" aria-label="Close">✕</button>
+          <button class="btn-icon-only" id="tcTemplatesClose" aria-label="Close">✕</button>
         </div>
-        <ol class="tc-onb-steps">
-          <li><span class="tc-onb-num">1</span><span data-i18n="onb1">Choisis tes caméras et ton écran (panneau de droite)</span></li>
-          <li><span class="tc-onb-num">2</span><span data-i18n="onb2">Choisis une scène prête à l'emploi, ou crée la tienne</span></li>
-          <li><span class="tc-onb-num">3</span><span data-i18n="onb3">Appuie sur le gros bouton rouge 🔴 et c'est parti !</span></li>
-          <li><span class="tc-onb-num">4</span><span data-i18n="onb4">Ton tuto est téléchargé automatiquement à la fin</span></li>
-        </ol>
-        <button class="tc-onb-go" id="tcOnboardingGo" data-i18n="onbGo">C'est parti !</button>
+        <div class="tc-tpl-grid">
+          <button class="tc-tpl-card" data-tpl="lesson">
+            <div class="tc-tpl-card-icon">📚</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_lesson">Cours complet</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_lesson_d">Intro → Théorie → Démo → Exercice → Conclusion</div>
+          </button>
+          <button class="tc-tpl-card" data-tpl="robot">
+            <div class="tc-tpl-card-icon">🤖</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_robot">Démo robot</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_robot_d">Présentation → Code → Robot → Capteurs → Bilan</div>
+          </button>
+          <button class="tc-tpl-card" data-tpl="fix">
+            <div class="tc-tpl-card-icon">🔧</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_fix">Correction</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_fix_d">Bug → Analyse → Fix → Test → OK</div>
+          </button>
+          <button class="tc-tpl-card tc-tpl-blank" data-tpl="">
+            <div class="tc-tpl-card-icon">🎨</div>
+            <div class="tc-tpl-card-title" data-i18n="tplBlank">🎨 Vierge</div>
+            <div class="tc-tpl-card-desc" data-i18n="tplBlankDesc">Je compose ma propre scène</div>
+          </button>
+        </div>
       </div>
 
       <!-- ═══════════════════ MAIN STUDIO CARD ═══════════════════ -->
@@ -87,7 +103,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.1.2</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.2.0</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -159,6 +175,9 @@
             <button class="tc-btn-full" id="tcSnapBtn">📸 <span data-i18n="snapshot">Capture photo</span> <kbd>S</kbd></button>
           </aside>
         </div>
+
+        <!-- Template step strip — "Pick a template" pill when inactive, step progression when a template is running -->
+        <div class="tc-template-strip" id="tcTemplateStrip"></div>
 
         <!-- BIG REC BUTTON BAR -->
         <div class="tc-rec-bar">
@@ -304,6 +323,17 @@
       <!-- News / Changelog -->
       <div class="help-content" id="helpNews">
         <div class="wiki-entry">
+          <h3>🆕 v0.2.0 — 11 avril 2026</h3>
+          <p data-i18n="news_020">Templates de tutos guidés 🎬</p>
+          <ul>
+            <li data-i18n="news_020_1">3 templates kid-friendly : Cours complet, Démo robot, Correction</li>
+            <li data-i18n="news_020_2">Chaque template pose une séquence de 5 étapes visibles en permanence</li>
+            <li data-i18n="news_020_3">Clic sur une étape = changement de scène + marker chapitre</li>
+            <li data-i18n="news_020_4">Les caméras ajoutées après sélection d'un template héritent du layout</li>
+            <li data-i18n="news_020_5">Ouverture automatique au premier lancement (remplace l'ancienne onboarding)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
           <h3>🆕 v0.1.2 — 11 avril 2026</h3>
           <p data-i18n="news_012">Audit complet et correctifs majeurs 🔧</p>
           <ul>
@@ -345,7 +375,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.1.2</strong></span>
+      <span class="badge"><strong>v0.2.0</strong></span>
     </div>
   </aside>
 
@@ -401,7 +431,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.1.2</strong></span>
+      <span class="badge"><strong>v0.2.0</strong></span>
     </div>
   </aside>
 
@@ -433,7 +463,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.1.2</strong></span>
+      <span class="badge"><strong>v0.2.0</strong></span>
     </div>
   </aside>
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.1.2 — kids-friendly multi-cam screen recorder
+   TutoCast v0.2.0 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.1.2';
+const APP_VERSION = '0.2.0';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -146,6 +146,43 @@ const LANG = {
     news_012_6: "Nettoyage automatique des flux et blobs à la fermeture de l'onglet",
     news_012_7: "Reset des outils (laser/gel/dessin/textes) entre les prises",
     news_012_8: "Thèmes traduits, raccourcis FAQ alignés sur le code réel",
+    news_020: "Templates de tutos guidés 🎬",
+    news_020_1: "3 templates kid-friendly : Cours complet, Démo robot, Correction",
+    news_020_2: "Chaque template pose une séquence de 5 étapes visibles en permanence",
+    news_020_3: "Clic sur une étape = changement de scène + marker chapitre",
+    news_020_4: "Les caméras ajoutées après sélection d'un template héritent du layout",
+    news_020_5: "Ouverture automatique au premier lancement (remplace l'ancienne onboarding)",
+    tplTitle: "Choisis comment tu commences",
+    tplSubtitle: "Chaque template te guide étape par étape",
+    tplChoose: "Choisir un template",
+    tplStarted: "Template démarré",
+    tplDismiss: "Fermer",
+    tplBlank: "🎨 Vierge",
+    tplBlankDesc: "Je compose ma propre scène",
+    tpl_lesson: "Cours complet",
+    tpl_lesson_d: "Intro → Théorie → Démo → Exercice → Conclusion",
+    tpl_lesson_intro: "🎓 Aujourd'hui on apprend…",
+    tpl_lesson_s1: "Intro",
+    tpl_lesson_s2: "Théorie",
+    tpl_lesson_s3: "Démo",
+    tpl_lesson_s4: "Exercice",
+    tpl_lesson_s5: "Conclusion",
+    tpl_robot: "Démo robot",
+    tpl_robot_d: "Présentation → Code → Robot → Capteurs → Bilan",
+    tpl_robot_intro: "🤖 Regarde mon robot !",
+    tpl_robot_s1: "Présentation",
+    tpl_robot_s2: "Le code",
+    tpl_robot_s3: "Le robot",
+    tpl_robot_s4: "Les capteurs",
+    tpl_robot_s5: "Bilan",
+    tpl_fix: "Correction",
+    tpl_fix_d: "Bug → Analyse → Fix → Test → OK",
+    tpl_fix_intro: "🐛 On corrige ce bug ensemble",
+    tpl_fix_s1: "Le bug",
+    tpl_fix_s2: "On analyse",
+    tpl_fix_s3: "On corrige",
+    tpl_fix_s4: "On teste",
+    tpl_fix_s5: "Ça marche !",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
   },
@@ -276,6 +313,43 @@ const LANG = {
     news_012_6: "Clean shutdown of streams and blobs on tab close",
     news_012_7: "Tools (laser/freeze/draw/texts) reset between takes",
     news_012_8: "Themes translated, FAQ hotkeys aligned with actual code",
+    news_020: "Guided tutorial templates 🎬",
+    news_020_1: "3 kid-friendly templates: Full lesson, Robot demo, Fix-it",
+    news_020_2: "Each template lays out a 5-step sequence visible throughout",
+    news_020_3: "Clicking a step switches scene + adds a chapter marker",
+    news_020_4: "Cams added after picking a template inherit the layout",
+    news_020_5: "Opens automatically on first launch (replaces old onboarding)",
+    tplTitle: "Pick how you start",
+    tplSubtitle: "Each template guides you step by step",
+    tplChoose: "Pick a template",
+    tplStarted: "Template started",
+    tplDismiss: "Dismiss",
+    tplBlank: "🎨 Blank",
+    tplBlankDesc: "I'll build my own scene",
+    tpl_lesson: "Full lesson",
+    tpl_lesson_d: "Intro → Theory → Demo → Exercise → Wrap-up",
+    tpl_lesson_intro: "🎓 Today we're learning…",
+    tpl_lesson_s1: "Intro",
+    tpl_lesson_s2: "Theory",
+    tpl_lesson_s3: "Demo",
+    tpl_lesson_s4: "Exercise",
+    tpl_lesson_s5: "Wrap-up",
+    tpl_robot: "Robot demo",
+    tpl_robot_d: "Intro → Code → Robot → Sensors → Recap",
+    tpl_robot_intro: "🤖 Watch my robot!",
+    tpl_robot_s1: "Intro",
+    tpl_robot_s2: "The code",
+    tpl_robot_s3: "The robot",
+    tpl_robot_s4: "The sensors",
+    tpl_robot_s5: "Recap",
+    tpl_fix: "Fix-it",
+    tpl_fix_d: "Bug → Analyze → Fix → Test → OK",
+    tpl_fix_intro: "🐛 Let's fix this bug together",
+    tpl_fix_s1: "The bug",
+    tpl_fix_s2: "Analyze",
+    tpl_fix_s3: "Fix",
+    tpl_fix_s4: "Test",
+    tpl_fix_s5: "It works!",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
   },
@@ -394,6 +468,43 @@ const LANG = {
     news_012_6: "تنظيف تلقائي للتدفقات والبيانات عند إغلاق التبويب",
     news_012_7: "إعادة تعيين الأدوات (ليزر/تجميد/رسم/نصوص) بين التسجيلات",
     news_012_8: "ترجمة المظاهر ومواءمة اختصارات FAQ مع الشيفرة الفعلية",
+    news_020: "قوالب دروس موجّهة 🎬",
+    news_020_1: "3 قوالب ملائمة للأطفال: درس كامل، عرض روبوت، تصحيح",
+    news_020_2: "كل قالب يضع تسلسل 5 خطوات مرئي دائمًا",
+    news_020_3: "النقر على خطوة = تغيير المشهد + إضافة علامة فصل",
+    news_020_4: "الكاميرات المضافة بعد اختيار قالب ترث التخطيط",
+    news_020_5: "يفتح تلقائيًا عند أول تشغيل (يستبدل الإرشاد القديم)",
+    tplTitle: "اختر كيف تبدأ",
+    tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
+    tplChoose: "اختر قالبًا",
+    tplStarted: "بدأ القالب",
+    tplDismiss: "إغلاق",
+    tplBlank: "🎨 فارغ",
+    tplBlankDesc: "سأنشئ مشهدي الخاص",
+    tpl_lesson: "درس كامل",
+    tpl_lesson_d: "مقدمة → نظرية → عرض → تمرين → خاتمة",
+    tpl_lesson_intro: "🎓 اليوم نتعلّم…",
+    tpl_lesson_s1: "مقدمة",
+    tpl_lesson_s2: "النظرية",
+    tpl_lesson_s3: "العرض",
+    tpl_lesson_s4: "التمرين",
+    tpl_lesson_s5: "الخاتمة",
+    tpl_robot: "عرض روبوت",
+    tpl_robot_d: "مقدمة → كود → روبوت → مستشعرات → ملخّص",
+    tpl_robot_intro: "🤖 انظر إلى روبوتي!",
+    tpl_robot_s1: "مقدمة",
+    tpl_robot_s2: "الكود",
+    tpl_robot_s3: "الروبوت",
+    tpl_robot_s4: "المستشعرات",
+    tpl_robot_s5: "ملخّص",
+    tpl_fix: "تصحيح",
+    tpl_fix_d: "خطأ → تحليل → إصلاح → اختبار → تم",
+    tpl_fix_intro: "🐛 لنصلح هذا الخطأ معًا",
+    tpl_fix_s1: "الخطأ",
+    tpl_fix_s2: "التحليل",
+    tpl_fix_s3: "الإصلاح",
+    tpl_fix_s4: "الاختبار",
+    tpl_fix_s5: "يعمل!",
     t_mosque: 'مسجد', t_zellige: 'زليج', t_andalus: 'أندلس',
     t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
   }
@@ -600,6 +711,8 @@ const Engine = {
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
       this.onSourcesChanged();
+      // Re-apply the active scene so the new source is laid out correctly
+      if (Scenes.active) Scenes.reapply();
       log(`+ ${t('sourceScreen')}`, 'success');
     } catch (e) {
       log(`✗ screen: ${e.message}`, 'error');
@@ -632,6 +745,7 @@ const Engine = {
       };
       this.sources.push(src);
       this.onSourcesChanged();
+      if (Scenes.active) Scenes.reapply();
       log(`+ ${src.label}`, 'success');
       Badges.unlockIfMultiCam();
       // After a successful permission grant, labels become available — refresh
@@ -805,6 +919,13 @@ const Scenes = {
     Badges.unlockScene(key);
   },
 
+  /* Re-apply the active scene layout without logging / chapter side-effects.
+     Used after adding a source so it inherits the template / current layout. */
+  reapply() {
+    const s = this.presets.find(p => p.key === this.active);
+    if (s) s.apply(Engine);
+  },
+
   render() { renderScenes(); }
 };
 
@@ -855,6 +976,131 @@ function renderScenes() {
     el.appendChild(btn);
   });
 }
+
+/* ─────────── Templates ─────────── */
+
+const Templates = {
+  presets: [
+    {
+      key: 'lesson', icon: '📚', i18n: 'tpl_lesson', i18n_desc: 'tpl_lesson_d',
+      intro: 'tpl_lesson_intro',
+      steps: [
+        { scene: 'you',       label: 'tpl_lesson_s1' },
+        { scene: 'code',      label: 'tpl_lesson_s2' },
+        { scene: 'coderobot', label: 'tpl_lesson_s3' },
+        { scene: 'coderobot', label: 'tpl_lesson_s4' },
+        { scene: 'you',       label: 'tpl_lesson_s5' },
+      ],
+    },
+    {
+      key: 'robot', icon: '🤖', i18n: 'tpl_robot', i18n_desc: 'tpl_robot_d',
+      intro: 'tpl_robot_intro',
+      steps: [
+        { scene: 'you',     label: 'tpl_robot_s1' },
+        { scene: 'code',    label: 'tpl_robot_s2' },
+        { scene: 'robot',   label: 'tpl_robot_s3' },
+        { scene: 'sensors', label: 'tpl_robot_s4' },
+        { scene: 'studio',  label: 'tpl_robot_s5' },
+      ],
+    },
+    {
+      key: 'fix', icon: '🔧', i18n: 'tpl_fix', i18n_desc: 'tpl_fix_d',
+      intro: 'tpl_fix_intro',
+      steps: [
+        { scene: 'code',      label: 'tpl_fix_s1' },
+        { scene: 'you',       label: 'tpl_fix_s2' },
+        { scene: 'code',      label: 'tpl_fix_s3' },
+        { scene: 'coderobot', label: 'tpl_fix_s4' },
+        { scene: 'you',       label: 'tpl_fix_s5' },
+      ],
+    },
+  ],
+  active: null,
+  currentStep: -1,
+
+  apply(key) {
+    const tpl = this.presets.find(p => p.key === key);
+    if (!tpl) return;
+    this.active = tpl;
+    this.currentStep = 0;
+    Scenes.switch(tpl.steps[0].scene);
+    if (tpl.intro) TextOverlays.add(t(tpl.intro), { ttl: 6000 });
+    this.renderStepStrip();
+    log(`${t('tplStarted')}: ${tpl.icon} ${t(tpl.i18n)}`, 'success');
+    showToast(`${tpl.icon} ${t(tpl.i18n)}`, 2000);
+    Sfx.play('click');
+    this.hidePicker();
+  },
+
+  clear() {
+    this.active = null;
+    this.currentStep = -1;
+    this.renderStepStrip();
+  },
+
+  gotoStep(i) {
+    if (!this.active) return;
+    if (i < 0 || i >= this.active.steps.length) return;
+    this.currentStep = i;
+    const step = this.active.steps[i];
+    Scenes.switch(step.scene);
+    // If currently recording, add a chapter marker with the step label
+    if (Recorder.state === 'recording' || Recorder.state === 'paused') {
+      Chapters.items.push({ time: Recorder.elapsed() / 1000, label: t(step.label) });
+    }
+    this.renderStepStrip();
+    Sfx.play('click');
+  },
+
+  renderStepStrip() {
+    const el = $('tcTemplateStrip');
+    if (!el) return;
+    // Clear DOM
+    while (el.firstChild) el.removeChild(el.firstChild);
+
+    if (!this.active) {
+      el.classList.remove('active');
+      const pick = document.createElement('button');
+      pick.className = 'tc-tpl-pick-btn';
+      pick.addEventListener('click', () => this.showPicker());
+      const icon = document.createElement('span'); icon.textContent = '🎬 ';
+      const label = document.createElement('span'); label.textContent = t('tplChoose');
+      pick.append(icon, label);
+      el.appendChild(pick);
+      return;
+    }
+
+    el.classList.add('active');
+    const header = document.createElement('div');
+    header.className = 'tc-tpl-strip-header';
+    const title = document.createElement('span');
+    title.className = 'tc-tpl-strip-title';
+    title.textContent = `${this.active.icon} ${t(this.active.i18n)}`;
+    const close = document.createElement('button');
+    close.className = 'tc-tpl-strip-close';
+    close.title = t('tplDismiss');
+    close.textContent = '✕';
+    close.addEventListener('click', () => this.clear());
+    header.append(title, close);
+    el.appendChild(header);
+
+    const stepsEl = document.createElement('div');
+    stepsEl.className = 'tc-tpl-steps';
+    this.active.steps.forEach((step, i) => {
+      const s = document.createElement('button');
+      s.className = 'tc-tpl-step' + (i === this.currentStep ? ' active' : '') + (i < this.currentStep ? ' done' : '');
+      const n = document.createElement('span'); n.className = 'tc-tpl-step-n'; n.textContent = i + 1;
+      const l = document.createElement('span'); l.className = 'tc-tpl-step-l'; l.textContent = t(step.label);
+      s.append(n, l);
+      s.addEventListener('click', () => this.gotoStep(i));
+      stepsEl.appendChild(s);
+    });
+    el.appendChild(stepsEl);
+  },
+
+  showPicker()  { const c = $('tcTemplates'); if (c) c.style.display = 'block'; },
+  hidePicker()  { const c = $('tcTemplates'); if (c) c.style.display = 'none'; },
+};
 
 /* ─────────── Text Overlays ─────────── */
 
@@ -1561,14 +1807,21 @@ function renderTicker() {
 
 function setupOnboarding() {
   const seen = localStorage.getItem('tc-onboarded');
-  if (!seen) $('tcOnboarding').style.display = 'block';
-  $('tcOnboardingClose').addEventListener('click', () => {
-    $('tcOnboarding').style.display = 'none';
+  // First launch: show the template picker instead of the legacy steps card
+  if (!seen) Templates.showPicker();
+  const close = $('tcTemplatesClose');
+  if (close) close.addEventListener('click', () => {
+    Templates.hidePicker();
     try { localStorage.setItem('tc-onboarded', '1'); } catch {}
   });
-  $('tcOnboardingGo').addEventListener('click', () => {
-    $('tcOnboarding').style.display = 'none';
-    try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+  // Wire each template card button
+  document.querySelectorAll('[data-tpl]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.tpl;
+      try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+      if (key) Templates.apply(key);
+      else Templates.hidePicker();
+    });
   });
 }
 
@@ -1722,6 +1975,7 @@ async function init() {
   renderTextPresets();
   renderBadges();
   renderTicker();
+  Templates.renderStepStrip();
 
   setupOnboarding();
   setupHelpTabs();

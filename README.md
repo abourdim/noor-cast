@@ -36,6 +36,14 @@ Switch between them in real time during the recording using number keys **1-6**.
 
 ## ✨ Features
 
+### 🎬 Guided templates
+- **3 kid-friendly presets**: 📚 Full lesson, 🤖 Robot demo, 🔧 Fix-it
+- Each template sets an initial scene, drops a welcome text, and lays out a
+  **5-step sequence** (chips under the studio) that you click through
+- Clicking a step switches the scene AND adds a chapter marker in real time
+- Cams added after picking a template **inherit the layout** automatically
+- Opens automatically on first launch, reopenable via the "Pick a template" pill
+
 ### 📹 Capture & composition
 - Screen / window / tab capture via `getDisplayMedia`
 - Up to **3 simultaneous cameras** (USB webcams + internal + Continuity Camera)
