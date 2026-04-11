@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.82 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.83 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.82';
+const APP_VERSION = '0.7.83';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 09:45';
+const BUILD_DATE = '2026-04-12 10:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -276,6 +276,7 @@ const LANG = {
     captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
     sceneTransitionLabel: '🎞 Transition fondu entre scènes',
+    duckLabel: "🔉 Baisser l'audio des sources quand tu parles",
     screensaverLabel: "💤 Screensaver après 90s d'inactivité",
     screensaverHint: 'Touche une touche pour réveiller',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
@@ -846,6 +847,7 @@ const LANG = {
     captionsLabel: '💬 Live captions (Chrome/Edge)',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
     sceneTransitionLabel: '🎞 Scene transition fade',
+    duckLabel: '🔉 Duck source audio when you speak',
     screensaverLabel: '💤 Screensaver after 90s idle',
     screensaverHint: 'Press any key to wake up',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
@@ -1408,6 +1410,7 @@ const LANG = {
     captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
     sceneTransitionLabel: '🎞 انتقال مع تلاشي بين المشاهد',
+    duckLabel: '🔉 خفض صوت المصادر عند التحدث',
     screensaverLabel: '💤 شاشة توقف بعد 90 ثانية',
     screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
@@ -2095,6 +2098,8 @@ const MicBoost = {
       }
       const rms = Math.sqrt(sum / this._gateBuf.length);
       const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+      // v0.7.83: forward the mic RMS to VolumeDuck for ducking
+      try { VolumeDuck.tick(db); } catch {}
       const shouldMute = db < this.gateDb;
       if (shouldMute !== this._muted) {
         this._muted = shouldMute;
@@ -2103,6 +2108,72 @@ const MicBoost = {
       this._rafId = requestAnimationFrame(tick);
     };
     this._rafId = requestAnimationFrame(tick);
+  },
+};
+
+/* v0.7.83: VolumeDuck — opt-in automatic ducking. When the mic RMS rises
+   above THRESHOLD_DB, any non-mic source audio routed through
+   wrapSourceAudio gets ramped down by DUCK_DB; when the mic goes silent
+   the gain ramps back to 1. Piggybacks on MicBoost._startGateLoop's
+   existing analyser instead of tapping the audio graph again. */
+const VolumeDuck = {
+  enabled: false,
+  THRESHOLD_DB: -42,     // mic level that triggers ducking
+  DUCK_DB: -12,          // how much to lower non-mic sources
+  _gainNodes: new WeakMap(),  // source → GainNode
+  _active: false,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-duck') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-duck', v ? '1' : '0'); } catch {}
+    if (!v) this._restore();
+  },
+
+  // Called from Engine.addScreen / addCamera when a source has audio.
+  // Returns a GainNode to route the source's audio through.
+  wrapSourceAudio(src, srcNode) {
+    const ac = Engine.audioCtx;
+    if (!ac) return srcNode;
+    const g = ac.createGain();
+    g.gain.value = 1;
+    srcNode.connect(g);
+    this._gainNodes.set(src, g);
+    return g;
+  },
+
+  // Called each frame (or at least a few times/sec) by MicBoost._startGateLoop
+  // — we piggyback on the existing RMS analyser.
+  tick(micDb) {
+    if (!this.enabled) return;
+    const shouldDuck = micDb > this.THRESHOLD_DB;
+    if (shouldDuck === this._active) return;
+    this._active = shouldDuck;
+    const factor = Math.pow(10, this.DUCK_DB / 20);  // -12dB ≈ 0.25
+    const target = shouldDuck ? factor : 1;
+    Engine.sources.forEach(src => {
+      const g = this._gainNodes.get(src);
+      if (g) {
+        try {
+          g.gain.setTargetAtTime(target, Engine.audioCtx.currentTime, 0.12);
+        } catch {
+          g.gain.value = target;
+        }
+      }
+    });
+  },
+
+  _restore() {
+    this._active = false;
+    Engine.sources.forEach(src => {
+      const g = this._gainNodes.get(src);
+      if (g) {
+        try { g.gain.setTargetAtTime(1, Engine.audioCtx.currentTime, 0.12); }
+        catch { g.gain.value = 1; }
+      }
+    });
   },
 };
 
@@ -2652,7 +2723,9 @@ const Engine = {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: 30 },
-        audio: false
+        // v0.7.83: opt-in to system audio capture so VolumeDuck has
+        // something to duck. Browser still asks the user per-share.
+        audio: true
       });
       const video = document.createElement('video');
       video.srcObject = stream;
@@ -2666,6 +2739,17 @@ const Engine = {
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
+      // v0.7.83: if the screen capture has audio, route it through a
+      // VolumeDuck gain node so mic-ducking works
+      try {
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length > 0) {
+          const audioOnlyStream = new MediaStream(audioTracks);
+          const srcNode = this.audioCtx.createMediaStreamSource(audioOnlyStream);
+          const ducked = VolumeDuck.wrapSourceAudio(src, srcNode);
+          ducked.connect(this.audioDest);
+        }
+      } catch (e) { log('screen audio wire error: ' + e.message, 'error'); }
       this.onSourcesChanged();
       // Re-apply the active scene so the new source is laid out correctly
       if (Scenes.active) Scenes.reapply();
@@ -9876,6 +9960,12 @@ function wireEvents() {
       if (label) label.textContent = MicBoost.gateDb + ' dB';
     });
   }
+  // v0.7.83: volume ducking toggle
+  const duckEl = $('tcDuckToggle');
+  if (duckEl) {
+    duckEl.checked = VolumeDuck.enabled;
+    duckEl.addEventListener('change', (e) => VolumeDuck.setEnabled(e.target.checked));
+  }
 
   // Sources
   $('srcScreenBtn').addEventListener('click', () => Engine.addScreen());
@@ -10326,6 +10416,7 @@ async function init() {
   Sfx.load();
   Jingle.load();
   MicBoost.load();  // v0.7.69
+  VolumeDuck.load();  // v0.7.83
   TimeGoal.load();
   LiveCaptions.load();
   SceneIntroText.load();
