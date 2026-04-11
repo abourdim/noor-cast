@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.19 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.20 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.19';
+const APP_VERSION = '0.7.20';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 15:40';
+const BUILD_DATE = '2026-04-11 17:50';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -153,6 +153,10 @@ const LANG = {
     setSecTicker: 'Ticker',
     textFont: 'Aa Police par défaut',
     freeResize: 'Étire libre (Shift+coin)',
+    teleSpeed: 'Vitesse',
+    telePlay: 'Lecture',
+    telePause: 'Pause',
+    teleReset: 'Retour haut',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Réinitialiser les badges',
     clearCache: 'Vider le cache complet',
@@ -503,6 +507,10 @@ const LANG = {
     setSecTicker: 'Ticker',
     textFont: 'Aa Default font',
     freeResize: 'Free stretch (Shift+corner)',
+    teleSpeed: 'Speed',
+    telePlay: 'Play',
+    telePause: 'Pause',
+    teleReset: 'Reset top',
     setSecDanger: '♻ Maintenance',
     resetBadges: 'Reset badges',
     clearCache: 'Clear all local data',
@@ -845,6 +853,10 @@ const LANG = {
     setSecTicker: 'الشريط',
     textFont: 'Aa الخط الافتراضي',
     freeResize: 'تمدد حر (Shift+زاوية)',
+    teleSpeed: 'السرعة',
+    telePlay: 'تشغيل',
+    telePause: 'إيقاف',
+    teleReset: 'إعادة',
     setSecDanger: '♻ الصيانة',
     resetBadges: 'إعادة تعيين الشارات',
     clearCache: 'مسح جميع البيانات المحلية',
@@ -3348,24 +3360,153 @@ const Zoom = {
   },
 };
 
-/* Teleprompter — overlay visible on stage only, NOT drawn to canvas */
+/* Teleprompter — overlay visible on stage only, NEVER drawn to canvas.
+   v0.7.20: expanded from a static box into a broadcast-style prompter:
+   auto-scroll with speed control, persistent script (localStorage),
+   font size + width controls, ↻ reset-to-top, `T` keyboard hotkey.
+   Still teacher-only HTML — appears over the preview but never in the
+   recording (that promise is in FAQ q7). */
 const Teleprompter = {
-  on: false, _userEdited: false,
+  on: false, _userEdited: false, _wired: false,
+  // Persisted settings (loaded in setup)
+  script: '',
+  speed: 35,        // px/s
+  fontSize: 26,     // px
+  widthPct: 80,     // % of stage width
+  // Auto-scroll state
+  playing: false,
+  _rafId: null,
+  _lastTick: 0,
+  _scrollFrac: 0,
+
+  setup() {
+    // Load persisted values — pattern matches Badges/Brand/TextOverlays
+    try {
+      const s = localStorage.getItem('tc-tele-script'); if (s !== null) this.script = s;
+      const sp = parseFloat(localStorage.getItem('tc-tele-speed'));   if (!isNaN(sp)) this.speed = sp;
+      const fs = parseFloat(localStorage.getItem('tc-tele-font'));    if (!isNaN(fs)) this.fontSize = fs;
+      const w  = parseFloat(localStorage.getItem('tc-tele-width'));   if (!isNaN(w))  this.widthPct = w;
+    } catch {}
+
+    const inner = $('tcTeleInner');
+    if (!inner) return;
+    inner.contentEditable = 'true';
+    // Apply persisted script (overrides the i18n placeholder if user had one)
+    if (this.script) {
+      inner.textContent = this.script;
+      this._userEdited = true;
+    }
+    // Inline font-size so `setFont` works at runtime
+    inner.style.fontSize = this.fontSize + 'px';
+
+    // Width as a CSS custom property on the outer container
+    const outer = $('tcTeleprompter');
+    if (outer) outer.style.setProperty('--tele-w', this.widthPct + '%');
+
+    // Wire the contentEditable input — same _userEdited tracking as before
+    // so applyI18n won't clobber typed text on language switch.
+    if (!this._wired) {
+      inner.addEventListener('input', () => {
+        this._userEdited = true;
+        this.script = inner.textContent || '';
+        try { localStorage.setItem('tc-tele-script', this.script); } catch {}
+      });
+      this._wired = true;
+    }
+
+    // Wire control strip buttons (guard — only wire once)
+    const speedEl = $('tcTeleSpeed');
+    if (speedEl) {
+      speedEl.value = this.speed;
+      speedEl.addEventListener('input', (e) => this.setSpeed(parseFloat(e.target.value)));
+    }
+    $('tcTelePlayBtn')?.addEventListener('click', () => this.togglePlay());
+    $('tcTeleFontDown')?.addEventListener('click', () => this.setFont(this.fontSize - 2));
+    $('tcTeleFontUp')?.addEventListener('click', () => this.setFont(this.fontSize + 2));
+    $('tcTeleWidthDown')?.addEventListener('click', () => this.setWidth(this.widthPct - 5));
+    $('tcTeleWidthUp')?.addEventListener('click', () => this.setWidth(this.widthPct + 5));
+    $('tcTeleResetBtn')?.addEventListener('click', () => this.reset());
+    // The control strip should not propagate mousedown to .tc-stage
+    // (same bug class as v0.7.18 floating toolbars).
+    $('tcTeleControls')?.addEventListener('mousedown', (e) => e.stopPropagation());
+  },
+
   toggle() {
     this.on = !this.on;
     const el = $('tcTeleprompter');
-    el.style.display = this.on ? 'block' : 'none';
-    const inner = $('tcTeleInner');
-    inner.contentEditable = 'true';
-    // Track whether the user has typed their own text. applyI18n() will only
-    // refresh the placeholder when the user hasn't edited yet.
-    if (!this._wired) {
-      inner.addEventListener('input', () => { this._userEdited = true; });
-      this._wired = true;
-    }
-    $('tcTeleBtn').classList.toggle('active', this.on);
+    if (el) el.style.display = this.on ? 'flex' : 'none';
+    $('tcTeleBtn')?.classList.toggle('active', this.on);
+    // Auto-pause scroll if we're hiding
+    if (!this.on) this.pause();
     log(this.on ? t('teleOn') : t('teleOff'), 'info');
   },
+
+  play() {
+    if (this.playing) return;
+    this.playing = true;
+    this._lastTick = performance.now();
+    $('tcTelePlayBtn')?.classList.add('active');
+    const btn = $('tcTelePlayBtn'); if (btn) btn.textContent = '⏸';
+    const loop = (t) => {
+      if (!this.playing) return;
+      const dt = (t - this._lastTick) / 1000;
+      this._lastTick = t;
+      const inner = $('tcTeleInner');
+      if (inner) {
+        this._scrollFrac += this.speed * dt;
+        const whole = Math.floor(this._scrollFrac);
+        if (whole > 0) {
+          inner.scrollTop += whole;
+          this._scrollFrac -= whole;
+        }
+        // Stop when we've hit the bottom
+        if (inner.scrollTop + inner.clientHeight >= inner.scrollHeight - 1) {
+          this.pause();
+          return;
+        }
+      }
+      this._rafId = requestAnimationFrame(loop);
+    };
+    this._rafId = requestAnimationFrame(loop);
+  },
+
+  pause() {
+    this.playing = false;
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    $('tcTelePlayBtn')?.classList.remove('active');
+    const btn = $('tcTelePlayBtn'); if (btn) btn.textContent = '⏵';
+  },
+
+  togglePlay() { this.playing ? this.pause() : this.play(); },
+
+  reset() {
+    const inner = $('tcTeleInner');
+    if (inner) inner.scrollTop = 0;
+    this._scrollFrac = 0;
+  },
+
+  setSpeed(px) {
+    this.speed = Math.max(5, Math.min(200, px || 35));
+    try { localStorage.setItem('tc-tele-speed', String(this.speed)); } catch {}
+    const el = $('tcTeleSpeed');
+    if (el && parseFloat(el.value) !== this.speed) el.value = this.speed;
+  },
+
+  setFont(px) {
+    this.fontSize = Math.max(12, Math.min(72, px || 26));
+    const inner = $('tcTeleInner');
+    if (inner) inner.style.fontSize = this.fontSize + 'px';
+    try { localStorage.setItem('tc-tele-font', String(this.fontSize)); } catch {}
+  },
+
+  setWidth(pct) {
+    this.widthPct = Math.max(30, Math.min(100, pct || 80));
+    const outer = $('tcTeleprompter');
+    if (outer) outer.style.setProperty('--tele-w', this.widthPct + '%');
+    try { localStorage.setItem('tc-tele-width', String(this.widthPct)); } catch {}
+  },
+
   hasUserText() { return this._userEdited; }
 };
 
@@ -4775,6 +4916,10 @@ function setupHotkeys() {
     else if (k === 'd') { Whiteboard.toggle(); e.preventDefault(); }
     else if (k === 'z') { Zoom.toggle(); e.preventDefault(); }
     else if (k === 'q') { QuizCard.prompt(); e.preventDefault(); }
+    // v0.7.20: T toggles the teleprompter. Safe because the handler
+    // already bails on contentEditable targets above, so pressing 't'
+    // inside the script won't self-trigger a toggle.
+    else if (k === 't') { Teleprompter.toggle(); e.preventDefault(); }
     else if (k === 'f' && !e.ctrlKey && !e.metaKey) {
       // F alone = freeze screen; handled above. But if shift is held, we
       // reinterpret as maximize toggle. (Kept F for freeze to not break
@@ -5103,6 +5248,7 @@ async function init() {
   Drag.setup();
   TextToolbar.setup();
   SourceToolbar.setup();
+  Teleprompter.setup();
 
   renderScenes();
   renderTextPresets();

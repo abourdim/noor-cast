@@ -44,6 +44,37 @@ User: *"redesign. better look and feel. reorganize better"*.
 - Visual: bismillah centered, tools bar above stage, scenes 2×3, text
   presets compact, text toolbar docked below stage with selected "Hi".
 
+## v0.7.20 — 2026-04-11 (Broadcast-style teleprompter)
+
+### Added
+- **Auto-scrolling teleprompter** with a pinned control strip and a
+  scrollable script area. Replaces the static dashed box that was
+  unusable for long scripts.
+  - **⏵/⏸ play button** drives a `requestAnimationFrame` loop that
+    accumulates `speed × dt` pixels into a fractional scroll buffer,
+    writes integer `scrollTop` deltas, and auto-pauses at the bottom.
+  - **Speed slider** 10-120 px/s (persisted in `tc-tele-speed`).
+  - **A− / A+ font buttons** (12-72 px clamp, persisted in `tc-tele-font`).
+  - **↔− / ↔+ width buttons** (30-100 %, persisted in `tc-tele-width`
+    via `--tele-w` CSS custom property).
+  - **↻ reset button** — scroll back to top.
+  - **Persistent script** — every keystroke saves to `tc-tele-script`,
+    reloaded on `Teleprompter.setup()` at app startup. Preserved across
+    reloads, language switches, and cache clears (until the user clicks
+    💥 Clear all local data, which wipes it with the rest).
+  - **`T` keyboard hotkey** to toggle visibility. Safe because the
+    keyboard handler already bails on `contentEditable` targets — so
+    pressing `t` *inside* the script doesn't self-trigger.
+- **Still 100% teacher-only HTML** — never drawn to the output canvas,
+  never in the recording (promise from FAQ q7 unchanged).
+
+### Changed
+- `.tc-teleprompter` rewritten as a flex column so the control strip
+  stays pinned while `.tc-tele-inner` (the script) gets `overflow-y: auto`.
+- Font size now set inline on `#tcTeleInner` by `setFont()` so the
+  runtime control works without restyling the sheet.
+- Styled scrollbar to match the theme.
+
 ## v0.7.19 — 2026-04-11 (Maintenance tools + badge docs)
 
 User feedback: *"add this info to help, faq.. add reste badgeds. Add
