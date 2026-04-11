@@ -1358,22 +1358,29 @@ body.log-open .app {
 }
 
 /* ─── REC indicator ─── */
-.tc-rec-indicator {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 14px;
-  background: rgba(0,0,0,.35);
-  border-radius: 20px;
+/* v0.7.18: same styles work for .tc-rec-indicator OR .tc-rec-timer
+   (the new name used in the REC bar). Target both for safety. */
+.tc-rec-indicator,
+.tc-rec-timer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px;
+  background: rgba(0,0,0,.4);
+  border-radius: 22px;
   font-family: 'Orbitron', monospace;
-  font-size: .95rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--text-muted);
   border: 1px solid var(--border);
+  letter-spacing: 1px;
 }
-.tc-rec-indicator.active { color: #fca5a5; border-color: #ef4444; }
+.tc-rec-indicator.active,
+.tc-rec-timer.active { color: #fca5a5; border-color: #ef4444; }
 .tc-rec-dot {
   width: 10px; height: 10px; border-radius: 50%;
   background: #555;
 }
-.tc-rec-indicator.active .tc-rec-dot {
+.tc-rec-indicator.active .tc-rec-dot,
+.tc-rec-timer.active .tc-rec-dot {
   background: #ef4444;
   animation: recPulse 1.2s ease-in-out infinite;
 }
@@ -1905,6 +1912,83 @@ body.log-open .app {
 .tc-toolbar-select option {
   background: #0c1f0a;
   color: #e5e7eb;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   v0.7.18 — Floating horizontal tools bar above the studio grid
+   Canva-style icon pill that holds all the live tools (Laser, Freeze,
+   Draw, Zoom, Tele, Snap, Fullscreen). Frees the right sidebar from a
+   stack of 7 vertical buttons and puts the tools one click from the stage.
+   ═══════════════════════════════════════════════════════════════════ */
+.tc-tools-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  margin: 8px 18px 4px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent2, #fb923c) 8%, rgba(0, 0, 0, .35)),
+    rgba(0, 0, 0, .35));
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .06),
+    0 2px 12px rgba(0, 0, 0, .35);
+  flex-wrap: wrap;
+}
+.tc-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
+  color: #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--font-h), Righteous, sans-serif;
+  font-size: .78rem;
+  letter-spacing: .3px;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.tc-tool-btn:hover {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .22);
+  transform: translateY(-1px);
+}
+.tc-tool-btn:active { transform: translateY(0); }
+.tc-tool-btn.active {
+  background: color-mix(in srgb, var(--accent2, #fb923c) 25%, transparent);
+  border-color: color-mix(in srgb, var(--accent2, #fb923c) 60%, transparent);
+  color: #fff;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent2, #fb923c) 30%, transparent);
+}
+.tc-tool-icon { font-size: 1rem; line-height: 1; }
+.tc-tool-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: .72rem;
+}
+.tc-tool-btn kbd {
+  font-size: .62rem;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, .7);
+  font-family: ui-monospace, monospace;
+  margin-left: 2px;
+}
+.tc-tools-sep {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, .12);
+  margin: 0 4px;
+}
+@media (max-width: 920px) {
+  .tc-tool-label { display: none; }
+  .tc-tool-btn { padding: 7px 9px; }
 }
 
 /* v0.7.14: Settings panel sections (collapsible via <details>).

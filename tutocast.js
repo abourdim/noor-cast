@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.17 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.18 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.17';
+const APP_VERSION = '0.7.18';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -2511,7 +2511,8 @@ const Recorder = {
     const recording = this.state === 'recording' || this.state === 'paused';
     rec.classList.toggle('recording', recording);
     rec.querySelector('.tc-rec-label').textContent = recording ? t('recStop') : t('recStart');
-    ind.classList.toggle('active', this.state === 'recording');
+    // v0.7.18: the duplicate header timer/indicator was removed — guard null
+    if (ind) ind.classList.toggle('active', this.state === 'recording');
     ['tcPauseBtn', 'tcMarkBtn', 'tcStopBtn'].forEach(id => { $(id).disabled = !recording; });
     const pill = $('statusPill'), st = $('statusText');
     if (pill && st) {
@@ -3866,6 +3867,12 @@ const TextToolbar = {
   setup() {
     this.el = $('tcTextToolbar');
     if (!this.el) return;
+    // v0.7.18 CRITICAL FIX: stop the mousedown from bubbling to .tc-stage,
+    // otherwise Drag._onDown fires with coords outside the canvas, sees no
+    // hit, and deselects the text overlay — making every toolbar button
+    // appear "broken" because the next render hides the toolbar entirely.
+    // click stopPropagation isn't enough since mousedown fires first.
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
     // Color swatches
     this.el.querySelectorAll('.tc-swatch').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -3955,6 +3962,10 @@ const SourceToolbar = {
   setup() {
     this.el = $('tcSourceToolbar');
     if (!this.el) return;
+    // v0.7.18 CRITICAL FIX: same as TextToolbar — stop mousedown bubbling
+    // to .tc-stage so Drag._onDown doesn't deselect the source on every
+    // toolbar interaction.
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
     const sel = () => Engine.sources.find(s => s.id === Drag.selectedSourceId);
     $('tcSrcToolbarHide')?.addEventListener('click', (e) => {
       e.stopPropagation();

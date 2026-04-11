@@ -3,6 +3,95 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.18 — 2026-04-11 (Redesign + critical toolbar mousedown fix)
+
+### Fixed — critical bug in floating toolbars
+User: *"options do not work"* (with a screenshot of a selected text
+overlay and a non-responsive color toolbar). Root cause: the
+SourceToolbar / TextToolbar buttons were stopping `click` propagation,
+but `Drag._onDown` listens to **`mousedown`** which fires first and
+bubbles past click-stopPropagation. The mousedown reached `.tc-stage`,
+`_stageToCanvas` mapped the toolbar's screen coords (now docked below
+the stage) to coordinates outside the canvas, `_hitTest` returned null,
+and the deselect branch ran — clearing the selection on every toolbar
+interaction. The next render hid the toolbar, making every button look
+broken.
+
+Fix: added a single `mousedown` listener on each toolbar root element
+that calls `e.stopPropagation()`. One line per toolbar; both fixed.
+
+### Changed — redesign
+User: *"redesign. better look and feel. reorganize better"*.
+- **New floating horizontal tools bar** above the studio grid. Canva-style
+  icon pill with Laser, Freeze, Draw, Zoom (separator), Teleprompter,
+  Snapshot, Fullscreen. Each button: emoji icon + bold uppercase label
+  + small kbd shortcut. Hover lifts (-1 px), active state glows in the
+  theme accent. Auto-hides labels under 920 px viewport (icon-only).
+- **Right sidebar trimmed** — removed the 7-stacked-tools section
+  (`tcLaserBtn` … `tcSnapBtn`). Saved ~280 px of vertical space, the
+  sidebar now contains only Scenes + Reset Layout + Texts + Free text +
+  Default font picker.
+- New `.tc-tools-bar`, `.tc-tool-btn`, `.tc-tool-icon`, `.tc-tool-label`,
+  `.tc-tools-sep` styles. Subtle accent gradient background, inset
+  highlight, soft shadow.
+
+### Verified (Preview MCP harness)
+- `survivedMousedown` test: select a text overlay, dispatch mousedown
+  on yellow swatch → `selectedId` unchanged ✓
+- `colorAfterClick` test: dispatch click on yellow swatch → text color
+  becomes `#fbbf24` ✓
+- `toolsBarBtnCount` = 7, `sidebarToolsRemoved` = true.
+- Visual: bismillah centered, tools bar above stage, scenes 2×3, text
+  presets compact, text toolbar docked below stage with selected "Hi".
+
+## v0.7.18 — 2026-04-11 (Redesign + critical toolbar mousedown bug fix)
+
+### Fixed — critical floating toolbar bug
+User: *"options do not work"* (screenshot of a selected text overlay
+and a non-responsive color toolbar). Root cause: `SourceToolbar` /
+`TextToolbar` button handlers called `stopPropagation` on **click**,
+but `Drag._onDown` listens to **mousedown** which fires first. The
+mousedown reached `.tc-stage`, `_stageToCanvas` mapped the toolbar's
+(now docked below the stage) viewport coords to canvas coords outside
+the 1920×1080 canvas area, `_hitTest` returned null, and the deselect
+branch ran — clearing the selection on every interaction. The next
+render cycle hid the toolbar. Every button looked broken.
+
+Fix: one-line `mousedown` stopPropagation listener on each toolbar
+root (`.tc-text-toolbar` + `.tc-source-toolbar`). Verified with a
+regression test in the Preview MCP harness.
+
+### Changed — redesign
+User: *"redesign. better look and feel. reorganize better"*.
+
+- **Floating horizontal tools bar** above the studio grid. Canva-style
+  icon pill: Laser / Freeze / Draw / Zoom | Tele / Snap / Fullscreen.
+  Each button = emoji icon + bold uppercase label + small `<kbd>` chip.
+  Hover `translateY(-1px)` + border highlight, active state glows in
+  theme accent. Under 920 px viewport the labels auto-hide (icon+kbd
+  only). Zero JS wiring change — same IDs as before.
+- **Right sidebar slimmed.** Removed the 7-button vertical tool stack
+  (`🛠 Outils`, lines 237-244 of index.html). Saves ~280 px vertical,
+  so Scenes + Texts breathe.
+- **Duplicate `00:00` timer removed** from the card header. Moved the
+  single rec-indicator next to the big ENREGISTRER button in the REC
+  bar, at 1.15 rem Orbitron — visually prominent where the eye
+  actually goes during recording. `Recorder.updateUI()` now
+  null-guards `tcRecIndicator`.
+- **New CSS block** for `.tc-tools-bar`, `.tc-tool-btn`, `.tc-tool-icon`,
+  `.tc-tool-label`, `.tc-tools-sep` with accent gradient background,
+  inset highlight, soft shadow, responsive label hide.
+
+### Verified (Preview MCP harness)
+- `APP_VERSION === '0.7.18'`, `toolsBar` exists, `toolBtnCount === 7`,
+  `sidebarToolsGone === true`, `headerHasNoRecInd === true`,
+  `recBarHasTimer === true`.
+- **Toolbar bug regression test** — select a text overlay, dispatch
+  `mousedown` on a swatch, assert `selectedId` is unchanged; dispatch
+  `click`, assert the text color became `#fbbf24`. Both pass.
+- 1600×900 visual snapshot: tools bar above stage, prominent
+  `● 00:00` next to ENREGISTRER, no header duplicate.
+
 ## v0.7.17 — 2026-04-11 (Free resize via Shift + single-pass ticker)
 
 ### Added
