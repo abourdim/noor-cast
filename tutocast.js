@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.41 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.42 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.41';
+const APP_VERSION = '0.7.42';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 23:15';
+const BUILD_DATE = '2026-04-11 23:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -1548,6 +1548,29 @@ const Engine = {
 
     // Brand watermark (logo + slogan + fun effect) — always on top of overlays
     Brand.draw(ctx);
+
+    // v0.7.42: smart alignment guides — bright lines drawn while
+    // the user is actively dragging a source. Cleared on drag-end.
+    if (Drag._activeGuides && Drag._activeGuides.length) {
+      ctx.save();
+      ctx.strokeStyle = '#e879f9';  // Pink, high contrast against theme accents
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 8]);
+      Drag._activeGuides.forEach(g => {
+        ctx.beginPath();
+        if (g.axis === 'y') {
+          // Vertical line at x = g.at
+          ctx.moveTo(g.at, 0);
+          ctx.lineTo(g.at, height);
+        } else {
+          ctx.moveTo(0, g.at);
+          ctx.lineTo(width, g.at);
+        }
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
 
     // v0.7.25: Intro/outro cards — drawn on top of sources + overlays
     // but BELOW laser/ripples so pointer visuals still land on top.
@@ -3868,6 +3891,57 @@ const Drag = {
         for (const [ax, ay] of anchors) {
           if ((nx - ax) ** 2 + (ny - ay) ** 2 < r2) { nx = ax; ny = ay; break; }
         }
+        // v0.7.42: smart alignment guides. Compare the dragged source
+        // edges + center against every OTHER visible source's edges +
+        // center. If within 8 canvas-px, snap that axis and publish a
+        // guide line for Engine.render() to draw.
+        const SNAP_PX = 8;
+        const guides = [];
+        const others = Engine.sources.filter(x =>
+          x !== ref && x.type !== 'mic' && x.visible !== false && !x.hidden
+        );
+        // Horizontal candidates (X-axis lines, vertical guides)
+        const myXs = [
+          { val: nx, kind: 'left' },
+          { val: nx + ref.w / 2, kind: 'centerX' },
+          { val: nx + ref.w, kind: 'right' },
+        ];
+        for (const m of myXs) {
+          for (const o of others) {
+            const targets = [o.x, o.x + o.w / 2, o.x + o.w];
+            for (const tx of targets) {
+              if (Math.abs(m.val - tx) < SNAP_PX) {
+                const delta = tx - m.val;
+                nx += delta;
+                // Rebuild myXs with the corrected x
+                m.val += delta;
+                guides.push({ axis: 'y', at: tx });
+                break;
+              }
+            }
+          }
+        }
+        const myYs = [
+          { val: ny, kind: 'top' },
+          { val: ny + ref.h / 2, kind: 'centerY' },
+          { val: ny + ref.h, kind: 'bottom' },
+        ];
+        for (const m of myYs) {
+          for (const o of others) {
+            const targets = [o.y, o.y + o.h / 2, o.y + o.h];
+            for (const ty of targets) {
+              if (Math.abs(m.val - ty) < SNAP_PX) {
+                const delta = ty - m.val;
+                ny += delta;
+                m.val += delta;
+                guides.push({ axis: 'x', at: ty });
+                break;
+              }
+            }
+          }
+        }
+        // Stash for Engine.render() to draw (overwrites any previous frame)
+        Drag._activeGuides = guides;
       }
       // Keep inside canvas
       nx = Math.max(0, Math.min(Engine.width  - ref.w, nx));
@@ -3931,6 +4005,7 @@ const Drag = {
       this.state = null;
       if (this.stage) this.stage.classList.remove('dragging');
     }
+    Drag._activeGuides = null;  // v0.7.42: clear alignment guides on drag-end
     if (wasDragOrResize) LayoutHistory.capture();
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
