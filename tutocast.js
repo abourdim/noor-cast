@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.78 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.79 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.78';
+const APP_VERSION = '0.7.79';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 08:45';
+const BUILD_DATE = '2026-04-12 09:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -558,6 +558,7 @@ const LANG = {
     t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
     // v0.7.55: custom accent color picker
     customAccent: '🎨 Couleur accent personnalisée',
+    snapResolution: '📐 Résolution capture photo',
     customAccentReset: '🎨 Couleur par défaut restaurée',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
@@ -1118,6 +1119,7 @@ const LANG = {
     t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
     // v0.7.55: custom accent color picker
     customAccent: '🎨 Custom accent color',
+    snapResolution: '📐 Snapshot resolution',
     customAccentReset: '🎨 Default color restored',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
@@ -1664,6 +1666,7 @@ const LANG = {
     t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
     // v0.7.55: custom accent color picker
     customAccent: '🎨 لون التمييز المخصص',
+    snapResolution: '📐 دقة اللقطة',
     customAccentReset: '🎨 تم استعادة اللون الافتراضي',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 المصادر',
@@ -7150,26 +7153,65 @@ const QuizCard = {
 
 /* Snapshot — download current canvas as PNG */
 function snapshot() {
-  Engine.canvas.toBlob((blob) => {
-    // v0.7.54: if annotation mode is on, open the modal instead of
-    // immediately downloading. Opt-in via localStorage tc-snap-annotate.
-    let annotate = false;
-    try { annotate = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
-    if (annotate) {
-      SnapshotAnnotator.open(blob);
-      return;
-    }
+  // v0.7.54: if annotation mode is on, open the modal instead of
+  // immediately downloading. Opt-in via localStorage tc-snap-annotate.
+  // This check runs BEFORE the v0.7.79 mult check — annotation always
+  // operates on the Engine canvas at its native resolution; the chosen
+  // multiplier still applies when the annotated image is finally saved.
+  let annotate = false;
+  try { annotate = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
+  if (annotate) {
+    Engine.canvas.toBlob((blob) => SnapshotAnnotator.open(blob));
+    return;
+  }
+
+  // v0.7.79: snapshot resolution multiplier — 1× / 2× / 4×
+  let mult = 1;
+  try {
+    const saved = parseInt(localStorage.getItem('tc-snap-mult'), 10);
+    if (saved === 2 || saved === 4) mult = saved;
+  } catch {}
+
+  if (mult === 1) {
+    // Existing fast path — no re-encode
+    Engine.canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      log(t('snapshotSaved'), 'success');
+      // v0.7.30: also push a thumbnail into the visible strip below the stage
+      SnapshotGallery.add(blob);
+    });
+    return;
+  }
+
+  // v0.7.79: up-scale path — draw the Engine canvas to an oversized
+  // offscreen canvas with high-quality image smoothing.
+  const w = Engine.canvas.width * mult;
+  const h = Engine.canvas.height * mult;
+  const off = document.createElement('canvas');
+  off.width = w;
+  off.height = h;
+  const octx = off.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(Engine.canvas, 0, 0, w, h);
+  off.toBlob((blob) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     a.href = url;
-    a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+    a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${mult}x.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    log(t('snapshotSaved'), 'success');
-    // v0.7.30: also push a thumbnail into the visible strip below the stage
-    SnapshotGallery.add(blob);
+    log(`${t('snapshotSaved')} (${mult}×)`, 'success');
+    if (typeof SnapshotGallery !== 'undefined') SnapshotGallery.add(blob);
   });
 }
 
@@ -9457,6 +9499,15 @@ function wireEvents() {
   // Lang & theme
   $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
   $('themeSelect').addEventListener('change', (e) => setTheme(e.target.value));
+
+  // v0.7.79: snapshot resolution multiplier dropdown
+  const smEl = $('tcSnapMultSelect');
+  if (smEl) {
+    try { smEl.value = localStorage.getItem('tc-snap-mult') || '1'; } catch {}
+    smEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-snap-mult', e.target.value); } catch {}
+    });
+  }
 
   // v0.7.55: custom accent color picker — overlays current theme's --accent
   const ca = $('tcCustomAccentInput');
