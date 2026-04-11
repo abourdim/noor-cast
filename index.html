@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.54</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.55</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -937,7 +937,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.54</strong></span>
+      <span class="badge"><strong>v0.7.55</strong></span>
     </div>
   </aside>
 
@@ -975,6 +975,14 @@
               <option value="space" data-i18n="t_space">Space</option>
               <option value="robot" data-i18n="t_robot">Robot</option>
             </select>
+          </div>
+          <!-- v0.7.55: custom accent color picker — overlays current theme's --accent -->
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="customAccent">🎨 Couleur accent personnalisée</label>
+            <div class="tc-custom-accent-row">
+              <input type="color" id="tcCustomAccentInput" value="#a3e635" />
+              <button id="tcCustomAccentClear" class="tc-custom-accent-clear" title="Reset to theme default">✕</button>
+            </div>
           </div>
           <!-- v0.7.20: reset controls + build timestamp -->
           <div class="sidebar-group">
@@ -1170,7 +1178,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.54</strong></span>
+      <span class="badge"><strong>v0.7.55</strong></span>
     </div>
   </aside>
 
@@ -1202,7 +1210,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.54</strong></span>
+      <span class="badge"><strong>v0.7.55</strong></span>
     </div>
   </aside>
 

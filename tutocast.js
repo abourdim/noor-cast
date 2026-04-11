@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.54 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.55 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.54';
+const APP_VERSION = '0.7.55';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 02:45';
+const BUILD_DATE = '2026-04-12 03:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -484,6 +484,9 @@ const LANG = {
     tpl_fix_s5: "Ça marche !",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 Couleur accent personnalisée',
+    customAccentReset: '🎨 Couleur par défaut restaurée',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
     tour_1_body: 'Commence par ajouter une source — écran, caméra ou micro.',
@@ -969,6 +972,9 @@ const LANG = {
     tpl_fix_s5: "It works!",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 Custom accent color',
+    customAccentReset: '🎨 Default color restored',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
     tour_1_body: 'Start by adding a source — screen, camera, or mic.',
@@ -1442,6 +1448,9 @@ const LANG = {
     tpl_fix_s5: "يعمل!",
     t_mosque: 'مسجد', t_zellige: 'زليج', t_andalus: 'أندلس',
     t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 لون التمييز المخصص',
+    customAccentReset: '🎨 تم استعادة اللون الافتراضي',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 المصادر',
     tour_1_body: 'ابدأ بإضافة مصدر — شاشة، كاميرا، أو ميكروفون.',
@@ -1509,11 +1518,65 @@ window.dismissSplash = dismissSplash;
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('tc-theme', name); } catch {}
+  // v0.7.55: after the base theme applies, overlay any custom accent
+  CustomAccent.apply();
   // Give the browser one tick to apply the new :root vars, then re-cache.
   if (typeof Engine !== 'undefined' && Engine.canvas) {
     setTimeout(() => Engine.refreshAccent(), 20);
   }
 }
+
+// v0.7.55: custom accent color override — applied on top of the current
+// theme. Stored in tc-custom-accent localStorage. When empty, the theme's
+// default accent is used (inline CSS overrides are cleared).
+const CustomAccent = {
+  current: null,
+
+  load() {
+    try { this.current = localStorage.getItem('tc-custom-accent') || null; } catch {}
+    this.apply();
+  },
+
+  set(hex) {
+    if (!hex) { this.clear(); return; }
+    // Basic validation
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    this.current = hex;
+    try { localStorage.setItem('tc-custom-accent', hex); } catch {}
+    this.apply();
+  },
+
+  clear() {
+    this.current = null;
+    try { localStorage.removeItem('tc-custom-accent'); } catch {}
+    this.apply();
+  },
+
+  apply() {
+    const root = document.documentElement;
+    if (this.current) {
+      root.style.setProperty('--accent', this.current);
+      // Also tweak --glow to a 30% alpha variant for hover effects
+      const rgb = this._hexToRgb(this.current);
+      if (rgb) {
+        root.style.setProperty('--glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, .3)`);
+      }
+    } else {
+      // Reset inline overrides so the theme's CSS rules take over again
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--glow');
+    }
+    // Engine._accentColor drives canvas-side rendering (corner handles,
+    // laser, etc.) — refresh it so the next frame picks up the new color.
+    if (typeof Engine !== 'undefined' && Engine.refreshAccent) Engine.refreshAccent();
+  },
+
+  _hexToRgb(hex) {
+    const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
+    if (!m) return null;
+    return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+  },
+};
 
 const logHistory = [];
 function log(msg, type = 'info') {
@@ -7937,6 +8000,20 @@ function wireEvents() {
   $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
   $('themeSelect').addEventListener('change', (e) => setTheme(e.target.value));
 
+  // v0.7.55: custom accent color picker — overlays current theme's --accent
+  const ca = $('tcCustomAccentInput');
+  if (ca) {
+    // Initialize from saved value
+    if (CustomAccent.current) ca.value = CustomAccent.current;
+    ca.addEventListener('input', (e) => CustomAccent.set(e.target.value));
+  }
+  $('tcCustomAccentClear')?.addEventListener('click', () => {
+    CustomAccent.clear();
+    const inp = $('tcCustomAccentInput');
+    if (inp) inp.value = '#a3e635';
+    showToast(t('customAccentReset') || '🎨 Couleur par défaut restaurée', 1400);
+  });
+
   // v0.7.19: Maintenance — reset badges + clear cache + build meta
   $('tcResetBadgesBtn')?.addEventListener('click', () => {
     Badges.unlocked.clear();
@@ -8282,6 +8359,9 @@ async function init() {
     const theme = localStorage.getItem('tc-theme'); if (theme) setTheme(theme);
   } catch {}
   $('langSelect').value = currentLang;
+
+  // v0.7.55: apply any custom accent override on top of the theme restored above
+  CustomAccent.load();
 
   Sfx.load();
   Jingle.load();
