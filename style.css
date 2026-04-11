@@ -1860,6 +1860,55 @@ body.log-open .app {
 
 /* Brand settings group */
 .brand-group { border-top: 1px dashed var(--border); padding-top: 14px !important; margin-top: 10px; }
+
+/* v0.7.4 — brand size slider + slogan color swatches */
+.tc-brand-range {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  outline: none;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.tc-brand-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+}
+.tc-brand-range::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  cursor: grab;
+}
+.tc-brand-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.tc-brand-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .25);
+  cursor: pointer;
+  padding: 0;
+  transition: transform .12s, border-color .12s;
+}
+.tc-brand-swatch:hover { transform: scale(1.15); border-color: rgba(255, 255, 255, .6); }
+.tc-brand-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(163, 230, 53, .35);
+}
+
 .tc-file-btn {
   display: flex;
   align-items: center;

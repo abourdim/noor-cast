@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.3 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.4 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.3';
+const APP_VERSION = '0.7.4';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -133,6 +133,11 @@ const LANG = {
     brandLogoLoaded: '🏷 Logo chargé',
     brandLogoCleared: '🏷 Logo retiré',
     brandEffect: 'Effet fun',
+    brandBgRemove: '✂ Retirer le fond du logo (JPG à fond uni)',
+    brandBgRemoved: '✂ Fond retiré',
+    brandBgRestored: '↩ Fond original restauré',
+    brandSize: '📐 Taille du logo',
+    brandSloganColor: '🎨 Couleur du slogan',
     sourceTitlePh: 'Titre (ex: 💻 Mon code)',
     sourceShape: 'Forme',
     filter_none: '— Filtre —',
@@ -421,6 +426,11 @@ const LANG = {
     brandLogoLoaded: '🏷 Logo loaded',
     brandLogoCleared: '🏷 Logo cleared',
     brandEffect: 'Fun effect',
+    brandBgRemove: '✂ Remove background (works on JPGs with a solid bg)',
+    brandBgRemoved: '✂ Background removed',
+    brandBgRestored: '↩ Original background restored',
+    brandSize: '📐 Logo size',
+    brandSloganColor: '🎨 Slogan color',
     sourceTitlePh: 'Title (e.g. 💻 My code)',
     sourceShape: 'Shape',
     filter_none: '— Filter —',
@@ -701,6 +711,11 @@ const LANG = {
     brandLogoLoaded: '🏷 تم تحميل الشعار',
     brandLogoCleared: '🏷 تمت إزالة الشعار',
     brandEffect: 'تأثير ممتع',
+    brandBgRemove: '✂ إزالة خلفية الشعار (يعمل مع JPG بخلفية موحّدة)',
+    brandBgRemoved: '✂ تمت إزالة الخلفية',
+    brandBgRestored: '↩ استُعيدت الخلفية الأصلية',
+    brandSize: '📐 حجم الشعار',
+    brandSloganColor: '🎨 لون الشعار النصي',
     sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
     sourceShape: 'الشكل',
     filter_none: '— فلتر —',
@@ -2665,46 +2680,89 @@ const Drag = {
    fun effect (spin/pulse/bounce/wiggle/glow/rainbow). Drawn in
    Engine.render() after the text overlays so it's always on top. */
 const Brand = {
-  img: null,              // HTMLImageElement, loaded from dataURL
-  logoDataUrl: null,      // persisted in localStorage
+  img: null,              // HTMLImageElement (already-processed: bg removed if flag set)
+  _originalDataUrl: null, // as uploaded, before background removal
   slogan: '',             // e.g. "code + robot + ☕"
   x: 40, y: 40, w: 180, h: 180,   // bounding box (top-left + size)
   rotation: 0,
   effect: 'none',          // 'none'|'spin'|'pulse'|'bounce'|'wiggle'|'glow'|'rainbow'
+  bgRemoved: false,        // v0.7.4 — auto-remove solid background (sample top-left pixel)
+  sloganColor: '#ffffff',  // v0.7.4 — slogan text color (white by default)
 
   load() {
     try {
-      this.logoDataUrl = localStorage.getItem('tc-brand-logo') || null;
-      this.slogan      = localStorage.getItem('tc-brand-slogan') || '';
-      this.effect      = localStorage.getItem('tc-brand-effect') || 'none';
-      const pos        = localStorage.getItem('tc-brand-pos');
+      this._originalDataUrl = localStorage.getItem('tc-brand-logo') || null;
+      this.slogan       = localStorage.getItem('tc-brand-slogan') || '';
+      this.effect       = localStorage.getItem('tc-brand-effect') || 'none';
+      this.bgRemoved    = localStorage.getItem('tc-brand-bgremove') === '1';
+      this.sloganColor  = localStorage.getItem('tc-brand-color') || '#ffffff';
+      const pos         = localStorage.getItem('tc-brand-pos');
       if (pos) { try { const p = JSON.parse(pos); Object.assign(this, p); } catch {} }
     } catch {}
-    if (this.logoDataUrl) this._loadImg();
+    if (this._originalDataUrl) this._recomputeLogo();
   },
 
   save() {
     try {
-      if (this.logoDataUrl) localStorage.setItem('tc-brand-logo', this.logoDataUrl);
-      localStorage.setItem('tc-brand-slogan', this.slogan || '');
-      localStorage.setItem('tc-brand-effect', this.effect);
-      localStorage.setItem('tc-brand-pos', JSON.stringify({ x: this.x, y: this.y, w: this.w, h: this.h }));
+      if (this._originalDataUrl) localStorage.setItem('tc-brand-logo', this._originalDataUrl);
+      localStorage.setItem('tc-brand-slogan',   this.slogan || '');
+      localStorage.setItem('tc-brand-effect',   this.effect);
+      localStorage.setItem('tc-brand-bgremove', this.bgRemoved ? '1' : '0');
+      localStorage.setItem('tc-brand-color',    this.sloganColor || '#ffffff');
+      localStorage.setItem('tc-brand-pos',      JSON.stringify({ x: this.x, y: this.y, w: this.w, h: this.h }));
     } catch {}
   },
 
-  _loadImg() {
-    if (!this.logoDataUrl) { this.img = null; return; }
-    const img = new Image();
-    img.onload = () => { this.img = img; };
-    img.onerror = () => { this.img = null; log('✗ brand logo failed to load', 'error'); };
-    img.src = this.logoDataUrl;
+  /* Load the current _originalDataUrl, optionally strip its background,
+     then update this.img and fix aspect ratio from the real image dims. */
+  _recomputeLogo() {
+    if (!this._originalDataUrl) { this.img = null; return; }
+    const raw = new Image();
+    raw.onerror = () => { this.img = null; log('✗ brand logo failed to load', 'error'); };
+    raw.onload = () => {
+      // Fix aspect ratio from the real image — don't force the 180×180 default
+      if (raw.width && raw.height) {
+        this.h = this.w * (raw.height / raw.width);
+      }
+      if (!this.bgRemoved) {
+        this.img = raw;
+        return;
+      }
+      // Background removal: sample the top-left pixel as the background
+      // reference colour, then set alpha=0 on every pixel within threshold.
+      // Works for simple JPG logos with solid bg; not perfect for anti-aliased
+      // edges but a huge improvement over "no option at all".
+      try {
+        const cv = document.createElement('canvas');
+        cv.width = raw.width; cv.height = raw.height;
+        const c = cv.getContext('2d');
+        c.drawImage(raw, 0, 0);
+        const id = c.getImageData(0, 0, cv.width, cv.height);
+        const d = id.data;
+        const r0 = d[0], g0 = d[1], b0 = d[2];
+        const thresh2 = 45 * 45;  // RGB distance²
+        for (let i = 0; i < d.length; i += 4) {
+          const dr = d[i] - r0, dg = d[i+1] - g0, db = d[i+2] - b0;
+          if (dr*dr + dg*dg + db*db < thresh2) d[i+3] = 0;
+        }
+        c.putImageData(id, 0, 0);
+        const processed = cv.toDataURL('image/png');
+        const img2 = new Image();
+        img2.onload = () => { this.img = img2; };
+        img2.src = processed;
+      } catch (e) {
+        log(`✗ bg removal failed: ${e.message}`, 'error');
+        this.img = raw;
+      }
+    };
+    raw.src = this._originalDataUrl;
   },
 
   setLogoFromFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.logoDataUrl = e.target.result;
-      this._loadImg();
+      this._originalDataUrl = e.target.result;
+      this._recomputeLogo();
       this.save();
       showToast(t('brandLogoLoaded'), 2000);
     };
@@ -2712,13 +2770,24 @@ const Brand = {
   },
 
   clearLogo() {
-    this.logoDataUrl = null;
+    this._originalDataUrl = null;
     this.img = null;
     try { localStorage.removeItem('tc-brand-logo'); } catch {}
   },
 
-  setSlogan(s) { this.slogan = s || ''; this.save(); },
-  setEffect(e) { this.effect = e || 'none'; this.save(); },
+  setSlogan(s)      { this.slogan = s || ''; this.save(); },
+  setEffect(e)      { this.effect = e || 'none'; this.save(); },
+  setBgRemoved(v)   { this.bgRemoved = !!v; this._recomputeLogo(); this.save(); },
+  setSloganColor(c) { this.sloganColor = c || '#ffffff'; this.save(); },
+
+  /* Size setter: scales w+h together (from the slider). */
+  setSize(newW) {
+    const clamped = Math.max(60, Math.min(600, newW));
+    const ratio = clamped / this.w;
+    this.w = clamped;
+    this.h = this.h * ratio;
+    this.save();
+  },
 
   resizeTo(newW) {
     const ratio = Math.max(60, newW) / this.w;
@@ -2801,10 +2870,10 @@ const Brand = {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       const textY = this.img ? this.y + this.h + 8 : this.y;
-      // Outline + fill for readability
+      // Outline + fill for readability, user-picked color (v0.7.4)
       ctx.lineWidth = 6; ctx.strokeStyle = '#000';
       ctx.strokeText(this.slogan, cx, textY);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = this.sloganColor || '#ffffff';
       ctx.fillText(this.slogan, cx, textY);
     }
     ctx.restore();
@@ -4289,6 +4358,33 @@ function wireEvents() {
     effectSel.value = Brand.effect || 'none';
     effectSel.addEventListener('change', (e) => Brand.setEffect(e.target.value));
   }
+
+  // Background removal toggle (v0.7.4)
+  const bgRemove = $('tcBrandBgRemoveToggle');
+  if (bgRemove) {
+    bgRemove.checked = Brand.bgRemoved;
+    bgRemove.addEventListener('change', (e) => {
+      Brand.setBgRemoved(e.target.checked);
+      showToast(e.target.checked ? t('brandBgRemoved') : t('brandBgRestored'), 1800);
+    });
+  }
+  // Size slider (v0.7.4)
+  const sizeSlider = $('tcBrandSizeSlider');
+  if (sizeSlider) {
+    sizeSlider.value = Brand.w;
+    sizeSlider.addEventListener('input', (e) => Brand.setSize(parseInt(e.target.value)));
+  }
+  // Slogan color swatches (v0.7.4)
+  document.querySelectorAll('#tcBrandColorRow .tc-brand-swatch').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Brand.setSloganColor(btn.dataset.bc);
+      // Visual selected state: clear other active, set this one
+      document.querySelectorAll('#tcBrandColorRow .tc-brand-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    if (btn.dataset.bc === Brand.sloganColor) btn.classList.add('active');
+  });
 
   // Maximize mode (v0.7.0): press the ⛶ button or the F hotkey
   const maxBtn = $('tcMaxBtn');

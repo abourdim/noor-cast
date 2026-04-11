@@ -114,7 +114,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.3</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.4</span></div>
           </div>
           <div class="tc-rec-indicator" id="tcRecIndicator">
             <span class="tc-rec-dot"></span>
@@ -554,7 +554,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.3</strong></span>
+      <span class="badge"><strong>v0.7.4</strong></span>
     </div>
   </aside>
 
@@ -618,7 +618,7 @@
           <span data-i18n="jingleLabel">🎵 Jingle d'intro (1.5s)</span>
         </label>
       </div>
-      <!-- ═══ Brand watermark (v0.7.0) ═══ -->
+      <!-- ═══ Brand watermark (v0.7.0, expanded v0.7.4) ═══ -->
       <div class="sidebar-group brand-group">
         <label class="sidebar-label" data-i18n="brandSection">🏷 Marque (logo + slogan)</label>
         <label class="tc-file-btn" for="tcBrandLogoInput">
@@ -628,7 +628,28 @@
         <button id="tcBrandClearBtn" class="tc-btn-full" style="margin-top:6px">
           🗑 <span data-i18n="brandClearLogo">Retirer le logo</span>
         </button>
-        <input type="text" id="tcBrandSloganInput" class="sidebar-select" placeholder="Ton slogan…" style="margin-top:8px" />
+        <label class="toggle-ctrl" style="margin-top:8px">
+          <input type="checkbox" id="tcBrandBgRemoveToggle" class="checkbox-ctrl" />
+          <span data-i18n="brandBgRemove">✂ Retirer le fond du logo (JPG à fond uni)</span>
+        </label>
+
+        <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSize">📐 Taille du logo</label>
+        <input type="range" id="tcBrandSizeSlider" min="60" max="500" step="10" value="180" class="tc-brand-range" />
+
+        <input type="text" id="tcBrandSloganInput" class="sidebar-select" placeholder="Ton slogan…" style="margin-top:10px" />
+
+        <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSloganColor">🎨 Couleur du slogan</label>
+        <div class="tc-brand-color-row" id="tcBrandColorRow">
+          <button class="tc-brand-swatch" data-bc="#ffffff" style="background:#ffffff" title="white"></button>
+          <button class="tc-brand-swatch" data-bc="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+          <button class="tc-brand-swatch" data-bc="#fb923c" style="background:#fb923c" title="orange"></button>
+          <button class="tc-brand-swatch" data-bc="#ef4444" style="background:#ef4444" title="red"></button>
+          <button class="tc-brand-swatch" data-bc="#a3e635" style="background:#a3e635" title="lime"></button>
+          <button class="tc-brand-swatch" data-bc="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+          <button class="tc-brand-swatch" data-bc="#e879f9" style="background:#e879f9" title="pink"></button>
+          <button class="tc-brand-swatch" data-bc="#000000" style="background:#000000" title="black"></button>
+        </div>
+
         <label class="sidebar-label" style="margin-top:10px" data-i18n="brandEffect">Effet fun</label>
         <select id="tcBrandEffectSelect" class="sidebar-select">
           <option value="none">— Aucun —</option>
@@ -652,7 +673,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.3</strong></span>
+      <span class="badge"><strong>v0.7.4</strong></span>
     </div>
   </aside>
 
@@ -684,7 +705,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.3</strong></span>
+      <span class="badge"><strong>v0.7.4</strong></span>
     </div>
   </aside>
 
