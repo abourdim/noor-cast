@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.34</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.35</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -241,6 +241,29 @@
                 </select>
                 <span class="tc-toolbar-sep"></span>
                 <button class="tc-toolbar-btn tc-toolbar-del" id="tcSrcToolbarDel" title="Delete">✕</button>
+              </div>
+              <!-- v0.7.35: right-click context menu on a selected source. Plain
+                   position:fixed panel — teacher-only, never drawn on canvas. -->
+              <div class="tc-src-ctxmenu" id="tcSrcCtxMenu" style="display:none">
+                <button data-action="hide"><span class="tc-ctx-icon">👁</span><span data-i18n="ctxHide">Cacher / afficher</span></button>
+                <button data-action="pin"><span class="tc-ctx-icon">📌</span><span data-i18n="ctxPin">Épingler / détacher</span></button>
+                <button data-action="dup"><span class="tc-ctx-icon">🔄</span><span data-i18n="ctxDup">Dupliquer</span></button>
+                <div class="tc-ctx-sub" data-action="shape">
+                  <span class="tc-ctx-icon">⬛</span><span data-i18n="ctxShape">Forme ▸</span>
+                  <div class="tc-ctx-submenu">
+                    <button data-shape="rect">⬛ Rectangle</button>
+                    <button data-shape="rounded">🔲 Rounded</button>
+                    <button data-shape="circle">⚪ Circle</button>
+                    <button data-shape="pill">💊 Pill</button>
+                    <button data-shape="hexagon">⬢ Hexagon</button>
+                    <button data-shape="octagon">🛑 Octagon</button>
+                    <button data-shape="diamond">🔶 Diamond</button>
+                    <button data-shape="star">⭐ Star</button>
+                    <button data-shape="heart">❤️ Heart</button>
+                  </div>
+                </div>
+                <hr>
+                <button data-action="del" class="danger"><span class="tc-ctx-icon">✕</span><span data-i18n="ctxDel">Supprimer</span></button>
               </div>
               <!-- Floating color picker toolbar, shown above a selected text overlay (v0.7.1 Canva-style) -->
               <div class="tc-text-toolbar" id="tcTextToolbar" style="display:none">
@@ -820,7 +843,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.34</strong></span>
+      <span class="badge"><strong>v0.7.35</strong></span>
     </div>
   </aside>
 
@@ -1032,7 +1055,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.34</strong></span>
+      <span class="badge"><strong>v0.7.35</strong></span>
     </div>
   </aside>
 
@@ -1064,7 +1087,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.34</strong></span>
+      <span class="badge"><strong>v0.7.35</strong></span>
     </div>
   </aside>
 

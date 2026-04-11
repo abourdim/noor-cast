@@ -1993,6 +1993,70 @@ body.log-open .app {
   pointer-events: auto;
   font-size: 1rem;
 }
+
+/* v0.7.35: right-click context menu on a selected source. Plain HTML
+   position:fixed panel — appears at the cursor, closes on outside click
+   or Escape. Teacher-only — never drawn on canvas, never recorded. */
+.tc-src-ctxmenu {
+  position: fixed;
+  z-index: 12500;
+  min-width: 200px;
+  background: rgba(12, 31, 10, .97);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(163, 230, 53, .4);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+  font-family: var(--font-h, Righteous, sans-serif);
+  font-size: .82rem;
+}
+.tc-src-ctxmenu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 6px;
+}
+.tc-src-ctxmenu button:hover {
+  background: rgba(163, 230, 53, .15);
+}
+.tc-src-ctxmenu button.danger { color: #fca5a5; }
+.tc-src-ctxmenu button.danger:hover { background: rgba(239, 68, 68, .2); color: #fff; }
+.tc-src-ctxmenu hr {
+  border: none;
+  border-top: 1px dashed rgba(255, 255, 255, .1);
+  margin: 4px 2px;
+}
+.tc-ctx-icon { font-size: 1rem; width: 18px; text-align: center; }
+.tc-ctx-sub { position: relative; }
+.tc-ctx-sub > span:first-child + span,
+.tc-ctx-sub > .tc-ctx-icon + span { flex: 1; }
+.tc-ctx-sub > button, .tc-ctx-sub {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #e5e7eb;
+}
+.tc-ctx-sub:hover { background: rgba(163, 230, 53, .15); }
+.tc-ctx-submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  display: none;
+  background: rgba(12, 31, 10, .97);
+  border: 1px solid rgba(163, 230, 53, .4);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 160px;
+  margin-left: 4px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+}
+.tc-ctx-sub:hover .tc-ctx-submenu { display: block; }
+.tc-ctx-submenu button { font-size: .8rem; padding: 6px 10px; }
 .tc-source-toolbar .tc-toolbar-btn {
   min-width: 34px;
   min-height: 30px;

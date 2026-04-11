@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.34 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.35 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.34';
+const APP_VERSION = '0.7.35';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 21:30';
+const BUILD_DATE = '2026-04-11 21:45';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -113,6 +113,11 @@ const LANG = {
     unpinSource: '🔓 Détacher (la scène reprend le contrôle)',
     toggleBlur: '🌫 Flou arrière-plan',
     removeSource: '✕ Retirer',
+    ctxHide: 'Cacher / afficher',
+    ctxPin: 'Épingler / détacher',
+    ctxDup: 'Dupliquer',
+    ctxShape: 'Forme ▸',
+    ctxDel: 'Supprimer',
     resetLayout: '🔓 Réinitialiser la disposition',
     layoutReset: '🔓 Disposition réinitialisée',
     downloadCsv: 'Capteurs (.csv)',
@@ -528,6 +533,11 @@ const LANG = {
     unpinSource: '🔓 Unpin (scene controls position again)',
     toggleBlur: '🌫 Background blur',
     removeSource: '✕ Remove',
+    ctxHide: 'Hide / show',
+    ctxPin: 'Pin / unpin',
+    ctxDup: 'Duplicate',
+    ctxShape: 'Shape ▸',
+    ctxDel: 'Delete',
     resetLayout: '🔓 Reset layout',
     layoutReset: '🔓 Layout reset',
     downloadCsv: 'Sensors (.csv)',
@@ -935,6 +945,11 @@ const LANG = {
     unpinSource: '🔓 فك التثبيت (المشهد يتحكم في الموضع)',
     toggleBlur: '🌫 تمويه الخلفية',
     removeSource: '✕ إزالة',
+    ctxHide: 'إخفاء / عرض',
+    ctxPin: 'تثبيت / إلغاء',
+    ctxDup: 'تكرار',
+    ctxShape: 'الشكل ▸',
+    ctxDel: 'حذف',
     resetLayout: '🔓 إعادة ضبط التخطيط',
     layoutReset: '🔓 تمت إعادة ضبط التخطيط',
     downloadCsv: 'المستشعرات (.csv)',
@@ -3458,6 +3473,18 @@ const Drag = {
     this.stage.addEventListener('mousedown', (e) => this._onDown(e));
     window.addEventListener('mousemove', (e) => this._onMove(e));
     window.addEventListener('mouseup', (e) => this._onUp(e));
+    // v0.7.35: right-click on a source opens the HTML context menu
+    this.stage.addEventListener('contextmenu', (e) => {
+      const [mx, my] = this._stageToCanvas(e);
+      const hit = this._hitTest(mx, my);
+      if (hit && hit.kind === 'source') {
+        e.preventDefault();
+        this.selectedSourceId = hit.ref.id;
+        if (typeof SourceContextMenu !== 'undefined') {
+          SourceContextMenu.show(e.clientX, e.clientY, hit.ref);
+        }
+      }
+    });
     // Escape clears selection, Delete removes the selected overlay/source
     window.addEventListener('keydown', (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
@@ -5261,6 +5288,134 @@ const SourceToolbar = {
   },
 };
 
+/* v0.7.35: SourceContextMenu — HTML right-click menu for a selected source.
+   Plain position:fixed panel that appears at the cursor and closes on any
+   outside click or Escape. Teacher-only; never drawn on canvas. Actions:
+   👁 hide/show · 📌 pin/unpin · 🔄 duplicate · ⬛ shape (submenu) · ✕ delete */
+const SourceContextMenu = {
+  el: null,
+  currentId: null,
+  _bound: false,
+
+  setup() {
+    this.el = $('tcSrcCtxMenu');
+    if (!this.el) return;
+    const getSrc = () => Engine.sources.find(s => s.id === this.currentId);
+
+    // Don't let clicks inside the menu bubble up to the global close handler
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
+    this.el.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    this.el.querySelector('[data-action="hide"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      s.hidden = !s.hidden;
+      showToast(s.hidden ? '👁 ' + t('sourceHidden') : '👁 ' + t('sourceShown'), 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    this.el.querySelector('[data-action="pin"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      // v0.7.35: flip both custom (scene override) and pinned (semantic flag)
+      const next = !s.custom;
+      s.custom = next;
+      s.pinned = next;
+      showToast(next ? '📌 pinned' : '🔓 unpinned', 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    this.el.querySelector('[data-action="dup"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      // Deep-copy: reuse the same stream/video (they're still running), but
+      // clone the layout so the duplicate is independent thereafter.
+      const copy = {
+        id: Engine.nextId++,
+        type: s.type,
+        stream: s.stream,
+        video: s.video,
+        label: (s.label || 'Source') + ' (2)',
+        x: s.x + 30,
+        y: s.y + 30,
+        w: s.w,
+        h: s.h,
+        shape: s.shape || 'rect',
+        visible: true,
+        mirrored: !!s.mirrored,
+        hidden: false,
+        custom: true,   // duplicates are always pinned so scenes don't overwrite
+        pinned: true,
+      };
+      Engine.sources.push(copy);
+      Engine.onSourcesChanged();
+      showToast('🔄 ' + (s.label || 'source'), 1400);
+      this.hide();
+    });
+
+    // Shape submenu buttons
+    this.el.querySelectorAll('.tc-ctx-submenu button[data-shape]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = getSrc(); if (!s) return;
+        s.shape = btn.dataset.shape;
+        showToast('◻ ' + s.shape, 1200);
+        Engine.onSourcesChanged();
+        this.hide();
+      });
+    });
+
+    this.el.querySelector('[data-action="del"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      Engine.removeSource(s.id);
+      Drag.selectedSourceId = null;
+      this.hide();
+    });
+
+    if (!this._bound) {
+      // Close on any mousedown outside the menu
+      window.addEventListener('mousedown', (e) => {
+        if (!this.el || this.el.style.display === 'none') return;
+        if (this.el.contains(e.target)) return;
+        this.hide();
+      });
+      // Close on Esc
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.el && this.el.style.display !== 'none') {
+          this.hide();
+        }
+      });
+      this._bound = true;
+    }
+  },
+
+  show(vpX, vpY, source) {
+    if (!this.el) return;
+    this.currentId = source.id;
+    // Make it measurable before clamping
+    this.el.style.display = 'block';
+    this.el.style.left = '0px';
+    this.el.style.top = '0px';
+    const mw = this.el.offsetWidth || 200;
+    const mh = this.el.offsetHeight || 220;
+    const maxX = window.innerWidth - mw - 8;
+    const maxY = window.innerHeight - mh - 8;
+    const x = Math.max(8, Math.min(maxX, vpX));
+    const y = Math.max(8, Math.min(maxY, vpY));
+    this.el.style.left = x + 'px';
+    this.el.style.top = y + 'px';
+  },
+
+  hide() {
+    if (!this.el) return;
+    this.el.style.display = 'none';
+    this.currentId = null;
+  },
+};
+
 /* Maximize mode (v0.7.0): hide sidebars/header/ticker and stretch the
    stage to the full viewport. Toggle with the ⛶ button. Also toggles
    browser-level fullscreen via the Fullscreen API for extra impact. */
@@ -6802,6 +6957,7 @@ async function init() {
   Drag.setup();
   TextToolbar.setup();
   SourceToolbar.setup();
+  SourceContextMenu.setup();
   Teleprompter.setup();
   Cheatsheet.setup();
   Minimap.setup();
