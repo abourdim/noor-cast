@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.62 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.63 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.62';
+const APP_VERSION = '0.7.63';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 04:45';
+const BUILD_DATE = '2026-04-12 05:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -80,6 +80,7 @@ const LANG = {
     textAdded: '✏️ Texte ajouté',
     laserOn: '🔴 Laser activé', laserOff: '⚪ Laser désactivé',
     ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
+    spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
     drawOn: '✏️ Mode dessin',
@@ -589,6 +590,7 @@ const LANG = {
     textAdded: '✏️ Text added',
     laserOn: '🔴 Laser on', laserOff: '⚪ Laser off',
     ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
+    spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
     drawOn: '✏️ Draw mode',
@@ -1095,6 +1097,7 @@ const LANG = {
     textAdded: '✏️ نص مُضاف',
     laserOn: '🔴 الليزر', laserOff: '⚪ إيقاف الليزر', freezeOn: '❄️ مُجمَّد', freezeOff: '▶ مباشر',
     ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
+    spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
     teleImportDone: '📂 تم استيراد النص',
@@ -1889,6 +1892,9 @@ const Engine = {
     // v0.7.33: refresh the sidebar minimap a few times per second so
     // it reflects live source movements without being a rAF hot path.
     Minimap.maybeRender();
+
+    // v0.7.63: cursor spotlight dim/reveal
+    Spotlight.render(ctx, width, height);
 
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
@@ -4104,6 +4110,75 @@ const Laser = {
     $('tcLaserBtn').classList.toggle('active', this.on);
     if (this.on) showToast(t('laserHint'), 4000);
   }
+};
+
+/* v0.7.63: Spotlight — cursor-following vignette. A large translucent
+   circle follows the mouse; everything outside is dimmed. Drawn on the
+   output canvas (Engine.render) right before Laser, so it's baked into
+   the recording. Opt-in via the 💡 button in the floating tools bar. */
+const Spotlight = {
+  enabled: false,
+  x: 0,
+  y: 0,
+  RADIUS: 180,     // canvas-px radius of the bright circle
+  DARKNESS: 0.65,  // alpha of the dim overlay outside the circle
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-spotlight') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-spotlight', v ? '1' : '0'); } catch {}
+    const btn = $('tcSpotlightBtn');
+    if (btn) btn.classList.toggle('active', this.enabled);
+  },
+  toggle() {
+    this.setEnabled(!this.enabled);
+    showToast(this.enabled ? '💡 ' + (t('spotlightOn') || 'Spotlight on') : '💡 ' + (t('spotlightOff') || 'Spotlight off'), 1200);
+  },
+
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.enabled) return;
+      const r = stage.getBoundingClientRect();
+      this.x = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.y = ((e.clientY - r.top) / r.height) * Engine.height;
+    });
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    // Draw a full-canvas dim layer with a radial "hole" around the cursor.
+    // Use a radial gradient with destination-out composition so the hole
+    // is transparent and everything else is darkened.
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${this.DARKNESS})`;
+    ctx.fillRect(0, 0, W, H);
+    // Cut a circular hole
+    ctx.globalCompositeOperation = 'destination-out';
+    const grad = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.RADIUS
+    );
+    grad.addColorStop(0,    'rgba(0, 0, 0, 1)');
+    grad.addColorStop(0.7,  'rgba(0, 0, 0, 0.9)');
+    grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Draw a thin bright ring around the hole so it pops
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, .35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  },
 };
 
 /* Ripples — click tracer. Every mousedown on the stage emits a two-ring
@@ -8670,6 +8745,7 @@ function wireEvents() {
   // Tools
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
+  $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
@@ -8991,6 +9067,8 @@ async function init() {
   Engine.init();
   StageAspect.load();  // v0.7.58: restore stage aspect ratio preset
   Laser.setup();
+  Spotlight.setup();
+  Spotlight.load();
   Whiteboard.setup();
   Zoom.setup();
   Drag.setup();
