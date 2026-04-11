@@ -109,12 +109,33 @@ Switch between them in real time during the recording using number keys **1-6**.
 - **`Q` key** — drop a quiz card on the canvas with a question you type
 - **`🤖 overlay` on robot jolt** — opt-in Settings toggle, fires a robot sticker whenever accel magnitude > 1.6 g
 
-### 🖐 Drag & drop layout (v0.4.0)
+### 🖐 Drag & drop layout (v0.4.0 → v0.7.17)
 - **Click-drag any source** on the stage to reposition it
 - **Auto-pins** the source so scene switches won't move it back
 - **Snaps to 7 anchors** (corners + edge centers + center) within 60 px
 - **📌 / 🔓 toggle** per source to pin / unpin manually
 - **Reset layout** button to release every source back to scene control
+- **Visible 4-corner resize handles** on the selected source (v0.7.14)
+- **Shift+corner** = **free stretch** (aspect ratio unlocked), default = locked (v0.7.17)
+
+### 💠 9 source shapes (v0.7.15)
+Every video/screen source can be clipped to any of **9 shapes**, picked
+from a dropdown in the floating source toolbar:
+- **Rect** · **Rounded** · **Circle** · **Pill** · **Hexagon** ·
+  **Octagon** · **Diamond** · **Star** · **Heart**
+- All shapes share the same centralized canvas path so the glow ring,
+  background-blur, and clip mask use identical geometry.
+
+### 🎨 Floating toolbars (v0.7.13 → v0.7.18)
+When you select a source or a text overlay, a Canva-style HTML toolbar
+docks **below the stage** (never over the recording area):
+- **Source toolbar**: 👁 hide · 📌 pin · shape dropdown · ✕ delete
+- **Text toolbar**: 6 color swatches · Aa font cycle · 🎭 transparency ·
+  ↺ ↻ rotate · 📋 duplicate · ✕ delete
+- HTML elements — never appear in the recording
+- **Horizontal tools bar** above the studio (v0.7.18): Laser · Freeze ·
+  Draw · Zoom | Teleprompter · Snapshot · Fullscreen, with kbd shortcut
+  chips. Responsive: labels hide under 920 px.
 
 ### ✨ Effects (v0.4.0)
 - **Background blur** (🌫 per source) — sharp center, blurred edge ring, no ML model
