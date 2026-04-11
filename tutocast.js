@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.5 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.6 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.5';
+const APP_VERSION = '0.7.6';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -158,8 +158,13 @@ const LANG = {
     layerForward: '⬆ Vers l\'avant',
     layerBackward: '⬇ Vers l\'arrière',
     sourceRemoved: 'Source retirée',
-    firstSourceHint: '💡 Glisse pour déplacer · coin pour redimensionner · ✕ dans la liste ou touche Suppr pour retirer',
+    firstSourceHint: '💡 Clique la vidéo pour la sélectionner · ✕ pour retirer · 👁 pour cacher · coin pour redimensionner',
     overlayDeleted: '✕ Overlay supprimé',
+    sourceHide: '👁 Cacher (temporairement)',
+    sourceShow: '🙈 Afficher à nouveau',
+    sourceHidden: '🙈 Source cachée',
+    sourceShown: '👁 Source affichée',
+    sourceChromeHint: 'Clique ✕ pour retirer · 👁 pour cacher · Suppr clavier',
     transparency_solid: 'Fond plein',
     transparency_semi:  'Fond semi-transparent',
     transparency_text:  'Texte seul',
@@ -455,8 +460,13 @@ const LANG = {
     layerForward: '⬆ Forward',
     layerBackward: '⬇ Backward',
     sourceRemoved: 'Source removed',
-    firstSourceHint: '💡 Drag to move · corner to resize · ✕ in the list or Delete key to remove',
+    firstSourceHint: '💡 Click the video to select · ✕ to remove · 👁 to hide · corner to resize',
     overlayDeleted: '✕ Overlay deleted',
+    sourceHide: '👁 Hide (temporarily)',
+    sourceShow: '🙈 Show again',
+    sourceHidden: '🙈 Source hidden',
+    sourceShown: '👁 Source shown',
+    sourceChromeHint: 'Click ✕ to remove · 👁 to hide · Del key',
     transparency_solid: 'Solid background',
     transparency_semi:  'Semi-transparent background',
     transparency_text:  'Text only',
@@ -744,8 +754,13 @@ const LANG = {
     layerForward: '⬆ إلى الأمام',
     layerBackward: '⬇ إلى الخلف',
     sourceRemoved: 'تمت إزالة المصدر',
-    firstSourceHint: '💡 اسحب للتحريك · الزاوية لتغيير الحجم · ✕ في القائمة أو مفتاح Delete للإزالة',
+    firstSourceHint: '💡 انقر الفيديو للتحديد · ✕ للإزالة · 👁 للإخفاء · الزاوية لتغيير الحجم',
     overlayDeleted: '✕ تم حذف الطبقة',
+    sourceHide: '👁 إخفاء (مؤقت)',
+    sourceShow: '🙈 إظهار مجددًا',
+    sourceHidden: '🙈 المصدر مخفي',
+    sourceShown: '👁 المصدر ظاهر',
+    sourceChromeHint: 'انقر ✕ للإزالة · 👁 للإخفاء · Del للحذف',
     transparency_solid: 'خلفية ممتلئة',
     transparency_semi:  'خلفية شبه شفافة',
     transparency_text:  'نص فقط',
@@ -1046,6 +1061,8 @@ const Engine = {
     // background
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
+    // v0.7.6: source selection chrome buffer — drawn after sources so it's on top
+    this._srcChrome = null;
 
     // Apply the zoom transform around its focus point for sources + overlays.
     // Text overlays and sensor HUD remain at 1x so they stay readable.
@@ -1062,12 +1079,16 @@ const Engine = {
     if (Recorder.frozen && this.frozenFrame) {
       ctx.putImageData(this.frozenFrame, 0, 0);
     } else {
-      // draw visible sources (filter non-video)
-      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && s.video && s.video.readyState >= 2);
+      // draw visible sources (filter non-video, respect manual hide)
+      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden && s.video && s.video.readyState >= 2);
       visible.forEach(src => this.drawSource(src));
     }
 
     if (zoomed) ctx.restore();
+
+    // v0.7.6: draw selection chrome (outline + handles + ✕ + 👁) on top of
+    // everything, hit-testable via cached rects on Drag._srcChromeHit.
+    this._drawSelectedSourceChrome();
 
     // draw text overlays (unscaled so they stay readable)
     TextOverlays.drawAll(ctx);
@@ -1224,6 +1245,105 @@ const Engine = {
 
     // Close the rotation wrapper opened earlier
     if (rot !== 0) ctx.restore();
+  },
+
+  /* v0.7.6: draw a Canva-style selection chrome (dashed outline + corner
+     handles + red ✕ delete + 👁 hide button) on top of the currently-
+     selected source. Coords for the ✕ and 👁 are cached on the source so
+     Drag._onDown can hit-test them before the move/resize logic. */
+  _drawSelectedSourceChrome() {
+    const selId = Drag.selectedSourceId;
+    if (selId == null) {
+      // Clear any stale chrome hit regions
+      this.sources.forEach(s => { s._chromeDel = null; s._chromeHide = null; });
+      return;
+    }
+    const s = this.sources.find(x => x.id === selId);
+    if (!s || s.type === 'mic' || !s.visible || s.hidden) return;
+
+    const ctx = this.ctx;
+    const { x, y, w, h } = s;
+
+    ctx.save();
+    // Dashed outline
+    ctx.strokeStyle = this._accentColor || '#a3e635';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([16, 10]);
+    ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+    ctx.setLineDash([]);
+
+    // Red ✕ delete button — floats above the top-right corner
+    const delR = 32;
+    const delX = x + w + 40;
+    const delY = y - 40;
+    s._chromeDel = { x: delX, y: delY, r: delR };
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.65)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(delX, delY, delR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    const k = delR * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(delX - k, delY - k); ctx.lineTo(delX + k, delY + k);
+    ctx.moveTo(delX + k, delY - k); ctx.lineTo(delX - k, delY + k);
+    ctx.stroke();
+    ctx.restore();
+
+    // 👁 hide button — floats above the top-left corner
+    const hideR = 32;
+    const hideX = x - 40;
+    const hideY = y - 40;
+    s._chromeHide = { x: hideX, y: hideY, r: hideR };
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.65)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#1f2937';
+    ctx.strokeStyle = this._accentColor || '#a3e635';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(hideX, hideY, hideR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = '800 32px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👁', hideX, hideY + 2);
+    ctx.restore();
+
+    // Short label "Clique ✕ pour retirer · 👁 pour cacher · Suppr clavier" below the source
+    ctx.save();
+    ctx.font = '700 22px Righteous, sans-serif';
+    ctx.fillStyle = 'rgba(0,0,0,.72)';
+    const hintText = t('sourceChromeHint');
+    const m = ctx.measureText(hintText);
+    const hintPadX = 16, hintPadY = 8;
+    const hintW = m.width + hintPadX * 2;
+    const hintH = 22 * 1.4 + hintPadY * 2;
+    const hintX = x + (w - hintW) / 2;
+    const hintY = y + h + 20;
+    const rr = 10;
+    ctx.beginPath();
+    ctx.moveTo(hintX + rr, hintY);
+    ctx.lineTo(hintX + hintW - rr, hintY); ctx.quadraticCurveTo(hintX + hintW, hintY, hintX + hintW, hintY + rr);
+    ctx.lineTo(hintX + hintW, hintY + hintH - rr); ctx.quadraticCurveTo(hintX + hintW, hintY + hintH, hintX + hintW - rr, hintY + hintH);
+    ctx.lineTo(hintX + rr, hintY + hintH); ctx.quadraticCurveTo(hintX, hintY + hintH, hintX, hintY + hintH - rr);
+    ctx.lineTo(hintX, hintY + rr); ctx.quadraticCurveTo(hintX, hintY, hintX + rr, hintY);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(hintText, hintX + hintW / 2, hintY + hintH / 2);
+    ctx.restore();
+
+    ctx.restore();
   },
 
   /* Build a canvas path for the given shape. Centralized so glow + clip
@@ -1468,6 +1588,19 @@ const Engine = {
           pin.title = s.custom ? t('unpinSource') : t('pinSource');
           pin.addEventListener('click', (e) => { e.stopPropagation(); Drag.togglePin(s.id); });
           topRow.appendChild(pin);
+
+          // v0.7.6: Hide/show toggle button
+          const hideBtn = document.createElement('button');
+          hideBtn.className = 'tc-src-icon-btn' + (s.hidden ? ' active' : '');
+          hideBtn.textContent = s.hidden ? '🙈' : '👁';
+          hideBtn.title = s.hidden ? t('sourceShow') : t('sourceHide');
+          hideBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.hidden = !s.hidden;
+            this.onSourcesChanged();
+            showToast(s.hidden ? t('sourceHidden') : t('sourceShown'), 1500);
+          });
+          topRow.appendChild(hideBtn);
 
           const blur = document.createElement('button');
           blur.className = 'tc-src-icon-btn' + (s.blur ? ' active' : '');
@@ -2592,10 +2725,7 @@ const Drag = {
     if (Whiteboard.on) return;
     const [mx, my] = this._stageToCanvas(e);
 
-    // v0.7.3: if there's a selected text overlay with a canvas-drawn red ✕
-    // delete button, check it first. A click inside the button removes the
-    // overlay even if the mouse isn't over the text itself (the button
-    // floats above the top-right corner of the selection).
+    // v0.7.3: text-overlay canvas ✕ delete button
     if (TextOverlays.selectedId != null) {
       const sel = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
       if (sel && sel._deleteBtn) {
@@ -2605,6 +2735,31 @@ const Drag = {
           showToast(t('overlayDeleted'), 1500);
           e.preventDefault();
           return;
+        }
+      }
+    }
+
+    // v0.7.6: video-source canvas ✕ delete + 👁 hide buttons
+    if (this.selectedSourceId != null) {
+      const sel = Engine.sources.find(s => s.id === this.selectedSourceId);
+      if (sel) {
+        if (sel._chromeDel) {
+          const { x: bx, y: by, r: br } = sel._chromeDel;
+          if ((mx - bx) ** 2 + (my - by) ** 2 <= br * br) {
+            Engine.removeSource(sel.id);
+            e.preventDefault();
+            return;
+          }
+        }
+        if (sel._chromeHide) {
+          const { x: bx, y: by, r: br } = sel._chromeHide;
+          if ((mx - bx) ** 2 + (my - by) ** 2 <= br * br) {
+            sel.hidden = !sel.hidden;
+            showToast(sel.hidden ? t('sourceHidden') : t('sourceShown'), 1500);
+            log(sel.hidden ? `👁 hidden: ${sel.label}` : `👁 shown: ${sel.label}`, 'info');
+            e.preventDefault();
+            return;
+          }
         }
       }
     }
