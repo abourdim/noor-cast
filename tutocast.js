@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.96 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.99 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.98';
+const APP_VERSION = '0.7.99';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 13:45';
+const BUILD_DATE = '2026-04-12 14:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -102,6 +102,7 @@ const LANG = {
     laserOn: '🔴 Laser activé', laserOff: '⚪ Laser désactivé',
     ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
     spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
+    trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
     drawOn: '✏️ Mode dessin',
@@ -710,6 +711,7 @@ const LANG = {
     laserOn: '🔴 Laser on', laserOff: '⚪ Laser off',
     ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
     spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
+    trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
     drawOn: '✏️ Draw mode',
@@ -1315,6 +1317,7 @@ const LANG = {
     laserOn: '🔴 الليزر', laserOff: '⚪ إيقاف الليزر', freezeOn: '❄️ مُجمَّد', freezeOff: '▶ مباشر',
     ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
     spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
+    trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
     teleImportDone: '📂 تم استيراد النص',
@@ -2455,6 +2458,11 @@ const Engine = {
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
     Screensaver.render(ctx, width, height);
+
+    // v0.7.99: Cursor trail — rainbow particles drawn on the output canvas
+    // (after Spotlight, before Laser) so they're under pointer visuals but
+    // baked into the recording.
+    CursorTrail.render(ctx, width, height);
 
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
@@ -5048,6 +5056,73 @@ const Spotlight = {
     ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
+  },
+};
+
+/* v0.7.99: CursorTrail — opt-in rainbow particle trail that follows the
+   mouse over the stage. Each mousemove drops a small colored dot that
+   fades out over 600ms. Drawn on the output canvas (in the recording).
+   Different from Laser (single red dot) and Spotlight (dim the rest) —
+   this is a rainbow trail showing where the cursor has been. */
+const CursorTrail = {
+  enabled: false,
+  particles: [],
+  _lastX: 0,
+  _lastY: 0,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-cursor-trail') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-cursor-trail', v ? '1' : '0'); } catch {}
+    const btn = $('tcCursorTrailBtn');
+    if (btn) btn.classList.toggle('active', this.enabled);
+  },
+  toggle() {
+    this.setEnabled(!this.enabled);
+    showToast(this.enabled ? '🎨 ' + (t('trailOn') || 'Trail on') : '🎨 ' + (t('trailOff') || 'Trail off'), 1100);
+  },
+
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.enabled) return;
+      const r = stage.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * Engine.width;
+      const y = ((e.clientY - r.top) / r.height) * Engine.height;
+      // Rate limit: drop a particle every ~20px of movement
+      const d2 = (x - this._lastX) ** 2 + (y - this._lastY) ** 2;
+      if (d2 < 300) return;
+      this._lastX = x;
+      this._lastY = y;
+      // Rainbow hue based on time
+      const hue = (performance.now() / 10) % 360;
+      this.particles.push({ x, y, t0: performance.now(), hue });
+      if (this.particles.length > 80) this.particles.shift();
+    });
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled || this.particles.length === 0) return;
+    const now = performance.now();
+    const DURATION = 600;
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      const age = now - p.t0;
+      if (age >= DURATION) { this.particles.splice(i, 1); continue; }
+      const k = age / DURATION;
+      const r = 18 * (1 - k * 0.6);
+      const alpha = (1 - k) * 0.8;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `hsl(${p.hue}, 85%, 60%)`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   },
 };
 
@@ -10639,6 +10714,7 @@ function wireEvents() {
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
+  $('tcCursorTrailBtn')?.addEventListener('click', () => CursorTrail.toggle());
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
@@ -11113,6 +11189,8 @@ async function init() {
   Laser.setup();
   Spotlight.setup();
   Spotlight.load();
+  CursorTrail.setup();
+  CursorTrail.load();
   Whiteboard.setup();
   Zoom.setup();
   Drag.setup();
