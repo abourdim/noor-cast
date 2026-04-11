@@ -1914,6 +1914,123 @@ const PipPopout = {
   },
 };
 
+/* v0.7.68: chroma key helper — keys a source's pixels transparent
+   based on RGB-distance² against a target color. WeakMap-cached
+   offscreen canvas per source. */
+const ChromaKey = {
+  _canvases: new WeakMap(),
+  process(src) {
+    if (!src.chromaKey || !src.video) return null;
+    const { color, threshold } = src.chromaKey;
+    const tr = parseInt(color.slice(1, 3), 16);
+    const tg = parseInt(color.slice(3, 5), 16);
+    const tb = parseInt(color.slice(5, 7), 16);
+    const t2 = threshold * threshold;
+    const vw = src.video.videoWidth || 640;
+    const vh = src.video.videoHeight || 360;
+    let off = this._canvases.get(src);
+    if (!off || off.width !== vw || off.height !== vh) {
+      off = document.createElement('canvas');
+      off.width = vw;
+      off.height = vh;
+      this._canvases.set(src, off);
+    }
+    const ctx = off.getContext('2d', { willReadFrequently: true });
+    try {
+      ctx.drawImage(src.video, 0, 0, vw, vh);
+    } catch { return null; }
+    const img = ctx.getImageData(0, 0, vw, vh);
+    const data = img.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const dr = data[i] - tr;
+      const dg = data[i + 1] - tg;
+      const db = data[i + 2] - tb;
+      if (dr * dr + dg * dg + db * db < t2) data[i + 3] = 0;
+    }
+    ctx.putImageData(img, 0, 0);
+    return off;
+  },
+};
+
+/* v0.7.69: MicBoost — user-controllable mic gain (0.0–4.0×) + noise
+   gate (-60 to -20 dB). Inserted between the mic MediaStreamSource and
+   Engine.audioDest. The v0.2.2 silent keepalive stays untouched. */
+const MicBoost = {
+  gain: 1.0,
+  gateDb: -50,
+  _gainNode: null,
+  _gateAnalyser: null,
+  _gateBuf: null,
+  _rafId: null,
+  _muted: false,
+  load() {
+    try {
+      const g = parseFloat(localStorage.getItem('tc-mic-gain'));
+      if (!isNaN(g)) this.gain = Math.max(0, Math.min(4, g));
+      const d = parseFloat(localStorage.getItem('tc-mic-gate-db'));
+      if (!isNaN(d)) this.gateDb = Math.max(-60, Math.min(-20, d));
+    } catch {}
+  },
+  setGain(v) {
+    this.gain = Math.max(0, Math.min(4, parseFloat(v) || 1));
+    try { localStorage.setItem('tc-mic-gain', String(this.gain)); } catch {}
+    this._applyGain();
+  },
+  setGate(db) {
+    this.gateDb = Math.max(-60, Math.min(-20, parseFloat(db) || -50));
+    try { localStorage.setItem('tc-mic-gate-db', String(this.gateDb)); } catch {}
+  },
+  _applyGain() {
+    if (!this._gainNode) return;
+    const target = this._muted ? 0 : this.gain;
+    try {
+      this._gainNode.gain.setTargetAtTime(target, Engine.audioCtx.currentTime, 0.015);
+    } catch {
+      this._gainNode.gain.value = target;
+    }
+  },
+  attach(srcNode) {
+    const ac = Engine.audioCtx;
+    if (!ac) return srcNode;
+    this._gainNode = ac.createGain();
+    this._gainNode.gain.value = this.gain;
+    this._gateAnalyser = ac.createAnalyser();
+    this._gateAnalyser.fftSize = 512;
+    this._gateBuf = new Uint8Array(this._gateAnalyser.frequencyBinCount);
+    srcNode.connect(this._gainNode);
+    srcNode.connect(this._gateAnalyser);
+    this._startGateLoop();
+    return this._gainNode;
+  },
+  detach() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    this._gainNode = null;
+    this._gateAnalyser = null;
+    this._muted = false;
+  },
+  _startGateLoop() {
+    const tick = () => {
+      if (!this._gateAnalyser) return;
+      this._gateAnalyser.getByteTimeDomainData(this._gateBuf);
+      let sum = 0;
+      for (let i = 0; i < this._gateBuf.length; i++) {
+        const v = (this._gateBuf[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / this._gateBuf.length);
+      const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+      const shouldMute = db < this.gateDb;
+      if (shouldMute !== this._muted) {
+        this._muted = shouldMute;
+        this._applyGain();
+      }
+      this._rafId = requestAnimationFrame(tick);
+    };
+    this._rafId = requestAnimationFrame(tick);
+  },
+};
+
 const Engine = {
   canvas: null, ctx: null,
   overlayCanvas: null, overlayCtx: null,   // whiteboard strokes — persist across frames
