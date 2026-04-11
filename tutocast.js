@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.4 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.5 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.4';
+const APP_VERSION = '0.7.5';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -160,6 +160,10 @@ const LANG = {
     sourceRemoved: 'Source retirée',
     firstSourceHint: '💡 Glisse pour déplacer · coin pour redimensionner · ✕ dans la liste ou touche Suppr pour retirer',
     overlayDeleted: '✕ Overlay supprimé',
+    transparency_solid: 'Fond plein',
+    transparency_semi:  'Fond semi-transparent',
+    transparency_text:  'Texte seul',
+    transparency_ghost: 'Texte fantôme',
     badge_first: 'Premier tuto',
     badge_long: 'Plus de 5 min',
     badge_multi: 'Multi-caméras',
@@ -453,6 +457,10 @@ const LANG = {
     sourceRemoved: 'Source removed',
     firstSourceHint: '💡 Drag to move · corner to resize · ✕ in the list or Delete key to remove',
     overlayDeleted: '✕ Overlay deleted',
+    transparency_solid: 'Solid background',
+    transparency_semi:  'Semi-transparent background',
+    transparency_text:  'Text only',
+    transparency_ghost: 'Ghost text',
     badge_first: 'First tutorial',
     badge_long: 'Over 5 minutes',
     badge_multi: 'Multi-camera',
@@ -738,6 +746,10 @@ const LANG = {
     sourceRemoved: 'تمت إزالة المصدر',
     firstSourceHint: '💡 اسحب للتحريك · الزاوية لتغيير الحجم · ✕ في القائمة أو مفتاح Delete للإزالة',
     overlayDeleted: '✕ تم حذف الطبقة',
+    transparency_solid: 'خلفية ممتلئة',
+    transparency_semi:  'خلفية شبه شفافة',
+    transparency_text:  'نص فقط',
+    transparency_ghost: 'نص شبحي',
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     faq_q1: "ما هو TutoCast؟",
@@ -1811,16 +1823,31 @@ const Templates = {
    resize them like any other layer. Preset texts keep their 4-second
    auto-fade, but if the user drags or resizes one, the ttl timer is
    cancelled and the text stays permanent. */
+/* v0.7.5: transparency cycle + font cycle on text overlays */
+const TEXT_TRANSPARENCY_MODES = [
+  { bgAlpha: 1,   textAlpha: 1,   label: 'solid'  },  // 0 — solid bg + opaque text (default was 0.65, now crisp)
+  { bgAlpha: 0.5, textAlpha: 1,   label: 'semi'   },  // 1 — semi bg
+  { bgAlpha: 0,   textAlpha: 1,   label: 'text'   },  // 2 — text only
+  { bgAlpha: 0,   textAlpha: 0.5, label: 'ghost'  },  // 3 — ghost text only
+];
+const TEXT_FONTS = [
+  { family: 'Bangers, Righteous, sans-serif',   name: 'Bangers',   weight: 800 },
+  { family: 'Righteous, Bangers, sans-serif',   name: 'Righteous', weight: 800 },
+  { family: 'Orbitron, monospace',              name: 'Orbitron',  weight: 700 },
+  { family: 'Amiri, serif',                     name: 'Amiri',     weight: 700 },
+  { family: 'Tajawal, sans-serif',              name: 'Tajawal',   weight: 700 },
+  { family: 'Arial, sans-serif',                name: 'System',    weight: 700 },
+];
+
 const TextOverlays = {
-  items: [],  // { id, text, x, y, w, h, size, color, bg, _ttlTimer?, pinned? }
+  items: [],  // { id, text, x, y, w, h, size, color, bg, transparency, font, _ttlTimer?, pinned? }
   nextId: 1,
   selectedId: null,
 
   add(text, opts = {}) {
     const size = opts.size ?? 80;
-    // Compute w/h using an offscreen canvas measureText
-    const { w, h } = this._measure(text, size);
-    // Default placement: centered-ish near the top, but converted to top-left
+    const font = opts.font ?? 0;                 // index into TEXT_FONTS
+    const { w, h } = this._measure(text, size, font);
     const cx = opts.x ?? Engine.width / 2;
     const cy = opts.y ?? 160;
     const item = {
@@ -1830,13 +1857,14 @@ const TextOverlays = {
       y: cy - h / 2,
       w, h, size,
       color: opts.color ?? '#ffffff',
-      bg: opts.bg ?? 'rgba(0,0,0,.65)',
-      pinned: opts.ttl === 0,   // free texts (from the "Free text" button) are pinned by default
+      bg: opts.bg ?? '#000000',
+      transparency: opts.transparency ?? 1,       // 0..3 (semi bg by default)
+      font,                                       // 0..TEXT_FONTS.length-1
+      pinned: opts.ttl === 0,
     };
     this.items.push(item);
     log(`${t('textAdded')}: ${text}`, 'info');
     if (!item.pinned) {
-      // auto-fade after 4s unless the user interacts (Drag cancels this)
       item._ttlTimer = setTimeout(() => this.remove(item.id), opts.ttl || 4000);
     }
     return item;
@@ -1858,13 +1886,13 @@ const TextOverlays = {
     item.pinned = true;
   },
 
-  /* Recompute w/h when text or size changes. Uses the main canvas's
-     context for measureText — measurement is cheap. */
-  _measure(text, size) {
+  /* Recompute w/h when text/size/font changes. */
+  _measure(text, size, fontIdx = 0) {
     const ctx = Engine && Engine.ctx;
     if (!ctx) return { w: 200, h: 100 };
+    const f = TEXT_FONTS[fontIdx] || TEXT_FONTS[0];
     ctx.save();
-    ctx.font = `800 ${size}px Bangers, Righteous, sans-serif`;
+    ctx.font = `${f.weight} ${size}px ${f.family}`;
     const m = ctx.measureText(text);
     ctx.restore();
     const padX = 30, padY = 18;
@@ -1872,6 +1900,24 @@ const TextOverlays = {
       w: m.width + padX * 2,
       h: size * 1.2 + padY * 2,
     };
+  },
+
+  /* Cycle the transparency mode (0..3) of the selected item. */
+  cycleTransparency(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return null;
+    item.transparency = ((item.transparency ?? 1) + 1) % TEXT_TRANSPARENCY_MODES.length;
+    return TEXT_TRANSPARENCY_MODES[item.transparency];
+  },
+
+  /* Cycle the font (0..5) of the selected item and re-measure the bbox. */
+  cycleFont(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return null;
+    item.font = ((item.font ?? 0) + 1) % TEXT_FONTS.length;
+    const { w, h } = this._measure(item.text, item.size, item.font);
+    item.w = w; item.h = h;
+    return TEXT_FONTS[item.font];
   },
 
   /* Drag is resizing a text overlay — scale the font size to the new w,
@@ -1887,10 +1933,15 @@ const TextOverlays = {
 
   drawAll(ctx) {
     this.items.forEach(item => {
+      const fontIdx = item.font ?? 0;
+      const f = TEXT_FONTS[fontIdx] || TEXT_FONTS[0];
       // Re-measure each frame in case the font just loaded or the text changed
-      const { w, h } = this._measure(item.text, item.size);
+      const { w, h } = this._measure(item.text, item.size, fontIdx);
       item.w = w; item.h = h;
       const cx = item.x + w / 2, cy = item.y + h / 2;
+
+      const modeIdx = item.transparency ?? 1;
+      const mode = TEXT_TRANSPARENCY_MODES[modeIdx] || TEXT_TRANSPARENCY_MODES[1];
 
       ctx.save();
       // v0.7.1: rotation around the text center
@@ -1900,26 +1951,34 @@ const TextOverlays = {
         ctx.rotate(rot);
         ctx.translate(-cx, -cy);
       }
-      ctx.font = `800 ${item.size}px Bangers, Righteous, sans-serif`;
+      ctx.font = `${f.weight} ${item.size}px ${f.family}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // rounded-rect background
-      ctx.fillStyle = item.bg;
-      ctx.beginPath();
-      const r = Math.min(20, h / 3);
-      ctx.moveTo(item.x + r, item.y);
-      ctx.lineTo(item.x + w - r, item.y); ctx.quadraticCurveTo(item.x + w, item.y, item.x + w, item.y + r);
-      ctx.lineTo(item.x + w, item.y + h - r); ctx.quadraticCurveTo(item.x + w, item.y + h, item.x + w - r, item.y + h);
-      ctx.lineTo(item.x + r, item.y + h); ctx.quadraticCurveTo(item.x, item.y + h, item.x, item.y + h - r);
-      ctx.lineTo(item.x, item.y + r); ctx.quadraticCurveTo(item.x, item.y, item.x + r, item.y);
-      ctx.fill();
+      // rounded-rect background (v0.7.5: skipped entirely if bgAlpha === 0)
+      if (mode.bgAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = mode.bgAlpha;
+        ctx.fillStyle = item.bg;
+        ctx.beginPath();
+        const r = Math.min(20, h / 3);
+        ctx.moveTo(item.x + r, item.y);
+        ctx.lineTo(item.x + w - r, item.y); ctx.quadraticCurveTo(item.x + w, item.y, item.x + w, item.y + r);
+        ctx.lineTo(item.x + w, item.y + h - r); ctx.quadraticCurveTo(item.x + w, item.y + h, item.x + w - r, item.y + h);
+        ctx.lineTo(item.x + r, item.y + h); ctx.quadraticCurveTo(item.x, item.y + h, item.x, item.y + h - r);
+        ctx.lineTo(item.x, item.y + r); ctx.quadraticCurveTo(item.x, item.y, item.x + r, item.y);
+        ctx.fill();
+        ctx.restore();
+      }
 
-      // text with outline
+      // text with outline — honours textAlpha
+      ctx.save();
+      ctx.globalAlpha = mode.textAlpha;
       ctx.lineWidth = 6; ctx.strokeStyle = '#000';
       ctx.strokeText(item.text, cx, cy);
       ctx.fillStyle = item.color;
       ctx.fillText(item.text, cx, cy);
+      ctx.restore();
 
       // Selection + resize handles + canvas-native delete button
       if (TextOverlays.selectedId === item.id) {
@@ -3568,6 +3627,20 @@ const TextToolbar = {
     $('tcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       if (TextOverlays.selectedId != null) TextOverlays.remove(TextOverlays.selectedId);
+    });
+    // v0.7.5 — Transparency cycle
+    $('tcToolbarTrans')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId == null) return;
+      const mode = TextOverlays.cycleTransparency(TextOverlays.selectedId);
+      if (mode) showToast(`🎭 ${t('transparency_' + mode.label)}`, 1400);
+    });
+    // v0.7.5 — Font cycle
+    $('tcToolbarFont')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId == null) return;
+      const f = TextOverlays.cycleFont(TextOverlays.selectedId);
+      if (f) showToast(`Aa ${f.name}`, 1400);
     });
   },
 
