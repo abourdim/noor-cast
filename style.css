@@ -283,10 +283,11 @@ body {
   unicode-bidi: isolate;
 }
 .bism-text {
-  /* The single-character Bismillah ligature U+FDFD renders as elegant
-     calligraphy in Amiri. 24px + gradient for a premium look. */
-  font-size: 26px;
-  font-weight: 400;
+  /* Spelled-out form (not the ﷽ ligature — Amiri decomposes it on some
+     systems, blowing the container wide). 15px Amiri with gradient fill
+     sits comfortably in the header at any viewport. */
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1;
   background: linear-gradient(90deg,
     color-mix(in srgb, var(--bism-color, #a3e635) 85%, transparent),
@@ -294,28 +295,29 @@ body {
     color-mix(in srgb, var(--bism-color, #a3e635) 85%, transparent));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--bism-color, #a3e635) 40%, transparent));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--bism-color, #a3e635) 35%, transparent));
   opacity: .9;
-  letter-spacing: .02em;
+  letter-spacing: 0;
   padding: 0 2px;
+  white-space: nowrap;
 }
 .bism-flourish {
   font-family: 'Amiri', serif;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--bism-color, #a3e635);
   opacity: .55;
   line-height: 1;
 }
 .bism-ornament {
-  font-size: 10px;
+  font-size: 8px;
   color: var(--accent2, #fb923c);
-  opacity: .5;
+  opacity: .55;
   animation: bismTwinkle 4s ease-in-out infinite;
 }
 .bism-ornament:last-child { animation-delay: 2s; }
 @keyframes bismTwinkle {
-  0%,100% { opacity: .25; transform: rotate(0deg) scale(.85); }
+  0%,100% { opacity: .3; transform: rotate(0deg) scale(.85); }
   50%     { opacity: .85; transform: rotate(45deg) scale(1.15); }
 }
 .light-theme .bism-text { -webkit-text-fill-color: unset; background: none; color: #854d0e; filter: none; }
@@ -323,10 +325,14 @@ body {
 .light-theme .bism-ornament { color: #ea580c; }
 
 @media (max-width: 720px) {
-  .bism-text     { font-size: 22px; }
-  .bism-flourish { font-size: 18px; }
-  .bism-ornament { font-size: 8px; }
-  .bismillah     { gap: 6px; top: 2px; }
+  .bism-text     { font-size: 13px; }
+  .bism-flourish { font-size: 14px; }
+  .bism-ornament { font-size: 7px; }
+  .bismillah-inner { gap: 6px; }
+}
+@media (max-width: 480px) {
+  /* On very narrow phones, hide the ornaments and flourishes — keep just the text */
+  .bism-ornament, .bism-flourish { display: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1331,14 +1337,18 @@ body.log-open .app {
 .tc-onb-go:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.3); }
 
 /* ─── Studio main layout ─── */
-.tc-studio { padding-bottom: 12px; }
+.tc-studio { padding-bottom: 8px; }
+/* v0.7.12 — tighter studio card header so the stage has more vertical room */
+.tc-studio > .card-header { padding: 8px 14px !important; }
 .tc-studio-grid {
   display: grid;
   /* minmax(0, 1fr) is critical: without it, the grid item refuses to
      shrink below the canvas's intrinsic size and the layout blows out. */
-  grid-template-columns: 240px minmax(0, 1fr) 240px;
-  gap: 16px;
-  padding: 14px 18px;
+  /* v0.7.12: sidebars 240 → 220, gap 16 → 12, padding 14/18 → 10/14.
+     Gives ~60 px more to the stage width without cramping the sidebars. */
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  gap: 12px;
+  padding: 10px 14px;
   align-items: start;
 }
 @media (max-width: 1080px) {
@@ -1382,7 +1392,7 @@ body.log-open .app {
   min-height: 0;
   /* Cap sidebar height to the stage's effective height so the REC button
      stays above the fold. Internal scroll when content exceeds. */
-  max-height: calc(100vh - 360px);
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
 }
 .tc-sidebar::-webkit-scrollbar { width: 8px; }
@@ -1530,9 +1540,9 @@ body.log-open .app {
   aspect-ratio: 16/9;
   /* Cap the stage height so the REC button + step strip stay above the
      fold on typical laptop screens. 100vh - header - controls - padding. */
-  max-height: calc(100vh - 360px);
+  max-height: calc(100vh - 300px);
   /* When the max-height kicks in, keep the aspect ratio by shrinking width. */
-  max-width: calc((100vh - 360px) * 16 / 9);
+  max-width: calc((100vh - 300px) * 16 / 9);
   margin: 0 auto;
   background: #000;
   border-radius: 12px;
@@ -2377,11 +2387,11 @@ body.log-open .app {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 14px;
-  margin: 10px 0 4px;
-  min-height: 38px;
+  padding: 5px 12px;
+  margin: 6px 0 2px;
+  min-height: 30px;
   flex-wrap: wrap;
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, .12);
   border: 1px solid rgba(255, 255, 255, .06);
   transition: background .2s;

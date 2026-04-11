@@ -3,6 +3,42 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.12 — 2026-04-11 (Layout optimization + Bismillah fix)
+
+Two issues that both came out of live screenshots from the user.
+
+### Fixed
+- **Bismillah in header was clipping** — the single-character ligature
+  `﷽` (U+FDFD) decomposes in Amiri on many systems and blew the
+  container wide, making the ornaments/flourishes fall off the edges.
+  Replaced with the spelled-out form `بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ`
+  at 15px with the same gradient background-clip:text treatment. Container
+  is now 233 × 16 px and centers cleanly in the header at every viewport.
+- **Responsive breakpoints** — 720 px down sizes the bismillah text to
+  13 px; 480 px and below hides the ornaments/flourishes entirely so the
+  text alone survives.
+
+### Changed — layout optimization
+User screenshot showed the app overflowing the viewport and the REC
+button barely above the fold. Three targeted tweaks to give the stage
+more room without cramping the sidebars.
+- **Sidebars 240 → 220 px** and grid gap 16 → 12 px and padding 14/18
+  → 10/14 px (`.tc-studio-grid`). Gains ~60 px of horizontal space for
+  the canvas.
+- **Stage max-height subtrahend 360 → 300 px** (`.tc-stage` and
+  `.tc-sidebar`). Stage grows ~60 px taller on 1080 p screens.
+- **Template strip tightened** — padding 8/14 → 5/12 px, margin 10/4
+  → 6/2 px, min-height 38 → 30 px.
+- **Studio card header tightened** — added explicit `padding: 8px 14px`
+  override, and `.tc-studio` `padding-bottom` 12 → 8 px.
+
+### Verified (Preview MCP harness)
+- 1920×1080 — stage 1230×692 (was 960×540), REC button visible at
+  y=1047.
+- 1600×900 — stage 1033×581, REC button visible at y=867.
+- Bismillah container 233×16 px, centered, `﴾﷽﴿` → spelled-out
+  form renders correctly.
+
 ## v0.7.1 — 2026-04-11 (Canva polish)
 
 The three Canva-inspired features I didn't fit into v0.7.0, shipped
