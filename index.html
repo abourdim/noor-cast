@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.75</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.76</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -348,6 +348,10 @@
               <option value="4">Tajawal</option>
               <option value="5">Arial</option>
             </select>
+            <!-- v0.7.76: outline thickness slider for text overlays.
+                 0 = no outline, up to 14 px. Persisted in tc-text-stroke. -->
+            <label class="sidebar-label" style="margin-top:10px;font-size:.7rem;opacity:.75" data-i18n="textStroke">✒ Contour du texte</label>
+            <input type="range" id="tcTextStrokeSlider" min="0" max="14" step="1" value="6" class="tc-brand-range" />
 
             <!-- v0.7.20: Tools moved to floating horizontal bar above the stage -->
 
@@ -988,7 +992,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.75</strong></span>
+      <span class="badge"><strong>v0.7.76</strong></span>
     </div>
   </aside>
 
@@ -1285,7 +1289,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.75</strong></span>
+      <span class="badge"><strong>v0.7.76</strong></span>
     </div>
   </aside>
 
@@ -1317,7 +1321,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.75</strong></span>
+      <span class="badge"><strong>v0.7.76</strong></span>
     </div>
   </aside>
 

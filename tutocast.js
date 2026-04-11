@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.75 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.76 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.75';
+const APP_VERSION = '0.7.76';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 08:00';
+const BUILD_DATE = '2026-04-12 08:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -209,6 +209,7 @@ const LANG = {
     setSecSlogan: 'Slogan & effet',
     setSecTicker: 'Ticker',
     textFont: 'Aa Police par défaut',
+    textStroke: '✒ Contour du texte',
     freeResize: 'Étire libre (Shift+coin)',
     teleSpeed: 'Vitesse',
     telePlay: 'Lecture',
@@ -765,6 +766,7 @@ const LANG = {
     setSecSlogan: 'Slogan & effect',
     setSecTicker: 'Ticker',
     textFont: 'Aa Default font',
+    textStroke: '✒ Text outline',
     freeResize: 'Free stretch (Shift+corner)',
     teleSpeed: 'Speed',
     telePlay: 'Play',
@@ -1313,6 +1315,7 @@ const LANG = {
     setSecSlogan: 'النص والتأثير',
     setSecTicker: 'الشريط',
     textFont: 'Aa الخط الافتراضي',
+    textStroke: '✒ إطار النص',
     freeResize: 'تمدد حر (Shift+زاوية)',
     teleSpeed: 'السرعة',
     telePlay: 'تشغيل',
@@ -3619,6 +3622,9 @@ const TextOverlays = {
   selectedId: null,
   defaultFont: 0,  // v0.7.14: index into TEXT_FONTS — applied to NEW overlays
                    // unless caller passes opts.font. Bound to #tcTextFontSelect.
+  defaultStroke: 6,  // v0.7.76: outline thickness in px (0-14). 0 disables
+                     // the outline entirely. Bound to #tcTextStrokeSlider
+                     // and persisted in tc-text-stroke.
 
   add(text, opts = {}) {
     const size = opts.size ?? 80;
@@ -3636,6 +3642,7 @@ const TextOverlays = {
       bg: opts.bg ?? '#000000',
       transparency: opts.transparency ?? 1,       // 0..3 (semi bg by default)
       font,                                       // 0..TEXT_FONTS.length-1
+      stroke: opts.stroke ?? this.defaultStroke,  // v0.7.76: outline px, 0 disables
       pinned: opts.ttl === 0,
     };
     this.items.push(item);
@@ -3748,10 +3755,17 @@ const TextOverlays = {
       }
 
       // text with outline — honours textAlpha
+      // v0.7.76: outline thickness is per-item; 0 disables strokeText so the
+      // text can sit clean on a high-contrast background. Pre-v0.7.76 items
+      // without a stroke field fall back to the legacy 6 px.
       ctx.save();
       ctx.globalAlpha = mode.textAlpha;
-      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
-      ctx.strokeText(item.text, cx, cy);
+      const strokeW = (typeof item.stroke === 'number' ? item.stroke : 6);
+      if (strokeW > 0) {
+        ctx.lineWidth = strokeW;
+        ctx.strokeStyle = '#000';
+        ctx.strokeText(item.text, cx, cy);
+      }
       ctx.fillStyle = item.color;
       ctx.fillText(item.text, cx, cy);
       ctx.restore();
@@ -9505,6 +9519,31 @@ function wireEvents() {
       TextOverlays.defaultFont = idx;
       try { localStorage.setItem('tc-text-default-font', String(idx)); } catch {}
       showToast('Aa ' + (TEXT_FONTS[idx]?.name || 'font'), 1400);
+    });
+  }
+
+  // v0.7.76: outline thickness slider for text overlays. Drives
+  // TextOverlays.defaultStroke (used at .add() time) and live-updates the
+  // currently selected overlay so the user gets instant visual feedback.
+  // Persisted in tc-text-stroke. Range 0-14; 0 = no outline.
+  const tsEl = $('tcTextStrokeSlider');
+  if (tsEl) {
+    try {
+      const saved = parseInt(localStorage.getItem('tc-text-stroke'), 10);
+      if (!isNaN(saved)) {
+        TextOverlays.defaultStroke = saved;
+        tsEl.value = saved;
+      }
+    } catch {}
+    tsEl.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value, 10);
+      TextOverlays.defaultStroke = v;
+      try { localStorage.setItem('tc-text-stroke', String(v)); } catch {}
+      // Live-update the currently selected overlay if any
+      if (TextOverlays.selectedId != null) {
+        const sel = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+        if (sel) sel.stroke = v;
+      }
     });
   }
 
