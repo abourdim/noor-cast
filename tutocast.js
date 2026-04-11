@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.94';
+const APP_VERSION = '0.7.95';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 12:45';
+const BUILD_DATE = '2026-04-12 13:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -173,6 +173,7 @@ const LANG = {
     micBoost: '🎚 Boost du micro',
     micGate: '🔇 Seuil silence (dB)',
     jingleLabel: '🎵 Jingle d\'intro (1.5s)',
+    timelapseLabel: '⏩ Timelapse',
     timeGoalLabel: '⏳ Objectif de durée',
     timeGoalMinutes: 'Minutes :',
     timeGoalAutoStop: "Arrêt automatique à l'objectif",
@@ -772,6 +773,7 @@ const LANG = {
     micBoost: '🎚 Mic boost',
     micGate: '🔇 Noise gate (dB)',
     jingleLabel: '🎵 Intro jingle (1.5s)',
+    timelapseLabel: '⏩ Timelapse',
     timeGoalLabel: '⏳ Duration goal',
     timeGoalMinutes: 'Minutes:',
     timeGoalAutoStop: 'Auto-stop at goal',
@@ -1363,6 +1365,7 @@ const LANG = {
     micBoost: '🎚 تعزيز الميكروفون',
     micGate: '🔇 بوابة الصمت (dB)',
     jingleLabel: '🎵 جينغل المقدمة (1.5ث)',
+    timelapseLabel: '⏩ تسريع الوقت',
     timeGoalLabel: '⏳ هدف المدة',
     timeGoalMinutes: 'الدقائق:',
     timeGoalAutoStop: 'إيقاف تلقائي عند الهدف',
@@ -4231,6 +4234,17 @@ const Recorder = {
       // Countdown
       if ($('tcCountdownEnabled').checked) {
         await this.countdown();
+      }
+      // v0.7.95: re-create the capture stream with timelapse fps if needed.
+      // The cached _canvasStream from earlier sessions is dropped here so the
+      // next getMasterStream() rebuilds it at Timelapse.getCaptureFps().
+      if (typeof Timelapse !== 'undefined') {
+        try {
+          Engine._canvasStream = Engine.canvas.captureStream(Timelapse.getCaptureFps());
+          log(`⏩ capture fps = ${Timelapse.getCaptureFps()} (timelapse ${Timelapse.enabled ? Timelapse.multiplier + '×' : 'off'})`, 'info');
+        } catch (e) {
+          log(`⚠ timelapse re-capture failed: ${e.message}`, 'error');
+        }
       }
       const stream = Engine.getMasterStream();
       const videoTracks = stream.getVideoTracks();
@@ -8394,6 +8408,39 @@ const SilenceWatch = {
    (soft mode) or firing Recorder.stop() (hard auto-stop mode). All state
    is persisted in localStorage so the next session reopens with the same
    target. Default OFF. */
+/* v0.7.95: timelapse mode — record at a reduced canvas captureStream fps so
+   the resulting video has fewer frames per real second. Played back at the
+   normal browser rate, content appears N× sped up. The trick is purely in
+   the captureStream(fps) parameter — Engine.render keeps drawing at the
+   browser's natural rAF rate, but MediaRecorder only samples the canvas at
+   `30 / multiplier` Hz. */
+const Timelapse = {
+  enabled: false,
+  multiplier: 4,  // speedup factor
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-timelapse') === '1';
+      const m = parseFloat(localStorage.getItem('tc-timelapse-mult'));
+      if (!isNaN(m)) this.multiplier = Math.max(2, Math.min(20, m));
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-timelapse', v ? '1' : '0'); } catch {}
+  },
+  setMultiplier(m) {
+    this.multiplier = Math.max(2, Math.min(20, parseFloat(m) || 4));
+    try { localStorage.setItem('tc-timelapse-mult', String(this.multiplier)); } catch {}
+  },
+
+  // Returns the fps to pass to canvas.captureStream() based on current settings.
+  // Normal: 30 fps. Timelapse: 30 / multiplier (e.g. 7.5 fps at 4×).
+  getCaptureFps() {
+    return this.enabled ? (30 / this.multiplier) : 30;
+  },
+};
+
 const TimeGoal = {
   enabled: false,
   autoStop: false,
@@ -10662,6 +10709,23 @@ function wireEvents() {
     jingleEl.addEventListener('change', (e) => Jingle.setEnabled(e.target.checked));
   }
 
+  // v0.7.95: timelapse mode (record at reduced captureStream fps)
+  const tlEl = $('tcTimelapseToggle');
+  const tlOpts = $('tcTimelapseOptions');
+  const tlMul = $('tcTimelapseMult');
+  if (tlEl) {
+    tlEl.checked = Timelapse.enabled;
+    if (tlOpts) tlOpts.style.display = Timelapse.enabled ? 'block' : 'none';
+    tlEl.addEventListener('change', (e) => {
+      Timelapse.setEnabled(e.target.checked);
+      if (tlOpts) tlOpts.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  if (tlMul) {
+    tlMul.value = Timelapse.multiplier;
+    tlMul.addEventListener('change', (e) => Timelapse.setMultiplier(e.target.value));
+  }
+
   // v0.7.65: recording time goal + optional auto-stop
   const tgEl = $('tcTimeGoalToggle');
   const tgOpts = $('tcTimeGoalOptions');
@@ -10827,6 +10891,7 @@ async function init() {
   Jingle.load();
   MicBoost.load();  // v0.7.69
   VolumeDuck.load();  // v0.7.83
+  Timelapse.load();  // v0.7.95
   TimeGoal.load();
   ClockOverlay.load();  // v0.7.90
   LiveCaptions.load();
