@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.63 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.64 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.63';
+const APP_VERSION = '0.7.64';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 05:00';
+const BUILD_DATE = '2026-04-12 05:15';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -226,6 +226,7 @@ const LANG = {
     autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
     captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
+    sceneTransitionLabel: '🎞 Transition fondu entre scènes',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
     snapAnnotClear: 'Effacer',
@@ -736,6 +737,7 @@ const LANG = {
     autoPauseLabel: '⏸ Auto-pause when you switch tab',
     captionsLabel: '💬 Live captions (Chrome/Edge)',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
+    sceneTransitionLabel: '🎞 Scene transition fade',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
     snapAnnotClear: 'Clear',
@@ -1238,6 +1240,7 @@ const LANG = {
     autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
     captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
+    sceneTransitionLabel: '🎞 انتقال مع تلاشي بين المشاهد',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
     snapAnnotClear: 'مسح',
@@ -1893,8 +1896,8 @@ const Engine = {
     // it reflects live source movements without being a rAF hot path.
     Minimap.maybeRender();
 
-    // v0.7.63: cursor spotlight dim/reveal
-    Spotlight.render(ctx, width, height);
+    // v0.7.64: scene transition fade overlay (drawn on top of everything)
+    SceneTransition.render(ctx, width, height);
 
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
@@ -2720,7 +2723,11 @@ const Scenes = {
   switch(key) {
     const s = this.presets.find(p => p.key === key);
     if (!s) return;
-    s.apply(Engine);
+    // v0.7.64: if transitions are enabled, the transition object applies
+    // the scene at its midpoint. Otherwise apply immediately.
+    if (!SceneTransition.run(s, Engine)) {
+      s.apply(Engine);
+    }
     this.active = key;
     this.render();
     const labelForLog = s.custom ? s.label : t('scene_' + key);
@@ -2897,6 +2904,66 @@ const Scenes = {
   },
 
   render() { renderScenes(); }
+};
+
+/* v0.7.64: Opt-in scene transition fade effect.
+   When enabled, switching scenes via hotkey / click / template advance
+   plays a 400ms fade-to-black transition:
+     - 0-200ms:  fade out the old scene
+     - midpoint: apply the new scene layout
+     - 200-400ms: fade back in with the new layout
+   Drawn as a fullscreen black rect on the output canvas with animated
+   alpha, so the transition is baked into the recording. Persisted in
+   localStorage as tc-scene-transition. */
+const SceneTransition = {
+  enabled: false,
+  DURATION: 400,   // ms total (200 fade out + 200 fade in)
+  _activeUntil: 0,
+  _midpointAt: 0,
+  _pendingApply: null,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-scene-transition') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-scene-transition', v ? '1' : '0'); } catch {}
+  },
+
+  // Called INSTEAD of applying the scene directly, if enabled.
+  // Returns true if the transition took over the apply flow.
+  run(scene, engine) {
+    if (!this.enabled) return false;
+    const now = performance.now();
+    this._activeUntil = now + this.DURATION;
+    this._midpointAt = now + this.DURATION / 2;
+    this._pendingApply = () => scene.apply(engine);
+    // Wait 200ms (midpoint), apply the scene, let the render loop
+    // finish the fade-in during the second half
+    setTimeout(() => {
+      if (this._pendingApply) {
+        this._pendingApply();
+        this._pendingApply = null;
+      }
+    }, this.DURATION / 2);
+    return true;
+  },
+
+  // Called from Engine.render() each frame — draws the fade overlay
+  render(ctx, W, H) {
+    const now = performance.now();
+    if (now >= this._activeUntil) return;
+    const elapsed = this.DURATION - (this._activeUntil - now);
+    const half = this.DURATION / 2;
+    // Fade out 0..1 over first half, then fade in 1..0 over second half
+    let alpha;
+    if (elapsed < half) alpha = elapsed / half;
+    else alpha = 1 - ((elapsed - half) / half);
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, Math.min(1, alpha))})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
 };
 
 /* v0.7.37: Per-scene auto intro text cards.
@@ -8993,6 +9060,12 @@ function wireEvents() {
     siEl.checked = SceneIntroText.enabled;
     siEl.addEventListener('change', (e) => SceneIntroText.setEnabled(e.target.checked));
   }
+  // v0.7.64: opt-in scene transition fade effect
+  const stEl = $('tcSceneTransitionToggle');
+  if (stEl) {
+    stEl.checked = SceneTransition.enabled;
+    stEl.addEventListener('change', (e) => SceneTransition.setEnabled(e.target.checked));
+  }
   // v0.7.28: History clear button
   $('tcHistoryClearBtn')?.addEventListener('click', () => {
     if (History.entries.length === 0) return;
@@ -9051,6 +9124,7 @@ async function init() {
   Jingle.load();
   LiveCaptions.load();
   SceneIntroText.load();
+  SceneTransition.load();
   IntroOutro.load();
   History.load();
   Scenes.loadCustom();  // v0.7.48: restore custom scenes
