@@ -12989,6 +12989,10 @@ const Sensors = {
   autoOverlayEnabled: false,  // v0.5.0 — opt-in in Settings
   _lastAutoOverlayAt: 0,
 
+  /* v0.7.171: UART-only BLE connection (inspired by bit-playground).
+     All data flows through a single UART service as text lines.
+     Firmware sends: A:x,y,z  BA:1  BB:0  TP:23  L:128  S:200
+     TutoCast sends: P:90  TI:45  LED:1f1f1f1f1f  TEST  HELLO */
   async connect() {
     if (!navigator.bluetooth) {
       showToast('❌ Web Bluetooth non supporté (Chrome/Edge requis)', 3000);
@@ -12997,182 +13001,40 @@ const Sensors = {
     try {
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: 'BBC micro:bit' }],
-        optionalServices: [
-          'e95d0753-251d-470a-a062-fa1922dfa9a8', // Accelerometer service
-          'e95d9882-251d-470a-a062-fa1922dfa9a8', // Button service
-          'e95d6100-251d-470a-a062-fa1922dfa9a8', // Temperature service (v1+v2)
-          'e95d9250-251d-470a-a062-fa1922dfa9a8', // LED service (for future use)
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // UART service (v2 sound via custom firmware)
-        ],
+        optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'],
       });
       this.server = await this.device.gatt.connect();
-      // v0.7.170: handle BLE disconnect with auto-reconnect (from bit-playground)
       this._reconnectAttempts = 0;
       this.device.addEventListener('gattserverdisconnected', () => {
         log('micro:bit disconnected', 'warn');
         showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
         this.server = null;
         this._uartTx = null;
-        this._ledMatrix = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
         this.updatePanel();
         this._tryReconnect();
       });
-      // Try accelerometer
-      try {
-        const accelSvc = await this.server.getPrimaryService('e95d0753-251d-470a-a062-fa1922dfa9a8');
-        const accelChar = await accelSvc.getCharacteristic('e95dca4b-251d-470a-a062-fa1922dfa9a8');
-        await accelChar.startNotifications();
-        accelChar.addEventListener('characteristicvaluechanged', (e) => {
-          const v = e.target.value;
-          this.values = this.values || {};
-          this.values.x = v.getInt16(0, true) / 1000;
-          this.values.y = v.getInt16(2, true) / 1000;
-          this.values.z = v.getInt16(4, true) / 1000;
-          this.updatePanel();
-          // v0.5.0: if the laser is ON, tilt drives the laser position
-          // so the teacher can aim with the physical robot in their hand.
-          // Accelerometer range ≈ [-1, 1] in g's for tilt angles.
-          // Map x → laserX, y → laserY (inverted — nose-down = top of screen).
-          if (Laser.on) {
-            const nx = Math.max(-1, Math.min(1, this.values.x));
-            const ny = Math.max(-1, Math.min(1, this.values.y));
-            const targetX = Engine.width * 0.5 + nx * Engine.width * 0.45;
-            const targetY = Engine.height * 0.5 + ny * Engine.height * 0.45;
-            // Smooth ease so jitter doesn't jerk the dot around
-            Laser.x = Laser.x + (targetX - Laser.x) * 0.3;
-            Laser.y = Laser.y + (targetY - Laser.y) * 0.3;
-            Laser.lastMove = Date.now();
-          }
-          // v0.7.165: tilt-to-pan — shift crop window on selected source based on tilt
-          if (this._tiltToPan) {
-            const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
-            if (sel && sel.type !== 'mic') {
-              const panSpeed = 0.008;
-              sel.cropLeft  = Math.max(0, Math.min(0.4, (sel.cropLeft || 0) + this.values.x * panSpeed));
-              sel.cropRight = Math.max(0, Math.min(0.4, (sel.cropRight || 0) - this.values.x * panSpeed));
-              sel.cropTop   = Math.max(0, Math.min(0.4, (sel.cropTop || 0) + this.values.y * panSpeed));
-              sel.cropBottom = Math.max(0, Math.min(0.4, (sel.cropBottom || 0) - this.values.y * panSpeed));
-            }
-          }
-          // v0.5.0: accumulate a sensor sample into the recording timeline
-          if (SensorTimeline.recording) SensorTimeline.sample(this.values);
-          // v0.5.0: if opted in, drop a 🤖 overlay when the robot jerks hard.
-          // Cooldown 3s so we don't spam the canvas during continuous motion.
-          const mag = Math.sqrt(this.values.x * this.values.x + this.values.y * this.values.y + this.values.z * this.values.z);
-          if (this.autoOverlayEnabled) {
-            if (mag > 1.6 && Date.now() - this._lastAutoOverlayAt > 3000) {
-              this._lastAutoOverlayAt = Date.now();
-              TextOverlays.add('🤖', { size: 120, ttl: 1800, y: Engine.height / 2 });
-            }
-          }
-          // v0.7.163: shake-to-switch scene (strong jerk > 2.2g, cooldown 2s)
-          if (this._shakeToScene && mag > 2.2 && Date.now() - (this._lastShakeAt || 0) > 2000) {
-            this._lastShakeAt = Date.now();
-            if (typeof Scenes.random === 'function') Scenes.random();
-          }
-          // v0.7.163: shake = confetti burst (medium jerk > 1.8g, cooldown 3s)
-          if (this._shakeConfetti && mag > 1.8 && Date.now() - (this._lastShakeConfettiAt || 0) > 3000) {
-            this._lastShakeConfettiAt = Date.now();
-            if (typeof Confetti !== 'undefined' && Confetti.burst) Confetti.burst();
-          }
-          // v0.7.163: tilt controls emoji reaction drift direction
-          if (typeof Reactions !== 'undefined' && Reactions._particles.length) {
-            Reactions._particles.forEach(p => { p.vx += this.values.x * 0.3; });
-          }
-          // v0.7.163: feed live graph overlay
-          if (this._liveGraph && this._graphSamples) {
-            this._graphSamples.push({ t: Date.now(), x: this.values.x, y: this.values.y, z: this.values.z });
-            if (this._graphSamples.length > 200) this._graphSamples.shift();
-          }
-          // v0.7.163: motion trail — accumulate position from acceleration
-          if (this._motionTrail && this._trailPoints) {
-            this._trailVx = (this._trailVx || 0) + this.values.x * 0.02;
-            this._trailVy = (this._trailVy || 0) + this.values.y * 0.02;
-            this._trailX = (this._trailX || 0.5) + this._trailVx;
-            this._trailY = (this._trailY || 0.5) + this._trailVy;
-            this._trailX = Math.max(0, Math.min(1, this._trailX));
-            this._trailY = Math.max(0, Math.min(1, this._trailY));
-            this._trailPoints.push({ x: this._trailX, y: this._trailY, t: Date.now() });
-            if (this._trailPoints.length > 300) this._trailPoints.shift();
-          }
-        });
-      } catch (e) { /* accelerometer optional */ }
-      // Try buttons
-      try {
-        const btnSvc = await this.server.getPrimaryService('e95d9882-251d-470a-a062-fa1922dfa9a8');
-        const aChar = await btnSvc.getCharacteristic('e95dda90-251d-470a-a062-fa1922dfa9a8');
-        await aChar.startNotifications();
-        aChar.addEventListener('characteristicvaluechanged', (e) => {
-          this.values = this.values || {};
-          const prev = this.values.a || 0;
-          this.values.a = e.target.value.getUint8(0);
-          this.updatePanel();
-          // Edge-trigger: button A pressed (transition from 0 → non-zero)
-          if (prev === 0 && this.values.a !== 0) {
-            if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') {
-              SoundBoard.play('clap'); // v0.7.163: Button A = applause SFX
-            } else {
-              Zoom.toggle(); // default: toggle zoom
-            }
-          }
-        });
-        const bChar = await btnSvc.getCharacteristic('e95dda91-251d-470a-a062-fa1922dfa9a8');
-        await bChar.startNotifications();
-        bChar.addEventListener('characteristicvaluechanged', (e) => {
-          this.values = this.values || {};
-          const prevB = this.values.b || 0;
-          this.values.b = e.target.value.getUint8(0);
-          this.updatePanel();
-          // v0.5.0: edge-trigger on B button → add a chapter marker.
-          // Combined with A → zoom, the micro:bit is a full remote now.
-          if (prevB === 0 && this.values.b !== 0) Chapters.addMarker();
-        });
-      } catch (e) { /* buttons optional */ }
-      // v0.7.165: temperature service (available on v1 + v2)
-      try {
-        const tempSvc = await this.server.getPrimaryService('e95d6100-251d-470a-a062-fa1922dfa9a8');
-        const tempChar = await tempSvc.getCharacteristic('e95d9250-251d-470a-a062-fa1922dfa9a8');
-        await tempChar.startNotifications();
-        tempChar.addEventListener('characteristicvaluechanged', (e) => {
-          this.values = this.values || {};
-          this.values.temp = e.target.value.getInt8(0);
-        });
-        log('🌡 Temperature sensor connected', 'info');
-      } catch (e) { /* temperature optional */ }
-      // v0.7.165: UART service — receive sound level from custom v2 firmware
-      // The v2 MakeCode program sends "S:NNN\n" where NNN is the sound level (0-255)
-      try {
-        const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-        const rxChar = await uartSvc.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
-        await rxChar.startNotifications();
-        this._uartBuf = '';
-        rxChar.addEventListener('characteristicvaluechanged', (e) => {
-          const dec = new TextDecoder();
-          this._uartBuf += dec.decode(e.target.value);
-          const lines = this._uartBuf.split('\n');
-          this._uartBuf = lines.pop(); // keep incomplete line
-          lines.forEach(line => {
-            const m = line.match(/^S:(\d+)/);
-            if (m) {
-              this.values = this.values || {};
-              this.values.sound = parseInt(m[1], 10);
-            }
-          });
-        });
-        // v0.7.170: also get UART TX characteristic (write commands to micro:bit)
-        try {
-          this._uartTx = await uartSvc.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
-          log('📤 UART TX ready (can send commands)', 'info');
-        } catch {}
-        log('🔊 UART (sound level) connected', 'info');
-      } catch (e) { /* UART optional — v2 only with custom firmware */ }
-      // v0.7.170: LED matrix service (5x5 display)
-      try {
-        const ledSvc = await this.server.getPrimaryService('e95dd91d-251d-470a-a062-fa1922dfa9a8');
-        this._ledMatrix = await ledSvc.getCharacteristic('e95d7b77-251d-470a-a062-fa1922dfa9a8');
-        log('💡 LED matrix connected', 'info');
-      } catch (e) { /* LED service optional */ }
+      // Connect UART service
+      const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+      const chars = await uartSvc.getCharacteristics();
+      let notifyChar = null;
+      for (const ch of chars) {
+        const id = ch.uuid.toLowerCase();
+        if (id.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
+        if (id.includes('6e400003') && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
+      }
+      if (!notifyChar) throw new Error('UART notify characteristic not found');
+      await notifyChar.startNotifications();
+      this._uartBuf = '';
+      notifyChar.addEventListener('characteristicvaluechanged', (e) => {
+        const dec = new TextDecoder();
+        this._uartBuf += dec.decode(e.target.value);
+        const lines = this._uartBuf.split('\n');
+        this._uartBuf = lines.pop();
+        lines.forEach(line => this._handleUartLine(line.trim()));
+      });
+      // Say hello
+      this.sendUart('HELLO');
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
       Badges.unlockMicrobit();
@@ -13331,7 +13193,6 @@ const Sensors = {
   _showSound: false,
   _tiltToPan: false,
   _uartTx: null,
-  _ledMatrix: null,
   _reconnectAttempts: 0,
 
   // v0.7.170: auto-reconnect (inspired by bit-playground)
@@ -13354,11 +13215,6 @@ const Sensors = {
           if (ch.uuid.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
         }
       } catch {}
-      // Re-acquire LED matrix
-      try {
-        const ledSvc = await this.server.getPrimaryService('e95dd91d-251d-470a-a062-fa1922dfa9a8');
-        this._ledMatrix = await ledSvc.getCharacteristic('e95d7b77-251d-470a-a062-fa1922dfa9a8');
-      } catch {}
       this._reconnectAttempts = 0;
       showToast('micro:bit reconnected!', 2000);
       log('BLE reconnected', 'success');
@@ -13369,6 +13225,106 @@ const Sensors = {
   },
   _panAngle: 90,
   _tiltAngle: 90,
+
+  // v0.7.171: parse all incoming UART lines (unified protocol)
+  _handleUartLine(line) {
+    if (!line) return;
+    this.values = this.values || {};
+    // A:x,y,z — accelerometer (milli-g)
+    if (line.startsWith('A:')) {
+      const parts = line.substring(2).split(',');
+      if (parts.length >= 3) {
+        this.values.x = parseInt(parts[0], 10) / 1000;
+        this.values.y = parseInt(parts[1], 10) / 1000;
+        this.values.z = parseInt(parts[2], 10) / 1000;
+        this.updatePanel();
+        this._processAccel();
+      }
+      return;
+    }
+    // BA:1 / BA:0 — button A
+    if (line.startsWith('BA:')) {
+      const prev = this.values.a || 0;
+      this.values.a = parseInt(line.substring(3), 10);
+      this.updatePanel();
+      if (prev === 0 && this.values.a !== 0) {
+        if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') SoundBoard.play('clap');
+        else Zoom.toggle();
+      }
+      return;
+    }
+    // BB:1 / BB:0 — button B
+    if (line.startsWith('BB:')) {
+      const prev = this.values.b || 0;
+      this.values.b = parseInt(line.substring(3), 10);
+      this.updatePanel();
+      if (prev === 0 && this.values.b !== 0) Chapters.addMarker();
+      return;
+    }
+    // TP:23 — temperature
+    if (line.startsWith('TP:')) { this.values.temp = parseInt(line.substring(3), 10); return; }
+    // L:128 — light level
+    if (line.startsWith('L:')) { this.values.light = parseInt(line.substring(2), 10); return; }
+    // S:200 — sound level (v2)
+    if (line.startsWith('S:')) { this.values.sound = parseInt(line.substring(2), 10); return; }
+    // OK — test response
+    if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
+  },
+
+  // v0.7.171: process accelerometer data (extracted from old BLE handler)
+  _processAccel() {
+    const v = this.values;
+    // Laser tilt control
+    if (Laser.on) {
+      const nx = Math.max(-1, Math.min(1, v.x));
+      const ny = Math.max(-1, Math.min(1, v.y));
+      Laser.x = Laser.x + (Engine.width * 0.5 + nx * Engine.width * 0.45 - Laser.x) * 0.3;
+      Laser.y = Laser.y + (Engine.height * 0.5 + ny * Engine.height * 0.45 - Laser.y) * 0.3;
+      Laser.lastMove = Date.now();
+    }
+    // Tilt-to-pan
+    if (this._tiltToPan) {
+      const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+      if (sel && sel.type !== 'mic') {
+        const ps = 0.008;
+        sel.cropLeft = Math.max(0, Math.min(0.4, (sel.cropLeft || 0) + v.x * ps));
+        sel.cropRight = Math.max(0, Math.min(0.4, (sel.cropRight || 0) - v.x * ps));
+        sel.cropTop = Math.max(0, Math.min(0.4, (sel.cropTop || 0) + v.y * ps));
+        sel.cropBottom = Math.max(0, Math.min(0.4, (sel.cropBottom || 0) - v.y * ps));
+      }
+    }
+    // Timeline sample
+    if (SensorTimeline.recording) SensorTimeline.sample(v);
+    // Magnitude-based triggers
+    const mag = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (this.autoOverlayEnabled && mag > 1.6 && Date.now() - this._lastAutoOverlayAt > 3000) {
+      this._lastAutoOverlayAt = Date.now();
+      TextOverlays.add('🤖', { size: 120, ttl: 1800, y: Engine.height / 2 });
+    }
+    if (this._shakeToScene && mag > 2.2 && Date.now() - (this._lastShakeAt || 0) > 2000) {
+      this._lastShakeAt = Date.now();
+      if (typeof Scenes.random === 'function') Scenes.random();
+    }
+    if (this._shakeConfetti && mag > 1.8 && Date.now() - (this._lastShakeConfettiAt || 0) > 3000) {
+      this._lastShakeConfettiAt = Date.now();
+      if (typeof Confetti !== 'undefined' && Confetti.burst) Confetti.burst();
+    }
+    if (typeof Reactions !== 'undefined' && Reactions._particles.length) {
+      Reactions._particles.forEach(p => { p.vx += v.x * 0.3; });
+    }
+    if (this._liveGraph && this._graphSamples) {
+      this._graphSamples.push({ t: Date.now(), x: v.x, y: v.y, z: v.z });
+      if (this._graphSamples.length > 200) this._graphSamples.shift();
+    }
+    if (this._motionTrail && this._trailPoints) {
+      this._trailVx = (this._trailVx || 0) + v.x * 0.02;
+      this._trailVy = (this._trailVy || 0) + v.y * 0.02;
+      this._trailX = Math.max(0, Math.min(1, (this._trailX || 0.5) + this._trailVx));
+      this._trailY = Math.max(0, Math.min(1, (this._trailY || 0.5) + this._trailVy));
+      this._trailPoints.push({ x: this._trailX, y: this._trailY, t: Date.now() });
+      if (this._trailPoints.length > 300) this._trailPoints.shift();
+    }
+  },
 
   // v0.7.170: send UART command to micro:bit (with MTU chunking from bit-playground)
   async sendUart(str) {
@@ -13391,33 +13347,20 @@ const Sensors = {
     } catch (e) { log('UART send error: ' + e.message, 'error'); }
   },
 
-  // v0.7.170: test connection — flash LEDs + send TEST command
+  // v0.7.171: test connection via UART
   async test() {
     if (!this.server || !this.server.connected) {
       showToast('micro:bit not connected', 1500);
       return;
     }
-    // Try LED flash
-    if (this._ledMatrix) {
-      try {
-        // All ON
-        await this._ledMatrix.writeValue(new Uint8Array([0x1f, 0x1f, 0x1f, 0x1f, 0x1f]));
-        setTimeout(async () => {
-          try { await this._ledMatrix.writeValue(new Uint8Array([0, 0, 0, 0, 0])); } catch {}
-        }, 500);
-      } catch {}
-    }
-    // Try UART
     await this.sendUart('TEST');
     showToast('micro:bit test sent', 1500);
   },
 
-  // v0.7.170: set LED 5x5 pattern (array of 5 bytes, each bit = 1 LED)
+  // v0.7.171: set LED 5x5 pattern via UART (array of 5 bytes, each bit = 1 LED)
   async setLeds(pattern) {
-    if (!this._ledMatrix) { showToast('LED service not connected', 1500); return; }
-    try {
-      await this._ledMatrix.writeValue(new Uint8Array(pattern));
-    } catch (e) { log('LED write error: ' + e.message, 'error'); }
+    const hex = pattern.map(b => b.toString(16).padStart(2, '0')).join('');
+    await this.sendUart('LED:' + hex);
   },
 
   // v0.7.170: pan/tilt servo control via UART
@@ -13427,12 +13370,12 @@ const Sensors = {
   },
   tilt(delta) {
     this._tiltAngle = Math.max(0, Math.min(180, this._tiltAngle + delta));
-    this.sendUart('T:' + this._tiltAngle);
+    this.sendUart('TI:' + this._tiltAngle);
   },
   panTiltCenter() {
     this._panAngle = 90; this._tiltAngle = 90;
     this.sendUart('P:90');
-    this.sendUart('T:90');
+    this.sendUart('TI:90');
   },
 };
 
@@ -15510,11 +15453,12 @@ function wireEvents() {
   // Intercept brand clicks from Drag._onDown
   const origOnDown = Drag._onDown.bind(Drag);
   const stageEl = $('tcStage');
+  // v0.7.171: use click (not mousedown) so panels don't flash during drag
   if (stageEl) {
-    stageEl.addEventListener('mousedown', (e) => {
+    stageEl.addEventListener('click', (e) => {
+      if (e.target.closest('.tc-brand-panel')) return; // don't re-trigger from panel
       const [mx, my] = Drag._stageToCanvas(e);
       if (Brand.hasLogo() && Drag._insideRect(Brand.logo, mx, my)) {
-        // Sync panel values
         const lp = $('tcLogoPanelSize'); if (lp) lp.value = Brand.logo.w || 120;
         const lo = $('tcLogoPanelOpacity'); if (lo) lo.value = Math.round((Brand.logo.opacity ?? 1) * 100);
         const le = $('tcLogoPanelEffect'); if (le) le.value = Brand.logo.effect || 'none';
@@ -15526,7 +15470,7 @@ function wireEvents() {
         const ss = $('tcSloganPanelSize'); if (ss) ss.value = Brand.slogan.size || 48;
         _showBrandPanel('tcSloganPanel', Brand.slogan);
       }
-    }, true); // capture phase so it runs before Drag._onDown
+    });
   }
   // Close brand panels on outside click
   document.addEventListener('click', (e) => {
