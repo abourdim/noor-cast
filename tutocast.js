@@ -7239,9 +7239,9 @@ const Drag = {
 
     const hit = this._hitTest(mx, my);
     if (!hit) {
-      // Clicking empty canvas deselects any selected text overlay
+      // Clicking empty canvas deselects everything
       if (TextOverlays.selectedId != null) TextOverlays.selectedId = null;
-      // v0.7.138: clear multi-select on empty canvas click
+      this.selectedSourceId = null; // v0.7.166 fix: clear selection chrome
       MultiSelect.clear();
       return;
     }
