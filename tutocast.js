@@ -15295,6 +15295,147 @@ function wireEvents() {
     wmOp.value = String(Watermark.opacity);
     wmOp.addEventListener('input', (e) => Watermark.setOpacity(e.target.value));
   }
+  // v0.7.169: brand mini panels — show on canvas click
+  const _showBrandPanel = (panelId, ref) => {
+    const panel = $(panelId);
+    if (!panel) return;
+    // Hide any other brand panel
+    document.querySelectorAll('.tc-brand-panel').forEach(p => { if (p.id !== panelId) p.style.display = 'none'; });
+    const showing = panel.style.display !== 'none';
+    if (showing) { panel.style.display = 'none'; return; }
+    // Position near the brand element
+    const stage = $('tcStage');
+    const sr = stage.getBoundingClientRect();
+    const bx = sr.left + (ref.x + ref.w) / Engine.width * sr.width;
+    const by = sr.top + ref.y / Engine.height * sr.height;
+    panel.style.display = '';
+    panel.style.left = Math.min(bx + 10, window.innerWidth - 340) + 'px';
+    panel.style.top = Math.max(10, by) + 'px';
+  };
+  // Intercept brand clicks from Drag._onDown
+  const origOnDown = Drag._onDown.bind(Drag);
+  const stageEl = $('tcStage');
+  if (stageEl) {
+    stageEl.addEventListener('mousedown', (e) => {
+      const [mx, my] = Drag._stageToCanvas(e);
+      if (Brand.hasLogo() && Drag._insideRect(Brand.logo, mx, my)) {
+        // Sync panel values
+        const lp = $('tcLogoPanelSize'); if (lp) lp.value = Brand.logo.w || 120;
+        const lo = $('tcLogoPanelOpacity'); if (lo) lo.value = Math.round((Brand.logo.opacity ?? 1) * 100);
+        const le = $('tcLogoPanelEffect'); if (le) le.value = Brand.logo.effect || 'none';
+        const lf = $('tcLogoPanelFilter'); if (lf) lf.value = Brand.logo.filter || 'none';
+        _showBrandPanel('tcLogoPanel', Brand.logo);
+      } else if (Brand.hasSlogan() && Drag._insideRect(Brand.slogan, mx, my)) {
+        const st = $('tcSloganPanelText'); if (st) st.value = Brand.slogan.text || '';
+        const sf = $('tcSloganPanelFont'); if (sf) sf.value = String(Brand.slogan.font ?? 0);
+        const ss = $('tcSloganPanelSize'); if (ss) ss.value = Brand.slogan.size || 48;
+        _showBrandPanel('tcSloganPanel', Brand.slogan);
+      }
+    }, true); // capture phase so it runs before Drag._onDown
+  }
+  // Close brand panels on outside click
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.tc-brand-panel')) return;
+    document.querySelectorAll('.tc-brand-panel').forEach(p => p.style.display = 'none');
+  });
+  // Prevent brand panels from deselecting
+  document.querySelectorAll('.tc-brand-panel').forEach(p => {
+    p.addEventListener('pointerdown', e => e.stopPropagation());
+    p.addEventListener('mousedown', e => e.stopPropagation());
+  });
+  // Logo panel controls
+  $('tcLogoPanelSize')?.addEventListener('input', e => { Brand.setLogoSize(parseInt(e.target.value)); });
+  $('tcLogoPanelOpacity')?.addEventListener('input', e => { Brand.setLogoOpacity(parseInt(e.target.value) / 100); });
+  $('tcLogoPanelEffect')?.addEventListener('change', e => { Brand.setEffect(e.target.value); });
+  $('tcLogoPanelFilter')?.addEventListener('change', e => { Brand.logo.filter = e.target.value; Brand.save(); });
+  $('tcLogoPanelRemove')?.addEventListener('click', () => { Brand.clearLogo(); document.querySelectorAll('.tc-brand-panel').forEach(p => p.style.display = 'none'); });
+  // Logo tint swatches
+  document.querySelectorAll('#tcLogoPanel [data-tint]').forEach(btn => {
+    btn.addEventListener('click', () => { Brand.logo.tint = btn.dataset.tint || ''; Brand.save(); });
+  });
+  // Slogan panel controls
+  $('tcSloganPanelText')?.addEventListener('input', e => { Brand.setSlogan(e.target.value); });
+  $('tcSloganPanelFont')?.addEventListener('change', e => { Brand.setSloganFont(parseInt(e.target.value)); });
+  $('tcSloganPanelSize')?.addEventListener('input', e => { Brand.setSloganSize(parseInt(e.target.value)); });
+  // Slogan color swatches
+  document.querySelectorAll('#tcSloganPanel [data-sc]').forEach(btn => {
+    btn.addEventListener('click', () => { Brand.setSloganColor(btn.dataset.sc); });
+  });
+
+  // v0.7.169: logo gallery — store multiple logos in localStorage
+  const LogoGallery = {
+    KEY: 'tc-logo-gallery',
+    _items: [],
+    load() {
+      try { this._items = JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { this._items = []; }
+    },
+    save() {
+      try { localStorage.setItem(this.KEY, JSON.stringify(this._items)); } catch {}
+    },
+    add(dataUrl, name) {
+      // Max 8 logos, ~200KB each
+      if (this._items.length >= 8) { showToast('Max 8 logos in gallery', 1500); return; }
+      this._items.push({ url: dataUrl, name: name || 'Logo ' + (this._items.length + 1) });
+      this.save();
+      this.render();
+    },
+    remove(idx) {
+      this._items.splice(idx, 1);
+      this.save();
+      this.render();
+    },
+    render() {
+      const container = $('tcLogoGallery');
+      if (!container) return;
+      container.innerHTML = '';
+      this._items.forEach((item, i) => {
+        const thumb = document.createElement('img');
+        thumb.src = item.url;
+        thumb.title = item.name + ' (click to use, right-click to remove)';
+        thumb.style.cssText = 'width:40px;height:40px;object-fit:contain;border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;background:rgba(0,0,0,.3)';
+        thumb.addEventListener('click', () => {
+          Brand.logo.img = new Image();
+          Brand.logo.img.src = item.url;
+          Brand.logo.imgUrl = item.url;
+          localStorage.setItem('tc-brand-logo', item.url);
+          Brand.save();
+          showToast('Logo: ' + item.name, 1200);
+        });
+        thumb.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          this.remove(i);
+        });
+        container.appendChild(thumb);
+      });
+      // Also add current logo if not in gallery
+      if (Brand.logo.imgUrl && !this._items.find(it => it.url === Brand.logo.imgUrl)) {
+        const cur = document.createElement('div');
+        cur.style.cssText = 'width:40px;height:40px;border:2px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--accent);cursor:default';
+        cur.textContent = 'Active';
+        container.appendChild(cur);
+      }
+    }
+  };
+  LogoGallery.load();
+  LogoGallery.render();
+  // Upload more logos to gallery
+  $('tcLogoUploadMore')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      LogoGallery.add(reader.result, file.name.replace(/\.[^.]+$/, ''));
+      // Also set as active logo
+      Brand.logo.img = new Image();
+      Brand.logo.img.src = reader.result;
+      Brand.logo.imgUrl = reader.result;
+      localStorage.setItem('tc-brand-logo', reader.result);
+      Brand.save();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
   // Custom ticker messages (v0.7.8)
   const tickerTA = $('tcTickerCustomInput');
   if (tickerTA) {

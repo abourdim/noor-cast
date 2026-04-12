@@ -423,6 +423,69 @@ basic.forever(() => {
                   <button class="tc-toolbar-btn" id="tcSrcBlurBtn" title="Blur face">🔲 Blur</button>
                 </div>
               </div>
+              <!-- v0.7.169: logo mini panel (click logo on canvas) -->
+              <div class="tc-src-style-popup tc-brand-panel" id="tcLogoPanel" style="display:none">
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🏷 Logo</div>
+                  <div class="tc-ssp-row" id="tcLogoGallery" style="flex-wrap:wrap;gap:4px"></div>
+                  <label class="tc-ssp-row" style="margin-top:6px"><input type="file" id="tcLogoUploadMore" accept="image/*" style="font-size:11px;width:100%" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Look</div>
+                  <label class="tc-ssp-row">Size <input type="range" id="tcLogoPanelSize" min="60" max="500" value="120" /></label>
+                  <label class="tc-ssp-row">Opacity <input type="range" id="tcLogoPanelOpacity" min="0" max="100" value="100" /></label>
+                  <label class="tc-ssp-row">Effect <select id="tcLogoPanelEffect" style="flex:1;font-size:11px">
+                    <optgroup label="None"><option value="none">None</option></optgroup>
+                    <optgroup label="Motion"><option value="spin">Spin</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="float">Float</option><option value="shake">Shake</option><option value="jelly">Jelly</option><option value="flip">Flip</option><option value="orbit">Orbit</option></optgroup>
+                    <optgroup label="Visual"><option value="glow">Glow</option><option value="neon">Neon</option><option value="fire">Fire</option><option value="gold">Gold</option><option value="blink">Blink</option><option value="glitch">Glitch</option></optgroup>
+                    <optgroup label="Filter"><option value="matrix">Matrix</option><option value="invert">Invert</option><option value="thermal">Thermal</option><option value="xray">X-Ray</option></optgroup>
+                  </select></label>
+                  <label class="tc-ssp-row">Filter <select id="tcLogoPanelFilter" style="flex:1;font-size:11px">
+                    <option value="none">None</option><option value="bw">B&W</option><option value="sepia">Sepia</option><option value="bright">Bright</option><option value="contrast">Contrast</option><option value="vintage">Vintage</option>
+                  </select></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Tint</div>
+                  <div class="tc-ssp-row" style="flex-wrap:wrap;gap:3px">
+                    <button class="tc-brand-swatch" data-tint="" style="background:transparent;border:1px dashed rgba(255,255,255,.3)" title="None">✕</button>
+                    <button class="tc-brand-swatch" data-tint="#ffffff" style="background:#fff"></button>
+                    <button class="tc-brand-swatch" data-tint="#fbbf24" style="background:#fbbf24"></button>
+                    <button class="tc-brand-swatch" data-tint="#fb923c" style="background:#fb923c"></button>
+                    <button class="tc-brand-swatch" data-tint="#ef4444" style="background:#ef4444"></button>
+                    <button class="tc-brand-swatch" data-tint="#a3e635" style="background:#a3e635"></button>
+                    <button class="tc-brand-swatch" data-tint="#38bdf8" style="background:#38bdf8"></button>
+                    <button class="tc-brand-swatch" data-tint="#e879f9" style="background:#e879f9"></button>
+                    <button class="tc-brand-swatch" data-tint="#000000" style="background:#000"></button>
+                  </div>
+                </div>
+                <button class="tc-btn-full" id="tcLogoPanelRemove" style="margin-top:6px;font-size:.75rem;color:#ef4444">Remove logo</button>
+              </div>
+
+              <!-- v0.7.169: slogan mini panel (click slogan on canvas) -->
+              <div class="tc-src-style-popup tc-brand-panel" id="tcSloganPanel" style="display:none">
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">✍ Slogan</div>
+                  <label class="tc-ssp-row"><input type="text" id="tcSloganPanelText" placeholder="Your slogan..." style="flex:1;font-size:12px" /></label>
+                  <label class="tc-ssp-row">Font <select id="tcSloganPanelFont" style="flex:1;font-size:11px">
+                    <option value="0">Bangers</option><option value="1">Righteous</option><option value="2">Orbitron</option><option value="3">Amiri</option><option value="4">Tajawal</option><option value="5">Arial</option>
+                  </select></label>
+                  <label class="tc-ssp-row">Size <input type="range" id="tcSloganPanelSize" min="20" max="160" value="48" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Color</div>
+                  <div class="tc-ssp-row" style="flex-wrap:wrap;gap:3px">
+                    <button class="tc-slogan-swatch" data-sc="#ffffff" style="background:#fff"></button>
+                    <button class="tc-slogan-swatch" data-sc="#fbbf24" style="background:#fbbf24"></button>
+                    <button class="tc-slogan-swatch" data-sc="#fb923c" style="background:#fb923c"></button>
+                    <button class="tc-slogan-swatch" data-sc="#ef4444" style="background:#ef4444"></button>
+                    <button class="tc-slogan-swatch" data-sc="#a3e635" style="background:#a3e635"></button>
+                    <button class="tc-slogan-swatch" data-sc="#38bdf8" style="background:#38bdf8"></button>
+                    <button class="tc-slogan-swatch" data-sc="#e879f9" style="background:#e879f9"></button>
+                    <button class="tc-slogan-swatch" data-sc="#000000" style="background:#000"></button>
+                  </div>
+                </div>
+              </div>
+
               <!-- v0.7.47: whiteboard color + thickness + eraser picker -->
               <div class="tc-wb-picker" id="tcWbPicker" style="display:none">
                 <button class="tc-wb-swatch" data-color="#fbbf24" style="background:#fbbf24" title="yellow"></button>
