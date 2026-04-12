@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.104 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.109 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.105';
+const APP_VERSION = '0.7.109';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 12:00';
@@ -161,6 +161,9 @@ const LANG = {
     layoutReset: '🔓 Disposition réinitialisée',
     collapseSidebar: 'Cacher la sidebar',
     expandSidebar: 'Afficher la sidebar',
+    focusMode: 'Focus',
+    focusOn: '⛶ Mode focus activé',
+    focusOff: '⛶ Mode focus désactivé',
     saveScene: 'Sauvegarder la disposition',
     promptSaveScene: 'Nom de cette scène ?',
     promptDuplicateScene: 'Nom de la copie ?',
@@ -776,6 +779,9 @@ const LANG = {
     layoutReset: '🔓 Layout reset',
     collapseSidebar: 'Collapse sidebar',
     expandSidebar: 'Expand sidebar',
+    focusMode: 'Focus',
+    focusOn: '⛶ Focus mode on',
+    focusOff: '⛶ Focus mode off',
     saveScene: 'Save this layout',
     promptSaveScene: 'Name for this scene?',
     promptDuplicateScene: 'Name of the copy?',
@@ -1383,6 +1389,9 @@ const LANG = {
     layoutReset: '🔓 تمت إعادة ضبط التخطيط',
     collapseSidebar: 'إخفاء الشريط الجانبي',
     expandSidebar: 'إظهار الشريط الجانبي',
+    focusMode: 'تركيز',
+    focusOn: '⛶ وضع التركيز مُفعَّل',
+    focusOff: '⛶ وضع التركيز مُعطَّل',
     saveScene: 'حفظ التخطيط',
     promptSaveScene: 'اسم هذا المشهد؟',
     promptDuplicateScene: 'اسم النسخة؟',
@@ -8169,6 +8178,31 @@ const SourceContextMenu = {
   },
 };
 
+/* v0.7.109 — Full focus / distraction-free preview mode.
+   Hides left sidebar, right sidebar, tools bar, and rec bar so only the
+   stage canvas remains. Superset of the v0.7.94 right-sidebar collapse.
+   Toggle via the ⛶ Focus button in the tools bar or Shift+F hotkey.
+   State persisted in localStorage key `tc-focus-mode`. */
+const FocusMode = {
+  on: false,
+  setup() {
+    try { this.on = localStorage.getItem('tc-focus-mode') === '1'; } catch {}
+    this._apply();
+  },
+  toggle() {
+    this.on = !this.on;
+    this._apply();
+    try { localStorage.setItem('tc-focus-mode', this.on ? '1' : '0'); } catch {}
+    showToast(this.on ? t('focusOn') : t('focusOff'), 1400);
+    log(this.on ? '⛶ focus on' : '⛶ focus off', 'info');
+  },
+  _apply() {
+    document.body.classList.toggle('tc-focus', this.on);
+    const btn = $('tcFocusBtn');
+    if (btn) btn.classList.toggle('active', this.on);
+  },
+};
+
 /* Maximize mode (v0.7.0): hide sidebars/header/ticker and stretch the
    stage to the full viewport. Toggle with the ⛶ button. Also toggles
    browser-level fullscreen via the Fullscreen API for extra impact. */
@@ -10910,6 +10944,12 @@ function setupHotkeys() {
       if (Scenes.presets[idx]) { Scenes.switch(Scenes.presets[idx].key); e.preventDefault(); }
       return;
     }
+    // v0.7.109: Shift+F = toggle full focus / distraction-free mode
+    if (e.shiftKey && k === 'f') {
+      FocusMode.toggle();
+      e.preventDefault();
+      return;
+    }
     // v0.7.61: Shift+R = instant record (skip countdown). Kept as an
     // explicit branch so Shift+R still works even if the user rebinds
     // the rec action away from 'r'.
@@ -10974,6 +11014,8 @@ function setupHotkeys() {
         Cheatsheet.hide();
         return;
       }
+      // Exit focus mode first if active
+      if (FocusMode.on) { FocusMode.toggle(); return; }
       // Exit maximize first if active
       const app = document.querySelector('.app');
       if (app && app.classList.contains('maximized')) { toggleMaximize(); return; }
@@ -11512,6 +11554,10 @@ function wireEvents() {
   const fsBtn = $('tcFullscreenBtn');
   if (fsBtn) fsBtn.addEventListener('click', () => toggleMaximize());
 
+  // v0.7.109: Focus mode button
+  const focusBtn = $('tcFocusBtn');
+  if (focusBtn) focusBtn.addEventListener('click', () => FocusMode.toggle());
+
   // Jingle toggle (v0.6.0) — opt-in in Settings
   const jingleEl = $('tcJingleToggle');
   if (jingleEl) {
@@ -11768,7 +11814,7 @@ async function init() {
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
   MicMeter.setup();     // v0.7.111
-  StickyNotes.setup();  // v0.7.105
+  FocusMode.setup();    // v0.7.109
 
   renderScenes();
   renderTextPresets();

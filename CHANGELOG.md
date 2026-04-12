@@ -3,25 +3,30 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.105 — 2026-04-12 (Draggable sticky-note overlay)
+## v0.7.109 — 2026-04-12 (Full focus / distraction-free preview mode)
 
-Teachers can now add yellow sticky notes on top of the stage as HTML
-overlays. Notes are never rendered on canvas and never appear in
-recordings. Each note is a 180x120 yellow div with an editable text
-body, a draggable header, and a close button. Notes are persisted in
-localStorage under the `tc-sticky-notes` key.
+Toggle that hides the left sidebar, right sidebar, tools bar, and rec
+bar so only the stage canvas remains — a superset of the v0.7.94
+right-sidebar collapse. Activate via the new **⛶ Focus** button in the
+tools bar or the **Shift+F** hotkey. Press **Escape** to leave focus
+mode. State is persisted in `localStorage` key `tc-focus-mode`.
 
 ### Added
-- `StickyNotes` object in `tutocast.js`: manages notes array, add/remove/
-  update/save/render lifecycle. Pointer-based drag on the header bar,
-  contenteditable body, close button.
-- Tools-bar button `🗒️ Note` (`#tcStickyNoteBtn`) calling
-  `StickyNotes.add()`.
-- `<div class="tc-sticky-layer" id="tcStickyLayer">` inside `.tc-stage`
-  as the overlay container (pointer-events: none pass-through).
-- `.tc-sticky-note` CSS: yellow background (#fff7a8), shadow, slight
-  rotation, grab cursor on header, placeholder via `::before`.
-- i18n keys `stickyNoteBtn` and `stickyNotePlaceholder` in FR/EN/AR.
+- `FocusMode` object in `tutocast.js`: `on` flag, `setup()` (loads
+  persisted state), `toggle()`, `_apply()` which toggles
+  `document.body.classList('tc-focus')`.
+- Tools-bar button `#tcFocusBtn` (⛶ icon, `Shift+F` kbd hint) wired to
+  `FocusMode.toggle()`.
+- `Shift+F` hotkey in the main keyboard handler.
+- `Escape` exits focus mode before maximize mode.
+- CSS: `body.tc-focus` hides `.tc-sidebar`, `.tc-sidebar-scenes`,
+  `.tc-rsidebar-toggle`, `.tc-tools-bar`, `.tc-rec-bar` and stretches
+  `.tc-stage` to fill the viewport.
+- i18n keys `focusMode`, `focusOn`, `focusOff` in FR, EN, AR.
+
+### Changed
+- `APP_VERSION` → `0.7.109`, `BUILD_DATE` bumped, header comment and
+  `index.html` version badge updated.
 
 ## v0.7.111 — 2026-04-11 (Always-visible audio level meter in tools bar)
 
