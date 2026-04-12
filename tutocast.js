@@ -3128,8 +3128,7 @@ const Engine = {
       const cx = x + w / 2, cy = y + h / 2;
       const r = Math.min(w, h) / 2;
       const rot = src.rotation || 0;
-      ctx.save(); // opacity wrapper
-      ctx.globalAlpha = src.opacity ?? 1;
+      // Note: outer ctx.save() at line 3118 already set globalAlpha
       ctx.save(); // transform wrapper
       if (rot !== 0) { ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy); }
       if (src.flipH || src.flipV) { ctx.translate(cx, cy); ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1); ctx.translate(-cx, -cy); }
@@ -3155,7 +3154,7 @@ const Engine = {
       if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
       this._drawTitleChip(ctx, src, x, y, w, h);
       ctx.restore(); // transform
-      ctx.restore(); // opacity
+      ctx.restore(); // outer wrapper (line 3118)
       return;
     }
 
