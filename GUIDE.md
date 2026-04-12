@@ -31,6 +31,53 @@ Select your mic from the dropdown under Mic. Audio is recorded automatically.
 ### Image
 Paste an image from clipboard (Ctrl+V) to add it as a static source on the canvas.
 
+### Colored shapes
+Click any shape in the **🟩 Shapes** accordion (left sidebar) to add a colored shape to the canvas:
+
+| Shape | Button | Default color |
+|-------|--------|---------------|
+| Rectangle | ⬛ | Green |
+| Circle | ⚪ | Blue |
+| Rounded | 🔲 | Orange |
+| Pill | 💊 | Pink |
+| Hexagon | ⬢ | Green |
+| Octagon | 🛑 | Red |
+| Diamond | 🔶 | Yellow |
+| Star | ⭐ | Yellow |
+| Heart | ❤️ | Red |
+| Full background | 🖤 | Black (1920x1080) |
+| Dark bar | ➖ | Dark (400x60) |
+| White bar | ▬ | White (400x60) |
+| Red dot | 🔴 | Red (60x60) |
+| Green dot | 🟢 | Green (60x60) |
+| Dark card | 🃏 | Dark (500x300) |
+
+Shapes support ALL source features: drag, resize (free — no aspect lock), opacity, color change, border, shadow, corner radius, rotation, flip, badge, alignment. Change color via **🎨 Style → Shape Color** picker.
+
+**Use cases:** colored backgrounds behind text, divider bars, decorative frames, status dots, title cards.
+
+### Simple / Pro mode
+On first launch, choose **🎓 Simple** or **🚀 Pro**:
+
+- **Simple mode:** Only essential tools visible (Laser, Freeze, Draw, Snapshot, Fullscreen). Settings show General section only. No sensors, no text section, no advanced overlays.
+- **Pro mode:** Everything visible — all 25+ tools, all settings sections, sensors, shapes, text stickers.
+- **Switch anytime:** Click the mode badge in the header (🎓/🚀) or the button at the top of Settings.
+
+### Source Style popup (Pro mode)
+Click a source → click **🎨** in the toolbar → Style popup opens with:
+
+| Section | Controls |
+|---------|----------|
+| 🟩 Shape Color | Color picker (shapes only) |
+| 🎨 Look | Opacity (0-100%), Filter (9 presets), Corner radius (0-50px), Rotation (-180 to +180°) |
+| 🖼 Frame | Border (color + width 0-10px), Shadow (color + blur 0-30 + offset X/Y) |
+| ✂ Crop | Top/Bottom/Left/Right (0-40% each) |
+| 🏷 Badge | Text label (max 12 chars) + color — draws a pill at top-right |
+| ↔ Align | 6 buttons: left/center H/right/top/center V/bottom |
+| 🔗 Aspect lock | Lock width/height ratio during resize |
+| ↔↕ Flip | Horizontal / Vertical mirror |
+| 🙈 Privacy | Avatar mode (cartoon face) / Privacy blur (30px) |
+
 ---
 
 ## 📱 Using Your Phone as a Camera
@@ -572,4 +619,4 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*TutoCast v0.7.161 — Made with ❤️ for teachers who code with robots*
+*TutoCast v0.7.167 — Made with ❤️ for teachers who code with robots*
