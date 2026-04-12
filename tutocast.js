@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.140';
+const APP_VERSION = '0.7.142';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -153,6 +153,8 @@ const LANG = {
     ctxLock: 'Verrouiller / déverrouiller',
     sourceLocked: 'Position verrouillée',
     sourceUnlocked: 'Position déverrouillée',
+    aspectLockOn: 'Ratio verrouillé',
+    aspectLockOff: 'Ratio libre',
     toggleBlur: '🌫 Flou arrière-plan',
     removeSource: '✕ Retirer',
     ctxHide: 'Cacher / afficher',
@@ -823,6 +825,8 @@ const LANG = {
     ctxLock: 'Lock / unlock',
     sourceLocked: 'Position locked',
     sourceUnlocked: 'Position unlocked',
+    aspectLockOn: 'Aspect ratio locked',
+    aspectLockOff: 'Aspect ratio free',
     toggleBlur: '🌫 Background blur',
     removeSource: '✕ Remove',
     ctxHide: 'Hide / show',
@@ -1485,6 +1489,8 @@ const LANG = {
     ctxLock: 'قفل / فتح',
     sourceLocked: 'الموضع مقفل',
     sourceUnlocked: 'الموضع مفتوح',
+    aspectLockOn: 'نسبة العرض مقفلة',
+    aspectLockOff: 'نسبة العرض حرة',
     toggleBlur: '🌫 تمويه الخلفية',
     removeSource: '✕ إزالة',
     ctxHide: 'إخفاء / عرض',
@@ -4079,6 +4085,7 @@ const Scenes = {
       target.shadowOffsetX = snap.shadowOffsetX ?? 5;
       target.shadowOffsetY = snap.shadowOffsetY ?? 5;
       target.locked = !!snap.locked;
+      target.aspectLock = !!snap.aspectLock;
       target.rotation = snap.rotation || 0;
       target.custom = true;
     });
@@ -4119,6 +4126,7 @@ const Scenes = {
         shadowOffsetX: s.shadowOffsetX ?? 5,
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -4208,6 +4216,7 @@ const Scenes = {
         shadowOffsetX: s.shadowOffsetX ?? 5,
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
       }));
     if (snapshot.length === 0) return false;
     scene.snapshot = snapshot;
@@ -6778,7 +6787,9 @@ const Drag = {
       // Shift while dragging the corner to break the lock and resize
       // freely. Shift state is read live from the move event so the
       // user can press/release mid-drag.
-      const freeResize = !!e.shiftKey || s.freeResize;
+      // v0.7.142: per-source aspectLock overrides Shift — ratio always kept.
+      const forceLock = !!(s.ref && s.ref.aspectLock);
+      const freeResize = !forceLock && (!!e.shiftKey || s.freeResize);
       if (s.kind === 'source' && !freeResize) {
         const keepByWidth = newW / s.aspect > newH;
         if (keepByWidth) newH = newW / s.aspect; else newW = newH * s.aspect;
@@ -8962,6 +8973,17 @@ const SourceToolbar = {
       showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
       Engine.onSourcesChanged();
     });
+    // v0.7.142: aspect ratio lock toggle
+    $('tcSrcToolbarAspect')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.aspectLock = !s.aspectLock;
+      const btn = $('tcSrcToolbarAspect');
+      if (btn) btn.textContent = s.aspectLock ? '🔗' : '↔';
+      showToast(s.aspectLock ? '🔗 ' + t('aspectLockOn') : '↔ ' + t('aspectLockOff'), 1400);
+      Engine.onSourcesChanged();
+      SceneAutoSave.trigger();
+    });
     // v0.7.15: shape picker is now a <select>, not a cycle button
     $('tcSrcToolbarShape')?.addEventListener('change', (e) => {
       e.stopPropagation();
@@ -9110,6 +9132,9 @@ const SourceToolbar = {
     // v0.7.122: sync lock button icon
     const lockBtn = $('tcSrcToolbarLock');
     if (lockBtn) lockBtn.textContent = s.locked ? '🔒' : '🔓';
+    // v0.7.142: sync aspect lock button icon
+    const aspectBtn = $('tcSrcToolbarAspect');
+    if (aspectBtn) aspectBtn.textContent = s.aspectLock ? '🔗' : '↔';
     // v0.7.117: sync border color + width inputs
     const bcEl = $('tcSrcBorderColor');
     if (bcEl && bcEl.value !== (s.borderColor || '#ffffff')) {
@@ -9231,6 +9256,7 @@ const SourceContextMenu = {
         shadowOffsetX: s.shadowOffsetX ?? 5,
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
         rotation: s.rotation || 0,
       };
       Engine.sources.push(copy);

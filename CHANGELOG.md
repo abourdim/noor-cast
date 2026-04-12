@@ -3,21 +3,21 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.141 — 2026-04-12 (Large recording elapsed timer on canvas)
+## v0.7.142 — 2026-04-12 (Source aspect ratio lock during resize)
 
-Opt-in elapsed time counter (HH:MM:SS) drawn at the bottom-center of the
-canvas in a semi-transparent dark pill while recording. Visible in the
-exported video. Toggle in Settings, default off. Persisted as `tc-rec-elapsed`.
+Per-source aspect ratio lock toggle. When enabled, the source's width/height
+ratio is always maintained during resize — even if Shift is held. A chain-link
+button in the source toolbar toggles the lock per source. Property persists
+across scenes and source duplication.
 
 ### Added
-- `RecElapsed` object in `tutocast.js`: `visible`, `_startTime`, `load()`,
-  `setVisible()`, `setup()`, `render(ctx, W, H)` — computes elapsed seconds
-  from `Recorder.startTime`, formats as HH:MM:SS, draws a rounded dark pill
-  at bottom-center.
-- Render call in `Engine.render()` after `AudioViz`.
-- Settings toggle `tcRecElapsedToggle` in `index.html`.
-- Settings wiring and `RecElapsed.load()` at startup in `tutocast.js`.
-- i18n key `recElapsedLabel` in FR, EN, AR.
+- `aspectLock` boolean property on sources (default `false`).
+- Resize handler: when `aspectLock === true`, Shift no longer unlocks free
+  stretch — dimensions are always constrained to the original ratio.
+- Toolbar button (`tcSrcToolbarAspect`) toggles aspect lock per source.
+- i18n keys `aspectLockOn` / `aspectLockOff` in FR, EN, AR.
+- `aspectLock` persisted in scene save, scene apply, scene duplicate, and
+  source duplicate (context menu).
 
 ---
 
