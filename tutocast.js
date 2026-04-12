@@ -13008,7 +13008,7 @@ const Sensors = {
       this.device.addEventListener('gattserverdisconnected', () => {
         log('micro:bit disconnected', 'warn');
         showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
-        const s = $('tcBtStatus'); if (s) { s.textContent = '❌'; s.title = 'Disconnected'; }
+        const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Disconnected'; s.style.color = '#ef4444'; }
         this.server = null;
         this._uartTx = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
@@ -13049,13 +13049,13 @@ const Sensors = {
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
       const statusEl = $('tcBtStatus');
-      if (statusEl) { statusEl.textContent = '✅'; statusEl.title = 'Connected'; }
+      if (statusEl) { statusEl.textContent = '✅ Connected'; statusEl.style.color = '#a3e635'; }
       Badges.unlockMicrobit();
       this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
       $('tcBtValues').style.display = 'block';
     } catch (e) {
       log(`${t('btError')}: ${e.message}`, 'error');
-      const s3 = $('tcBtStatus'); if (s3) { s3.textContent = '❌'; s3.title = e.message; }
+      const s3 = $('tcBtStatus'); if (s3) { s3.textContent = '❌ ' + e.message; s3.style.color = '#ef4444'; }
       showToast(t('btError'), 2500);
     }
   },
@@ -13208,7 +13208,7 @@ const Sensors = {
     if (!this.device || this._reconnectAttempts >= 3) {
       if (this._reconnectAttempts >= 3) {
         showToast('micro:bit reconnect failed after 3 attempts', 3000);
-        const s = $('tcBtStatus'); if (s) { s.textContent = '❌'; s.title = 'Reconnect failed'; }
+        const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Reconnect failed'; s.style.color = '#ef4444'; }
       }
       this._reconnectAttempts = 0;
       this._reconnecting = false;
@@ -13257,7 +13257,7 @@ const Sensors = {
       this._reconnectAttempts = 0;
       this._reconnecting = false;
       showToast('micro:bit reconnected!', 2000);
-      const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅'; s2.title = 'Connected'; }
+      const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅ Reconnected'; s2.style.color = '#a3e635'; }
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
