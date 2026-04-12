@@ -493,6 +493,8 @@ NoorCast has **6 built-in scene presets** that arrange your sources in different
 - **Silence trim**: automatically remove silent pauses
 - **Take notes**: add notes about what went well
 - **Rate**: give your take 1-5 stars
+- **SRT captions**: if live captions were on, download `.srt` subtitle file (works with YouTube, VLC)
+- **Thumbnail**: download a `.png` screenshot of the last frame for YouTube thumbnails
 
 ---
 
@@ -619,4 +621,4 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*NoorCast v0.7.167 — A professional tool for teachers who code with robots*
+*NoorCast v0.7.174 — A professional tool for teachers who code with robots*
