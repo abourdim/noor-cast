@@ -240,7 +240,6 @@
             <!-- Tab strip -->
             <div class="tc-side-tabs">
               <button class="tc-side-tab active" data-stab="sources" title="Sources">📹</button>
-              <button class="tc-side-tab" data-stab="shapes" title="Shapes">🟩</button>
               <button class="tc-side-tab" data-stab="microbit" title="micro:bit">🤖</button>
             </div>
 
@@ -254,28 +253,7 @@
               <ul class="tc-src-list" id="tcSrcList"></ul>
             </div>
 
-            <!-- Panel 2: Shapes -->
-            <div class="tc-side-panel" id="tcSidebarShapes">
-              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px">
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#a3e635',200,150)" title="Rectangle">⬛</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#38bdf8',200,200)" title="Circle">⚪</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#fb923c',200,150)" title="Rounded">🔲</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('pill','#e879f9',240,100)" title="Pill">💊</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('hexagon','#22c55e',200,200)" title="Hexagon">⬢</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('octagon','#ef4444',200,200)" title="Octagon">🛑</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('diamond','#fbbf24',200,200)" title="Diamond">🔶</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('star','#fbbf24',200,200)" title="Star">⭐</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('heart','#ef4444',200,200)" title="Heart">❤️</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full bg">🖤</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#1e293b',400,60)" title="Dark bar">➖</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#ffffff',400,60)" title="White bar">▬</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#ef4444',60,60)" title="Red dot">🔴</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#22c55e',60,60)" title="Green dot">🟢</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#1e293b',500,300)" title="Dark card">🃏</button>
-              </div>
-            </div>
-
-            <!-- Panel 3: micro:bit -->
+            <!-- Panel 2: micro:bit -->
             <div class="tc-side-panel" id="tcSidebarMicrobit">
               <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
               <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
@@ -615,6 +593,26 @@ basic.forever(() => {
                   <div class="tc-emoji-row"><button>❤️</button><button>💖</button><button>👍</button><button>👏</button><button>🙌</button><button>✌️</button><button>🤝</button><button>🫶</button></div>
                   <div class="tc-emoji-row"><button>🤖</button><button>⚙️</button><button>🔧</button><button>💡</button><button>📌</button><button>🎯</button><button>⚡</button><button>🌈</button></div>
                   <div class="tc-emoji-row"><button>😀</button><button>😂</button><button>🤔</button><button>😎</button><button>🙂</button><button>😮</button><button>🤩</button><button>🥳</button></div>
+                </div>
+              </div>
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Shapes</div>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px">
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#a3e635',200,150)" title="Rectangle">⬛</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#38bdf8',200,200)" title="Circle">⚪</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rounded','#fb923c',200,150)" title="Rounded">🔲</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('pill','#e879f9',240,100)" title="Pill">💊</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('hexagon','#22c55e',200,200)" title="Hexagon">⬢</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('octagon','#ef4444',200,200)" title="Octagon">🛑</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('diamond','#fbbf24',200,200)" title="Diamond">🔶</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('star','#fbbf24',200,200)" title="Star">⭐</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('heart','#ef4444',200,200)" title="Heart">❤️</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full bg">🖤</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#1e293b',400,60)" title="Dark bar">➖</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#ffffff',400,60)" title="White bar">▬</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#ef4444',60,60)" title="Red dot">🔴</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#22c55e',60,60)" title="Green dot">🟢</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rounded','#1e293b',500,300)" title="Dark card">🃏</button>
                 </div>
               </div>
               <details class="tc-tp-advanced">
