@@ -15076,12 +15076,12 @@ function wireEvents() {
   if (brandClear) brandClear.addEventListener('click', () => { Brand.clearLogo(); showToast(t('brandLogoCleared'), 1500); });
   const sloganInput = $('tcBrandSloganInput');
   if (sloganInput) {
-    sloganInput.value = Brand.slogan || '';
+    sloganInput.value = Brand.slogan?.text || '';
     sloganInput.addEventListener('input', (e) => Brand.setSlogan(e.target.value));
   }
   const effectSel = $('tcBrandEffectSelect');
   if (effectSel) {
-    effectSel.value = Brand.effect || 'none';
+    effectSel.value = Brand.logo?.effect || 'none';
     effectSel.addEventListener('change', (e) => Brand.setEffect(e.target.value));
   }
 

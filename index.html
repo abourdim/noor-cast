@@ -1479,6 +1479,17 @@ basic.forever(() => {
           </div>
 
           <!-- v0.7.82: 3 numbered brand preset slots (save / load) -->
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandEffect">🎭 Logo effect</label>
+          <select id="tcBrandEffectSelect" class="sidebar-select">
+            <option value="none">— None —</option>
+            <option value="spin">🌀 Spin</option>
+            <option value="pulse">💓 Pulse</option>
+            <option value="bounce">🏀 Bounce</option>
+            <option value="wiggle">〰 Wiggle</option>
+            <option value="glow">✨ Glow</option>
+            <option value="rainbow">🌈 Rainbow</option>
+          </select>
+
           <label class="sidebar-label" style="margin-top:14px" data-i18n="brandPresets">📁 Presets de marque</label>
           <div class="tc-brand-preset-row">
             <span data-i18n="brandSave">Sauvegarder :</span>
@@ -1524,17 +1535,6 @@ basic.forever(() => {
             <button class="tc-brand-swatch" data-bc="#e879f9" style="background:#e879f9" title="pink"></button>
             <button class="tc-brand-swatch" data-bc="#000000" style="background:#000000" title="black"></button>
           </div>
-
-          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandEffect">Effet fun</label>
-          <select id="tcBrandEffectSelect" class="sidebar-select">
-            <option value="none">— Aucun —</option>
-            <option value="spin">🌀 Tourne</option>
-            <option value="pulse">💓 Pulse</option>
-            <option value="bounce">🏀 Rebond</option>
-            <option value="wiggle">〰 Wiggle</option>
-            <option value="glow">✨ Halo</option>
-            <option value="rainbow">🌈 Arc-en-ciel</option>
-          </select>
 
           <!-- v0.7.42: badge card link URL — printed on BadgeCard PNG exports -->
           <label class="sidebar-label" style="margin-top:10px" data-i18n="brandQrUrl">🔗 URL du badge card</label>
