@@ -105,6 +105,11 @@
             <div class="tc-tpl-card-title" data-i18n="tpl_fix">Correction</div>
             <div class="tc-tpl-card-desc" data-i18n="tpl_fix_d">Bug → Analyse → Fix → Test → OK</div>
           </button>
+          <button class="tc-tpl-card" data-tpl="robotcam">
+            <div class="tc-tpl-card-icon">🤖</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_robotcam">Robot Tuto</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_robotcam_d">Face → Code → Robot → Capteurs → Bilan</div>
+          </button>
           <button class="tc-tpl-card tc-tpl-blank" data-tpl="">
             <div class="tc-tpl-card-icon">🎨</div>
             <div class="tc-tpl-card-title" data-i18n="tplBlank">🎨 Vierge</div>
@@ -843,6 +848,7 @@
       <button class="help-tab" data-tab="howto" data-i18n="howto">Comment faire</button>
       <button class="help-tab" data-tab="wiki" data-i18n="wiki">Wiki</button>
       <button class="help-tab" data-tab="news" data-i18n="news">Nouveautés</button>
+      <button class="help-tab" data-tab="cameras" data-i18n="helpCamerasTab">📷 Caméras</button>
       <button class="help-tab" data-tab="hotkeys" data-i18n="hotkeyRefTab">Raccourcis</button>
     </div>
 
@@ -1201,6 +1207,29 @@
       </div>
 
       <!-- v0.7.134: dynamic hotkey reference panel -->
+      <!-- v0.7.156: remote cameras guide -->
+      <div class="help-content" id="helpCameras">
+        <p style="margin:0 0 12px;opacity:0.7;font-size:13px">Use your phone as a remote camera for TutoCast. Install one of these apps:</p>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_continuity_title">📱 Continuity Camera (Mac + iPhone)</h3>
+          <p data-i18n="cam_continuity_body">No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in TutoCast. Perfect for filming the robot.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_droidcam_title">📲 DroidCam (Android / iOS)</h3>
+          <p data-i18n="cam_droidcam_body">Free. Install the app on your phone + the driver on your PC. Connect via USB or Wi-Fi. The phone appears as a virtual webcam.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_iriun_title">📡 Iriun Webcam (all platforms)</h3>
+          <p data-i18n="cam_iriun_body">Free. Works on Windows, Mac and Linux. Same principle: app + driver. Wi-Fi or USB connection.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_camo_title">🎥 Camo (pro quality)</h3>
+          <p data-i18n="cam_camo_body">Free tier is limited, paid plan adds advanced controls. Best image quality.</p>
+        </div>
+        <div style="margin-top:16px;text-align:center">
+          <button class="tc-btn" id="tcCamSetupBtn" data-i18n="cam_setup_btn" onclick="CameraWizard.start()">📷 Set up cameras</button>
+        </div>
+      </div>
       <div class="help-content" id="helpHotkeys"></div>
     </div>
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.154 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.156 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.155';
+const APP_VERSION = '0.7.156';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -672,6 +672,35 @@ const LANG = {
     tpl_fix_s3: "On corrige",
     tpl_fix_s4: "On teste",
     tpl_fix_s5: "Ça marche !",
+    // v0.7.156: robot tutorial template
+    tpl_robotcam: "Robot Tuto",
+    tpl_robotcam_d: "Face → Code → Robot → Capteurs → Bilan",
+    tpl_robotcam_intro: "🤖 Regarde mon robot en action !",
+    tpl_robotcam_s1: "Présentation",
+    tpl_robotcam_s2: "Le code",
+    tpl_robotcam_s3: "Le robot",
+    tpl_robotcam_s4: "Les capteurs",
+    tpl_robotcam_s5: "Bilan",
+    // v0.7.156: remote cameras help tab
+    helpCamerasTab: "📷 Caméras",
+    cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
+    cam_continuity_body: "Aucune installation requise. Même Wi-Fi + même Apple ID = l'iPhone apparaît comme caméra dans TutoCast. Idéal pour filmer le robot depuis un iPhone.",
+    cam_droidcam_title: "📲 DroidCam (Android / iOS)",
+    cam_droidcam_body: "Gratuit. Installez l'appli sur le téléphone + le pilote sur le PC. Connectez en USB ou Wi-Fi. Le téléphone apparaît comme webcam virtuelle.",
+    cam_iriun_title: "📡 Iriun Webcam (tous OS)",
+    cam_iriun_body: "Gratuit. Fonctionne sur Windows, Mac et Linux. Même principe : appli + pilote. Connexion Wi-Fi ou USB.",
+    cam_camo_title: "🎥 Camo (qualité pro)",
+    cam_camo_body: "Version gratuite limitée, version payante avec contrôles avancés (zoom, exposition, mise au point). Meilleure qualité d'image.",
+    cam_setup_btn: "📷 Configurer les caméras",
+    // v0.7.156: camera setup wizard
+    camwiz_1_title: "Étape 1 : Installer l'appli",
+    camwiz_1_body: "Installez DroidCam, Iriun ou Camo sur votre téléphone. Installez aussi le pilote compagnon sur cet ordinateur.",
+    camwiz_2_title: "Étape 2 : Connecter",
+    camwiz_2_body: "Ouvrez l'appli sur le téléphone. Connectez-vous en Wi-Fi (même réseau) ou en USB (plus stable pour le suivi du robot).",
+    camwiz_3_title: "Étape 3 : Ajouter la caméra",
+    camwiz_3_body: "Cliquez sur '+ Caméra' ici. Votre téléphone apparaît dans la liste des caméras. Sélectionnez-le.",
+    camwiz_4_title: "Étape 4 : Assigner à une scène",
+    camwiz_4_body: "Placez la caméra du téléphone dans une scène. Essayez le modèle 'Robot Tuto' pour un setup prêt à l'emploi !",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
     // v0.7.55: custom accent color picker
@@ -1362,6 +1391,32 @@ const LANG = {
     tpl_fix_s3: "Fix",
     tpl_fix_s4: "Test",
     tpl_fix_s5: "It works!",
+    tpl_robotcam: "Robot Tuto",
+    tpl_robotcam_d: "Face → Code → Robot → Sensors → Recap",
+    tpl_robotcam_intro: "🤖 Watch my robot in action!",
+    tpl_robotcam_s1: "Introduction",
+    tpl_robotcam_s2: "The code",
+    tpl_robotcam_s3: "The robot",
+    tpl_robotcam_s4: "Sensors",
+    tpl_robotcam_s5: "Recap",
+    helpCamerasTab: "📷 Cameras",
+    cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
+    cam_continuity_body: "No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in TutoCast. Perfect for filming the robot.",
+    cam_droidcam_title: "📲 DroidCam (Android / iOS)",
+    cam_droidcam_body: "Free. Install the app on your phone + the driver on your PC. Connect via USB or Wi-Fi. The phone appears as a virtual webcam.",
+    cam_iriun_title: "📡 Iriun Webcam (all platforms)",
+    cam_iriun_body: "Free. Works on Windows, Mac and Linux. Same principle: app + driver. Wi-Fi or USB connection.",
+    cam_camo_title: "🎥 Camo (pro quality)",
+    cam_camo_body: "Free tier is limited, paid plan adds advanced controls (zoom, exposure, focus). Best image quality.",
+    cam_setup_btn: "📷 Set up cameras",
+    camwiz_1_title: "Step 1: Install the app",
+    camwiz_1_body: "Install DroidCam, Iriun or Camo on your phone. Also install the companion driver on this computer.",
+    camwiz_2_title: "Step 2: Connect",
+    camwiz_2_body: "Open the app on your phone. Connect via Wi-Fi (same network) or USB (more stable for robot tracking).",
+    camwiz_3_title: "Step 3: Add the camera",
+    camwiz_3_body: "Click '+ Camera' here. Your phone appears in the camera list. Select it.",
+    camwiz_4_title: "Step 4: Assign to a scene",
+    camwiz_4_body: "Place the phone camera in a scene. Try the 'Robot Tuto' template for a ready-made setup!",
     t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
     t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
     // v0.7.55: custom accent color picker
@@ -2038,6 +2093,32 @@ const LANG = {
     tpl_fix_s3: "الإصلاح",
     tpl_fix_s4: "الاختبار",
     tpl_fix_s5: "يعمل!",
+    tpl_robotcam: "درس الروبوت",
+    tpl_robotcam_d: "الوجه ← الكود ← الروبوت ← المستشعرات ← الخلاصة",
+    tpl_robotcam_intro: "🤖 شاهد الروبوت في العمل!",
+    tpl_robotcam_s1: "مقدمة",
+    tpl_robotcam_s2: "الكود",
+    tpl_robotcam_s3: "الروبوت",
+    tpl_robotcam_s4: "المستشعرات",
+    tpl_robotcam_s5: "الخلاصة",
+    helpCamerasTab: "📷 كاميرات",
+    cam_continuity_title: "📱 Continuity Camera (ماك + آيفون)",
+    cam_continuity_body: "لا حاجة للتثبيت. نفس الواي فاي + نفس Apple ID = الآيفون يظهر ككاميرا في TutoCast.",
+    cam_droidcam_title: "📲 DroidCam (أندرويد / iOS)",
+    cam_droidcam_body: "مجاني. ثبّت التطبيق على الهاتف + برنامج التشغيل على الحاسوب. اتصل عبر USB أو واي فاي.",
+    cam_iriun_title: "📡 Iriun Webcam (جميع الأنظمة)",
+    cam_iriun_body: "مجاني. يعمل على ويندوز وماك ولينكس. نفس المبدأ: تطبيق + برنامج تشغيل.",
+    cam_camo_title: "🎥 Camo (جودة احترافية)",
+    cam_camo_body: "نسخة مجانية محدودة، النسخة المدفوعة تضيف تحكمات متقدمة (تكبير، تعريض، تركيز).",
+    cam_setup_btn: "📷 إعداد الكاميرات",
+    camwiz_1_title: "الخطوة 1: تثبيت التطبيق",
+    camwiz_1_body: "ثبّت DroidCam أو Iriun أو Camo على هاتفك. ثبّت أيضاً برنامج التشغيل المرافق على هذا الحاسوب.",
+    camwiz_2_title: "الخطوة 2: الاتصال",
+    camwiz_2_body: "افتح التطبيق على الهاتف. اتصل عبر واي فاي (نفس الشبكة) أو USB (أكثر استقراراً لتتبع الروبوت).",
+    camwiz_3_title: "الخطوة 3: إضافة الكاميرا",
+    camwiz_3_body: "انقر '+ كاميرا' هنا. سيظهر هاتفك في قائمة الكاميرات. اختره.",
+    camwiz_4_title: "الخطوة 4: تعيين لمشهد",
+    camwiz_4_body: "ضع كاميرا الهاتف في مشهد. جرّب قالب 'درس الروبوت' لإعداد جاهز!",
     t_mosque: 'مسجد', t_zellige: 'زليج', t_andalus: 'أندلس',
     t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
     // v0.7.55: custom accent color picker
@@ -5172,6 +5253,17 @@ const Templates = {
         { scene: 'code',      label: 'tpl_fix_s3' },
         { scene: 'coderobot', label: 'tpl_fix_s4' },
         { scene: 'you',       label: 'tpl_fix_s5' },
+      ],
+    },
+    {
+      key: 'robotcam', icon: '🤖', i18n: 'tpl_robotcam', i18n_desc: 'tpl_robotcam_d',
+      intro: 'tpl_robotcam_intro',
+      steps: [
+        { scene: 'you',     label: 'tpl_robotcam_s1' },
+        { scene: 'code',    label: 'tpl_robotcam_s2' },
+        { scene: 'robot',   label: 'tpl_robotcam_s3' },
+        { scene: 'sensors', label: 'tpl_robotcam_s4' },
+        { scene: 'you',     label: 'tpl_robotcam_s5' },
       ],
     },
   ],
@@ -10697,15 +10789,6 @@ const GuidedTour = {
     this.renderStep();
   },
 
-  stop(done) {
-    this.active = false;
-    const modal = $('tcTourModal');
-    if (modal) modal.style.display = 'none';
-    if (done) {
-      try { localStorage.setItem('tc-tour-done', '1'); } catch {}
-    }
-  },
-
   skip() { this.stop(true); },
   finish() { this.stop(true); },
 
@@ -10754,6 +10837,29 @@ const GuidedTour = {
     $('tcTourNextBtn').textContent = this.idx === this.steps.length - 1 ? (t('tour_done') || 'Terminé ✓') : (t('tour_next') || 'Suivant →');
   },
 
+  // v0.7.156: run the tour with custom steps (used by CameraWizard)
+  _origSteps: null,
+  startCustom(customSteps) {
+    this._origSteps = this.steps;
+    this.steps = customSteps;
+    this.active = true;
+    this.idx = 0;
+    const modal = $('tcTourModal');
+    if (modal) modal.style.display = '';
+    this.renderStep();
+  },
+
+  stop(done) {
+    this.active = false;
+    const modal = $('tcTourModal');
+    if (modal) modal.style.display = 'none';
+    // Restore original steps if we were running a custom tour
+    if (this._origSteps) { this.steps = this._origSteps; this._origSteps = null; }
+    if (done && !this._origSteps) {
+      try { localStorage.setItem('tc-tour-done', '1'); } catch {}
+    }
+  },
+
   setup() {
     const modal = $('tcTourModal');
     if (!modal) return;
@@ -10762,6 +10868,20 @@ const GuidedTour = {
     $('tcTourSkipBtn')?.addEventListener('click', () => this.skip());
     // Re-render on resize
     window.addEventListener('resize', () => { if (this.active) this.renderStep(); });
+  },
+};
+
+/* ─────────── CameraWizard — v0.7.156 interactive phone-as-webcam setup guide
+   Reuses GuidedTour's spotlight modal with custom step definitions. */
+const CameraWizard = {
+  steps: [
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_1_title', bodyKey: 'camwiz_1_body' },
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_2_title', bodyKey: 'camwiz_2_body' },
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_3_title', bodyKey: 'camwiz_3_body' },
+    { target: '.tc-sidebar-scenes',  titleKey: 'camwiz_4_title', bodyKey: 'camwiz_4_body' },
+  ],
+  start() {
+    GuidedTour.startCustom(this.steps);
   },
 };
 

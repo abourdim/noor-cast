@@ -3,6 +3,16 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.156 — 2026-04-12 (Remote cameras guide + Robot template + Camera wizard)
+
+### Added
+- **Help panel "Cameras" tab** with setup guides for Continuity Camera, DroidCam, Iriun, and Camo
+- **"Robot Tuto" template** (4th preset): Face → Code → Robot → Sensors → Recap
+- **Camera Setup Wizard** — interactive 4-step spotlight tour for setting up phone-as-webcam
+- `GuidedTour.startCustom(steps)` — reusable method for running custom spotlight tours
+- `CameraWizard` object with 4 guided steps
+- i18n keys for all three features in FR, EN, AR
+
 ## v0.7.154 — 2026-04-12 (Canvas vignette effect)
 
 Optional dark-edge vignette overlay drawn on the canvas, visible in recordings.
