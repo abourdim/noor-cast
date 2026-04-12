@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.164';
+const APP_VERSION = '0.7.165';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -12867,6 +12867,9 @@ const Sensors = {
         optionalServices: [
           'e95d0753-251d-470a-a062-fa1922dfa9a8', // Accelerometer service
           'e95d9882-251d-470a-a062-fa1922dfa9a8', // Button service
+          'e95d6100-251d-470a-a062-fa1922dfa9a8', // Temperature service (v1+v2)
+          'e95d9250-251d-470a-a062-fa1922dfa9a8', // LED service (for future use)
+          '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // UART service (v2 sound via custom firmware)
         ],
       });
       this.server = await this.device.gatt.connect();
@@ -12903,6 +12906,17 @@ const Sensors = {
             Laser.x = Laser.x + (targetX - Laser.x) * 0.3;
             Laser.y = Laser.y + (targetY - Laser.y) * 0.3;
             Laser.lastMove = Date.now();
+          }
+          // v0.7.165: tilt-to-pan — shift crop window on selected source based on tilt
+          if (this._tiltToPan) {
+            const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+            if (sel && sel.type !== 'mic') {
+              const panSpeed = 0.008;
+              sel.cropLeft  = Math.max(0, Math.min(0.4, (sel.cropLeft || 0) + this.values.x * panSpeed));
+              sel.cropRight = Math.max(0, Math.min(0.4, (sel.cropRight || 0) - this.values.x * panSpeed));
+              sel.cropTop   = Math.max(0, Math.min(0.4, (sel.cropTop || 0) + this.values.y * panSpeed));
+              sel.cropBottom = Math.max(0, Math.min(0.4, (sel.cropBottom || 0) - this.values.y * panSpeed));
+            }
           }
           // v0.5.0: accumulate a sensor sample into the recording timeline
           if (SensorTimeline.recording) SensorTimeline.sample(this.values);
@@ -12978,6 +12992,39 @@ const Sensors = {
           if (prevB === 0 && this.values.b !== 0) Chapters.addMarker();
         });
       } catch (e) { /* buttons optional */ }
+      // v0.7.165: temperature service (available on v1 + v2)
+      try {
+        const tempSvc = await this.server.getPrimaryService('e95d6100-251d-470a-a062-fa1922dfa9a8');
+        const tempChar = await tempSvc.getCharacteristic('e95d9250-251d-470a-a062-fa1922dfa9a8');
+        await tempChar.startNotifications();
+        tempChar.addEventListener('characteristicvaluechanged', (e) => {
+          this.values = this.values || {};
+          this.values.temp = e.target.value.getInt8(0);
+        });
+        log('🌡 Temperature sensor connected', 'info');
+      } catch (e) { /* temperature optional */ }
+      // v0.7.165: UART service — receive sound level from custom v2 firmware
+      // The v2 MakeCode program sends "S:NNN\n" where NNN is the sound level (0-255)
+      try {
+        const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+        const rxChar = await uartSvc.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+        await rxChar.startNotifications();
+        this._uartBuf = '';
+        rxChar.addEventListener('characteristicvaluechanged', (e) => {
+          const dec = new TextDecoder();
+          this._uartBuf += dec.decode(e.target.value);
+          const lines = this._uartBuf.split('\n');
+          this._uartBuf = lines.pop(); // keep incomplete line
+          lines.forEach(line => {
+            const m = line.match(/^S:(\d+)/);
+            if (m) {
+              this.values = this.values || {};
+              this.values.sound = parseInt(m[1], 10);
+            }
+          });
+        });
+        log('🔊 UART (sound level) connected', 'info');
+      } catch (e) { /* UART optional — v2 only with custom firmware */ }
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
       Badges.unlockMicrobit();
@@ -13102,6 +13149,25 @@ const Sensors = {
       ctx.fillText(`💡 ${this.values.light || 0}`, lx + lw / 2, ly + lh / 2);
       ctx.restore();
     }
+
+    // v0.7.165: sound level bar (v2 mic via UART, below light bar)
+    if (this._showSound && this.values.sound != null) {
+      ctx.save();
+      const sw = 160, sh = 20;
+      const sx = ctx.canvas.width - sw - 20;
+      const sy = (this._showTemp ? 70 : 20) + (this._showLight ? 28 : 0);
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(sx, sy, sw, sh);
+      const level = Math.min(1, (this.values.sound || 0) / 255);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(sx, sy, sw * level, sh);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`🔊 ${this.values.sound || 0}`, sx + sw / 2, sy + sh / 2);
+      ctx.restore();
+    }
   },
 
   // v0.7.163: micro:bit feature flags (toggled from settings or JS)
@@ -13114,6 +13180,8 @@ const Sensors = {
   _trailPoints: [],
   _showTemp: false,
   _showLight: false,
+  _showSound: false,
+  _tiltToPan: false,
 };
 
 /* ─────────── 7. Kid polish: sfx, debug hud, badges, confetti, ticker ─────────── */
@@ -15325,6 +15393,8 @@ function wireEvents() {
     ['tcMotionTrailToggle', '_motionTrail', 'tc-motion-trail'],
     ['tcShowTempToggle', '_showTemp', 'tc-show-temp'],
     ['tcShowLightToggle', '_showLight', 'tc-show-light'],
+    ['tcShowSoundToggle', '_showSound', 'tc-show-sound'],
+    ['tcTiltPanToggle', '_tiltToPan', 'tc-tilt-pan'],
   ];
   mbToggles.forEach(([elId, prop, lsKey]) => {
     const el = $(elId);
