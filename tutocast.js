@@ -13008,6 +13008,7 @@ const Sensors = {
       this.device.addEventListener('gattserverdisconnected', () => {
         log('micro:bit disconnected', 'warn');
         showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
+        const s = $('tcBtStatus'); if (s) { s.textContent = '❌'; s.title = 'Disconnected'; }
         this.server = null;
         this._uartTx = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
@@ -13023,7 +13024,7 @@ const Sensors = {
         if (id.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
         if (id.includes('6e400003') && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
       }
-      if (!notifyChar) throw new Error('UART notify characteristic not found');
+      if (!notifyChar) throw new Error('UART not found — flash the TutoCast firmware first (click ⚙ above)');
       await notifyChar.startNotifications();
       this._uartBuf = '';
       notifyChar.addEventListener('characteristicvaluechanged', (e) => {
@@ -13037,11 +13038,14 @@ const Sensors = {
       this.sendUart('HELLO');
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
+      const statusEl = $('tcBtStatus');
+      if (statusEl) { statusEl.textContent = '✅'; statusEl.title = 'Connected'; }
       Badges.unlockMicrobit();
       this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
       $('tcBtValues').style.display = 'block';
     } catch (e) {
       log(`${t('btError')}: ${e.message}`, 'error');
+      const s3 = $('tcBtStatus'); if (s3) { s3.textContent = '❌'; s3.title = e.message; }
       showToast(t('btError'), 2500);
     }
   },
@@ -13217,6 +13221,7 @@ const Sensors = {
       } catch {}
       this._reconnectAttempts = 0;
       showToast('micro:bit reconnected!', 2000);
+      const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅'; s2.title = 'Connected'; }
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
