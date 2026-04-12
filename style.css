@@ -2783,6 +2783,40 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
 /* Simple mode: hide microbit tab */
 body.tc-simple .tc-side-tab[data-stab="microbit"] { display: none; }
 
+/* v0.7.172: firmware modal */
+.tc-fw-modal {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center;
+}
+.tc-fw-modal-content {
+  background: #1a1a2e; border: 1px solid rgba(255,255,255,.15);
+  border-radius: 16px; padding: 24px 28px; max-width: 700px; width: 90vw;
+  max-height: 85vh; overflow-y: auto; color: #e2e8e0;
+}
+.tc-fw-modal-content h3 { font-size: 1.3rem; margin-bottom: 8px; color: var(--accent, #a3e635); }
+.tc-fw-modal-content p { margin-bottom: 10px; font-size: .9rem; opacity: .8; }
+.tc-fw-modal-content ol { margin: 0 0 16px 20px; font-size: .85rem; line-height: 1.8; }
+.tc-fw-modal-content kbd { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 3px; padding: 1px 5px; font-size: .8em; }
+.tc-fw-modal-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+.tc-fw-btn-copy {
+  background: var(--accent, #a3e635); color: #000; border: none;
+  padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: .9rem; cursor: pointer;
+}
+.tc-fw-btn-copy:hover { filter: brightness(1.1); }
+.tc-fw-btn-open {
+  background: transparent; color: var(--accent, #a3e635); border: 1px solid var(--accent, #a3e635);
+  padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: .9rem; text-decoration: none; cursor: pointer;
+}
+.tc-fw-btn-close {
+  background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.15);
+  padding: 10px 20px; border-radius: 8px; font-size: .9rem; cursor: pointer;
+}
+.tc-fw-code {
+  background: #0d1117; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 16px 18px; font-size: .72rem; line-height: 1.5;
+  color: #a3e635; overflow-x: auto; white-space: pre; max-height: 50vh;
+}
+
 /* v0.7.132: PiP active indicator badge in the tools bar */
 .tc-pip-badge {
   display: inline-block;

@@ -14960,9 +14960,23 @@ function wireEvents() {
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
   // v0.7.162: copy micro:bit firmware code to clipboard
-  $('tcCopyFwBtn')?.addEventListener('click', () => {
+  // v0.7.172: firmware modal (inspired by bit-playground)
+  $('tcFwModalBtn')?.addEventListener('click', () => {
+    $('tcFwModal').style.display = '';
+  });
+  $('tcFwCloseBtn')?.addEventListener('click', () => {
+    $('tcFwModal').style.display = 'none';
+  });
+  $('tcFwModal')?.addEventListener('click', (e) => {
+    if (e.target === $('tcFwModal')) $('tcFwModal').style.display = 'none';
+  });
+  $('tcFwCopyBtn')?.addEventListener('click', () => {
     const code = $('tcMicrobitCode')?.textContent || '';
-    navigator.clipboard.writeText(code).then(() => showToast('📋 Code copied!', 1400)).catch(() => {});
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('📋 Code copied!', 1400);
+      $('tcFwCopyBtn').textContent = 'Copied!';
+      setTimeout(() => { $('tcFwCopyBtn').textContent = 'Copy Code'; }, 2000);
+    }).catch(() => {});
   });
   // v0.7.170: test connection button
   $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
