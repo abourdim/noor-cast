@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.142 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.143 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -666,6 +666,8 @@ const LANG = {
     customAccent: '🎨 Couleur accent personnalisée',
     snapResolution: '📐 Résolution capture photo',
     customAccentReset: '🎨 Couleur par défaut restaurée',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 Couleur de fond du canvas',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
     tour_1_body: 'Commence par ajouter une source — écran, caméra ou micro.',
@@ -1340,6 +1342,8 @@ const LANG = {
     customAccent: '🎨 Custom accent color',
     snapResolution: '📐 Snapshot resolution',
     customAccentReset: '🎨 Default color restored',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 Canvas background color',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 Sources',
     tour_1_body: 'Start by adding a source — screen, camera, or mic.',
@@ -2000,6 +2004,8 @@ const LANG = {
     customAccent: '🎨 لون التمييز المخصص',
     snapResolution: '📐 دقة اللقطة',
     customAccentReset: '🎨 تم استعادة اللون الافتراضي',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 لون خلفية اللوحة',
     // v0.7.36: first-time guided tour
     tour_1_title: '📹 المصادر',
     tour_1_body: 'ابدأ بإضافة مصدر — شاشة، كاميرا، أو ميكروفون.',
@@ -2141,6 +2147,24 @@ const CustomAccent = {
     const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
     if (!m) return null;
     return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+  },
+};
+
+/* v0.7.143: canvas background color — persisted in localStorage, default black */
+const CanvasBg = {
+  current: '#000000',
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-canvas-bg');
+      if (v && /^#[0-9a-fA-F]{6}$/.test(v)) this.current = v;
+    } catch {}
+  },
+
+  set(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    this.current = hex;
+    try { localStorage.setItem('tc-canvas-bg', hex); } catch {}
   },
 };
 
@@ -2738,8 +2762,8 @@ const Engine = {
 
   render() {
     const { ctx, width, height } = this;
-    // background
-    ctx.fillStyle = '#000';
+    // background (v0.7.143: user-configurable canvas background color)
+    ctx.fillStyle = CanvasBg.current;
     ctx.fillRect(0, 0, width, height);
     // v0.7.6: source selection chrome buffer — drawn after sources so it's on top
     this._srcChrome = null;
@@ -9938,8 +9962,8 @@ const Minimap = {
   _draw() {
     const ctx = this.ctx;
     const W = this.canvas.width, H = this.canvas.height;
-    // Clear
-    ctx.fillStyle = '#000';
+    // Clear (v0.7.143: respect canvas background color)
+    ctx.fillStyle = CanvasBg.current;
     ctx.fillRect(0, 0, W, H);
     // Scale factor from engine (1920×1080) → minimap
     const sx = W / Engine.width;
@@ -13336,6 +13360,13 @@ function wireEvents() {
     showToast(t('customAccentReset') || '🎨 Couleur par défaut restaurée', 1400);
   });
 
+  // v0.7.143: canvas background color picker
+  const cbg = $('tcCanvasBgColor');
+  if (cbg) {
+    cbg.value = CanvasBg.current;
+    cbg.addEventListener('input', (e) => CanvasBg.set(e.target.value));
+  }
+
   // v0.7.19: Maintenance — reset badges + clear cache + build meta
   $('tcResetBadgesBtn')?.addEventListener('click', () => {
     Badges.unlocked.clear();
@@ -14107,6 +14138,8 @@ async function init() {
 
   // v0.7.55: apply any custom accent override on top of the theme restored above
   CustomAccent.load();
+  // v0.7.143: load persisted canvas background color
+  CanvasBg.load();
 
   Sfx.load();
   Jingle.load();

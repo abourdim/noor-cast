@@ -3,6 +3,21 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.143 — 2026-04-12 (Canvas background color picker)
+
+A color picker in Settings > General lets you change the canvas background color
+(default black). The chosen color is applied as `ctx.fillRect` at the start of
+`Engine.render()` before drawing sources, and persists in `tc-canvas-bg`
+localStorage. The minimap also respects the custom background color.
+
+### Added
+- `CanvasBg` object in `tutocast.js`: `load()`, `set(hex)`, `current` (default
+  `#000000`), backed by `tc-canvas-bg` localStorage key.
+- Color picker `#tcCanvasBgColor` in settings General section.
+- i18n key `canvasBgColor` (FR / EN / AR).
+- `Engine.render()` and `Minimap._draw()` use `CanvasBg.current` for the
+  background fill instead of hard-coded `#000`.
+
 ## v0.7.138 — 2026-04-12 (Multi-source selection)
 
 Shift+click to select multiple sources on the canvas. When multiple sources
