@@ -1533,8 +1533,8 @@ body.log-open .app {
   background: rgba(255,255,255,.04);
   border: 1px solid var(--border);
   border-radius: 10px;
-  color: var(--text); font-size: .85rem; font-family: var(--font-h);
-  padding: 8px 10px; cursor: pointer;
+  color: var(--text); font-size: .8rem; font-family: var(--font-h);
+  padding: 6px 8px; cursor: pointer;
   transition: background .2s, transform .1s;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
@@ -1827,13 +1827,18 @@ body.log-open .app {
 /* ─── Scenes panel ─── */
 .tc-scenes {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 5px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
+.tc-scenes::-webkit-scrollbar { width: 4px; }
+.tc-scenes::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 .tc-scene-btn {
   background: rgba(0,0,0,.3);
   border: 2px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 4px 8px;
+  border-radius: 8px;
+  padding: 4px 3px 6px;
   cursor: pointer;
   color: var(--text);
   font-family: var(--font-h);
