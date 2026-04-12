@@ -14487,7 +14487,18 @@ function wireEvents() {
   $('tcMoreToolsBtn')?.addEventListener('click', (e) => {
     e.stopPropagation();
     const pop = $('tcMoreToolsPopup');
-    if (pop) pop.style.display = pop.style.display === 'none' ? '' : 'none';
+    if (!pop) return;
+    const showing = pop.style.display !== 'none';
+    if (showing) { pop.style.display = 'none'; return; }
+    // Position fixed popup above the More button
+    const btn = $('tcMoreToolsBtn');
+    const r = btn.getBoundingClientRect();
+    pop.style.display = '';
+    const pw = pop.offsetWidth;
+    let left = r.right - pw;
+    if (left < 8) left = 8;
+    pop.style.left = left + 'px';
+    pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
   });
   document.addEventListener('click', (e) => {
     const pop = $('tcMoreToolsPopup');
