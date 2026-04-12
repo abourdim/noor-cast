@@ -74,6 +74,7 @@
             <button id="helpBtn" class="btn-icon-only" aria-label="Help">❓</button>
             <button id="settingsBtn" class="btn-icon-only" aria-label="Settings">⚙️</button>
             <button id="logBtn" class="btn-icon-only" aria-label="Activity Log">📜</button>
+            <button id="tcMaxBtn" class="btn-icon-only tc-max-btn" aria-label="Maximize" title="Maximize">⛶</button>
             <span class="tc-mode-badge" id="tcModeBadge"></span>
           </div>
           <div class="status-pill" id="statusPill">
@@ -145,10 +146,7 @@
 
       <!-- ═══════════════════ MAIN STUDIO CARD ═══════════════════ -->
       <div class="card tc-studio" id="mainCard">
-        <!-- Studio header removed to save space — maximize button kept -->
-        <div style="display:flex;justify-content:flex-end;padding:2px 8px 0">
-          <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)" style="opacity:.4;font-size:.8rem">⛶</button>
-        </div>
+        <!-- Studio header removed — maximize button moved to app header -->
 
         <!-- v0.7.20: Floating horizontal tools bar — Canva-style icon pill
              above the studio grid. Frees the right sidebar from 7 stacked
