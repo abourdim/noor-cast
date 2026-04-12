@@ -3,18 +3,20 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.149 — 2026-04-12 (Source duplicate as mirror)
+## v0.7.150 — 2026-04-12 (Docs rollup for v0.7.98 → v0.7.149)
 
-New "Duplicate as mirror" button in the source context menu. Duplicates the
-selected source, flips it horizontally via `flipH`, and positions it
-symmetrically on the opposite side of the canvas — useful for artistic
-mirror-effect layouts.
+Documentation-only release. The help panel's News tab now includes a
+consolidated summary of all ~50 features shipped from v0.7.98 to v0.7.149,
+grouped by category: source tools, canvas, audio, scenes, UI, tools,
+recording, and fun.
 
 ### Added
-- `data-action="mirrorDup"` button in the source context menu (`index.html`).
-- Handler in `SourceContextMenu.setup()`: deep-copies the source, sets
-  `clone.flipH = !src.flipH`, positions at `x = canvasW - src.x - src.w`.
-- i18n keys `mirrorSource` and `ctxMirrorDup` in fr / en / ar.
+- Consolidated news entry in the help panel News tab covering v0.7.98-v0.7.149.
+
+### Changed
+- `APP_VERSION` bumped to `0.7.150`.
+- `BUILD_DATE` updated.
+- Version tag in `index.html` header updated to `v0.7.150`.
 
 ## v0.7.144 — 2026-04-12 (Per-source rounded corners)
 
