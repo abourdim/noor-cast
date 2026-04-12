@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.118</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.122</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -285,6 +285,7 @@
               <div class="tc-source-toolbar" id="tcSourceToolbar" style="display:none">
                 <button class="tc-toolbar-btn" id="tcSrcToolbarHide" title="Hide (eye)">👁</button>
                 <button class="tc-toolbar-btn" id="tcSrcToolbarPin"  title="Pin / Unpin">📌</button>
+                <button class="tc-toolbar-btn" id="tcSrcToolbarLock" title="Lock / Unlock position">🔓</button>
                 <!-- v0.7.20: shape picker (select) instead of cycle button -->
                 <select class="tc-toolbar-select" id="tcSrcToolbarShape" title="Shape">
                   <option value="rect">⬛ Rectangle</option>
@@ -330,6 +331,7 @@
               <div class="tc-src-ctxmenu" id="tcSrcCtxMenu" style="display:none">
                 <button data-action="hide"><span class="tc-ctx-icon">👁</span><span data-i18n="ctxHide">Cacher / afficher</span></button>
                 <button data-action="pin"><span class="tc-ctx-icon">📌</span><span data-i18n="ctxPin">Épingler / détacher</span></button>
+                <button data-action="lock"><span class="tc-ctx-icon">🔒</span><span data-i18n="ctxLock">Verrouiller / déverrouiller</span></button>
                 <button data-action="dup"><span class="tc-ctx-icon">🔄</span><span data-i18n="ctxDup">Dupliquer</span></button>
                 <div class="tc-ctx-sub" data-action="shape">
                   <span class="tc-ctx-icon">⬛</span><span data-i18n="ctxShape">Forme ▸</span>

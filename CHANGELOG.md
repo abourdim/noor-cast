@@ -3,22 +3,26 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.120 — 2026-04-12 (Recording indicator pulse dot)
+## v0.7.122 — 2026-04-12 (Source position lock)
 
-When recording is active, a pulsing red dot with "REC" text is drawn in
-the top-left corner of the canvas. The dot opacity oscillates between
-0.3 and 1.0 at ~1 Hz so it is clearly visible in the exported video.
-The indicator can be toggled off in Settings (default: on).
+Each source (screen, camera, image) can now be locked so it cannot be
+dragged or resized on the canvas. Prevents accidental repositioning
+during recording. Toggle via the floating source toolbar, the sidebar
+source row, or the right-click context menu.
 
 ### Added
-- `RecIndicator` object with `load()`, `setEnabled()`, and `render()`
-  methods. Draws a red circle (r=8) at (20, 20) with white "REC" text
-  when `Recorder.state === 'recording'`.
-- `RecIndicator.render()` called from `Engine.render()` after
-  `CountdownTimer` and before `Screensaver`.
-- Settings toggle checkbox (`tcRecIndicatorToggle`) with `tc-rec-indicator`
-  localStorage persistence (default: enabled).
-- i18n key `recIndicatorLabel` in FR, EN, AR.
+- `locked: false` default on every source at creation (screen, camera,
+  image).
+- `Drag._onDown()`: skip drag/resize when source is locked; show a
+  brief toast instead. Selection still works so the toolbar is visible.
+- Source toolbar: 🔒/🔓 toggle button (`tcSrcToolbarLock`), icon synced
+  in `SourceToolbar.updatePosition()`.
+- Sidebar source row: lock icon button in `Engine.onSourcesChanged()`.
+- `SourceContextMenu`: lock/unlock action wired to `data-action="lock"`.
+- `locked` persisted in custom scene snapshots, scene restore,
+  scene duplication, and source duplication.
+- i18n keys `lockSource`, `unlockSource`, `ctxLock`, `sourceLocked`,
+  `sourceUnlocked` in FR, EN, AR.
 
 ---
 

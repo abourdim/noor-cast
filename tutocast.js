@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.120';
+const APP_VERSION = '0.7.122';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 21:00';
+const BUILD_DATE = '2026-04-12 22:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -144,6 +144,11 @@ const LANG = {
     cancel: 'Annuler',
     pinSource: '📌 Épingler (garder la position entre les scènes)',
     unpinSource: '🔓 Détacher (la scène reprend le contrôle)',
+    lockSource: '🔒 Verrouiller la position',
+    unlockSource: '🔓 Déverrouiller la position',
+    ctxLock: 'Verrouiller / déverrouiller',
+    sourceLocked: 'Position verrouillée',
+    sourceUnlocked: 'Position déverrouillée',
     toggleBlur: '🌫 Flou arrière-plan',
     removeSource: '✕ Retirer',
     ctxHide: 'Cacher / afficher',
@@ -778,6 +783,11 @@ const LANG = {
     cancel: 'Cancel',
     pinSource: '📌 Pin (keep position across scenes)',
     unpinSource: '🔓 Unpin (scene controls position again)',
+    lockSource: '🔒 Lock position',
+    unlockSource: '🔓 Unlock position',
+    ctxLock: 'Lock / unlock',
+    sourceLocked: 'Position locked',
+    sourceUnlocked: 'Position unlocked',
     toggleBlur: '🌫 Background blur',
     removeSource: '✕ Remove',
     ctxHide: 'Hide / show',
@@ -1404,6 +1414,11 @@ const LANG = {
     cancel: 'إلغاء',
     pinSource: '📌 تثبيت (الاحتفاظ بالموضع بين المشاهد)',
     unpinSource: '🔓 فك التثبيت (المشهد يتحكم في الموضع)',
+    lockSource: '🔒 قفل الموضع',
+    unlockSource: '🔓 فتح قفل الموضع',
+    ctxLock: 'قفل / فتح',
+    sourceLocked: 'الموضع مقفل',
+    sourceUnlocked: 'الموضع مفتوح',
     toggleBlur: '🌫 تمويه الخلفية',
     removeSource: '✕ إزالة',
     ctxHide: 'إخفاء / عرض',
@@ -3169,7 +3184,7 @@ const Engine = {
         x: 0, y: 0, w: this.width, h: this.height,
         shape: 'rect', visible: true, mirrored: false,
         borderColor: '', borderWidth: 0,
-        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+        locked: false,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3218,7 +3233,7 @@ const Engine = {
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
         borderColor: '', borderWidth: 0,
-        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+        locked: false,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3262,7 +3277,7 @@ const Engine = {
           hidden: false,
           custom: true,
           borderColor: '', borderWidth: 0,
-          cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+          locked: false,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3482,6 +3497,19 @@ const Engine = {
             showToast(s.hidden ? t('sourceHidden') : t('sourceShown'), 1500);
           });
           topRow.appendChild(hideBtn);
+
+          // v0.7.122: lock position toggle
+          const lock = document.createElement('button');
+          lock.className = 'tc-src-icon-btn' + (s.locked ? ' active' : '');
+          lock.textContent = s.locked ? '🔒' : '🔓';
+          lock.title = s.locked ? t('unlockSource') : t('lockSource');
+          lock.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.locked = !s.locked;
+            this.onSourcesChanged();
+            showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+          });
+          topRow.appendChild(lock);
 
           const blur = document.createElement('button');
           blur.className = 'tc-src-icon-btn' + (s.blur ? ' active' : '');
@@ -3811,8 +3839,7 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
-        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+        locked: !!s.locked,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3861,10 +3888,7 @@ const Scenes = {
       target.shape = snap.shape;
       target.borderColor = snap.borderColor || '';
       target.borderWidth = snap.borderWidth || 0;
-      target.cropTop = snap.cropTop || 0;
-      target.cropBottom = snap.cropBottom || 0;
-      target.cropLeft = snap.cropLeft || 0;
-      target.cropRight = snap.cropRight || 0;
+      target.locked = !!snap.locked;
       target.custom = true;
     });
   },
@@ -3899,8 +3923,7 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
-        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+        locked: !!s.locked,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -6182,6 +6205,14 @@ const Drag = {
     if (kind === 'source') this.selectedSourceId = ref.id;
     else this.selectedSourceId = null;
 
+    // v0.7.122: locked sources can be selected (toolbar visible) but not
+    // dragged or resized. Show a brief toast so the teacher knows why.
+    if (kind === 'source' && ref.locked) {
+      showToast('🔒 ' + t('sourceLocked'), 1200);
+      e.preventDefault();
+      return;
+    }
+
     // Corner-near → resize, otherwise move
     const corner = this._nearCorner(ref, mx, my);
     if (corner >= 0) {
@@ -8237,6 +8268,16 @@ const SourceToolbar = {
       showToast(s.pinned ? '📌 pinned' : '🔓 unpinned', 1400);
       Engine.onSourcesChanged();
     });
+    // v0.7.122: lock / unlock position toggle
+    $('tcSrcToolbarLock')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.locked = !s.locked;
+      const btn = $('tcSrcToolbarLock');
+      if (btn) btn.textContent = s.locked ? '🔒' : '🔓';
+      showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+      Engine.onSourcesChanged();
+    });
     // v0.7.15: shape picker is now a <select>, not a cycle button
     $('tcSrcToolbarShape')?.addEventListener('change', (e) => {
       e.stopPropagation();
@@ -8313,6 +8354,9 @@ const SourceToolbar = {
     if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
       shapeSel.value = s.shape || 'rect';
     }
+    // v0.7.122: sync lock button icon
+    const lockBtn = $('tcSrcToolbarLock');
+    if (lockBtn) lockBtn.textContent = s.locked ? '🔒' : '🔓';
     // v0.7.117: sync border color + width inputs
     const bcEl = $('tcSrcBorderColor');
     if (bcEl && bcEl.value !== (s.borderColor || '#ffffff')) {
@@ -8371,6 +8415,16 @@ const SourceContextMenu = {
       this.hide();
     });
 
+    // v0.7.122: lock / unlock position
+    this.el.querySelector('[data-action="lock"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      s.locked = !s.locked;
+      showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
     this.el.querySelector('[data-action="dup"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = getSrc(); if (!s) return;
@@ -8394,8 +8448,7 @@ const SourceContextMenu = {
         pinned: true,
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
-        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+        locked: !!s.locked,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
