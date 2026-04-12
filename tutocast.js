@@ -13696,6 +13696,13 @@ const V100Celebration = {
     try {
       if (localStorage.getItem('tc-v100-seen') === '1') return;
     } catch {}
+    // v0.7.166: don't show if mode picker or template picker is active
+    const modePicker = $('tcModePicker');
+    if (modePicker && modePicker.style.display !== 'none') {
+      // Retry after mode is chosen
+      setTimeout(() => this.maybeShow(), 3000);
+      return;
+    }
     // Wait for splash + onboard to clear
     setTimeout(() => this.show(), 2500);
   },
