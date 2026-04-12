@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.122 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.123 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.122';
+const APP_VERSION = '0.7.123';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 21:00';
+const BUILD_DATE = '2026-04-12 23:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -380,6 +380,7 @@ const LANG = {
     brandLogoTint: '🎨 Couleur du logo (silhouette)',
     sourceTitlePh: 'Titre (ex: 💻 Mon code)',
     sourceOpacity: 'Opacité',
+    sourceRotation: 'Rotation',
     sourceShape: 'Forme',
     sourceBorder: 'Bordure',
     borderColor: 'Couleur bordure',
@@ -1021,6 +1022,7 @@ const LANG = {
     brandLogoTint: '🎨 Logo color (silhouette)',
     sourceTitlePh: 'Title (e.g. 💻 My code)',
     sourceOpacity: 'Opacity',
+    sourceRotation: 'Rotation',
     sourceShape: 'Shape',
     sourceBorder: 'Border',
     borderColor: 'Border color',
@@ -1654,6 +1656,7 @@ const LANG = {
     brandLogoTint: '🎨 لون الشعار (ظلّي)',
     sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
     sourceOpacity: 'شفافية',
+    sourceRotation: 'دوران',
     sourceShape: 'الشكل',
     sourceBorder: 'إطار',
     borderColor: 'لون الإطار',
@@ -3191,6 +3194,7 @@ const Engine = {
         shape: 'rect', visible: true, mirrored: false,
         borderColor: '', borderWidth: 0,
         locked: false,
+        rotation: 0,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3240,6 +3244,7 @@ const Engine = {
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
         borderColor: '', borderWidth: 0,
         locked: false,
+        rotation: 0,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3284,6 +3289,7 @@ const Engine = {
           custom: true,
           borderColor: '', borderWidth: 0,
           locked: false,
+          rotation: 0,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3846,6 +3852,7 @@ const Scenes = {
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
         locked: !!s.locked,
+        rotation: s.rotation || 0,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3895,6 +3902,7 @@ const Scenes = {
       target.borderColor = snap.borderColor || '';
       target.borderWidth = snap.borderWidth || 0;
       target.locked = !!snap.locked;
+      target.rotation = snap.rotation || 0;
       target.custom = true;
     });
   },
@@ -8319,6 +8327,24 @@ const SourceToolbar = {
       });
       $(elId)?.addEventListener('click', (e) => e.stopPropagation());
     });
+    // v0.7.123: source rotation slider (-180 to +180 degrees)
+    $('tcSrcRotation')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      const deg = parseInt(e.target.value, 10) || 0;
+      s.rotation = deg * Math.PI / 180;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = deg + '\u00B0';
+    });
+    $('tcSrcRotation')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcRotation')?.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.rotation = 0;
+      e.target.value = 0;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = '0\u00B0';
+    });
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -8381,6 +8407,14 @@ const SourceToolbar = {
       const v = String(Math.round((s['crop' + dir] || 0) * 100));
       if (el.value !== v) el.value = v;
     });
+    // v0.7.123: sync rotation slider
+    const rotEl = $('tcSrcRotation');
+    if (rotEl) {
+      const deg = String(Math.round((s.rotation || 0) * 180 / Math.PI));
+      if (rotEl.value !== deg) rotEl.value = deg;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = deg + '\u00B0';
+    }
   },
 };
 
@@ -8457,6 +8491,7 @@ const SourceContextMenu = {
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
         locked: !!s.locked,
+        rotation: s.rotation || 0,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
@@ -9076,6 +9111,7 @@ const LayoutHistory = {
       borderWidth: s.borderWidth || 0,
       cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
       cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+      rotation: s.rotation || 0,
     }));
   },
 
@@ -9126,6 +9162,7 @@ const LayoutHistory = {
       s.cropBottom = entry.cropBottom || 0;
       s.cropLeft = entry.cropLeft || 0;
       s.cropRight = entry.cropRight || 0;
+      s.rotation = entry.rotation || 0;
     });
     Engine.onSourcesChanged();
     this._suppress = false;

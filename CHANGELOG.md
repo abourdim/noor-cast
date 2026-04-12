@@ -3,6 +3,26 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.123 — 2026-04-12 (Source rotation slider)
+
+Each source (screen, camera, image) gets a rotation slider (-180 to +180
+degrees) in the floating source toolbar. Applied via `ctx.rotate()` in
+`Engine.drawSource()`. Double-click the slider to reset to 0. Persists
+in scene snapshots, layout undo/redo, and source duplication.
+
+### Added
+- `rotation: 0` default on sources in `addScreen`, `addCamera`, `addImage`.
+- Rotation slider `#tcSrcRotation` in the source toolbar (`index.html`),
+  with live degree label `#tcSrcRotationVal`. Double-click resets to 0.
+- Toolbar sync in `SourceToolbar.updatePosition()` — converts radians
+  back to degrees for the slider value.
+- `rotation` persisted in scene custom snapshots (save + restore).
+- `rotation` persisted in `LayoutHistory._snapshot()` / `_apply()`.
+- `rotation` copied in source duplication (context menu).
+- i18n key `sourceRotation` in FR, EN, AR.
+
+---
+
 ## v0.7.121 — 2026-04-12 (Canvas color picker / eyedropper tool)
 
 A tools-bar eyedropper button (Pick) that reads the pixel color at
