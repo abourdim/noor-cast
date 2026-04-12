@@ -1254,6 +1254,9 @@ basic.forever(() => {
     </div>
 
     <div class="sidebar-body">
+      <!-- v0.7.166: mode switch — prominent at top of settings -->
+      <button class="tc-btn-full" id="tcModeSwitchBtn" style="margin-bottom:10px;font-size:.85rem;background:rgba(163,230,53,.1);border-color:rgba(163,230,53,.3)">🔄 Switch to Pro mode</button>
+
       <!-- v0.7.20: collapsible sections to break up the formerly flat list -->
 
       <details class="tc-set-section" open>
@@ -1357,10 +1360,7 @@ basic.forever(() => {
             <summary class="tc-diag-summary">🔧 <span data-i18n="diagnostics">Diagnostics</span></summary>
             <div class="tc-diag" id="tcDiagList"></div>
           </details>
-          <!-- v0.7.166: mode switch -->
-          <div class="sidebar-group" style="margin-top:10px;text-align:center">
-            <button class="tc-btn-full" id="tcModeSwitchBtn" style="font-size:.75rem;opacity:.7">🔄 Switch to Pro mode</button>
-          </div>
+          <!-- mode switch moved to top of settings panel -->
         </div>
       </details>
 
