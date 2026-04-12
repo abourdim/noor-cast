@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.163';
+const APP_VERSION = '0.7.164';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -2593,6 +2593,7 @@ const MicBoost = {
         sum += v * v;
       }
       const rms = Math.sqrt(sum / this._gateBuf.length);
+      this._lastRms = rms; // v0.7.164: expose for avatar mode mouth animation
       const db = rms > 0 ? 20 * Math.log10(rms) : -100;
       // v0.7.83: forward the mic RMS to VolumeDuck for ducking
       try { VolumeDuck.tick(db); } catch {}
@@ -3238,6 +3239,79 @@ const Engine = {
       ctx.restore();
     }
 
+    // v0.7.164: avatar mode — draw a cartoon face instead of the video
+    if (src.avatarMode) {
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      // Background
+      const avatarHue = (src.id * 47) % 360; // deterministic color per source
+      ctx.fillStyle = `hsl(${avatarHue}, 60%, 30%)`;
+      ctx.fillRect(x, y, w, h);
+      // Head circle
+      const headR = Math.min(w, h) * 0.32;
+      const headX = cx, headY = cy - headR * 0.1;
+      ctx.fillStyle = `hsl(${avatarHue}, 50%, 70%)`;
+      ctx.beginPath(); ctx.arc(headX, headY, headR, 0, Math.PI * 2); ctx.fill();
+      // Eyes
+      const eyeR = headR * 0.12, eyeY = headY - headR * 0.15;
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath(); ctx.arc(headX - headR * 0.28, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(headX + headR * 0.28, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+      // Eye shine
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(headX - headR * 0.25, eyeY - eyeR * 0.3, eyeR * 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(headX + headR * 0.31, eyeY - eyeR * 0.3, eyeR * 0.4, 0, Math.PI * 2); ctx.fill();
+      // Mouth — opens with mic RMS
+      const rms = MicBoost._lastRms || 0;
+      const mouthOpen = Math.min(1, rms * 4) * headR * 0.35;
+      const mouthY = headY + headR * 0.3;
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.ellipse(headX, mouthY, headR * 0.22, Math.max(2, mouthOpen), 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Robot antenna (if source label contains 'robot' or avatar type is robot)
+      if ((src.label || '').toLowerCase().includes('robot') || src.avatarType === 'robot') {
+        ctx.strokeStyle = `hsl(${avatarHue}, 50%, 70%)`;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(headX, headY - headR); ctx.lineTo(headX, headY - headR - headR * 0.4); ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(headX, headY - headR - headR * 0.4, headR * 0.08, 0, Math.PI * 2); ctx.fill();
+      }
+      // Label
+      ctx.font = `600 ${Math.max(14, headR * 0.28)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(src.label || 'Teacher', headX, headY + headR + 8);
+      ctx.restore();
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      if (src.flipH || src.flipV) ctx.restore();
+      if (rot !== 0) ctx.restore();
+      ctx.restore();
+      return;
+    }
+
+    // v0.7.164: privacy blur — entire source heavily blurred (for camera-shy teachers)
+    if (src.privacyBlur) {
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      ctx.filter = 'blur(30px)';
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored, src);
+      ctx.filter = 'none';
+      ctx.restore();
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      if (src.flipH || src.flipV) ctx.restore();
+      if (rot !== 0) ctx.restore();
+      ctx.restore();
+      return;
+    }
+
     // --- Per-source visual filter (v0.7.0) ---
     // Applied via ctx.filter for the duration of the draw pass, reset after.
     const filter = src.filter && src.filter !== 'none' ? this._filterString(src.filter) : 'none';
@@ -3627,7 +3701,7 @@ const Engine = {
         rotation: 0,
         cornerRadius: 0,
         badgeText: '',
-        badgeColor: '#e74c3c',
+        badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3684,7 +3758,7 @@ const Engine = {
         rotation: 0,
         cornerRadius: 0,
         badgeText: '',
-        badgeColor: '#e74c3c',
+        badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3736,7 +3810,7 @@ const Engine = {
           rotation: 0,
           cornerRadius: 0,
           badgeText: '',
-          badgeColor: '#e74c3c',
+          badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -9792,6 +9866,36 @@ const SourceToolbar = {
       if (!pop || pop.style.display === 'none') return;
       if (e.target.closest('#tcSrcStyleBtn') || e.target.closest('#tcSrcStylePopup')) return;
       pop.style.display = 'none';
+    });
+    // v0.7.164: privacy mode buttons
+    $('tcSrcAvatarBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.avatarMode = !s.avatarMode;
+      if (s.avatarMode) s.privacyBlur = false;
+      showToast(s.avatarMode ? '🤖 Avatar mode ON' : '🤖 Avatar mode OFF', 1200);
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBlurBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.privacyBlur = !s.privacyBlur;
+      if (s.privacyBlur) s.avatarMode = false;
+      showToast(s.privacyBlur ? '🔲 Blur ON' : '🔲 Blur OFF', 1200);
+      SceneAutoSave.trigger();
+    });
+    // v0.7.118: flip buttons
+    $('tcSrcFlipH')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipH = !s.flipH;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcFlipV')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipV = !s.flipV;
+      SceneAutoSave.trigger();
     });
   },
   updatePosition() {
