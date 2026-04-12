@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.123 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.124 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.123';
+const APP_VERSION = '0.7.124';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:30';
+const BUILD_DATE = '2026-04-12 23:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -316,6 +316,9 @@ const LANG = {
     countdownTimer: '⏳ Minuteur',
     colorPicker: '🎨 Pipette',
     colorCopied: 'Copié',
+    textStamp: '✏️ Texte',
+    addText: 'Ajouter',
+    clearTexts: 'Effacer les textes',
     timerDuration: 'Durée minuteur (min)',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
@@ -958,6 +961,9 @@ const LANG = {
     countdownTimer: '⏳ Timer',
     colorPicker: '🎨 Color picker',
     colorCopied: 'Copied',
+    textStamp: '✏️ Text',
+    addText: 'Add',
+    clearTexts: 'Clear texts',
     timerDuration: 'Timer duration (min)',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
@@ -1592,6 +1598,9 @@ const LANG = {
     countdownTimer: '⏳ مؤقت',
     colorPicker: '🎨 منتقي اللون',
     colorCopied: 'تم النسخ',
+    textStamp: '✏️ نص',
+    addText: 'إضافة',
+    clearTexts: 'مسح النصوص',
     timerDuration: 'مدة المؤقت (دقيقة)',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
@@ -2643,6 +2652,9 @@ const Engine = {
 
     // draw text overlays (unscaled so they stay readable)
     TextOverlays.drawAll(ctx);
+
+    // v0.7.124: quick ad-hoc text stamps (after text overlays, before captions)
+    TextStamps.render(ctx);
 
     // v0.7.57: live captions overlay
     LiveCaptions.render(ctx, width, height);
@@ -9609,6 +9621,134 @@ const CountdownTimer = {
   },
 };
 
+/* ─────────── v0.7.124: TextStamps — quick ad-hoc canvas text stamps
+
+   A tools-bar button lets the teacher type arbitrary text live during
+   recording. Each stamp is drawn at the center of the canvas via
+   ctx.fillText with configurable color and font size. Multiple stamps
+   can coexist. They persist until explicitly cleared.
+
+   Different from TextOverlays (pre-configured, auto-fade) — these are
+   quick ad-hoc labels the teacher types on the fly. */
+const TextStamps = {
+  stamps: [],  // { text, x, y, color, fontSize }
+  _popupEl: null,
+
+  add(text, color = '#ffffff', fontSize = 48) {
+    if (!text || !text.trim()) return;
+    this.stamps.push({
+      text: text.trim(),
+      x: Engine.width / 2,
+      y: Engine.height / 2 + this.stamps.length * 60,
+      color,
+      fontSize,
+    });
+    log(`${t('textStamp') || '✏️ Text'}: ${text.trim()}`, 'info');
+  },
+
+  clear() {
+    this.stamps = [];
+    log(t('clearTexts') || 'Clear texts', 'info');
+  },
+
+  render(ctx) {
+    if (!this.stamps.length) return;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const s of this.stamps) {
+      ctx.font = `800 ${s.fontSize}px Arial, sans-serif`;
+      // Dark outline for readability
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = Math.max(2, s.fontSize / 12);
+      ctx.lineJoin = 'round';
+      ctx.strokeText(s.text, s.x, s.y);
+      ctx.fillStyle = s.color;
+      ctx.fillText(s.text, s.x, s.y);
+    }
+    ctx.restore();
+  },
+
+  /** Show / hide the inline popup anchored to the tools-bar button */
+  togglePopup() {
+    if (this._popupEl) { this._closePopup(); return; }
+    const popup = document.createElement('div');
+    popup.className = 'tc-textstamp-popup';
+    popup.style.cssText = 'position:absolute;z-index:9999;background:var(--bg-2,#1e1e2e);border:1px solid var(--border,#444);border-radius:8px;padding:8px;display:flex;gap:6px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = t('textStamp') || 'Text';
+    input.style.cssText = 'width:140px;padding:4px 8px;border-radius:4px;border:1px solid #555;background:#111;color:#fff;font-size:14px';
+
+    const color = document.createElement('input');
+    color.type = 'color';
+    color.value = '#ffffff';
+    color.style.cssText = 'width:32px;height:28px;border:none;padding:0;cursor:pointer;background:transparent';
+
+    const size = document.createElement('select');
+    size.style.cssText = 'padding:4px;border-radius:4px;border:1px solid #555;background:#111;color:#fff;font-size:13px';
+    [24, 36, 48, 72].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v + 'px';
+      if (v === 48) o.selected = true;
+      size.appendChild(o);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.textContent = t('addText') || 'Add';
+    addBtn.style.cssText = 'padding:4px 10px;border-radius:4px;border:none;background:var(--accent,#a3e635);color:#000;font-weight:700;cursor:pointer;font-size:13px';
+    addBtn.addEventListener('click', () => {
+      this.add(input.value, color.value, parseInt(size.value, 10));
+      input.value = '';
+      input.focus();
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = t('clearTexts') || 'Clear';
+    clearBtn.style.cssText = 'padding:4px 8px;border-radius:4px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer;font-size:13px';
+    clearBtn.addEventListener('click', () => this.clear());
+
+    popup.append(input, color, size, addBtn, clearBtn);
+
+    // Position below the button
+    const btn = $('tcTextStampBtn');
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      popup.style.left = r.left + 'px';
+      popup.style.top = (r.bottom + 6) + 'px';
+    } else {
+      popup.style.top = '60px';
+      popup.style.left = '200px';
+    }
+
+    document.body.appendChild(popup);
+    this._popupEl = popup;
+    input.focus();
+
+    // Submit on Enter
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { addBtn.click(); e.preventDefault(); }
+      if (e.key === 'Escape') { this._closePopup(); }
+    });
+
+    // Close when clicking outside
+    setTimeout(() => {
+      this._outsideHandler = (e) => {
+        if (!popup.contains(e.target) && e.target.id !== 'tcTextStampBtn' && !e.target.closest('#tcTextStampBtn')) {
+          this._closePopup();
+        }
+      };
+      document.addEventListener('mousedown', this._outsideHandler);
+    }, 50);
+  },
+
+  _closePopup() {
+    if (this._popupEl) { this._popupEl.remove(); this._popupEl = null; }
+    if (this._outsideHandler) { document.removeEventListener('mousedown', this._outsideHandler); this._outsideHandler = null; }
+  },
+};
+
 /* ─────────── v0.7.121: ColorPicker — canvas eyedropper tool
 
    When active, the stage cursor becomes a crosshair.  Clicking anywhere
@@ -12133,6 +12273,7 @@ function wireEvents() {
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
   $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
+  $('tcTextStampBtn')?.addEventListener('click', () => TextStamps.togglePopup());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
   $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());

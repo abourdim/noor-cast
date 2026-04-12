@@ -3,23 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.123 — 2026-04-12 (Source rotation slider)
+## v0.7.124 — 2026-04-12 (Quick canvas text stamp)
 
-Each source (screen, camera, image) gets a rotation slider (-180 to +180
-degrees) in the floating source toolbar. Applied via `ctx.rotate()` in
-`Engine.drawSource()`. Double-click the slider to reset to 0. Persists
-in scene snapshots, layout undo/redo, and source duplication.
+A tools-bar button that lets the teacher type arbitrary text live during
+recording. Each stamp is drawn at the center of the canvas with configurable
+color and font size. Multiple stamps can coexist and persist until cleared.
 
 ### Added
-- `rotation: 0` default on sources in `addScreen`, `addCamera`, `addImage`.
-- Rotation slider `#tcSrcRotation` in the source toolbar (`index.html`),
-  with live degree label `#tcSrcRotationVal`. Double-click resets to 0.
-- Toolbar sync in `SourceToolbar.updatePosition()` — converts radians
-  back to degrees for the slider value.
-- `rotation` persisted in scene custom snapshots (save + restore).
-- `rotation` persisted in `LayoutHistory._snapshot()` / `_apply()`.
-- `rotation` copied in source duplication (context menu).
-- i18n key `sourceRotation` in FR, EN, AR.
+- `TextStamps` object in `tutocast.js`: `stamps[]`, `add(text, color, size)`,
+  `clear()`, `render(ctx)`, `togglePopup()` with inline popup UI.
+- Each stamp: `{text, x, y, color, fontSize}` drawn via `ctx.fillText`
+  with dark outline for readability.
+- Tools bar button `#tcTextStampBtn` in `index.html`,
+  wired to `TextStamps.togglePopup()`.
+- Inline popup with text input, color picker, size dropdown (24/36/48/72),
+  Add button and Clear button. Submit via Enter, dismiss via Escape or
+  clicking outside.
+- `TextStamps.render(ctx)` called from `Engine.render()` after text overlays.
+- i18n keys `textStamp`, `addText`, `clearTexts` in FR, EN, AR.
 
 ---
 
