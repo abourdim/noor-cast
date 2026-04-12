@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.111</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.104</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -162,8 +162,20 @@
           <button class="tc-tool-btn" id="tcFullscreenBtn" title="Fullscreen" data-tip-key="tip_fullscreen" data-tip-title="Fullscreen">
             <span class="tc-tool-icon">⛶</span><span class="tc-tool-label" data-i18n="fullscreen">Plein</span>
           </button>
+          <!-- v0.7.104: emoji reaction burst -->
+          <button class="tc-tool-btn" id="tcReactBtn" title="React">
+            <span class="tc-tool-icon">😀</span><span class="tc-tool-label" data-i18n="reactBtn">React</span>
+          </button>
+          <div class="tc-react-palette" id="tcReactPalette" style="display:none">
+            <button class="tc-react-emoji">👍</button>
+            <button class="tc-react-emoji">❤️</button>
+            <button class="tc-react-emoji">🎉</button>
+            <button class="tc-react-emoji">🔥</button>
+            <button class="tc-react-emoji">💡</button>
+            <button class="tc-react-emoji">⭐</button>
+          </div>
           <span class="tc-tools-sep"></span>
-          <!-- v0.7.111: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
+          <!-- v0.7.104: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
           <canvas id="tcMicMeter" class="tc-mic-meter" width="80" height="12" title="Mic level"></canvas>
         </div>
 
@@ -437,7 +449,7 @@
             <div class="tc-take-rating" id="tcTakeRating"></div>
           </div>
           <div class="tc-take-actions">
-            <!-- v0.7.111: inline filename editor — primed in Recorder.finish() -->
+            <!-- v0.7.104: inline filename editor — primed in Recorder.finish() -->
             <div class="tc-take-title-wrap">
               <label class="sidebar-label" data-i18n="takeTitle">📝 Nom du fichier</label>
               <input type="text" id="tcTakeTitleInput" class="sidebar-select" maxlength="100" />
@@ -1048,7 +1060,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.111</strong></span>
+      <span class="badge"><strong>v0.7.104</strong></span>
     </div>
   </aside>
 
@@ -1420,7 +1432,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.111</strong></span>
+      <span class="badge"><strong>v0.7.104</strong></span>
     </div>
   </aside>
 
@@ -1452,7 +1464,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.111</strong></span>
+      <span class="badge"><strong>v0.7.104</strong></span>
     </div>
   </aside>
 

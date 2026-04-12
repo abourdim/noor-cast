@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.111 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.104 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.111';
+const APP_VERSION = '0.7.104';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 15:00';
+const BUILD_DATE = '2026-04-12 12:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -103,6 +103,7 @@ const LANG = {
     ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
     spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
+    reactBtn: 'React',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
     drawOn: '✏️ Mode dessin',
@@ -717,6 +718,7 @@ const LANG = {
     ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
     spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
+    reactBtn: 'React',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
     drawOn: '✏️ Draw mode',
@@ -1328,6 +1330,7 @@ const LANG = {
     ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
     spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
+    reactBtn: 'تفاعل',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
     teleImportDone: '📂 تم استيراد النص',
@@ -2529,6 +2532,9 @@ const Engine = {
     // (after Spotlight, before Laser) so they're under pointer visuals but
     // baked into the recording.
     CursorTrail.render(ctx, width, height);
+
+    // v0.7.104: emoji reaction burst — floating emojis baked into output
+    Reactions.render(ctx, width, height);
 
     // Laser dot — redraw its offscreen canvas then composite
     Laser.render();
@@ -10320,6 +10326,49 @@ function renderBadges() {
   });
 }
 
+/* v0.7.104: Reactions — emoji burst overlay (YouTube / Twitch style).
+   Drawn directly on the output canvas via Engine.render() so the
+   emojis are baked into the recording. */
+const Reactions = {
+  _particles: [],
+  burst(emoji) {
+    const cv = Engine.canvas;
+    if (!cv) return;
+    const w = cv.width, h = cv.height;
+    for (let i = 0; i < 12; i++) {
+      this._particles.push({
+        emoji,
+        x: w * 0.2 + Math.random() * w * 0.6,
+        y: h + 10,
+        vx: (Math.random() - 0.5) * 2,
+        vy: -(2 + Math.random() * 3),
+        life: 1,
+        max: 120 + Math.random() * 40,  // frames (~2s at 60fps)
+        age: 0,
+      });
+    }
+  },
+  render(ctx, width, height) {
+    if (!this._particles.length) return;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '32px sans-serif';
+    for (let i = this._particles.length - 1; i >= 0; i--) {
+      const p = this._particles[i];
+      p.age++;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx += (Math.random() - 0.5) * 0.3;  // random drift
+      p.life = Math.max(0, 1 - p.age / p.max);
+      ctx.globalAlpha = p.life;
+      ctx.fillText(p.emoji, p.x, p.y);
+      if (p.life <= 0) this._particles.splice(i, 1);
+    }
+    ctx.restore();
+  },
+};
+
 const Confetti = {
   canvas: null, ctx: null, particles: [], rafId: null,
   burst() {
@@ -11093,6 +11142,31 @@ function wireEvents() {
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
   $('tcCursorTrailBtn')?.addEventListener('click', () => CursorTrail.toggle());
+  // v0.7.104: emoji reaction burst button + palette
+  const reactBtn = $('tcReactBtn');
+  if (reactBtn) {
+    reactBtn.addEventListener('click', () => {
+      const pal = $('tcReactPalette');
+      if (!pal) return;
+      pal.style.display = pal.style.display === 'flex' ? 'none' : 'flex';
+    });
+  }
+  const reactPal = $('tcReactPalette');
+  if (reactPal) {
+    reactPal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tc-react-emoji');
+      if (!btn) return;
+      Reactions.burst(btn.textContent.trim());
+      reactPal.style.display = 'none';
+    });
+  }
+  // close react palette on outside click
+  document.addEventListener('click', (e) => {
+    const pal = $('tcReactPalette');
+    if (!pal || pal.style.display === 'none') return;
+    if (e.target.closest('#tcReactBtn') || e.target.closest('#tcReactPalette')) return;
+    pal.style.display = 'none';
+  });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());

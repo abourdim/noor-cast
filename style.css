@@ -2379,6 +2379,7 @@ body.log-open .app {
    stack of 7 vertical buttons and puts the tools one click from the stage.
    ═══════════════════════════════════════════════════════════════════ */
 .tc-tools-bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2451,6 +2452,35 @@ body.log-open .app {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
+
+/* v0.7.104: emoji reaction palette */
+.tc-react-palette {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  background: var(--card-bg, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+.tc-react-emoji {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.tc-react-emoji:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 @media (max-width: 920px) {
   .tc-tool-label { display: none; }
   .tc-tool-btn { padding: 7px 9px; }

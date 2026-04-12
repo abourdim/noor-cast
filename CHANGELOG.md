@@ -3,6 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.104 — 2026-04-12 (Emoji reaction burst overlay)
+
+Click the new "React" button in the tools bar to open a tiny palette of
+six emojis (thumbs-up, heart, party, fire, lightbulb, star).  Picking
+one launches ~12 floating copies from the bottom of the canvas that
+drift upward with random sway and fade out over ~2 seconds — just like
+YouTube / Twitch live reactions.  The particles are drawn on the output
+canvas via `ctx.fillText` so they are baked into the recording.
+
+### Added
+- `Reactions` object in `tutocast.js`: `_particles` array, `burst(emoji)`
+  spawns 12 particles, `render(ctx)` updates and draws each frame.
+- Tools-bar button `#tcReactBtn` with emoji palette `.tc-react-palette`
+  containing 6 clickable emoji buttons.
+- CSS for `.tc-react-palette` and `.tc-react-emoji` in `style.css`.
+- `reactBtn` i18n key in FR, EN and AR `LANG` dicts.
+- `Reactions.render()` call in `Engine.render()` after CursorTrail,
+  before Laser composite.
+
 ## v0.7.111 — 2026-04-11 (Always-visible audio level meter in tools bar)
 
 A tiny 80×12 LED-style mic level meter is now embedded directly in the
