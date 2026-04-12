@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.135';
+const APP_VERSION = '0.7.137';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -381,6 +381,11 @@ const LANG = {
     bundleImported: '📦 Session importée — rechargement…',
     bundleBadFormat: '❌ Format invalide',
     bundleConfirm: 'Remplacer tes données locales par cette session ?',
+    exportSettings: 'Exporter les paramètres',
+    importSettings: 'Importer les paramètres',
+    settingsExported: '⚙️ Paramètres exportés',
+    settingsImported: '⚙️ Paramètres importés — rechargement…',
+    settingsConfirm: 'Remplacer tes paramètres locaux par ce fichier ?',
     buildMeta: 'Compilé',
     badgeUnlockTitle: '🏆 Badge débloqué !',
     badgeUnlockContinue: 'Continuer',
@@ -1041,6 +1046,11 @@ const LANG = {
     bundleImported: '📦 Session imported — reloading…',
     bundleBadFormat: '❌ Invalid format',
     bundleConfirm: 'Replace your local data with this session?',
+    exportSettings: 'Export settings',
+    importSettings: 'Import settings',
+    settingsExported: '⚙️ Settings exported',
+    settingsImported: '⚙️ Settings imported — reloading…',
+    settingsConfirm: 'Replace your local settings with this file?',
     buildMeta: 'Built',
     badgeUnlockTitle: '🏆 Badge unlocked!',
     badgeUnlockContinue: 'Continue',
@@ -1693,6 +1703,11 @@ const LANG = {
     bundleImported: '📦 تم الاستيراد — إعادة تحميل…',
     bundleBadFormat: '❌ تنسيق غير صالح',
     bundleConfirm: 'استبدال بياناتك المحلية بهذه الجلسة؟',
+    exportSettings: 'تصدير الإعدادات',
+    importSettings: 'استيراد الإعدادات',
+    settingsExported: '⚙️ تم تصدير الإعدادات',
+    settingsImported: '⚙️ تم استيراد الإعدادات — إعادة تحميل…',
+    settingsConfirm: 'استبدال إعداداتك المحلية بهذا الملف؟',
     buildMeta: 'تم البناء',
     badgeUnlockTitle: '🏆 شارة مُفتوحة!',
     badgeUnlockContinue: 'متابعة',
@@ -11111,6 +11126,59 @@ const Dashboard = {
   },
 };
 
+/* v0.7.137: export / import settings as JSON.
+   Gathers every tc-* localStorage key into a JSON file for backup
+   or sharing setup between machines. */
+const SettingsIO = {
+  exportAll() {
+    const data = { v: 1, type: 'tutocast-settings', app: APP_VERSION, exportedAt: new Date().toISOString(), keys: {} };
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tc-')) data.keys[k] = localStorage.getItem(k);
+      }
+    } catch {}
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `tutocast-settings-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(t('settingsExported') || '⚙️ Paramètres exportés', 1800);
+  },
+
+  importAll(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== 'object' || data.v !== 1 || data.type !== 'tutocast-settings') {
+          showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+          return;
+        }
+        if (!confirm(t('settingsConfirm') || 'Remplacer tes paramètres locaux par ce fichier ?')) return;
+        if (data.keys) {
+          try {
+            Object.entries(data.keys).forEach(([k, v]) => {
+              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+            });
+          } catch {}
+        }
+        showToast(t('settingsImported') || '⚙️ Paramètres importés — rechargement…', 1800);
+        setTimeout(() => location.reload(), 900);
+      } catch (e) {
+        showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+        log('settings import error: ' + e.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  },
+};
+
 /* v0.7.44: portable session bundle. Exports everything a teacher
    would want to re-import on another machine — badges, history,
    preferences, brand logo, tutorial text presets, scene order.
@@ -12727,6 +12795,13 @@ function wireEvents() {
     const f = e.target.files?.[0];
     if (f) SessionBundle.import(f);
     e.target.value = '';  // Reset for re-selection
+  });
+  // v0.7.137: export / import settings as JSON
+  $('tcExportSettingsBtn')?.addEventListener('click', () => SettingsIO.exportAll());
+  $('tcImportSettingsInput')?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (f) SettingsIO.importAll(f);
+    e.target.value = '';
   });
   // Build timestamp chip — static text + i18n label
   const bm = $('tcBuildMeta');

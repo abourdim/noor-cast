@@ -3,20 +3,20 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.136 — 2026-04-12 (Source alignment buttons)
+## v0.7.137 — 2026-04-12 (Export / import settings as JSON)
 
-Six quick-align buttons in the floating source toolbar let the teacher
-snap any selected source to the canvas edges or center with a single click.
+Two new buttons in Settings > General let teachers export all `tc-*`
+localStorage keys as a JSON file and import them back. Useful for backup
+or sharing setup between machines.
 
 ### Added
-- 6 alignment buttons in `index.html` source toolbar (`#tcSrcAlignLeft`,
-  `#tcSrcAlignRight`, `#tcSrcAlignTop`, `#tcSrcAlignBottom`,
-  `#tcSrcAlignCenterH`, `#tcSrcAlignCenterV`).
-- Click handlers in `SourceToolbar.setup()` (`tutocast.js`): each button
-  sets `src.x` / `src.y` relative to `Engine.width` / `Engine.height`
-  and calls `SceneAutoSave.trigger()`.
-- i18n keys `alignLeft`, `alignRight`, `alignTop`, `alignBottom`,
-  `alignCenterH`, `alignCenterV` in FR, EN, AR.
+- `SettingsIO` object in `tutocast.js`: `exportAll()` gathers every `tc-*`
+  localStorage key into a JSON blob and triggers download;
+  `importAll(file)` reads a JSON file, sets all keys, and reloads the page.
+- Two buttons in Settings panel (General section): "Export settings" and
+  "Import settings" with a hidden file input for import.
+- i18n keys `exportSettings`, `importSettings`, `settingsExported`,
+  `settingsImported`, `settingsConfirm` in FR, EN, AR.
 
 ---
 
