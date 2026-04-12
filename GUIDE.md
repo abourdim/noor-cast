@@ -248,6 +248,69 @@ basic.forever(() => {
 
 Enable **"🤖 Overlay auto si le robot bouge fort"** in Settings → Recording. When the robot moves, accelerometer values appear on the canvas and are baked into the recording.
 
+### micro:bit advanced features
+
+All toggleable in Settings → Behavior:
+
+| Feature | What it does |
+|---------|-------------|
+| 🫨 Shake → switch scene | Shake the micro:bit hard to jump to a random scene |
+| 🎉 Shake → confetti | Shake triggers a confetti burst on canvas |
+| 👏 Button A → applause | Button A plays an applause sound effect instead of zoom |
+| 📈 Live graph | Real-time X/Y/Z accelerometer line chart on canvas |
+| 🌈 Motion trail | Rainbow dot trail showing the robot's movement path |
+| 🌡 Temperature | Displays micro:bit thermometer reading on canvas |
+| 💡 Light level | Shows ambient light as a bar on canvas |
+| 🔊 Sound level | micro:bit v2 mic level via UART (needs updated firmware) |
+| 🎯 Tilt → pan camera | Tilting shifts the crop window on the selected source |
+
+### Privacy features (for camera-shy teachers)
+
+- **🤖 Avatar mode:** Replaces the camera feed with a cartoon face. The mouth animates with your voice. Sources named "robot" get a robot antenna.
+- **🔲 Privacy blur:** Blurs the entire camera feed at 30px. You appear as a shape with colors but your face is unrecognizable.
+- Both toggleable per-source in **🎨 Style → Privacy**.
+- Or simply **don't add a face camera** — use screen + robot cam + mic only.
+
+---
+
+## 🔧 Assembly Tutorial Setup
+
+For teachers who film themselves **building and assembling robots** on a desk:
+
+### Recommended camera layout
+
+| Camera | What it films | Mount |
+|--------|--------------|-------|
+| Phone 1 (Iriun, portrait) | Hands + desk from above | Gooseneck clamp on desk edge (~8 EUR) |
+| Phone 2 (DroidCam) | Close-up on the robot | Small tripod at table level |
+| Screen share | Assembly instructions / datasheet | Browser or PDF |
+| USB webcam (optional) | Face for intro/outro | On laptop |
+
+### Cheap overhead mount options
+
+- **Phone gooseneck clamp** (~8 EUR on Amazon) — clips to desk edge, bends over workspace. Best option.
+- **Selfie stick + tape** — ghetto but works for quick setups
+- **Book stand** leaning over the desk with phone resting against it
+- **3D-printed arm** — if you have access to a printer, many free designs on Thingiverse
+
+### Tips for assembly filming
+
+1. **Use portrait mode** (Iriun) for the overhead shot — shows more of the vertical desk space
+2. **Good lighting matters more than camera quality** — a desk lamp pointed at the workspace makes a huge difference
+3. **Use the Freeze + Draw combo** (F then D) — freeze the overhead view, draw circles around components, annotate pin numbers
+4. **Drop markers** (M) at each assembly step — viewers get a clickable chapter timeline ("Step 1: Solder the motor driver", "Step 2: Connect the wheels")
+5. **Rename the "You" scene** to **"My Hands"** — double-click the scene button label to rename it
+6. **Use text stickers** for part labels — click ✏️ Add Text → type "Motor Driver" → position it near the component
+
+### Example workflow
+
+1. Scene 1 "Intro" (face cam): "Today we're building a line-following robot!"
+2. Scene 2 "Parts" (overhead cam): show all components laid out
+3. Scene 3 "Build" (overhead cam + close-up): assemble step by step, drop markers
+4. Scene 4 "Code" (screen share): write the program in MakeCode
+5. Scene 5 "Test" (robot cam): run the robot, show it working
+6. Scene 6 "Recap" (face cam): wrap up, show the finished robot
+
 ---
 
 ## Scenes
