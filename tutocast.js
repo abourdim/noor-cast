@@ -7246,7 +7246,8 @@ const Drag = {
     const srcs = Engine.sources;
     for (let i = srcs.length - 1; i >= 0; i--) {
       const s = srcs[i];
-      if (s.type === 'mic' || !s.visible || s.hidden || !s.video) continue;
+      if (s.type === 'mic' || !s.visible || s.hidden) continue;
+      if (s.type !== 'shape' && s.type !== 'image' && !s.video) continue;
       const inside = s.shape === 'circle' ? this._insideCircle(s, mx, my) : this._insideRect(s, mx, my);
       if (inside) return { kind: 'source', ref: s };
     }
@@ -8105,7 +8106,7 @@ const SourceLabels = {
     if (typeof Engine === 'undefined') return;
 
     const sources = Engine.sources.filter(s =>
-      s.type !== 'mic' && s.visible !== false && !s.hidden && s.video && s.video.readyState >= 2
+      s.type !== 'mic' && s.visible !== false && !s.hidden && (s.type === 'shape' || s.type === 'image' || (s.video && s.video.readyState >= 2))
     );
 
     const fontSize = 13;
