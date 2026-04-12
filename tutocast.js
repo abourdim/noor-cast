@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.132 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.130 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.132';
+const APP_VERSION = '0.7.130';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-13 00:00';
+const BUILD_DATE = '2026-04-12 23:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -106,6 +106,7 @@ const LANG = {
     spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
+    sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
@@ -763,6 +764,7 @@ const LANG = {
     spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
+    sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
@@ -1417,6 +1419,7 @@ const LANG = {
     spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
+    sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
@@ -2792,6 +2795,10 @@ const Engine = {
     // v0.7.33: refresh the sidebar minimap a few times per second so
     // it reflects live source movements without being a rAF hot path.
     Minimap.maybeRender();
+
+    // v0.7.130: source name labels — drawn on a separate overlay canvas
+    // (not on the main captureStream canvas) so they're teacher-only.
+    SourceLabels.render();
 
     // v0.7.64: scene transition fade overlay (drawn on top of everything)
     SceneTransition.render(ctx, width, height);
@@ -7132,6 +7139,91 @@ const GridOverlay = {
     ctx.moveTo(0, y2); ctx.lineTo(w, y2);
     ctx.stroke();
     ctx.restore();
+  },
+};
+
+/* v0.7.130 — On-canvas source name labels.
+   Draws a small dark pill with the source's .label text at the bottom-left
+   corner of each visible source. Rendered on a dedicated HTML <canvas>
+   overlay (tcSourceLabelsCanvas) that sits on top of the stage but is NOT
+   part of the captureStream pipeline — so labels are teacher-only and
+   never appear in recordings (same approach as GridOverlay).
+   Persisted in localStorage as tc-source-labels. Toggled via Settings. */
+const SourceLabels = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+
+  init() {
+    this._canvas = $('tcSourceLabelsCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-source-labels') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-source-labels', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    this.render();
+    showToast(this.visible
+      ? '🏷 ' + (t('sourceLabelsOn') || 'Source labels on')
+      : '🏷 ' + (t('sourceLabelsOff') || 'Source labels off'), 1200);
+  },
+
+  /** Called each frame from Engine.render() — redraws labels on the overlay canvas. */
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    if (!this.visible) return;
+    if (typeof Engine === 'undefined') return;
+
+    const sources = Engine.sources.filter(s =>
+      s.type !== 'mic' && s.visible !== false && !s.hidden && s.video && s.video.readyState >= 2
+    );
+
+    const fontSize = 13;
+    const padX = 7;
+    const padY = 4;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textBaseline = 'bottom';
+
+    sources.forEach(src => {
+      const text = src.label || '';
+      if (!text) return;
+      const tw = ctx.measureText(text).width;
+      const pillW = tw + padX * 2;
+      const pillH = fontSize + padY * 2;
+      const px = src.x + 6;
+      const py = src.y + src.h - 6 - pillH;
+      // dark pill background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.60)';
+      ctx.beginPath();
+      const r = 4;
+      ctx.moveTo(px + r, py);
+      ctx.lineTo(px + pillW - r, py);
+      ctx.quadraticCurveTo(px + pillW, py, px + pillW, py + r);
+      ctx.lineTo(px + pillW, py + pillH - r);
+      ctx.quadraticCurveTo(px + pillW, py + pillH, px + pillW - r, py + pillH);
+      ctx.lineTo(px + r, py + pillH);
+      ctx.quadraticCurveTo(px, py + pillH, px, py + pillH - r);
+      ctx.lineTo(px, py + r);
+      ctx.quadraticCurveTo(px, py, px + r, py);
+      ctx.closePath();
+      ctx.fill();
+      // white text
+      ctx.fillStyle = '#fff';
+      ctx.fillText(text, px + padX, py + pillH - padY);
+    });
   },
 };
 
@@ -13039,6 +13131,12 @@ function wireEvents() {
     asEl.checked = SceneAutoSave.enabled;
     asEl.addEventListener('change', (e) => SceneAutoSave.setEnabled(e.target.checked));
   }
+  // v0.7.130: source name labels on canvas
+  const slEl = $('tcSourceLabelsToggle');
+  if (slEl) {
+    slEl.checked = SourceLabels.visible;
+    slEl.addEventListener('change', () => SourceLabels.toggle());
+  }
   // v0.7.81: opt-in idle screensaver mode
   const ssEl = $('tcScreensaverToggle');
   if (ssEl) {
@@ -13221,6 +13319,7 @@ async function init() {
   SceneAutoAdvance.setup();  // v0.7.112
   SnapGrid.setup();          // v0.7.126
   GridOverlay.init();  // v0.7.115
+  SourceLabels.init(); // v0.7.130
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 

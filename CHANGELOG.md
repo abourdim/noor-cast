@@ -3,24 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.132 — 2026-04-13 (Enhanced Picture-in-Picture controls)
+## v0.7.130 — 2026-04-12 (On-canvas source name label)
 
-When Picture-in-Picture is active, the browser's media session now shows
-play/pause controls that map to Recorder start/stop. A small pulsing
-"PiP" badge in the tools bar indicates PiP status.
+Optional small text label showing the source name (e.g. "Camera 1", "Screen")
+drawn at the bottom-left corner of each source on the canvas. Toggle in
+Settings (default off). Teacher-only — labels never appear in recordings
+because they are rendered on a dedicated HTML overlay canvas, outside the
+captureStream pipeline (same approach as GridOverlay).
 
 ### Added
-- `PipPopout._setupMediaSession()` in `tutocast.js`: sets
-  `navigator.mediaSession.metadata` with title "TutoCast" and registers
-  `play` (Recorder.start) / `pause` (Recorder.stop) action handlers.
-- `PipPopout._clearMediaSession()` in `tutocast.js`: clears metadata and
-  action handlers when PiP deactivates.
-- `PipPopout._showBadge(visible)` in `tutocast.js`: toggles the
-  `#tcPipBadge` indicator in the tools bar.
-- `#tcPipBadge` element in `index.html` inside `#tcToolsBar`, hidden by
-  default, shown when PiP is active.
-- `.tc-pip-badge` CSS in `style.css`: indigo pill with pulsing animation.
-- i18n key `pipActive` in FR, EN, AR.
+- `SourceLabels` object in `tutocast.js`: `visible`, `toggle()`, `render()`,
+  `init()`, `load()`, `_save()`. Draws a dark rounded pill with white text
+  at each visible source's bottom-left corner on a separate overlay canvas
+  (`tcSourceLabelsCanvas`).
+- `<canvas id="tcSourceLabelsCanvas">` in `index.html` — overlay canvas that
+  sits on top of the stage but is NOT part of the captureStream pipeline.
+- Settings checkbox `#tcSourceLabelsToggle` in `index.html`, wired in
+  `tutocast.js`. Default: off. Persisted as `tc-source-labels`.
+- `SourceLabels.render()` called from `Engine.render()` each frame.
+- i18n keys `sourceLabels`, `sourceLabelsOn`, `sourceLabelsOff` in FR, EN, AR.
 
 ---
 

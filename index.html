@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.132</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.130</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -271,6 +271,8 @@
               <canvas id="tcOverlayCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
               <!-- v0.7.115: rule-of-thirds grid overlay — separate canvas so it never enters captureStream -->
               <canvas id="tcGridCanvas" width="1920" height="1080" class="tc-overlay tc-grid-overlay"></canvas>
+              <!-- v0.7.130: source name labels overlay — separate canvas so labels never enter captureStream -->
+              <canvas id="tcSourceLabelsCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
               <div class="tc-stage-hint" id="tcStageHint" data-i18n="stageHint">👆 Ajoute une source pour commencer</div>
               <div class="tc-countdown" id="tcCountdown"></div>
               <!-- v0.7.115: auto-advance countdown pill -->
@@ -1373,6 +1375,13 @@
             <label class="toggle-ctrl">
               <input type="checkbox" id="tcSceneAutoSaveToggle" class="checkbox-ctrl" checked />
               <span data-i18n="sceneAutoSave">💾 Sauvegarde auto de la scène quand les sources changent</span>
+            </label>
+          </div>
+          <!-- v0.7.130: source name labels on canvas -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcSourceLabelsToggle" class="checkbox-ctrl" />
+              <span data-i18n="sourceLabels">🏷 Afficher le nom des sources sur le canvas</span>
             </label>
           </div>
           <!-- v0.7.69: mic boost + noise gate -->
