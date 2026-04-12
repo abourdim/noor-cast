@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.157 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.158 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.157';
+const APP_VERSION = '0.7.158';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -5833,7 +5833,7 @@ const Recorder = {
   },
   autoResume() {
     if (!this._autoPaused || this.state !== 'paused') return;
-    try { this.recorder.resume(); } catch {}
+    try { this.recorder.resume(); } catch (e) { log('error', 'Recorder resume failed: ' + e.message); }
     this.pausedDuration += Date.now() - this.pausedAt;
     this.state = 'recording';
     this._autoPaused = false;
@@ -5868,7 +5868,7 @@ const Recorder = {
     if (!this.recorder) return;
     // Force a final ondataavailable flush before stopping. Firefox has
     // historically been unreliable with the implicit flush at stop().
-    try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch {}
+    try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch (e) { log('warn', 'requestData failed: ' + e.message); }
     try { this.recorder.stop(); } catch (e) { log(`✗ recorder.stop: ${e.message}`, 'error'); }
     this.state = 'idle';
     this.stopTimer();
@@ -12022,7 +12022,7 @@ const LiveCaptions = {
     this.recognition.onend = () => {
       // Chrome auto-stops after ~50s of silence. Restart if still enabled.
       if (this.running && this.enabled) {
-        try { this.recognition.start(); } catch {}
+        try { this.recognition.start(); } catch (e) { log('warn', 'Speech recognition start failed: ' + e.message); }
       }
     };
     try {
@@ -12700,6 +12700,14 @@ const Sensors = {
         ],
       });
       this.server = await this.device.gatt.connect();
+      // v0.7.158: handle BLE disconnect — reset values and notify teacher
+      this.device.addEventListener('gattserverdisconnected', () => {
+        log('warn', 'micro:bit disconnected');
+        showToast('⚠ micro:bit disconnected', 3000);
+        this.server = null;
+        if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
+        this.updatePanel();
+      });
       // Try accelerometer
       try {
         const accelSvc = await this.server.getPrimaryService('e95d0753-251d-470a-a062-fa1922dfa9a8');
@@ -15169,6 +15177,21 @@ window.addEventListener('beforeunload', () => {
       Recorder._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
     }
   } catch {}
+});
+
+// v0.7.158: global error handlers — prevent silent recording death
+window.onerror = (msg, src, line, col, err) => {
+  const detail = `${msg} at ${src}:${line}:${col}`;
+  try { log('error', `Uncaught error: ${detail}`); } catch {}
+  try { showToast(`⚠ Error: ${msg}`, 5000); } catch {}
+  console.error('[TutoCast] Uncaught:', err || detail);
+  return false; // let default handler also fire
+};
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason?.message || e.reason || 'unknown';
+  try { log('error', `Unhandled promise rejection: ${reason}`); } catch {}
+  try { showToast(`⚠ Async error: ${reason}`, 5000); } catch {}
+  console.error('[TutoCast] Unhandled rejection:', e.reason);
 });
 
 if (document.readyState === 'loading') {
