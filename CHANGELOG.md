@@ -3,24 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.104 — 2026-04-12 (Emoji reaction burst overlay)
+## v0.7.105 — 2026-04-12 (Draggable sticky-note overlay)
 
-Click the new "React" button in the tools bar to open a tiny palette of
-six emojis (thumbs-up, heart, party, fire, lightbulb, star).  Picking
-one launches ~12 floating copies from the bottom of the canvas that
-drift upward with random sway and fade out over ~2 seconds — just like
-YouTube / Twitch live reactions.  The particles are drawn on the output
-canvas via `ctx.fillText` so they are baked into the recording.
+Teachers can now add yellow sticky notes on top of the stage as HTML
+overlays. Notes are never rendered on canvas and never appear in
+recordings. Each note is a 180x120 yellow div with an editable text
+body, a draggable header, and a close button. Notes are persisted in
+localStorage under the `tc-sticky-notes` key.
 
 ### Added
-- `Reactions` object in `tutocast.js`: `_particles` array, `burst(emoji)`
-  spawns 12 particles, `render(ctx)` updates and draws each frame.
-- Tools-bar button `#tcReactBtn` with emoji palette `.tc-react-palette`
-  containing 6 clickable emoji buttons.
-- CSS for `.tc-react-palette` and `.tc-react-emoji` in `style.css`.
-- `reactBtn` i18n key in FR, EN and AR `LANG` dicts.
-- `Reactions.render()` call in `Engine.render()` after CursorTrail,
-  before Laser composite.
+- `StickyNotes` object in `tutocast.js`: manages notes array, add/remove/
+  update/save/render lifecycle. Pointer-based drag on the header bar,
+  contenteditable body, close button.
+- Tools-bar button `🗒️ Note` (`#tcStickyNoteBtn`) calling
+  `StickyNotes.add()`.
+- `<div class="tc-sticky-layer" id="tcStickyLayer">` inside `.tc-stage`
+  as the overlay container (pointer-events: none pass-through).
+- `.tc-sticky-note` CSS: yellow background (#fff7a8), shadow, slight
+  rotation, grab cursor on header, placeholder via `::before`.
+- i18n keys `stickyNoteBtn` and `stickyNotePlaceholder` in FR/EN/AR.
 
 ## v0.7.111 — 2026-04-11 (Always-visible audio level meter in tools bar)
 

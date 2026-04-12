@@ -4433,3 +4433,59 @@ body.log-open .app {
 }
 .tc-v100-btn:hover { transform: translateY(-2px); }
 .tc-v100-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent, #a3e635) 50%, black); }
+
+/* v0.7.105: draggable sticky-note overlay */
+.tc-sticky-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+}
+.tc-sticky-note {
+  position: absolute;
+  width: 180px;
+  min-height: 120px;
+  background: #fff7a8;
+  color: #333;
+  border-radius: 4px;
+  box-shadow: 2px 3px 10px rgba(0,0,0,.25);
+  transform: rotate(-1deg);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: .82rem;
+}
+.tc-sticky-head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 4px;
+  cursor: grab;
+  background: rgba(0,0,0,.06);
+  border-radius: 4px 4px 0 0;
+  min-height: 20px;
+}
+.tc-sticky-head:active { cursor: grabbing; }
+.tc-sticky-close {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+.tc-sticky-close:hover { color: #c00; }
+.tc-sticky-body {
+  flex: 1;
+  padding: 8px 10px;
+  outline: none;
+  min-height: 80px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.tc-sticky-body:empty::before {
+  content: attr(data-placeholder);
+  color: #bba;
+  pointer-events: none;
+}

@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.104';
+const APP_VERSION = '0.7.105';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 12:00';
@@ -103,7 +103,7 @@ const LANG = {
     ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
     spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
-    reactBtn: 'React',
+    stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
     drawOn: '✏️ Mode dessin',
@@ -718,7 +718,7 @@ const LANG = {
     ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
     spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
-    reactBtn: 'React',
+    stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
     drawOn: '✏️ Draw mode',
@@ -1330,7 +1330,7 @@ const LANG = {
     ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
     spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
-    reactBtn: 'تفاعل',
+    stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
     teleImportDone: '📂 تم استيراد النص',
@@ -2285,6 +2285,115 @@ const MicMeter = {
     for (let i = 1; i < 8; i++) {
       const x = (this.W / 8) * i;
       c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.H); c.stroke();
+    }
+  },
+};
+
+/* v0.7.105: StickyNotes — draggable yellow sticky-note overlays on the stage.
+   HTML-only (never on canvas / never in the recording). Each note is a 180×120
+   yellow div with a draggable header, close button, and contenteditable body.
+   Persisted in localStorage under 'tc-sticky-notes'. */
+const StickyNotes = {
+  notes: [],
+  _nextId: 1,
+
+  setup() {
+    try {
+      const raw = localStorage.getItem('tc-sticky-notes');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.notes)) this.notes = data.notes;
+        if (typeof data.nextId === 'number') this._nextId = data.nextId;
+      }
+    } catch {}
+    this._render();
+  },
+
+  add() {
+    const id = this._nextId++;
+    this.notes.push({
+      id,
+      text: '',
+      x: 40 + Math.random() * 120 | 0,
+      y: 40 + Math.random() * 80 | 0,
+    });
+    this._save();
+    this._render();
+  },
+
+  remove(id) {
+    this.notes = this.notes.filter(n => n.id !== id);
+    this._save();
+    this._render();
+  },
+
+  update(id, patch) {
+    const n = this.notes.find(n => n.id === id);
+    if (n) Object.assign(n, patch);
+    this._save();
+  },
+
+  _save() {
+    try {
+      localStorage.setItem('tc-sticky-notes', JSON.stringify({
+        notes: this.notes,
+        nextId: this._nextId,
+      }));
+    } catch {}
+  },
+
+  _render() {
+    const layer = $('tcStickyLayer');
+    if (!layer) return;
+    layer.innerHTML = '';
+    for (const note of this.notes) {
+      const el = document.createElement('div');
+      el.className = 'tc-sticky-note';
+      el.style.left = note.x + 'px';
+      el.style.top = note.y + 'px';
+
+      const head = document.createElement('div');
+      head.className = 'tc-sticky-head';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'tc-sticky-close';
+      closeBtn.textContent = '\u00d7';
+      closeBtn.addEventListener('click', () => this.remove(note.id));
+      head.appendChild(closeBtn);
+
+      // Dragging via header
+      head.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const startX = e.clientX, startY = e.clientY;
+        const origLeft = el.offsetLeft, origTop = el.offsetTop;
+        const onMove = (ev) => {
+          el.style.left = (origLeft + ev.clientX - startX) + 'px';
+          el.style.top  = (origTop  + ev.clientY - startY) + 'px';
+        };
+        const onUp = (ev) => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          this.update(note.id, {
+            x: parseInt(el.style.left) || 0,
+            y: parseInt(el.style.top)  || 0,
+          });
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+
+      const body = document.createElement('div');
+      body.className = 'tc-sticky-body';
+      body.contentEditable = 'true';
+      body.textContent = note.text || '';
+      body.setAttribute('data-placeholder', t('stickyNotePlaceholder') || 'Type your note here…');
+      body.addEventListener('input', () => {
+        this.update(note.id, { text: body.textContent });
+      });
+
+      el.appendChild(head);
+      el.appendChild(body);
+      layer.appendChild(el);
     }
   },
 };
@@ -11172,6 +11281,7 @@ function wireEvents() {
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
   $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());
   $('tcTeleBtn').addEventListener('click', () => Teleprompter.toggle());
+  $('tcStickyNoteBtn')?.addEventListener('click', () => StickyNotes.add());
   $('tcSnapBtn').addEventListener('click', () => snapshot());
 
   // Rec bar
@@ -11658,6 +11768,7 @@ async function init() {
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
   MicMeter.setup();     // v0.7.111
+  StickyNotes.setup();  // v0.7.105
 
   renderScenes();
   renderTextPresets();
