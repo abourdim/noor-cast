@@ -9937,6 +9937,9 @@ const SourceToolbar = {
       if (e.target.closest('#tcSrcStyleBtn') || e.target.closest('#tcSrcStylePopup')) return;
       pop.style.display = 'none';
     });
+    // v0.7.167: prevent Style popup interactions from deselecting the source
+    $('tcSrcStylePopup')?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    $('tcSrcStylePopup')?.addEventListener('mousedown', (e) => e.stopPropagation());
     // v0.7.167: shape color picker
     $('tcSrcShapeColor')?.addEventListener('input', (e) => {
       e.stopPropagation();
