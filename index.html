@@ -263,14 +263,28 @@
             <ul class="tc-src-list" id="tcSrcList"></ul>
 
             <!-- v0.7.167: add colored shapes to canvas -->
-            <div class="tc-side-title" style="margin-top:14px">🟩 Shapes</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
-              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('rect','#a3e635',200,150)">⬛</button>
-              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('circle','#38bdf8',200,200)">⚪</button>
-              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('rounded','#fb923c',200,150)">🔲</button>
-              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('star','#fbbf24',200,200)">⭐</button>
-              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('heart','#ef4444',200,200)">❤️</button>
-            </div>
+            <details style="margin-top:8px;margin-bottom:8px">
+              <summary class="tc-side-title" style="cursor:pointer;margin:0;list-style:none;display:flex;align-items:center;gap:6px">🟩 <span>Shapes</span></summary>
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px 0">
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#a3e635',200,150)" title="Rectangle">⬛</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#38bdf8',200,200)" title="Circle">⚪</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#fb923c',200,150)" title="Rounded">🔲</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('pill','#e879f9',240,100)" title="Pill">💊</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('hexagon','#22c55e',200,200)" title="Hexagon">⬢</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('octagon','#ef4444',200,200)" title="Octagon">🛑</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('diamond','#fbbf24',200,200)" title="Diamond">🔶</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('star','#fbbf24',200,200)" title="Star">⭐</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('heart','#ef4444',200,200)" title="Heart">❤️</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full background">🖤</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:0 0 6px">
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#1e293b',400,60)" title="Dark bar">➖</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#ffffff',400,60)" title="White bar">▬</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#ef4444',60,60)" title="Red dot">🔴</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#22c55e',60,60)" title="Green dot">🟢</button>
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#1e293b',500,300)" title="Dark card">🃏</button>
+              </div>
+            </details>
 
             <div class="tc-side-title" style="margin-top:14px">🤖 <span data-i18n="sensors">Capteurs</span></div>
             <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
