@@ -3,6 +3,30 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.118 — 2026-04-12 (Horizontal/vertical source flip)
+
+Each source (screen, camera, image) can now be flipped horizontally
+and/or vertically. Two toggle buttons in the floating source toolbar
+(`↔ Flip H` and `↕ Flip V`) control per-source `flipH` / `flipV`
+flags. Applied via `ctx.scale(-1,1)` / `ctx.scale(1,-1)` in
+`Engine.drawSource()`, inside the rotation wrapper so flips compose
+with rotation. Persists in custom scene snapshots and undo/redo.
+
+### Added
+- `flipH: false`, `flipV: false` defaults on every source at creation
+  (screen, camera, image).
+- `Engine.drawSource()`: `ctx.scale` flip transforms before content
+  draw, applied inside the rotation wrapper for both image and
+  video/screen paths.
+- Source toolbar: `<button id="tcSrcToolbarFlipH">↔</button>` +
+  `<button id="tcSrcToolbarFlipV">↕</button>` wired in
+  `SourceToolbar.setup()` as toggle buttons.
+- Flip props persisted in custom scene snapshots, scene restore,
+  source duplication, and `LayoutHistory` undo/redo.
+- i18n keys `flipH`, `flipV` in FR, EN, AR.
+
+---
+
 ## v0.7.117 — 2026-04-12 (Per-source colored border/frame)
 
 Each source (screen, camera, image) can now display an optional colored

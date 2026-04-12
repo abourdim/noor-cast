@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.117 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.118 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.117';
+const APP_VERSION = '0.7.118';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 18:00';
+const BUILD_DATE = '2026-04-12 19:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -376,6 +376,8 @@ const LANG = {
     sourceBorder: 'Bordure',
     borderColor: 'Couleur bordure',
     borderWidth: 'Épaisseur bordure',
+    flipH: 'Retourner H',
+    flipV: 'Retourner V',
     filter_none: '— Filtre —',
     filter_bw: 'N&B',
     filter_sepia: 'Sépia',
@@ -1005,6 +1007,8 @@ const LANG = {
     sourceBorder: 'Border',
     borderColor: 'Border color',
     borderWidth: 'Border width',
+    flipH: 'Flip H',
+    flipV: 'Flip V',
     filter_none: '— Filter —',
     filter_bw: 'B&W',
     filter_sepia: 'Sepia',
@@ -1626,6 +1630,8 @@ const LANG = {
     sourceBorder: 'إطار',
     borderColor: 'لون الإطار',
     borderWidth: 'سمك الإطار',
+    flipH: 'قلب أفقي',
+    flipV: 'قلب عمودي',
     filter_none: '— فلتر —',
     filter_bw: 'أبيض وأسود',
     filter_sepia: 'سيبيا',
@@ -2781,6 +2787,12 @@ const Engine = {
         ctx.rotate(rot);
         ctx.translate(-cx, -cy);
       }
+      // v0.7.118: horizontal/vertical flip
+      if (src.flipH || src.flipV) {
+        ctx.translate(cx, cy);
+        ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1);
+        ctx.translate(-cx, -cy);
+      }
       this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
       ctx.save();
       ctx.clip();
@@ -2822,6 +2834,14 @@ const Engine = {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rot);
+      ctx.translate(-cx, -cy);
+    }
+
+    // v0.7.118: horizontal/vertical flip
+    if (src.flipH || src.flipV) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1);
       ctx.translate(-cx, -cy);
     }
 
@@ -2934,6 +2954,8 @@ const Engine = {
       ctx.restore();
     }
 
+    // v0.7.118: close flip wrapper
+    if (src.flipH || src.flipV) ctx.restore();
     // Close the rotation wrapper opened earlier
     if (rot !== 0) ctx.restore();
     ctx.restore(); // v0.7.114: close globalAlpha wrapper
@@ -3116,6 +3138,7 @@ const Engine = {
         x: 0, y: 0, w: this.width, h: this.height,
         shape: 'rect', visible: true, mirrored: false,
         borderColor: '', borderWidth: 0,
+        flipH: false, flipV: false,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3164,6 +3187,7 @@ const Engine = {
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
         borderColor: '', borderWidth: 0,
+        flipH: false, flipV: false,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3207,6 +3231,7 @@ const Engine = {
           hidden: false,
           custom: true,
           borderColor: '', borderWidth: 0,
+          flipH: false, flipV: false,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3755,6 +3780,8 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        flipH: !!s.flipH,
+        flipV: !!s.flipV,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3803,6 +3830,8 @@ const Scenes = {
       target.shape = snap.shape;
       target.borderColor = snap.borderColor || '';
       target.borderWidth = snap.borderWidth || 0;
+      target.flipH = !!snap.flipH;
+      target.flipV = !!snap.flipV;
       target.custom = true;
     });
   },
@@ -3837,6 +3866,8 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        flipH: !!s.flipH,
+        flipV: !!s.flipV,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -8195,6 +8226,19 @@ const SourceToolbar = {
       s.borderWidth = Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
     });
     $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.118: horizontal/vertical flip toggles
+    $('tcSrcToolbarFlipH')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipH = !s.flipH;
+      showToast('↔ ' + t('flipH') + (s.flipH ? ' ✓' : ' ✗'), 1200);
+    });
+    $('tcSrcToolbarFlipV')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipV = !s.flipV;
+      showToast('↕ ' + t('flipV') + (s.flipV ? ' ✓' : ' ✗'), 1200);
+    });
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -8312,6 +8356,8 @@ const SourceContextMenu = {
         pinned: true,
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        flipH: !!s.flipH,
+        flipV: !!s.flipV,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
@@ -8929,6 +8975,8 @@ const LayoutHistory = {
       custom: s.custom,
       borderColor: s.borderColor || '',
       borderWidth: s.borderWidth || 0,
+      flipH: !!s.flipH,
+      flipV: !!s.flipV,
     }));
   },
 
@@ -8975,6 +9023,8 @@ const LayoutHistory = {
       s.custom = entry.custom;
       s.borderColor = entry.borderColor || '';
       s.borderWidth = entry.borderWidth || 0;
+      s.flipH = !!entry.flipH;
+      s.flipV = !!entry.flipV;
     });
     Engine.onSourcesChanged();
     this._suppress = false;
