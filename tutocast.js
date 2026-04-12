@@ -7825,6 +7825,7 @@ const Brand = {
   setEffect(e)        { this.logo.effect = e || 'none'; this.save(); },
   setBgRemoved(v)     { this.logo.bgRemoved = !!v; this._recomputeLogo(); this.save(); },
   setSloganColor(c)   { this.slogan.color = c || '#ffffff'; this.save(); },
+  setSloganOpacity(v) { this.slogan.opacity = Math.max(0, Math.min(1, parseFloat(v))); this.save(); },
   setLogoOpacity(v)   { this.logo.opacity = Math.max(0, Math.min(1, parseFloat(v))); this.save(); },
   setLogoFilter(f)    { this.logo.filter = f || 'none'; this.save(); },
   setLogoTint(c)      { this.logo.tint = c || null; this.save(); },
@@ -7952,6 +7953,7 @@ const Brand = {
       const S = this.slogan;
       this._measureSlogan();
       ctx.save();
+      ctx.globalAlpha = S.opacity ?? 1;
       const cx = S.x + S.w / 2, cy = S.y + S.h / 2;
       if (S.rotation) { ctx.translate(cx, cy); ctx.rotate(S.rotation); ctx.translate(-cx, -cy); }
       const f = TEXT_FONTS[S.font ?? 0] || TEXT_FONTS[0];
@@ -15653,6 +15655,7 @@ function wireEvents() {
         const st = $('tcSloganPanelText'); if (st) st.value = Brand.slogan.text || '';
         const sf = $('tcSloganPanelFont'); if (sf) sf.value = String(Brand.slogan.font ?? 0);
         const ss = $('tcSloganPanelSize'); if (ss) ss.value = Brand.slogan.size || 48;
+        const sop = $('tcSloganPanelOpacity'); if (sop) sop.value = Math.round((Brand.slogan.opacity ?? 1) * 100);
         _showBrandPanel('tcSloganPanel', Brand.slogan);
       }
     });
@@ -15681,6 +15684,7 @@ function wireEvents() {
   $('tcSloganPanelText')?.addEventListener('input', e => { Brand.setSlogan(e.target.value); });
   $('tcSloganPanelFont')?.addEventListener('change', e => { Brand.setSloganFont(parseInt(e.target.value)); });
   $('tcSloganPanelSize')?.addEventListener('input', e => { Brand.setSloganSize(parseInt(e.target.value)); });
+  $('tcSloganPanelOpacity')?.addEventListener('input', e => { Brand.setSloganOpacity(parseInt(e.target.value) / 100); });
   // Slogan color swatches
   document.querySelectorAll('#tcSloganPanel [data-sc]').forEach(btn => {
     btn.addEventListener('click', () => { Brand.setSloganColor(btn.dataset.sc); });
