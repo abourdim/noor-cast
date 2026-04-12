@@ -7229,6 +7229,11 @@ const Drag = {
      bottom to top, is: sources → text overlays → brand slogan → brand logo.
      Hit-test in reverse. */
   _hitTest(mx, my) {
+    // 0. Sensor overlay (draggable)
+    if (Sensors._overlayX !== null && Sensors._overlayW > 0 && Sensors.server?.connected) {
+      const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
+      if (this._insideRect(so, mx, my)) return { kind: 'sensorOverlay', ref: so };
+    }
     // 1. Brand slogan (top)
     if (Brand.hasSlogan()) {
       if (this._insideRect(Brand.slogan, mx, my)) return { kind: 'brandSlogan', ref: Brand.slogan };
@@ -7505,6 +7510,7 @@ const Drag = {
       } else {
         ref.x = nx; ref.y = ny;
         if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
+        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; }
       }
     } else {
       // resize
@@ -7552,6 +7558,9 @@ const Drag = {
       } else if (s.kind === 'brandSlogan') {
         Brand.resizeSlogan(newW);
         ref.x = newX; ref.y = newY;
+      } else if (s.kind === 'sensorOverlay') {
+        Sensors._overlayX = newX; Sensors._overlayY = newY;
+        if (s.mode === 'resize') Sensors._overlayScale = Math.max(0.5, Math.min(3, newW / s.startW));
       }
     }
     // Save brand position after any brand drag
@@ -13066,11 +13075,19 @@ const Sensors = {
     el.innerHTML = `🔘 A: ${v.a ?? '-'}   B: ${v.b ?? '-'}<br>📐 X: ${(v.x ?? 0).toFixed(2)}<br>   Y: ${(v.y ?? 0).toFixed(2)}<br>   Z: ${(v.z ?? 0).toFixed(2)}`;
   },
 
+  // Overlay position + size (draggable + resizable)
+  _overlayX: null, _overlayY: null, _overlayW: 0, _overlayH: 0,
+  _overlayOpacity: 0.85,
+  _overlayScale: 1.0,
+
   drawOverlay(ctx) {
     if (!this.values || !this.server || !this.server.connected) return;
     const v = this.values;
     const W = ctx.canvas.width, H = ctx.canvas.height;
+    // Default position: bottom-left
+    if (this._overlayX === null) { this._overlayX = 10; this._overlayY = H - 50; }
     ctx.save();
+    ctx.globalAlpha = this._overlayOpacity;
     // Compact 2-line strip at bottom-left with all data + LED mirror
     const line1 = `🤖 A:${v.a??'-'} B:${v.b??'-'}  X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`;
     const extras = [];
@@ -13086,7 +13103,19 @@ const Sensors = {
     const ledSize = 4, ledGap = 1, ledBlock = 5 * (ledSize + ledGap) + 4;
     const bw = tw + px * 2 + (this._lastLedState ? ledBlock + 8 : 0);
     const bh = line2 ? fs * 2 + 14 : fs + 10;
-    const bx = 10, by = H - bh - 10;
+    const sc = this._overlayScale;
+    const bx = this._overlayX, by = this._overlayY;
+    // Apply scale
+    ctx.translate(bx, by);
+    ctx.scale(sc, sc);
+    ctx.translate(-bx, -by);
+    // Store bbox for hit-test
+    this._overlayW = bw * sc; this._overlayH = bh * sc;
+    // Clamp to canvas
+    if (bx + this._overlayW > W) this._overlayX = W - this._overlayW;
+    if (by + this._overlayH > H) this._overlayY = H - this._overlayH;
+    if (this._overlayX < 0) this._overlayX = 0;
+    if (this._overlayY < 0) this._overlayY = 0;
     // Background
     ctx.fillStyle = 'rgba(0,0,0,.55)';
     ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
@@ -13099,7 +13128,7 @@ const Sensors = {
       ctx.fillStyle = 'rgba(163,230,53,.6)';
       ctx.fillText(line2, bx + px, by + fs + 8);
     }
-    // LED 5x5 mirror (tiny grid at right side of the bar)
+    // LED 5x5 mirror
     if (this._lastLedState) {
       const lx = bx + bw - ledBlock - 4;
       const ly = by + (bh - 5 * (ledSize + ledGap)) / 2;
@@ -15603,6 +15632,17 @@ function wireEvents() {
     stageEl.addEventListener('dblclick', (e) => {
       if (e.target.closest('.tc-brand-panel')) return;
       const [mx, my] = Drag._stageToCanvas(e);
+      // Double-click sensor overlay: cycle opacity 100→75→50→25→100
+      if (Sensors._overlayW > 0 && Sensors.server?.connected) {
+        const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
+        if (Drag._insideRect(so, mx, my)) {
+          const steps = [1, 0.75, 0.5, 0.25];
+          const cur = steps.indexOf(Sensors._overlayOpacity);
+          Sensors._overlayOpacity = steps[(cur + 1) % steps.length];
+          showToast(`Sensor overlay: ${Math.round(Sensors._overlayOpacity * 100)}%`, 1000);
+          return;
+        }
+      }
       if (Brand.hasLogo() && Drag._insideRect(Brand.logo, mx, my)) {
         const lp = $('tcLogoPanelSize'); if (lp) lp.value = Brand.logo.w || 120;
         const lo = $('tcLogoPanelOpacity'); if (lo) lo.value = Math.round((Brand.logo.opacity ?? 1) * 100);
