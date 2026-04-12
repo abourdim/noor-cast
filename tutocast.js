@@ -13067,7 +13067,7 @@ const Sensors = {
   },
 
   drawOverlay(ctx) {
-    if (!this.values) return;
+    if (!this.values || !this.server || !this.server.connected) return;
     const v = this.values;
     const W = ctx.canvas.width, H = ctx.canvas.height;
     ctx.save();
