@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.150</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.152</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -223,6 +223,10 @@
           <!-- v0.7.148: piano keyboard overlay for music teachers -->
           <button class="tc-tool-btn" id="tcPianoBtn" title="Piano overlay">
             <span class="tc-tool-icon">🎹</span><span class="tc-tool-label" data-i18n="pianoOverlay">Piano</span>
+          </button>
+          <!-- v0.7.152: cinematic letterbox bars -->
+          <button class="tc-tool-btn" id="tcLetterboxBtn" title="Cinematic letterbox bars">
+            <span class="tc-tool-icon">🎬</span><span class="tc-tool-label" data-i18n="letterboxBars">Bars</span>
           </button>
           <span class="tc-tools-sep"></span>
           <!-- v0.7.132: PiP active indicator badge -->
@@ -1389,6 +1393,18 @@
             <label class="toggle-ctrl">
               <input type="checkbox" id="tcRecElapsedToggle" class="checkbox-ctrl" />
               <span data-i18n="recElapsedLabel">⏱ Chrono écoulé pendant l'enregistrement</span>
+            </label>
+          </div>
+          <!-- v0.7.152: cinematic letterbox bars -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcLetterboxToggle" class="checkbox-ctrl" />
+              <span data-i18n="letterboxLabel">🎬 Barres cinématiques (letterbox)</span>
+            </label>
+            <label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem">
+              <span data-i18n="letterboxHeight">Hauteur des barres (%)</span>
+              <input type="range" id="tcLetterboxHeight" min="5" max="20" step="1" value="10" style="width:80px;margin-left:6px" />
+              <span id="tcLetterboxHeightVal" style="font-size:.75rem;margin-left:4px">10%</span>
             </label>
           </div>
           <!-- v0.7.34: cinematic intro/outro cards baked into the recording -->

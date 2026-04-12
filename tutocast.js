@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.150 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.152 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -333,6 +333,9 @@ const LANG = {
     gridSize: 'Taille grille (px)',
     countdownTimer: '⏳ Minuteur',
     pianoOverlay: '🎹 Piano',
+    letterboxBars: '🎬 Barres',
+    letterboxLabel: '🎬 Barres cinématiques (letterbox)',
+    letterboxHeight: 'Hauteur des barres (%)',
     colorPicker: '🎨 Pipette',
     colorCopied: 'Copié',
     sceneTime: 'Temps par scène',
@@ -1014,6 +1017,9 @@ const LANG = {
     gridSize: 'Grid size (px)',
     countdownTimer: '⏳ Timer',
     pianoOverlay: '🎹 Piano',
+    letterboxBars: '🎬 Bars',
+    letterboxLabel: '🎬 Cinematic letterbox bars',
+    letterboxHeight: 'Bar height (%)',
     colorPicker: '🎨 Color picker',
     colorCopied: 'Copied',
     sceneTime: 'Time per scene',
@@ -1687,6 +1693,9 @@ const LANG = {
     gridSize: 'حجم الشبكة (بكسل)',
     countdownTimer: '⏳ مؤقت',
     pianoOverlay: '🎹 بيانو',
+    letterboxBars: '🎬 أشرطة',
+    letterboxLabel: '🎬 أشرطة سينمائية (letterbox)',
+    letterboxHeight: 'ارتفاع الأشرطة (%)',
     colorPicker: '🎨 منتقي اللون',
     colorCopied: 'تم النسخ',
     sceneTime: 'الوقت لكل مشهد',
@@ -2915,6 +2924,9 @@ const Engine = {
 
     // v0.7.148: piano keyboard overlay for music teachers
     PianoOverlay.render(ctx, width, height);
+
+    // v0.7.152: cinematic letterbox bars (top + bottom black bars)
+    Letterbox.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -10845,6 +10857,68 @@ const PauseOverlay = {
   },
 };
 
+/* ─────────── Letterbox — cinematic black bars (top + bottom)
+
+   Toggle-able cinematic letterbox bars drawn at top and bottom of the canvas.
+   Adjustable height (5-20% of canvas). Visible in recordings. Gives a
+   movie-like feel. Toggle via the tools-bar 🎬 Bars button or the Settings
+   checkbox. Rendered by Engine.render() so the bars are baked into output. */
+const Letterbox = {
+  visible: false,
+  height: 0.1,  // fraction of canvas height (10% default)
+
+  _load() {
+    try {
+      const raw = localStorage.getItem('tc-letterbox');
+      if (raw) {
+        const obj = JSON.parse(raw);
+        this.visible = !!obj.visible;
+        if (typeof obj.height === 'number') this.height = Math.max(0.05, Math.min(0.2, obj.height));
+      }
+    } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-letterbox', JSON.stringify({ visible: this.visible, height: this.height })); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    const btn = $('tcLetterboxBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    const chk = $('tcLetterboxToggle');
+    if (chk) chk.checked = this.visible;
+    this._save();
+  },
+
+  setVisible(v) {
+    this.visible = v;
+    const btn = $('tcLetterboxBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    const chk = $('tcLetterboxToggle');
+    if (chk) chk.checked = this.visible;
+    this._save();
+  },
+
+  setHeight(h) {
+    this.height = Math.max(0.05, Math.min(0.2, h));
+    this._save();
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const barH = Math.round(H * this.height);
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    // Top bar
+    ctx.fillRect(0, 0, W, barH);
+    // Bottom bar
+    ctx.fillRect(0, H - barH, W, barH);
+    ctx.restore();
+  },
+};
+Letterbox._load();
+
 /* ─────────── PianoOverlay — on-canvas 2-octave keyboard for music teachers
 
    Draws a small piano keyboard (C4-B5) at the bottom of the canvas.
@@ -14057,6 +14131,7 @@ function wireEvents() {
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
   $('tcPianoBtn')?.addEventListener('click', () => PianoOverlay.toggle());
+  $('tcLetterboxBtn')?.addEventListener('click', () => Letterbox.toggle());
   $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
   $('tcTextStampBtn')?.addEventListener('click', () => TextStamps.togglePopup());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
@@ -14376,6 +14451,27 @@ function wireEvents() {
     reEl.checked = RecElapsed.visible;
     reEl.addEventListener('change', (e) => RecElapsed.setVisible(e.target.checked));
   }
+
+  // v0.7.152: cinematic letterbox bars toggle + height slider
+  const lbEl = $('tcLetterboxToggle');
+  if (lbEl) {
+    lbEl.checked = Letterbox.visible;
+    lbEl.addEventListener('change', (e) => Letterbox.setVisible(e.target.checked));
+  }
+  const lbHEl = $('tcLetterboxHeight');
+  const lbHVal = $('tcLetterboxHeightVal');
+  if (lbHEl) {
+    lbHEl.value = Math.round(Letterbox.height * 100);
+    if (lbHVal) lbHVal.textContent = Math.round(Letterbox.height * 100) + '%';
+    lbHEl.addEventListener('input', (e) => {
+      const pct = parseInt(e.target.value, 10);
+      Letterbox.setHeight(pct / 100);
+      if (lbHVal) lbHVal.textContent = pct + '%';
+    });
+  }
+  // Sync letterbox button active state on load
+  const lbBtn = $('tcLetterboxBtn');
+  if (lbBtn) lbBtn.classList.toggle('active', Letterbox.visible);
 
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');

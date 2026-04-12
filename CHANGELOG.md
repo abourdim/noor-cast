@@ -3,6 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.152 — 2026-04-12 (Cinematic letterbox bars)
+
+Toggle-able cinematic black bars (letterbox) drawn at top and bottom of the
+canvas. Adjustable height (5-20% of canvas). Visible in recordings. Gives a
+movie-like feel.
+
+### Added
+- `Letterbox` object with `visible`, `height` (default 10%), `toggle()`,
+  `setVisible(v)`, `setHeight(h)`, `render(ctx, W, H)`.
+- Two solid black rectangles: top `(0, 0, W, H*height)` and bottom
+  `(0, H-H*height, W, H*height)`.
+- Settings panel: toggle checkbox (`tcLetterboxToggle`) + height slider
+  (`tcLetterboxHeight`, 5-20%).
+- Persists via `localStorage` key `tc-letterbox`.
+- Tools bar button `🎬 Bars` (`tcLetterboxBtn`).
+- `Engine.render()` calls `Letterbox.render()` after PianoOverlay.
+- i18n keys: `letterboxBars`, `letterboxLabel`, `letterboxHeight` (fr/en/ar).
+
 ## v0.7.148 — 2026-04-12 (Keyboard piano overlay for music teachers)
 
 A small two-octave piano keyboard (C4-B5) drawn at the bottom of the canvas,
