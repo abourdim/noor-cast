@@ -3,24 +3,23 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.125 — 2026-04-12 (Per-scene time tracker)
+## v0.7.126 — 2026-04-12 (Snap-to-grid when dragging sources)
 
-Track how long each scene has been active during a recording. A small
-`MM:SS` badge appears on each scene button in the sidebar, updating
-every second. Resets when a new recording starts. Helps teachers know
-how long they spent on each scene.
+When dragging a source on the canvas, its position can now snap to a
+configurable pixel grid (default 20 px). Toggle via the Settings panel
+checkbox; grid size adjustable from 10 to 100 px. Independent of the
+existing Alt-key 48 px grid snap.
 
 ### Added
-- `SceneTimer` object in `tutocast.js`: `_times`, `_activeKey`,
-  `_lastSwitch`, `start()`, `stop()`, `onSceneSwitch(newKey)`,
-  `_tick()`, `_updateBadges()`, `clearBadges()`.
-- Hook in `Recorder.start()` → `SceneTimer.start()`.
-- Hook in `Recorder._stopImmediate()` → `SceneTimer.stop()`.
-- Hook in `Scenes.switch()` → `SceneTimer.onSceneSwitch(key)`.
-- `.tc-scene-time` badge span appended to each scene button in
-  `renderScenes()` via `_updateBadges()`.
-- CSS for `.tc-scene-time` in `style.css`.
-- i18n key `sceneTime` in FR, EN, AR.
+- `SnapGrid` object in `tutocast.js`: `enabled`, `size`, `setup()`,
+  `setEnabled(v)`, `setSize(px)`, `snap(val)` -- rounds to nearest
+  grid multiple.
+- Settings checkbox `#tcSnapGridChk` and number input `#tcSnapGridSize`
+  in `index.html`, wired in the init section.
+- Persisted in `tc-snap-grid` / `tc-snap-grid-size` localStorage keys.
+- Snap applied in `Drag._onMove()` for sources when enabled (before
+  anchor and alignment-guide snapping).
+- i18n keys `snapGrid`, `gridSize` in FR, EN, AR.
 
 ---
 

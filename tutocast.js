@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.125 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.126 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.125';
+const APP_VERSION = '0.7.126';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:00';
+const BUILD_DATE = '2026-04-12 23:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -313,6 +313,8 @@ const LANG = {
     screensaverHint: 'Touche une touche pour réveiller',
     autoAdvScenes: '⏩ Avance auto des scènes',
     autoAdvSec: 'Intervalle (sec)',
+    snapGrid: '📐 Aligner sur la grille',
+    gridSize: 'Taille grille (px)',
     countdownTimer: '⏳ Minuteur',
     colorPicker: '🎨 Pipette',
     colorCopied: 'Copié',
@@ -956,6 +958,8 @@ const LANG = {
     screensaverHint: 'Press any key to wake up',
     autoAdvScenes: '⏩ Auto-advance scenes',
     autoAdvSec: 'Interval (sec)',
+    snapGrid: '📐 Snap to grid',
+    gridSize: 'Grid size (px)',
     countdownTimer: '⏳ Timer',
     colorPicker: '🎨 Color picker',
     colorCopied: 'Copied',
@@ -1591,6 +1595,8 @@ const LANG = {
     screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
     autoAdvScenes: '⏩ تقدم تلقائي للمشاهد',
     autoAdvSec: 'الفاصل الزمني (ثانية)',
+    snapGrid: '📐 محاذاة إلى الشبكة',
+    gridSize: 'حجم الشبكة (بكسل)',
     countdownTimer: '⏳ مؤقت',
     colorPicker: '🎨 منتقي اللون',
     colorCopied: 'تم النسخ',
@@ -5978,6 +5984,37 @@ const Whiteboard = {
    Corner handles (within 30 canvas-px of any corner of a hit layer)
    start a resize instead of a drag. Sources keep aspect ratio on resize;
    text overlays scale their font size instead. */
+
+/* v0.7.126 — configurable snap-to-grid when dragging sources.
+   Toggle via Settings checkbox; grid size in px (10-100, default 20). */
+const SnapGrid = {
+  enabled: false,
+  size: 20,
+
+  setup() {
+    try { this.enabled = localStorage.getItem('tc-snap-grid') === '1'; } catch {}
+    try {
+      const s = parseInt(localStorage.getItem('tc-snap-grid-size'), 10);
+      if (s >= 10 && s <= 100) this.size = s;
+    } catch {}
+  },
+
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-snap-grid', v ? '1' : '0'); } catch {}
+  },
+
+  setSize(px) {
+    px = Math.max(10, Math.min(100, px || 20));
+    this.size = px;
+    try { localStorage.setItem('tc-snap-grid-size', String(px)); } catch {}
+  },
+
+  snap(val) {
+    return Math.round(val / this.size) * this.size;
+  },
+};
+
 const Drag = {
   state: null,  // { kind, ref, mode: 'move'|'resize', corner, offsetX, offsetY, startW, startH, startX, startY, aspect }
   selectedSourceId: null,   // v0.7.2: track the last-clicked source for Delete-key removal
@@ -6298,6 +6335,11 @@ const Drag = {
         Drag._gridVisible = true;
       } else {
         Drag._gridVisible = false;
+      }
+      // v0.7.126: settings-based snap-to-grid (independent of Alt key)
+      if (SnapGrid.enabled && s.kind === 'source' && !e.altKey) {
+        nx = SnapGrid.snap(nx);
+        ny = SnapGrid.snap(ny);
       }
       // Snap for sources only (keeps kid layouts clean)
       if (s.kind === 'source') {
@@ -12724,6 +12766,17 @@ function wireEvents() {
     aaSec.value = SceneAutoAdvance.intervalSec;
     aaSec.addEventListener('change', (e) => SceneAutoAdvance.setInterval(parseInt(e.target.value, 10)));
   }
+  // v0.7.126: snap-to-grid settings
+  const sgChk = $('tcSnapGridChk');
+  const sgSize = $('tcSnapGridSize');
+  if (sgChk) {
+    sgChk.checked = SnapGrid.enabled;
+    sgChk.addEventListener('change', (e) => SnapGrid.setEnabled(e.target.checked));
+  }
+  if (sgSize) {
+    sgSize.value = SnapGrid.size;
+    sgSize.addEventListener('change', (e) => SnapGrid.setSize(parseInt(e.target.value, 10)));
+  }
   // v0.7.28: History clear button
   $('tcHistoryClearBtn')?.addEventListener('click', () => {
     if (History.entries.length === 0) return;
@@ -12869,6 +12922,7 @@ async function init() {
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
   SceneAutoAdvance.setup();  // v0.7.112
+  SnapGrid.setup();          // v0.7.126
   GridOverlay.init();  // v0.7.115
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109

@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.124</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.126</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -1197,6 +1197,17 @@
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
               <label class="sidebar-label" data-i18n="autoAdvSec" style="flex:0 0 auto;margin:0">Intervalle (sec)</label>
               <input type="number" id="tcAutoAdvSec" class="sidebar-select" min="5" max="600" value="30" style="width:80px" />
+            </div>
+          </div>
+          <!-- v0.7.126: snap-to-grid when dragging sources -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcSnapGridChk" class="checkbox-ctrl" />
+              <span data-i18n="snapGrid">📐 Aligner sur la grille</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <label class="sidebar-label" data-i18n="gridSize" style="flex:0 0 auto;margin:0">Taille grille (px)</label>
+              <input type="number" id="tcSnapGridSize" class="sidebar-select" min="10" max="100" value="20" style="width:80px" />
             </div>
           </div>
           <!-- v0.7.113: canvas countdown timer duration -->
