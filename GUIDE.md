@@ -344,9 +344,9 @@ There is **no limit** on the number of cameras. Add as many as your computer can
 | USB webcam | Plug in USB, select in dropdown → + Add | ~10-15 EUR |
 | Second USB webcam | Plug in another, shows as separate entry → + Add | ~10-15 EUR |
 | iPhone (Mac only) | Same Wi-Fi + Apple ID → appears automatically | Free |
-| Phone via DroidCam | Install app + driver → "DroidCam Source" in dropdown | Free |
-| Phone via Iriun | Install app + driver → "Iriun Webcam" in dropdown | Free |
-| Phone via Camo | Install app + driver → "Camo" in dropdown | Free / paid |
+| Phone via [DroidCam](https://www.dev47apps.com/droidcam/) | Install app + driver → "DroidCam Source" in dropdown | Free |
+| Phone via [Iriun](https://iriun.com) | Install app + driver → "Iriun Webcam" in dropdown | Free |
+| Phone via [Camo](https://reincubate.com/camo/) | Install app + driver → "Camo" in dropdown | Free / paid |
 
 You can **mix and match** — e.g. laptop webcam + 1 USB cam + 2 phones via DroidCam = 4 cameras. Each click on **+ Camera** adds a new independent source.
 
@@ -367,7 +367,7 @@ TutoCast can read your **micro:bit sensors live** via Web Bluetooth:
 4. **Button A** = zoom in, **Button B** = drop a chapter marker
 5. Tilting the micro:bit drives the **laser pointer** on screen
 
-**MakeCode code** (flash this to your micro:bit to enable BLE):
+**[MakeCode](https://makecode.microbit.org/#editor) code** (flash this to your micro:bit to enable BLE):
 
 ```javascript
 bluetooth.startAccelerometerService()
