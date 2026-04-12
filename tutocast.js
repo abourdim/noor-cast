@@ -9772,6 +9772,12 @@ const SourceToolbar = {
       SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.167: debounce flag — skip updatePosition sync for 500ms after user edits
+    this._userEditUntil = 0;
+    const markUserEdit = () => { SourceToolbar._userEditUntil = Date.now() + 500; };
+    // Wire all Style popup inputs to mark user edit
+    $('tcSrcStylePopup')?.addEventListener('input', markUserEdit);
+    $('tcSrcStylePopup')?.addEventListener('change', markUserEdit);
     // v0.7.114: per-source opacity
     $('tcSrcOpacity')?.addEventListener('input', (e) => {
       e.stopPropagation();
@@ -10011,6 +10017,9 @@ const SourceToolbar = {
     this.el.style.left = `${vpLeft}px`;
     this.el.style.top = `${vpTop}px`;
     // v0.7.15: sync the shape select to the current source shape
+    // v0.7.167: skip Style popup value sync while user is actively editing
+    const userEditing = Date.now() < (this._userEditUntil || 0);
+
     const shapeSel = $('tcSrcToolbarShape');
     if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
       shapeSel.value = s.shape || 'rect';
@@ -10025,10 +10034,10 @@ const SourceToolbar = {
     const shapeColorSec = $('tcSspShapeColor');
     if (shapeColorSec) shapeColorSec.style.display = s.type === 'shape' ? '' : 'none';
     const shapeColorEl = $('tcSrcShapeColor');
-    if (shapeColorEl && s.type === 'shape' && document.activeElement !== shapeColorEl) shapeColorEl.value = s.shapeColor || '#a3e635';
+    if (shapeColorEl && s.type === 'shape' && !userEditing) shapeColorEl.value = s.shapeColor || '#a3e635';
     // v0.7.114: sync opacity (skip if user is actively dragging the slider)
     const opEl = $('tcSrcOpacity');
-    if (opEl && document.activeElement !== opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);
+    if (opEl && !userEditing) opEl.value = Math.round((s.opacity ?? 1) * 100);
     // v0.7.151: sync filter
     const fiEl = $('tcSrcFilter');
     if (fiEl) fiEl.value = s.filter || 'none';
@@ -10038,7 +10047,7 @@ const SourceToolbar = {
       bcEl.value = s.borderColor || '#ffffff';
     }
     const bwEl = $('tcSrcBorderWidth');
-    if (bwEl && document.activeElement !== bwEl && bwEl.value !== String(s.borderWidth || 0)) {
+    if (bwEl && !userEditing && bwEl.value !== String(s.borderWidth || 0)) {
       bwEl.value = s.borderWidth || 0;
     }
     // v0.7.128: sync shadow controls
@@ -10047,25 +10056,25 @@ const SourceToolbar = {
       scEl.value = s.shadowColor || '#000000';
     }
     const sbEl = $('tcSrcShadowBlur');
-    if (sbEl && document.activeElement !== sbEl && sbEl.value !== String(s.shadowBlur || 0)) {
+    if (sbEl && !userEditing && sbEl.value !== String(s.shadowBlur || 0)) {
       sbEl.value = s.shadowBlur || 0;
     }
     const sxEl = $('tcSrcShadowOffsetX');
-    if (sxEl && document.activeElement !== sxEl && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
+    if (sxEl && !userEditing && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
       sxEl.value = s.shadowOffsetX ?? 5;
     }
     const syEl = $('tcSrcShadowOffsetY');
-    if (syEl && document.activeElement !== syEl && syEl.value !== String(s.shadowOffsetY ?? 5)) {
+    if (syEl && !userEditing && syEl.value !== String(s.shadowOffsetY ?? 5)) {
       syEl.value = s.shadowOffsetY ?? 5;
     }
     // v0.7.144: sync corner radius slider
     const crEl = $('tcSrcCornerRadius');
-    if (crEl && document.activeElement !== crEl && crEl.value !== String(s.cornerRadius || 0)) {
+    if (crEl && !userEditing && crEl.value !== String(s.cornerRadius || 0)) {
       crEl.value = s.cornerRadius || 0;
     }
     // v0.7.155: sync badge text + color
     const btEl = $('tcSrcBadgeText');
-    if (btEl && document.activeElement !== btEl && btEl.value !== (s.badgeText || '')) {
+    if (btEl && !userEditing && btEl.value !== (s.badgeText || '')) {
       btEl.value = s.badgeText || '';
     }
     const bcBadgeEl = $('tcSrcBadgeColor');
@@ -10077,13 +10086,13 @@ const SourceToolbar = {
       const el = $('tcSrcCrop' + dir);
       if (!el) return;
       const v = String(Math.round((s['crop' + dir] || 0) * 100));
-      if (document.activeElement !== el && el.value !== v) el.value = v;
+      if (!userEditing && el.value !== v) el.value = v;
     });
     // v0.7.123: sync rotation slider
     const rotEl = $('tcSrcRotation');
     if (rotEl) {
       const deg = String(Math.round((s.rotation || 0) * 180 / Math.PI));
-      if (document.activeElement !== rotEl && rotEl.value !== deg) rotEl.value = deg;
+      if (!userEditing && rotEl.value !== deg) rotEl.value = deg;
       const valEl = $('tcSrcRotationVal');
       if (valEl) valEl.textContent = deg + '\u00B0';
     }
