@@ -260,17 +260,43 @@
               <span id="tcBtStatus" style="font-size:.7rem;opacity:.6;display:block;text-align:center;margin-top:2px"></span>
               <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
               <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
-              <details>
-                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">🎮 Pan/Tilt</summary>
-                <div style="padding:6px 0;text-align:center">
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;max-width:120px;margin:0 auto">
-                    <div></div><button class="tc-btn-full" id="tcTiltUp" style="padding:4px;font-size:14px">⬆</button><div></div>
-                    <button class="tc-btn-full" id="tcPanLeft" style="padding:4px;font-size:14px">⬅</button>
-                    <button class="tc-btn-full" id="tcPanCenter" style="padding:4px;font-size:11px">⏺</button>
-                    <button class="tc-btn-full" id="tcPanRight" style="padding:4px;font-size:14px">➡</button>
-                    <div></div><button class="tc-btn-full" id="tcTiltDown" style="padding:4px;font-size:14px">⬇</button><div></div>
+              <!-- v0.7.173: GamePad (inspired by bit-playground) -->
+              <details open>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.7;list-style:none;font-weight:700">🎮 GamePad</summary>
+                <div style="padding:8px 0;text-align:center">
+                  <div class="tc-dpad">
+                    <div></div><button class="tc-dpad-btn" id="tcTiltUp">↑</button><div></div>
+                    <button class="tc-dpad-btn" id="tcPanLeft">←</button>
+                    <button class="tc-dpad-center" id="tcPanCenter"></button>
+                    <button class="tc-dpad-btn" id="tcPanRight">→</button>
+                    <div></div><button class="tc-dpad-btn" id="tcTiltDown">↓</button><div></div>
                   </div>
-                  <div style="font-size:.65rem;opacity:.5;margin-top:4px">P:<span id="tcPanVal">90</span> T:<span id="tcTiltVal">90</span></div>
+                  <button class="tc-fire-btn" id="tcFireBtn">🔥 FIRE</button>
+                  <div style="font-size:.6rem;opacity:.4;margin-top:4px">P:<span id="tcPanVal">90</span>° T:<span id="tcTiltVal">90</span>°</div>
+                </div>
+              </details>
+              <!-- v0.7.173: Servos (inspired by bit-playground) -->
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.7;list-style:none;font-weight:700">⚙ Servos</summary>
+                <div style="padding:6px 0">
+                  <div style="font-size:.7rem;opacity:.7;margin-bottom:2px">Servo 1 (Pan · P1)</div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input type="range" id="tcServo1Slider" min="0" max="180" value="90" style="flex:1" />
+                    <span id="tcServo1Val" style="font-size:.75rem;font-weight:700;min-width:30px">90°</span>
+                  </div>
+                  <div style="display:flex;gap:4px;margin-top:3px">
+                    <button class="tc-btn-full" id="tcServo1Move" style="flex:1;font-size:.65rem;padding:3px;background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3)">Move</button>
+                    <button class="tc-btn-full" id="tcServo1Stop" style="flex:1;font-size:.65rem;padding:3px;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">Stop</button>
+                  </div>
+                  <div style="font-size:.7rem;opacity:.7;margin:8px 0 2px">Servo 2 (Tilt · P2)</div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input type="range" id="tcServo2Slider" min="0" max="180" value="90" style="flex:1" />
+                    <span id="tcServo2Val" style="font-size:.75rem;font-weight:700;min-width:30px">90°</span>
+                  </div>
+                  <div style="display:flex;gap:4px;margin-top:3px">
+                    <button class="tc-btn-full" id="tcServo2Move" style="flex:1;font-size:.65rem;padding:3px;background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3)">Move</button>
+                    <button class="tc-btn-full" id="tcServo2Stop" style="flex:1;font-size:.65rem;padding:3px;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">Stop</button>
+                  </div>
                 </div>
               </details>
               <details>

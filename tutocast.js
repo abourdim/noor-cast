@@ -15131,13 +15131,30 @@ function wireEvents() {
   // v0.7.170: test connection button
   $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
   // v0.7.170: pan/tilt D-pad
+  // v0.7.173: GamePad D-pad (inspired by bit-playground)
   const SERVO_STEP = 10;
-  // D-pad: show arrow FIRST, then move servo (arrow shows while servo moves)
   $('tcPanLeft')?.addEventListener('click', () => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
   $('tcPanRight')?.addEventListener('click', () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
   $('tcTiltUp')?.addEventListener('click', () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
   $('tcTiltDown')?.addEventListener('click', () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
   $('tcPanCenter')?.addEventListener('click', () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
+  // FIRE button
+  $('tcFireBtn')?.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
+  // v0.7.173: Servo sliders (inspired by bit-playground)
+  $('tcServo1Slider')?.addEventListener('input', e => { $('tcServo1Val').textContent = e.target.value + '°'; });
+  $('tcServo1Move')?.addEventListener('click', () => {
+    const angle = parseInt($('tcServo1Slider')?.value || 90);
+    Sensors._panAngle = angle; $('tcPanVal').textContent = angle;
+    Sensors.sendUart('P:' + angle);
+  });
+  $('tcServo1Stop')?.addEventListener('click', () => { Sensors.sendUart('P:OFF'); });
+  $('tcServo2Slider')?.addEventListener('input', e => { $('tcServo2Val').textContent = e.target.value + '°'; });
+  $('tcServo2Move')?.addEventListener('click', () => {
+    const angle = parseInt($('tcServo2Slider')?.value || 90);
+    Sensors._tiltAngle = angle; $('tcTiltVal').textContent = angle;
+    Sensors.sendUart('TI:' + angle);
+  });
+  $('tcServo2Stop')?.addEventListener('click', () => { Sensors.sendUart('TI:OFF'); });
   // v0.7.170: LED 5x5 grid editor
   // v0.7.170: LED 5x5 grid with drag-to-paint (inspired by bit-playground)
   const ledGrid = $('tcLedGrid');

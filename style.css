@@ -2813,6 +2813,38 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
   color: #a3e635; overflow-x: auto; white-space: pre; max-height: 50vh;
 }
 
+/* v0.7.173: GamePad D-pad + FIRE (inspired by bit-playground) */
+.tc-dpad {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+  max-width: 140px; margin: 0 auto 8px;
+}
+.tc-dpad-btn {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: #3b82f6; color: #fff; border: none;
+  font-size: 18px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .1s, filter .1s;
+  box-shadow: 0 3px 8px rgba(59,130,246,.4);
+}
+.tc-dpad-btn:hover { filter: brightness(1.2); }
+.tc-dpad-btn:active { transform: scale(.9); }
+.tc-dpad-center {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.2);
+  cursor: pointer; margin: auto;
+}
+.tc-dpad-center:active { background: rgba(255,255,255,.3); }
+.tc-fire-btn {
+  display: block; margin: 0 auto; padding: 8px 28px;
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  color: #fff; border: none; border-radius: 24px;
+  font-size: .85rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(239,68,68,.5);
+  transition: transform .1s;
+}
+.tc-fire-btn:hover { filter: brightness(1.1); }
+.tc-fire-btn:active { transform: scale(.92); }
+
 /* v0.7.132: PiP active indicator badge in the tools bar */
 .tc-pip-badge {
   display: inline-block;
