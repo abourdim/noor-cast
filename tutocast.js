@@ -13071,21 +13071,47 @@ const Sensors = {
     const v = this.values;
     const W = ctx.canvas.width, H = ctx.canvas.height;
     ctx.save();
-    // Compact inline strip at bottom-left
-    const text = `🤖 A:${v.a??'-'} B:${v.b??'-'}  X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`;
-    ctx.font = '600 16px ui-monospace, monospace';
-    const tm = ctx.measureText(text);
-    const px = 8, py = 4;
-    const bw = tm.width + px * 2, bh = 22;
+    // Compact 2-line strip at bottom-left with all data + LED mirror
+    const line1 = `🤖 A:${v.a??'-'} B:${v.b??'-'}  X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`;
+    const extras = [];
+    if (v.temp != null) extras.push(`${v.temp}°C`);
+    if (v.light != null) extras.push(`💡${v.light}`);
+    if (v.sound != null) extras.push(`🔊${v.sound}`);
+    if (v.compass != null) extras.push(`🧭${v.compass}°`);
+    const line2 = extras.join('  ');
+    const fs = 14;
+    ctx.font = `600 ${fs}px ui-monospace, monospace`;
+    const tw = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
+    const px = 8;
+    const ledSize = 4, ledGap = 1, ledBlock = 5 * (ledSize + ledGap) + 4;
+    const bw = tw + px * 2 + (this._lastLedState ? ledBlock + 8 : 0);
+    const bh = line2 ? fs * 2 + 14 : fs + 10;
     const bx = 10, by = H - bh - 10;
+    // Background
     ctx.fillStyle = 'rgba(0,0,0,.55)';
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
+    // Text
     ctx.fillStyle = '#a3e635';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, bx + px, by + bh / 2);
+    ctx.textBaseline = 'top';
+    ctx.fillText(line1, bx + px, by + 4);
+    if (line2) {
+      ctx.fillStyle = 'rgba(163,230,53,.6)';
+      ctx.fillText(line2, bx + px, by + fs + 8);
+    }
+    // LED 5x5 mirror (tiny grid at right side of the bar)
+    if (this._lastLedState) {
+      const lx = bx + bw - ledBlock - 4;
+      const ly = by + (bh - 5 * (ledSize + ledGap)) / 2;
+      for (let r = 0; r < 5; r++) {
+        const row = this._lastLedState[r] || 0;
+        for (let c = 0; c < 5; c++) {
+          const on = (row >> c) & 1;
+          ctx.fillStyle = on ? '#ef4444' : 'rgba(255,255,255,.1)';
+          ctx.fillRect(lx + c * (ledSize + ledGap), ly + r * (ledSize + ledGap), ledSize, ledSize);
+        }
+      }
+    }
     ctx.restore();
 
     // v0.7.163: live accelerometer graph (bottom-right corner)
@@ -13334,7 +13360,9 @@ const Sensors = {
   },
 
   // v0.7.172: sync the web LED grid from micro:bit telemetry
+  _lastLedState: null,
   _syncLedGrid(rows) {
+    this._lastLedState = rows; // store for canvas overlay mirror
     const grid = $('tcLedGrid');
     if (!grid) return;
     const cells = grid.querySelectorAll('div, button');
