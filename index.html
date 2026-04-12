@@ -1826,11 +1826,13 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     }
     if (cmd.indexOf("P:") == 0) {
         pan = Math.min(180, Math.max(0, parseInt(cmd.substr(2))))
-        pins.servoWritePin(AnalogPin.P1, pan); s1Active = true; return
+        pins.servoWritePin(AnalogPin.P1, pan); s1Active = true
+        led.plotBarGraph(pan, 180); ledsDirty = true; return
     }
     if (cmd.indexOf("TI:") == 0) {
         tilt = Math.min(180, Math.max(0, parseInt(cmd.substr(3))))
-        pins.servoWritePin(AnalogPin.P2, tilt); s2Active = true; return
+        pins.servoWritePin(AnalogPin.P2, tilt); s2Active = true
+        led.plotBarGraph(tilt, 180); ledsDirty = true; return
     }
     // Test / Hello
     if (cmd == "TEST") {
