@@ -48,11 +48,11 @@ This is Apple's **Continuity Camera** — zero setup.
 ### Option B: DroidCam (any phone + any computer)
 
 **On your phone:**
-1. Install **DroidCam** from App Store (iPhone) or Play Store (Android) — free
+1. Install **DroidCam** from [App Store (iPhone)](https://apps.apple.com/app/droidcam-webcam-obs-camera/id1510258102) or [Play Store (Android)](https://play.google.com/store/apps/details?id=com.dev47apps.droidcam) — free
 2. Open the app — note your phone's IP address and port number
 
 **On your computer:**
-1. Download **DroidCam Client** from [droidcam.app](https://droidcam.app)
+1. Download **DroidCam Client** from [droidcam.app](https://www.dev47apps.com/droidcam/)
 2. Install it (adds a virtual camera driver)
 3. Open DroidCam Client, enter your phone's IP, click **Start**
 
@@ -67,12 +67,12 @@ This is Apple's **Continuity Camera** — zero setup.
 
 **On your phone (iPhone or Android):**
 1. Go to App Store or Play Store
-2. Search **"Iriun Webcam"** — install it (free)
+2. Search **"Iriun Webcam"** — or use direct links: [App Store (iPhone)](https://apps.apple.com/app/iriun-webcam/id1439013982) · [Play Store (Android)](https://play.google.com/store/apps/details?id=com.jacksoftw.webcam)
 3. Open the app — it shows "Waiting for connection..."
 4. Your phone camera preview appears fullscreen
 
 **On your computer:**
-1. Go to [iriun.com](https://iriun.com)
+1. Go to [iriun.com](https://iriun.com) — download links for [Windows](https://iriun.com/IriunWebcam-2.8.1.exe), [Mac](https://iriun.com/IriunWebcam-2.8.pkg), [Linux (Ubuntu)](https://iriun.com/IriunWebcam-2.8.deb)
 2. Download the desktop client for your OS (Windows / Mac / Linux)
 3. Install it — this adds a virtual camera driver called "Iriun Webcam"
 4. **No need to open the desktop app** — the driver runs automatically in the background
@@ -117,13 +117,13 @@ This is Apple's **Continuity Camera** — zero setup.
 
 **On your phone (iPhone or Android):**
 1. Go to App Store or Play Store
-2. Search **"Camo"** by Reincubate — install it (free)
+2. Search **"Camo"** by Reincubate — or use direct links: [App Store (iPhone)](https://apps.apple.com/app/camo-webcam-for-mac-and-pc/id1514199064) · [Play Store (Android)](https://play.google.com/store/apps/details?id=com.reincubate.camo)
 3. Open the app — it shows a live camera preview with a toolbar at the bottom
 4. Grant camera permission when prompted
 
 **On your computer:**
-1. Go to [reincubate.com/camo](https://reincubate.com/camo/)
-2. Download **Camo Studio** for your OS (Windows or Mac — no Linux)
+1. Go to [reincubate.com/camo](https://reincubate.com/camo/) — download links for [Windows](https://reincubate.com/camo/download/windows/) · [Mac](https://reincubate.com/camo/download/mac/) (no Linux)
+2. Download **Camo Studio** for your OS
 3. Install it — adds a virtual camera driver called "Camo"
 4. Open Camo Studio — it shows a pairing screen
 
