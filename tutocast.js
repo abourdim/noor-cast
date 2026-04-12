@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.110';
+const APP_VERSION = '0.7.112';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 09:00';
+const BUILD_DATE = '2026-04-12 12:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -302,6 +302,8 @@ const LANG = {
     duckLabel: "🔉 Baisser l'audio des sources quand tu parles",
     screensaverLabel: "💤 Screensaver après 90s d'inactivité",
     screensaverHint: 'Touche une touche pour réveiller',
+    autoAdvScenes: '⏩ Avance auto des scènes',
+    autoAdvSec: 'Intervalle (sec)',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
     snapAnnotClear: 'Effacer',
@@ -920,6 +922,8 @@ const LANG = {
     duckLabel: '🔉 Duck source audio when you speak',
     screensaverLabel: '💤 Screensaver after 90s idle',
     screensaverHint: 'Press any key to wake up',
+    autoAdvScenes: '⏩ Auto-advance scenes',
+    autoAdvSec: 'Interval (sec)',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
     snapAnnotClear: 'Clear',
@@ -1530,6 +1534,8 @@ const LANG = {
     duckLabel: '🔉 خفض صوت المصادر عند التحدث',
     screensaverLabel: '💤 شاشة توقف بعد 90 ثانية',
     screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
+    autoAdvScenes: '⏩ تقدم تلقائي للمشاهد',
+    autoAdvSec: 'الفاصل الزمني (ثانية)',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
     snapAnnotClear: 'مسح',
@@ -4034,6 +4040,85 @@ const SceneIntroText = {
       bg: '#000000',
       transparency: 1,  // semi-bg
     });
+  },
+};
+
+/* v0.7.112: Opt-in scene auto-advance timer.
+   When enabled, cycles through scene presets every N seconds (default 30).
+   A corner pill shows the countdown until the next advance. Persisted in
+   localStorage as tc-autoadv (enabled) and tc-autoadv-sec (interval). */
+const SceneAutoAdvance = {
+  enabled: false,
+  intervalSec: 30,
+  _timer: null,
+  _remaining: 0,
+  _rafId: null,
+  _lastTick: 0,
+
+  setup() {
+    try { this.enabled = localStorage.getItem('tc-autoadv') === '1'; } catch {}
+    try {
+      const s = parseInt(localStorage.getItem('tc-autoadv-sec'), 10);
+      if (s >= 5 && s <= 600) this.intervalSec = s;
+    } catch {}
+    if (this.enabled) this.start();
+  },
+
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-autoadv', v ? '1' : '0'); } catch {}
+    if (v) this.start(); else this.stop();
+  },
+
+  setInterval(sec) {
+    sec = Math.max(5, Math.min(600, sec || 30));
+    this.intervalSec = sec;
+    try { localStorage.setItem('tc-autoadv-sec', String(sec)); } catch {}
+    if (this.enabled) { this.stop(); this.start(); }
+  },
+
+  start() {
+    this.stop();
+    this._remaining = this.intervalSec;
+    this._lastTick = performance.now();
+    this._scheduleNext();
+    this._tick();
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.style.display = '';
+  },
+
+  stop() {
+    clearTimeout(this._timer);
+    this._timer = null;
+    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.style.display = 'none';
+  },
+
+  _scheduleNext() {
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => this._advance(), this._remaining * 1000);
+  },
+
+  _advance() {
+    const keys = Scenes.presets.map(p => p.key);
+    if (keys.length === 0) return;
+    const idx = keys.indexOf(Scenes.active);
+    const next = keys[(idx + 1) % keys.length];
+    Scenes.switch(next);
+    this._remaining = this.intervalSec;
+    this._lastTick = performance.now();
+    this._scheduleNext();
+  },
+
+  _tick() {
+    const now = performance.now();
+    const delta = (now - this._lastTick) / 1000;
+    this._lastTick = now;
+    this._remaining = Math.max(0, this._remaining - delta);
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.textContent = 'Next: ' + Math.ceil(this._remaining) + 's';
+    if (this.enabled) this._rafId = requestAnimationFrame(() => this._tick());
   },
 };
 
@@ -11687,6 +11772,17 @@ function wireEvents() {
     ssEl.checked = Screensaver.enabled;
     ssEl.addEventListener('change', (e) => Screensaver.setEnabled(e.target.checked));
   }
+  // v0.7.112: opt-in scene auto-advance timer
+  const aaChk = $('tcAutoAdvChk');
+  const aaSec = $('tcAutoAdvSec');
+  if (aaChk) {
+    aaChk.checked = SceneAutoAdvance.enabled;
+    aaChk.addEventListener('change', (e) => SceneAutoAdvance.setEnabled(e.target.checked));
+  }
+  if (aaSec) {
+    aaSec.value = SceneAutoAdvance.intervalSec;
+    aaSec.addEventListener('change', (e) => SceneAutoAdvance.setInterval(parseInt(e.target.value, 10)));
+  }
   // v0.7.28: History clear button
   $('tcHistoryClearBtn')?.addEventListener('click', () => {
     if (History.entries.length === 0) return;
@@ -11830,6 +11926,7 @@ async function init() {
   GuidedTour.setup();
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
+  SceneAutoAdvance.setup();  // v0.7.112
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 

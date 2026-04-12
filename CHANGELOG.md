@@ -3,27 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.110 — 2026-04-12 (Random scene shuffle)
+## v0.7.112 — 2026-04-12 (Opt-in scene auto-advance timer)
 
-A "🎲" button in the tools bar and the `?` hotkey (Shift+/) pick a
-random scene from the presets list and switch to it instantly, skipping
-the currently active scene.  Edge cases (zero scenes, only one scene)
-show an explanatory toast instead.
+Scenes can now auto-advance every N seconds (default 30), cycling
+through presets in order. Toggle the feature in Settings > General
+with a checkbox and an interval input (5-600 s). A dark rounded pill
+in the top-right corner of the stage shows the countdown until the
+next scene switch.
 
 ### Added
-- `Scenes.random()` method in `tutocast.js`: filters out the active
-  scene, picks a random alternative, calls `Scenes.switch()`, and
-  shows a toast with the scene name.
-- Tools-bar button `🎲` (`#tcRandomSceneBtn`) calling `Scenes.random()`.
-- `?` (Shift+/) hotkey rewired from the cheat-sheet toggle to
-  `Scenes.random()`.  The cheat sheet remains accessible via its
-  button in the UI.
-- i18n keys `randomScene`, `noScenesToShuffle`, `onlyOneScene` in
-  FR / EN / AR.
-
-### Changed
-- `APP_VERSION` → `'0.7.110'`, `BUILD_DATE` updated.
-- Four version tags in `index.html` bumped to v0.7.110.
+- `SceneAutoAdvance` object in `tutocast.js`: `enabled`, `intervalSec`,
+  `setup()`, `start()`, `stop()`, `_scheduleNext()`, `_advance()`,
+  `_tick()` (rAF-driven countdown pill update).
+- Settings UI: checkbox `#tcAutoAdvChk` + number input `#tcAutoAdvSec`
+  in the General section.
+- Corner pill `<div class="tc-autoadv-pill" id="tcAutoAdvPill">` in
+  `.tc-stage`, styled as a dark rounded badge (top-right, Orbitron font).
+- i18n keys `autoAdvScenes` and `autoAdvSec` in FR, EN, AR.
+- localStorage keys `tc-autoadv` (enabled flag) and `tc-autoadv-sec`
+  (interval value).
 
 ---
 
