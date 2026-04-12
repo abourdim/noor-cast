@@ -15453,10 +15453,10 @@ function wireEvents() {
   // Intercept brand clicks from Drag._onDown
   const origOnDown = Drag._onDown.bind(Drag);
   const stageEl = $('tcStage');
-  // v0.7.171: use click (not mousedown) so panels don't flash during drag
+  // v0.7.171: double-click logo/slogan to open edit panel (single click = drag)
   if (stageEl) {
-    stageEl.addEventListener('click', (e) => {
-      if (e.target.closest('.tc-brand-panel')) return; // don't re-trigger from panel
+    stageEl.addEventListener('dblclick', (e) => {
+      if (e.target.closest('.tc-brand-panel')) return;
       const [mx, my] = Drag._stageToCanvas(e);
       if (Brand.hasLogo() && Drag._insideRect(Brand.logo, mx, my)) {
         const lp = $('tcLogoPanelSize'); if (lp) lp.value = Brand.logo.w || 120;
