@@ -3224,17 +3224,17 @@ const Engine = {
       ctx.restore();
     }
 
-    // --- Glow border (always on, uses current theme accent) ---
-    const accent = this._accentColor || '#a3e635';
-    ctx.save();
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = 30;
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 5;
-    this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
-    ctx.stroke();
-    ctx.stroke();  // double-stroke for a stronger halo
-    ctx.restore();
+    // --- Glow border (v0.7.158: toggleable, thin stroke without shadowBlur for perf) ---
+    if (this._showGlow !== false) {
+      const accent = this._accentColor || '#a3e635';
+      ctx.save();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // --- Per-source visual filter (v0.7.0) ---
     // Applied via ctx.filter for the duration of the draw pass, reset after.

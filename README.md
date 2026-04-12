@@ -28,9 +28,12 @@ a robot. If that's you, here's what you get that nobody else offers:
 - **The micro:bit IS your remote.** Button A zooms in, button B drops a
   chapter marker, tilting the robot drives the laser pointer. Hands-free
   recording while you hold the robot.
-- **Guided templates.** Pick `📚 Full lesson`, `🤖 Robot demo`, or
-  `🔧 Fix-it` on first launch and TutoCast walks you through a 5-step
-  sequence. Zero decision fatigue.
+- **Guided templates.** Pick `📚 Full lesson`, `🤖 Robot demo`,
+  `🔧 Fix-it`, or `🤖 Robot Tuto` on first launch and TutoCast walks
+  you through a 5-step sequence. Zero decision fatigue.
+- **60+ features.** Source flip/crop/rotate/opacity/shadow/border/filter,
+  countdown timer, emoji reactions, sticky notes, sound board, undo/redo,
+  multi-select, FPS counter, vignette, letterbox, piano overlay, and more.
 - **Smart silence trimmer.** One click after Stop removes all the "umm..."
   pauses. No external editor.
 - **Kid-friendly.** 10 colorful text stickers, confetti on finish, big
@@ -358,14 +361,16 @@ python3 -m http.server 8000
 
 | File | Lines | Purpose |
 |---|---|---|
-| `index.html` | ~440 | UI shell: header, studio grid, sidebars, rec bar, panels, ticker |
-| `tutocast.js` | ~900 | All app logic: i18n, engine, sources, scenes, recorder, tools, Web BT, badges, confetti, ticker |
-| `style.css` | ~1500 | 8 themes + responsive layout (inherited from workshop-diy) + TutoCast studio styles |
+| `index.html` | ~1,800 | UI shell: header, studio grid, source/text/context toolbars, settings panel (5 sections), help panel (6 tabs), rec bar, take panel, ticker |
+| `tutocast.js` | ~15,200 | All app logic: i18n (350 keys × 3 langs), engine (canvas renderer, 26 overlay passes), recorder (MediaRecorder + trim + silence removal), 110+ singleton objects covering scenes, drag, sensors, gamification, onboarding, and 60+ features |
+| `style.css` | ~4,800 | 8 themes, responsive layout, 44 component-specific rule groups |
 | `manifest.json` | ~12 | PWA manifest |
 | `icon.svg` | ~25 | PWA icon (static clapperboard + play + LED) |
 | `logo.svg` | ~30 | Animated header logo (clap that claps every 3s) |
 
 No build step, no dependencies, no `node_modules`. Just open `index.html` or run `python3 -m http.server`.
+
+**Privacy:** Zero outbound network calls from JS. All data stays on the local machine (84 localStorage keys). The only external request is Google Fonts loaded from CDN in the HTML.
 
 ---
 
