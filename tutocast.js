@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.103 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.106 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.103';
+const APP_VERSION = '0.7.106';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 15:10';
+const BUILD_DATE = '2026-04-11 22:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -2544,6 +2544,12 @@ const Engine = {
 
   drawSource(src) {
     const { ctx } = this;
+
+    // v0.7.106: defensive early-return — the main draw loop already
+    // filters on `visible !== false && !hidden`, but drawSource can be
+    // called from other paths (chrome preview, snapshot helpers), so
+    // honour the manual toggles here too.
+    if (src.visible === false || src.hidden) return;
 
     // v0.7.62: image sources (from clipboard paste) take a simplified draw
     // path — shape clip + drawImage — bypassing the video filter/mirror/
@@ -10551,6 +10557,24 @@ function setupHotkeys() {
         Scenes.saveOrder();
         Scenes.render();
         showToast('🎭 ' + (t('sceneReordered') || 'Scene reordered'), 900);
+      }
+      e.preventDefault();
+      return;
+    }
+    // v0.7.106: Alt+1..9 toggles visibility of the Nth video source in
+    // the sidebar. Plain 1..9 is reserved for scene switching, so we put
+    // this on the Alt modifier. Mic sources are skipped (they have no
+    // on-canvas presence), so N counts only visible-on-stage entries.
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key >= '1' && e.key <= '9') {
+      const idx = parseInt(e.key, 10) - 1;
+      const videoSources = Engine.sources.filter(s => s.type !== 'mic');
+      const target = videoSources[idx];
+      if (target) {
+        target.hidden = !target.hidden;
+        Engine.onSourcesChanged();
+        const label = target.label || `#${idx + 1}`;
+        showToast(`${idx + 1}. ${label} — ${target.hidden ? t('sourceHidden') : t('sourceShown')}`, 1400);
+        log(target.hidden ? `👁 hidden: ${label}` : `👁 shown: ${label}`, 'info');
       }
       e.preventDefault();
       return;

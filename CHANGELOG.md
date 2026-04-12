@@ -3,40 +3,35 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.103 — 2026-04-11 (Source layer/z-index badge on hover)
+## v0.7.106 — 2026-04-11 (Number-key quick hide/show for sources)
 
-Hovering a video source on the stage now pops a small dark pill
-near the cursor showing its layer number — `#3 / 7` where `3` is
-the layer counted from the back (1 = backmost) and `7` is the total
-count of visible sources. The same `#N/total` chip is also rendered
-as a static prefix on every sidebar source row so teachers can see
-the full stacking order at a glance without hovering the canvas.
-
-The number matches the draw order inside `Engine.render()`: the
-`sources[]` array is iterated low-index → high-index, so index 0 is
-drawn first (back) and the last index is drawn last (front / top of
-the stack). Bring-forward / send-back actions in the source context
-menu already reorder this array, so the badge reflects those changes
-immediately on the next hover / sidebar rebuild.
+Pressing **Alt+1** through **Alt+9** now toggles the visibility of the
+corresponding video source in the sidebar (Alt+1 = first source, Alt+2
+= second, etc.), with a toast confirming the new state. Plain `1-9` is
+already bound to scene switching, so the feature rides on the Alt
+modifier to stay out of the way. The existing sidebar eye-icon button
+(`👁 / 🙈`) already toggled the same `source.hidden` flag, so the new
+hotkeys mirror that exact behaviour — no new state, no migration.
 
 ### Added
-- `LayerBadge` module in `tutocast.js` — lazy-creates a single
-  `#tcLayerBadge` DOM element (fixed-position, pointer-events:none)
-  and exposes `showAt(x, y, layer, total)` / `hide()`.
-- `Drag.setup()` now attaches a stage `mousemove` listener that runs
-  the existing `_hitTest(mx, my)` against the cursor position and
-  calls `LayerBadge.showAt()` when the hit is a source. Cleared on
-  drag-start, `mouseleave`, and non-source hover.
-- `Engine.onSourcesChanged()` renders a `.tc-src-layer` chip
-  (`#N/total`) at the start of every video source row; mic sources
-  are excluded from the count.
-- CSS: `#tcLayerBadge` pill (dark bg, accent border, monospace) and
-  `.tc-src-layer` sidebar chip in `style.css`.
+- Alt+1..9 hotkey branch in `setupHotkeys()` that filters `Engine.sources`
+  to the non-mic entries, flips `target.hidden`, re-renders the sidebar
+  via `Engine.onSourcesChanged()`, and toasts `"N. <label> — <state>"`
+  using the existing `sourceHidden` / `sourceShown` i18n keys.
+- Defensive early-return in `Engine.drawSource()` that honours both
+  `src.visible === false` and `src.hidden`. The main render loop already
+  filters on both fields before calling `drawSource`, but other call
+  sites (selection chrome preview, snapshot helpers) now respect manual
+  toggles too.
 
-### Changed
-- Bump `APP_VERSION` to `0.7.103`, `BUILD_DATE` to `2026-04-12 15:10`,
-  `tutocast.js` header comment to `v0.7.103`, and all four `v0.7.102`
-  display tags in `index.html` to `v0.7.103`.
+### Notes
+- No i18n strings added — `sourceHidden` / `sourceShown` already exist
+  in FR / EN / AR from v0.7.6.
+- No sidebar markup added — the eye-icon button next to each source row
+  has existed since v0.7.6 and is the click-target equivalent of the
+  new hotkey.
+- Scene hotkeys (`1-9` with no modifier) are untouched and still switch
+  scenes as before.
 
 ## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
 
