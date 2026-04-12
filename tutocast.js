@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.154';
+const APP_VERSION = '0.7.155';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -3486,6 +3486,7 @@ const Engine = {
       case 'vintage':  return 'sepia(40%) contrast(1.1) brightness(0.95)';
       case 'cool':     return 'hue-rotate(-20deg) saturate(1.2)';
       case 'warm':     return 'hue-rotate(20deg) saturate(1.2)';
+      case 'invert':   return 'invert(1)';
       default:         return 'none';
     }
   },
@@ -3533,9 +3534,12 @@ const Engine = {
         label: t('sourceScreen'),
         x: 0, y: 0, w: this.width, h: this.height,
         shape: 'rect', visible: true, mirrored: false,
+        opacity: 1, filter: 'none',
+        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
         borderColor: '', borderWidth: 0,
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
-        locked: false,
+        locked: false, aspectLock: false,
         rotation: 0,
         cornerRadius: 0,
         badgeText: '',
@@ -3587,9 +3591,12 @@ const Engine = {
         label: label || `Camera ${n + 1}`,
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
+        opacity: 1, filter: 'none',
+        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
         borderColor: '', borderWidth: 0,
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
-        locked: false,
+        locked: false, aspectLock: false,
         rotation: 0,
         cornerRadius: 0,
         badgeText: '',
@@ -3636,9 +3643,12 @@ const Engine = {
           visible: true,
           hidden: false,
           custom: true,
+          opacity: 1, filter: 'none',
+          flipH: false, flipV: false,
+          cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
           borderColor: '', borderWidth: 0,
           shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
-          locked: false,
+          locked: false, aspectLock: false,
           rotation: 0,
           cornerRadius: 0,
           badgeText: '',
@@ -4205,13 +4215,17 @@ const Scenes = {
         label: s.label,
         x: s.x, y: s.y, w: s.w, h: s.h,
         shape: s.shape || 'rect',
+        opacity: s.opacity ?? 1, filter: s.filter || 'none',
+        flipH: !!s.flipH, flipV: !!s.flipV,
+        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
         shadowColor: s.shadowColor || '#000000',
         shadowBlur: s.shadowBlur || 0,
         shadowOffsetX: s.shadowOffsetX ?? 5,
         shadowOffsetY: s.shadowOffsetY ?? 5,
-        locked: !!s.locked,
+        locked: !!s.locked, aspectLock: !!s.aspectLock,
         rotation: s.rotation || 0,
         cornerRadius: s.cornerRadius || 0,
         badgeText: s.badgeText || '',
@@ -9485,6 +9499,21 @@ const SourceToolbar = {
       SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.114: per-source opacity
+    $('tcSrcOpacity')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.opacity = Math.max(0, Math.min(1, parseInt(e.target.value, 10) / 100));
+      SceneAutoSave.trigger();
+    });
+    // v0.7.151: per-source color filter
+    $('tcSrcFilter')?.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.filter = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcFilter')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.117: per-source border color + width
     $('tcSrcBorderColor')?.addEventListener('input', (e) => {
       e.stopPropagation();
@@ -9649,6 +9678,12 @@ const SourceToolbar = {
     // v0.7.142: sync aspect lock button icon
     const aspectBtn = $('tcSrcToolbarAspect');
     if (aspectBtn) aspectBtn.textContent = s.aspectLock ? '🔗' : '↔';
+    // v0.7.114: sync opacity
+    const opEl = $('tcSrcOpacity');
+    if (opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);
+    // v0.7.151: sync filter
+    const fiEl = $('tcSrcFilter');
+    if (fiEl) fiEl.value = s.filter || 'none';
     // v0.7.117: sync border color + width inputs
     const bcEl = $('tcSrcBorderColor');
     if (bcEl && bcEl.value !== (s.borderColor || '#ffffff')) {
