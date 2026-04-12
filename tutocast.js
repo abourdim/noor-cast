@@ -13209,16 +13209,25 @@ const Sensors = {
   _uartTx: null,
   _reconnectAttempts: 0,
 
-  // v0.7.170: auto-reconnect (inspired by bit-playground)
+  // v0.7.172: auto-reconnect with guard (from bit-playground)
+  _reconnecting: false,
   async _tryReconnect() {
+    if (this._reconnecting) return; // prevent re-entrant loops
     if (!this.device || this._reconnectAttempts >= 3) {
-      if (this._reconnectAttempts >= 3) showToast('micro:bit reconnect failed after 3 attempts', 3000);
+      if (this._reconnectAttempts >= 3) {
+        showToast('micro:bit reconnect failed after 3 attempts', 3000);
+        const s = $('tcBtStatus'); if (s) { s.textContent = '❌'; s.title = 'Reconnect failed'; }
+      }
       this._reconnectAttempts = 0;
+      this._reconnecting = false;
       return;
     }
+    this._reconnecting = true;
     this._reconnectAttempts++;
+    this._uartQueue.length = 0; // clear pending writes
+    this._uartBusy = false;
     log(`BLE reconnect attempt ${this._reconnectAttempts}/3`, 'info');
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000)); // longer cooldown
     try {
       this.server = await this.device.gatt.connect();
       // Re-acquire UART characteristics (robust detection)
@@ -13254,11 +13263,13 @@ const Sensors = {
         this.sendUart('HELLO');
       } catch {}
       this._reconnectAttempts = 0;
+      this._reconnecting = false;
       showToast('micro:bit reconnected!', 2000);
       const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅'; s2.title = 'Connected'; }
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
+      this._reconnecting = false;
       this._tryReconnect();
     }
   },
@@ -13395,25 +13406,40 @@ const Sensors = {
     }
   },
 
-  // v0.7.170: send UART command to micro:bit (with MTU chunking from bit-playground)
+  // v0.7.172: UART write queue — prevents "GATT operation already in progress"
+  _uartQueue: [],
+  _uartBusy: false,
   async sendUart(str) {
-    if (!this._uartTx) { showToast('UART not connected', 1500); return; }
-    try {
-      const enc = new TextEncoder();
-      const data = enc.encode(str + '\n');
-      const MTU = 20; // BLE ATT payload limit
-      if (data.byteLength <= MTU) {
-        await this._uartTx.writeValue(data);
-      } else {
-        // Chunk into MTU-sized pieces (from bit-playground)
-        let offset = 0;
-        while (offset < data.byteLength) {
-          const end = Math.min(offset + MTU, data.byteLength);
-          await this._uartTx.writeValue(data.slice(offset, end));
-          offset = end;
+    if (!this._uartTx) return;
+    this._uartQueue.push(str);
+    if (this._uartBusy) return;
+    this._uartBusy = true;
+    while (this._uartQueue.length > 0) {
+      const msg = this._uartQueue.shift();
+      try {
+        const enc = new TextEncoder();
+        const data = enc.encode(msg + '\n');
+        const MTU = 20;
+        if (data.byteLength <= MTU) {
+          await this._uartTx.writeValue(data);
+        } else {
+          let offset = 0;
+          while (offset < data.byteLength) {
+            const end = Math.min(offset + MTU, data.byteLength);
+            await this._uartTx.writeValue(data.slice(offset, end));
+            offset = end;
+          }
+        }
+      } catch (e) {
+        log('UART send error: ' + e.message, 'error');
+        // If GATT failed, clear queue to avoid flood
+        if (e.message.includes('GATT') || e.message.includes('disconnect')) {
+          this._uartQueue.length = 0;
+          break;
         }
       }
-    } catch (e) { log('UART send error: ' + e.message, 'error'); }
+    }
+    this._uartBusy = false;
   },
 
   // v0.7.171: test connection via UART
