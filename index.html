@@ -1509,13 +1509,44 @@ basic.forever(() => {
           <!-- v0.7.82: 3 numbered brand preset slots (save / load) -->
           <label class="sidebar-label" style="margin-top:10px" data-i18n="brandEffect">🎭 Logo effect</label>
           <select id="tcBrandEffectSelect" class="sidebar-select">
-            <option value="none">— None —</option>
-            <option value="spin">🌀 Spin</option>
-            <option value="pulse">💓 Pulse</option>
-            <option value="bounce">🏀 Bounce</option>
-            <option value="wiggle">〰 Wiggle</option>
-            <option value="glow">✨ Glow</option>
-            <option value="rainbow">🌈 Rainbow</option>
+            <optgroup label="— None —">
+              <option value="none">None</option>
+            </optgroup>
+            <optgroup label="Motion">
+              <option value="spin">Spin</option>
+              <option value="pulse">Pulse</option>
+              <option value="bounce">Bounce</option>
+              <option value="wiggle">Wiggle</option>
+              <option value="float">Float</option>
+              <option value="shake">Shake</option>
+              <option value="swing">Swing</option>
+              <option value="rock">Rock</option>
+              <option value="zoom">Zoom</option>
+              <option value="heartbeat">Heartbeat</option>
+              <option value="jelly">Jelly</option>
+              <option value="flip">Flip</option>
+              <option value="orbit">Orbit</option>
+              <option value="spiral">Spiral</option>
+            </optgroup>
+            <optgroup label="Visual">
+              <option value="glow">Glow</option>
+              <option value="neon">Neon</option>
+              <option value="fire">Fire</option>
+              <option value="gold">Gold</option>
+              <option value="blink">Blink</option>
+              <option value="fade">Fade</option>
+              <option value="strobe">Strobe</option>
+              <option value="flicker">Flicker</option>
+              <option value="glitch">Glitch</option>
+            </optgroup>
+            <optgroup label="Filter">
+              <option value="matrix">Matrix</option>
+              <option value="invert">Invert</option>
+              <option value="sepia">Sepia</option>
+              <option value="thermal">Thermal</option>
+              <option value="xray">X-Ray</option>
+              <option value="vintage">Vintage</option>
+            </optgroup>
           </select>
 
           <label class="sidebar-label" style="margin-top:14px" data-i18n="brandPresets">📁 Presets de marque</label>

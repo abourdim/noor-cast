@@ -7875,12 +7875,38 @@ const Brand = {
     if (this.logo.effect === 'none') return;
     const now = Date.now() / 1000;
     switch (this.logo.effect) {
-      case 'spin':    ctx.translate(cx, cy); ctx.rotate(now * 1.2); ctx.translate(-cx, -cy); break;
-      case 'pulse':   { const s = 1 + Math.sin(now * 3) * 0.08; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
-      case 'bounce':  ctx.translate(0, Math.abs(Math.sin(now * 4)) * -20); break;
-      case 'wiggle':  ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 5) * 0.1); ctx.translate(-cx, -cy); break;
-      case 'glow':    { const pulse = 20 + Math.sin(now * 3) * 15; ctx.shadowColor = Engine._accentColor || '#a3e635'; ctx.shadowBlur = pulse; } break;
-      case 'rainbow': { const hue = (now * 60) % 360; ctx.filter = `hue-rotate(${hue.toFixed(0)}deg) saturate(1.4)`; } break;
+      // Classic
+      case 'spin':      ctx.translate(cx, cy); ctx.rotate(now * 1.2); ctx.translate(-cx, -cy); break;
+      case 'pulse':     { const s = 1 + Math.sin(now * 3) * 0.08; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'bounce':    ctx.translate(0, Math.abs(Math.sin(now * 4)) * -20); break;
+      case 'wiggle':    ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 5) * 0.1); ctx.translate(-cx, -cy); break;
+      case 'glow':      { const p = 20 + Math.sin(now * 3) * 15; ctx.shadowColor = Engine._accentColor || '#a3e635'; ctx.shadowBlur = p; } break;
+      // Motion
+      case 'float':     ctx.translate(0, Math.sin(now * 1.5) * 12); break;
+      case 'shake':     ctx.translate(Math.sin(now * 20) * 3, Math.cos(now * 17) * 2); break;
+      case 'swing':     ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 2) * 0.15); ctx.translate(-cx, -cy); break;
+      case 'rock':      ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 3) * 0.05); ctx.translate(-cx, -cy); break;
+      case 'zoom':      { const s = 1 + Math.sin(now * 2) * 0.15; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'heartbeat': { const t = now * 5 % 1; const s = t < 0.15 ? 1.12 : t < 0.3 ? 1 : t < 0.4 ? 1.08 : 1; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'jelly':     { const sx = 1 + Math.sin(now * 4) * 0.06; const sy = 1 + Math.cos(now * 4) * 0.06; ctx.translate(cx, cy); ctx.scale(sx, sy); ctx.translate(-cx, -cy); } break;
+      case 'flip':      { const s = Math.cos(now * 2); ctx.translate(cx, cy); ctx.scale(s, 1); ctx.translate(-cx, -cy); } break;
+      case 'orbit':     { const r = 15; ctx.translate(Math.cos(now * 2) * r, Math.sin(now * 2) * r); } break;
+      case 'spiral':    { const r = 8; ctx.translate(Math.cos(now * 3) * r, Math.sin(now * 3) * r); ctx.translate(cx, cy); ctx.rotate(now * 1.5); ctx.translate(-cx, -cy); } break;
+      // Visual
+      case 'blink':     ctx.globalAlpha *= (Math.sin(now * 4) > 0 ? 1 : 0.2); break;
+      case 'fade':      ctx.globalAlpha *= 0.5 + Math.sin(now * 2) * 0.5; break;
+      case 'strobe':    ctx.globalAlpha *= (Math.sin(now * 12) > 0 ? 1 : 0); break;
+      case 'flicker':   ctx.globalAlpha *= 0.7 + Math.random() * 0.3; break;
+      case 'neon':      { const p = 8 + Math.sin(now * 6) * 8; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = p; } break;
+      case 'fire':      { const p = 12 + Math.sin(now * 8) * 8; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = p; } break;
+      case 'gold':      { const p = 10 + Math.sin(now * 4) * 6; ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = p; } break;
+      case 'glitch':    { const dx = (Math.random() > 0.9 ? (Math.random() - 0.5) * 10 : 0); ctx.translate(dx, 0); if (Math.random() > 0.95) ctx.globalAlpha *= 0.5; } break;
+      case 'matrix':    ctx.filter = `hue-rotate(90deg) brightness(1.3)`; break;
+      case 'invert':    ctx.filter = `invert(1)`; break;
+      case 'sepia':     ctx.filter = `sepia(1) contrast(1.1)`; break;
+      case 'thermal':   ctx.filter = `hue-rotate(180deg) saturate(2) contrast(1.3)`; break;
+      case 'xray':      ctx.filter = `invert(1) brightness(1.5) grayscale(1)`; break;
+      case 'vintage':   ctx.filter = `sepia(0.4) contrast(1.1) brightness(0.95)`; break;
     }
   },
 
