@@ -3,27 +3,21 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.128 — 2026-04-12 (Per-source drop shadow)
+## v0.7.129 — 2026-04-12 (Take notes / post-recording journal)
 
-Each source gets an optional drop shadow with color picker, blur slider
-(0-30 px), and X/Y offset sliders (-20 to +20 px). Applied via canvas
-shadow properties in `Engine.drawSource()`. Default: no shadow (blur=0).
+After a recording finishes the teacher can jot down free-text notes in the
+take panel. Notes are persisted in `History.entries[0].notes` via
+localStorage and included in the `.md` chapter export.
 
 ### Added
-- Shadow fields `shadowColor`, `shadowBlur`, `shadowOffsetX`,
-  `shadowOffsetY` on every source object (screen, cam, image).
-- Shadow rendering pass in `Engine.drawSource()` for both image and
-  video paths: fills the source shape with shadow before clipping.
-- Source toolbar controls in `index.html`: color picker
-  `#tcSrcShadowColor`, range sliders `#tcSrcShadowBlur`,
-  `#tcSrcShadowOffsetX`, `#tcSrcShadowOffsetY`.
-- Event wiring + sync in `SourceToolbar` (tutocast.js).
-- Shadow fields persisted in scene snapshots (save, restore, duplicate)
-  and `LayoutHistory` (undo/redo).
-- i18n keys `sourceShadow`, `shadowColor`, `shadowBlur`,
-  `shadowOffsetX`, `shadowOffsetY` in FR, EN, AR.
-
----
+- `<textarea id="tcTakeNotes">` in `index.html`: 3-row notes field below
+  the title input in the take panel.
+- `input` handler in `tutocast.js` (`Recorder.finish`): saves notes to the
+  latest History entry and regenerates the `.md` download blob.
+- `Chapters.toMarkdown()` now accepts an optional `notes` parameter and
+  appends a `## Notes` section when notes are present.
+- `applyI18n()` now translates `data-i18n-placeholder` attributes.
+- i18n keys `takeNotes` / `takeNotesPlaceholder` in FR, EN, AR.
 
 ## v0.7.127 — 2026-04-12 (Auto-save scene on source changes)
 

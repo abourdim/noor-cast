@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.128 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.129 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.128';
+const APP_VERSION = '0.7.129';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -355,6 +355,8 @@ const LANG = {
     dashAvgRating: 'note moy.',
     takeRating: 'Note ce tuto :',
     takeTitle: '📝 Nom du fichier',
+    takeNotes: '📝 Notes',
+    takeNotesPlaceholder: 'Notes sur cette prise…',
     manyPauses: 'Tu as fait beaucoup de pauses — essaie Shift+R pour démarrer direct',
     dashNote: '💡 Stats calculées sur les 10 derniers tutos',
     setSecDanger: '♻ Maintenance',
@@ -1007,6 +1009,8 @@ const LANG = {
     dashAvgRating: 'avg rating',
     takeRating: 'Rate this take:',
     takeTitle: '📝 File name',
+    takeNotes: '📝 Notes',
+    takeNotesPlaceholder: 'Notes about this take…',
     manyPauses: 'You paused a lot — try Shift+R for instant start',
     dashNote: '💡 Stats from the last 10 tutorials',
     setSecDanger: '♻ Maintenance',
@@ -1651,6 +1655,8 @@ const LANG = {
     dashAvgRating: 'متوسط التقييم',
     takeRating: 'قيّم هذا الدرس:',
     takeTitle: '📝 اسم الملف',
+    takeNotes: '📝 ملاحظات',
+    takeNotesPlaceholder: 'ملاحظات حول هذا الدرس…',
     manyPauses: 'لقد أوقفت كثيرًا — جرّب Shift+R للبدء الفوري',
     dashNote: '💡 إحصاءات آخر 10 دروس',
     setSecDanger: '♻ الصيانة',
@@ -1978,6 +1984,11 @@ function applyI18n() {
     // Don't clobber the teleprompter content if the user has typed their own
     if (el.id === 'tcTeleInner' && typeof Teleprompter !== 'undefined' && Teleprompter.hasUserText()) return;
     el.textContent = s[k];
+  });
+  // v0.7.129: translate data-i18n-placeholder attributes
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.dataset.i18nPlaceholder;
+    if (s[k] != null) el.setAttribute('placeholder', s[k]);
   });
   document.title = `${s.title} — ${s.slogan}`;
   document.documentElement.lang = currentLang;
@@ -5280,6 +5291,29 @@ const Recorder = {
         titleInput._wired = true;
       }
     }
+    // v0.7.129: post-recording journal notes textarea
+    const notesArea = $('tcTakeNotes');
+    if (notesArea) {
+      notesArea.value = '';
+      if (!notesArea._wired) {
+        notesArea.addEventListener('input', () => {
+          if (History.entries && History.entries.length > 0) {
+            History.entries[0].notes = notesArea.value;
+            History.save();
+          }
+          // Regenerate the .md download to include updated notes
+          const dlMd2 = $('tcDownloadMd');
+          if (dlMd2) {
+            const curName = (titleInput ? titleInput.value.trim() : '') || 'tutocast-take';
+            const md2 = Chapters.toMarkdown(curName, notesArea.value);
+            const mdBlob2 = new Blob([md2], { type: 'text/markdown' });
+            const mdUrl2 = URL.createObjectURL(mdBlob2);
+            dlMd2.href = mdUrl2;
+          }
+        });
+        notesArea._wired = true;
+      }
+    }
     // Chapters VTT
     const vtt = Chapters.toVTT();
     const vttBlob = new Blob([vtt], { type: 'text/vtt' });
@@ -5481,21 +5515,21 @@ const Chapters = {
     return out;
   },
 
-  toMarkdown(filename) {
+  toMarkdown(filename, notes) {
     const base = filename || 'tutocast-take';
     let out = `# ${base} — chapters\n\n`;
     if (this.items.length === 0) {
       out += '_No chapters_\n';
-      return out;
+    } else {
+      this.items.forEach((c, i) => {
+        const mm = Math.floor(c.time / 60);
+        const ss = Math.floor(c.time % 60);
+        const stamp = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+        const label = String(c.label || '').replace(/[\r\n]/g, ' ').trim();
+        const retryMark = c.retry ? ' ⚠' : '';
+        out += `- **${stamp}** — ${label}${retryMark}\n`;
+      });
     }
-    this.items.forEach((c, i) => {
-      const mm = Math.floor(c.time / 60);
-      const ss = Math.floor(c.time % 60);
-      const stamp = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-      const label = String(c.label || '').replace(/[\r\n]/g, ' ').trim();
-      const retryMark = c.retry ? ' ⚠' : '';
-      out += `- **${stamp}** — ${label}${retryMark}\n`;
-    });
     // Retry regions summary (from v0.7.38 soft rewind)
     if (Recorder.retryRegions && Recorder.retryRegions.length) {
       out += '\n## Retry regions\n\n';
@@ -5506,6 +5540,11 @@ const Chapters = {
         const eSs = Math.floor(r.end % 60);
         out += `- Retry ${r.n}: **${String(sMm).padStart(2, '0')}:${String(sSs).padStart(2, '0')}** → **${String(eMm).padStart(2, '0')}:${String(eSs).padStart(2, '0')}**\n`;
       });
+    }
+    // v0.7.129: append teacher notes if present
+    const n = notes || (History.entries && History.entries.length > 0 ? History.entries[0].notes : '');
+    if (n && n.trim()) {
+      out += '\n## Notes\n\n' + n.trim() + '\n';
     }
     return out;
   },

@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.128</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.129</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -513,6 +513,11 @@
             <div class="tc-take-title-wrap">
               <label class="sidebar-label" data-i18n="takeTitle">📝 Nom du fichier</label>
               <input type="text" id="tcTakeTitleInput" class="sidebar-select" maxlength="100" />
+            </div>
+            <!-- v0.7.129: post-recording journal notes -->
+            <div class="tc-take-notes-wrap">
+              <label class="sidebar-label" data-i18n="takeNotes">📝 Notes</label>
+              <textarea id="tcTakeNotes" class="sidebar-select" rows="3" data-i18n-placeholder="takeNotesPlaceholder" placeholder="Notes sur cette prise…"></textarea>
             </div>
             <button class="tc-btn-full tc-bulk-dl" id="tcBulkDlBtn">💾 <span data-i18n="bulkDl">Tout télécharger</span></button>
             <a class="tc-btn-full" id="tcDownloadBtn" download>⬇️ <span data-i18n="download">Télécharger</span></a>
