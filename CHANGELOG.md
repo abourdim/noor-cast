@@ -3,6 +3,30 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.113 — 2026-04-12 (Canvas countdown timer overlay)
+
+A visible countdown timer drawn on the canvas (baked into recordings).
+The teacher sets a duration (1-60 min, default 5 min) in Settings and
+presses the tools-bar **⏳ Timer** button to start. The timer counts
+down as `MM:SS` in a dark rounded pill at the top-center of the stage.
+When it hits `0:00` it flashes red three times over 1.5 s then auto-hides.
+Clicking the button again while running cancels immediately.
+
+### Added
+- `CountdownTimer` object in `tutocast.js`: `running`, `endAt`,
+  `durationSec`, `setup()`, `start()`, `stop()`, `toggle()`,
+  `render(ctx, W, H)`, `_drawPill(ctx, W, text, red)`.
+- Tools-bar button `⏳ Timer` (`#tcTimerBtn`) toggling start/stop.
+- Settings input `#tcTimerDur` (number, 1-60 min) in the General section.
+- `CountdownTimer.render()` called from `Engine.render()` after
+  `ClockOverlay`, drawing a rounded dark pill with white monospace text
+  at top-center. End-of-timer flash: red pill with `0:00` blinks 3 times
+  over 1.5 s then auto-hides.
+- i18n keys `countdownTimer` and `timerDuration` in FR, EN, AR.
+- localStorage key `tc-timer-dur` for persisting the duration setting.
+
+---
+
 ## v0.7.112 — 2026-04-12 (Opt-in scene auto-advance timer)
 
 Scenes can now auto-advance every N seconds (default 30), cycling

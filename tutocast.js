@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.112';
+const APP_VERSION = '0.7.113';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 12:00';
+const BUILD_DATE = '2026-04-12 18:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -304,6 +304,8 @@ const LANG = {
     screensaverHint: 'Touche une touche pour réveiller',
     autoAdvScenes: '⏩ Avance auto des scènes',
     autoAdvSec: 'Intervalle (sec)',
+    countdownTimer: '⏳ Minuteur',
+    timerDuration: 'Durée minuteur (min)',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
     snapAnnotClear: 'Effacer',
@@ -924,6 +926,8 @@ const LANG = {
     screensaverHint: 'Press any key to wake up',
     autoAdvScenes: '⏩ Auto-advance scenes',
     autoAdvSec: 'Interval (sec)',
+    countdownTimer: '⏳ Timer',
+    timerDuration: 'Timer duration (min)',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
     snapAnnotClear: 'Clear',
@@ -1536,6 +1540,8 @@ const LANG = {
     screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
     autoAdvScenes: '⏩ تقدم تلقائي للمشاهد',
     autoAdvSec: 'الفاصل الزمني (ثانية)',
+    countdownTimer: '⏳ مؤقت',
+    timerDuration: 'مدة المؤقت (دقيقة)',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
     snapAnnotClear: 'مسح',
@@ -2647,6 +2653,9 @@ const Engine = {
     // v0.7.90: opt-in on-canvas clock for time-stamped lesson recordings.
     // Drawn after the transition so the fade can dim it; baked into output.
     ClockOverlay.render(ctx, width, height);
+
+    // v0.7.113: canvas countdown timer overlay (top-center pill)
+    CountdownTimer.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -9111,6 +9120,118 @@ const ClockOverlay = {
   },
 };
 
+/* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
+
+   Teacher sets a duration (1-60 min, default 5 min) in Settings and
+   toggles start/stop via the tools-bar ⏳ Timer button.  The timer
+   counts down as MM:SS in a dark rounded pill drawn top-center of the
+   canvas by Engine.render().  When it reaches 0:00 it flashes red
+   three times over 1.5 s then auto-hides.  Clicking the button while
+   running cancels immediately. */
+const CountdownTimer = {
+  running: false,
+  endAt: 0,          // performance.now() timestamp when timer expires
+  durationSec: 300,  // default 5 min
+  _flashStart: 0,    // when the end-flash sequence began
+  _flashing: false,
+
+  setup() {
+    try {
+      const m = parseInt(localStorage.getItem('tc-timer-dur'), 10);
+      if (m >= 1 && m <= 60) this.durationSec = m * 60;
+    } catch {}
+  },
+
+  setDuration(min) {
+    min = Math.max(1, Math.min(60, min || 5));
+    this.durationSec = min * 60;
+    try { localStorage.setItem('tc-timer-dur', String(min)); } catch {}
+  },
+
+  start() {
+    this.running = true;
+    this._flashing = false;
+    this._flashStart = 0;
+    this.endAt = performance.now() + this.durationSec * 1000;
+    const btn = $('tcTimerBtn');
+    if (btn) btn.classList.add('active');
+  },
+
+  stop() {
+    this.running = false;
+    this._flashing = false;
+    this._flashStart = 0;
+    const btn = $('tcTimerBtn');
+    if (btn) btn.classList.remove('active');
+  },
+
+  toggle() {
+    if (this.running || this._flashing) this.stop();
+    else this.start();
+  },
+
+  render(ctx, W, H) {
+    // Handle flash-finish sequence (not running, just flashing)
+    if (this._flashing) {
+      const elapsed = performance.now() - this._flashStart;
+      if (elapsed > 1500) { this.stop(); return; }
+      // 3 flashes over 1.5s: flash at 0-250, 500-750, 1000-1250
+      const cycle = elapsed % 500;
+      const visible = cycle < 250;
+      if (!visible) return;
+      this._drawPill(ctx, W, '0:00', true);
+      return;
+    }
+
+    if (!this.running) return;
+
+    const remaining = Math.max(0, this.endAt - performance.now());
+    const totalSec = Math.ceil(remaining / 1000);
+
+    if (totalSec <= 0) {
+      // Timer just expired — start flash sequence
+      this.running = false;
+      this._flashing = true;
+      this._flashStart = performance.now();
+      return;
+    }
+
+    const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+    const ss = String(totalSec % 60).padStart(2, '0');
+    this._drawPill(ctx, W, `${mm}:${ss}`, false);
+  },
+
+  _drawPill(ctx, W, text, red) {
+    ctx.save();
+    const fontSize = 44;
+    ctx.font = `700 ${fontSize}px ui-monospace, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(text).width;
+    const padX = 28, padY = 14;
+    const pillW = tw + padX * 2;
+    const pillH = fontSize + padY * 2;
+    const x = (W - pillW) / 2;
+    const y = 30;
+    const r = pillH / 2;
+    // Rounded pill background
+    ctx.fillStyle = red ? 'rgba(220, 38, 38, .85)' : 'rgba(0, 0, 0, .65)';
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + pillW - r, y);
+    ctx.quadraticCurveTo(x + pillW, y, x + pillW, y + r);
+    ctx.quadraticCurveTo(x + pillW, y + pillH, x + pillW - r, y + pillH);
+    ctx.lineTo(x + r, y + pillH);
+    ctx.quadraticCurveTo(x, y + pillH, x, y + pillH - r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, W / 2, y + pillH / 2);
+    ctx.restore();
+  },
+};
+
 /* ─────────── SilenceWatch — flash a ⚠ chip when the mic has been quiet too long
 
    The cheap-and-honest alternative to "uh/um detection". We can't run
@@ -11421,6 +11542,7 @@ function wireEvents() {
     pal.style.display = 'none';
   });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
+  $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
   $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());
@@ -11772,6 +11894,12 @@ function wireEvents() {
     ssEl.checked = Screensaver.enabled;
     ssEl.addEventListener('change', (e) => Screensaver.setEnabled(e.target.checked));
   }
+  // v0.7.113: countdown timer duration input
+  const timerDurEl = $('tcTimerDur');
+  if (timerDurEl) {
+    timerDurEl.value = Math.round(CountdownTimer.durationSec / 60);
+    timerDurEl.addEventListener('change', (e) => CountdownTimer.setDuration(parseInt(e.target.value, 10)));
+  }
   // v0.7.112: opt-in scene auto-advance timer
   const aaChk = $('tcAutoAdvChk');
   const aaSec = $('tcAutoAdvSec');
@@ -11927,6 +12055,7 @@ async function init() {
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
   SceneAutoAdvance.setup();  // v0.7.112
+  CountdownTimer.setup();   // v0.7.113
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 
