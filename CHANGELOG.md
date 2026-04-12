@@ -3,33 +3,33 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.108 — 2026-04-11 (Source pulse highlight on sidebar click)
+## v0.7.111 — 2026-04-11 (Always-visible audio level meter in tools bar)
 
-Clicking a source's name in the sidebar now pulses a glowing yellow outline
-around that source on the output canvas for about one second (three animated
-pulses). Makes it unmistakable which camera or image the teacher just picked
-— especially helpful when many sources overlap or sit behind each other on a
-busy stage. The pulse is baked into the final recording since it's drawn by
-`Engine.render()` on the same canvas as the sources.
+A tiny 80×12 LED-style mic level meter is now embedded directly in the
+floating tools bar, giving teachers continuous visual feedback that
+their microphone is picking up audio and sitting at a healthy level.
+The meter reuses the existing `MicBoost._gateAnalyser` AnalyserNode
+and rides the same rAF loop that powers the noise gate — no new
+analyser, no new animation frame, zero ongoing cost when the mic is
+live.
 
 ### Added
-- `SourcePulse` object in `tutocast.js` with `_target`, `_start`, `DURATION`
-  (1000 ms), `pulse(src)`, and `render(ctx)`. Draws a 3-pulse yellow glow
-  (`rgba(255,220,60,…)`) over `{x, y, w, h}` of the source's bbox, with a
-  sin-easing lineWidth (4–8 px) and a soft 16 px shadow for readability.
-- `Engine.render()` calls `SourcePulse.render(ctx)` right after
-  `_drawSelectedSourceChrome()` so the highlight sits above sources and the
-  selection chrome but below text overlays and pointer visuals.
-- `Engine.onSourcesChanged()` wires a click listener on the editable source
-  name `<span>` (`.tc-src-name`) that calls `SourcePulse.pulse(s)` for
-  non-mic sources. Coexists with the contentEditable rename flow.
+- `MicMeter` object in `tutocast.js`: owns a 80×12 `<canvas>`, draws a
+  green → yellow → red gradient scaled from the linear RMS fed by
+  `MicBoost._startGateLoop`, plus faint tick marks for readability.
+- Tools-bar element `<canvas id="tcMicMeter" class="tc-mic-meter">` at
+  the end of `#tcToolsBar`, preceded by a `.tc-tools-sep` divider.
+- `.tc-mic-meter` CSS: inline-block, subtle border, 2 px radius to sit
+  flush with the surrounding tool buttons.
+- `MicBoost._startGateLoop` now forwards its computed linear RMS to
+  `MicMeter.update(rms)` on every tick, right next to the existing
+  `VolumeDuck.tick(db)` forward.
+- `MicMeter.setup()` wired into the main init block next to the other
+  `.setup()` calls so the canvas is primed and drawn empty on boot.
 
-### Notes
-- Single-source model: only the most recently clicked source is pulsing.
-  Clicking another name immediately retargets the pulse to that source.
-- Mic sources are skipped — they have no bbox on the canvas.
-- Action-button clicks (✕ / 👁 / 📌 / 🌫) already `stopPropagation()`, so
-  they never accidentally trigger a pulse.
+### Changed
+- `APP_VERSION` → `0.7.111`, `BUILD_DATE` bumped, header comment and
+  all four `index.html` version badges updated.
 
 ## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
 

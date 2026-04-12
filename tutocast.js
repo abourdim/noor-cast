@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.108 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.111 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.108';
+const APP_VERSION = '0.7.111';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-11 12:00';
+const BUILD_DATE = '2026-04-11 15:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -2229,6 +2229,8 @@ const MicBoost = {
       const db = rms > 0 ? 20 * Math.log10(rms) : -100;
       // v0.7.83: forward the mic RMS to VolumeDuck for ducking
       try { VolumeDuck.tick(db); } catch {}
+      // v0.7.111: feed the always-visible level meter from the same RMS
+      try { MicMeter.update(rms); } catch {}
       const shouldMute = db < this.gateDb;
       if (shouldMute !== this._muted) {
         this._muted = shouldMute;
@@ -2237,6 +2239,50 @@ const MicBoost = {
       this._rafId = requestAnimationFrame(tick);
     };
     this._rafId = requestAnimationFrame(tick);
+  },
+};
+
+/* v0.7.111: MicMeter — tiny 80×12 LED-style audio level meter rendered
+   in the floating tools bar. Piggybacks on MicBoost._startGateLoop's
+   existing analyser/rAF loop (no new AnalyserNode, no new rAF) so it
+   costs essentially nothing when the mic is live. Draws a green →
+   yellow → red gradient so teachers can see at a glance that their
+   mic is picking up audio and whether they're in the safe zone or
+   clipping. */
+const MicMeter = {
+  _canvas: null,
+  _ctx: null,
+  W: 80, H: 12,
+  setup() {
+    this._canvas = document.getElementById('tcMicMeter');
+    if (!this._canvas) return;
+    this._canvas.width = this.W; this._canvas.height = this.H;
+    this._ctx = this._canvas.getContext('2d');
+    this._draw(0);
+  },
+  update(rms) {
+    if (!this._ctx) return;
+    // rms is linear 0..1
+    this._draw(rms);
+  },
+  _draw(level) {
+    const c = this._ctx; c.clearRect(0, 0, this.W, this.H);
+    const filled = Math.min(1, level * 1.8) * this.W;
+    // gradient: green → yellow → red
+    const g = c.createLinearGradient(0, 0, this.W, 0);
+    g.addColorStop(0, '#2ecc71');
+    g.addColorStop(0.65, '#f1c40f');
+    g.addColorStop(0.9, '#e74c3c');
+    c.fillStyle = '#222';
+    c.fillRect(0, 0, this.W, this.H);
+    c.fillStyle = g;
+    c.fillRect(0, 0, filled, this.H);
+    // tick marks
+    c.strokeStyle = 'rgba(255,255,255,0.15)';
+    for (let i = 1; i < 8; i++) {
+      const x = (this.W / 8) * i;
+      c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.H); c.stroke();
+    }
   },
 };
 
@@ -11537,6 +11583,7 @@ async function init() {
   GuidedTour.setup();
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
+  MicMeter.setup();     // v0.7.111
 
   renderScenes();
   renderTextPresets();
