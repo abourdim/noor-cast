@@ -23,7 +23,7 @@ const $ = (id) => document.getElementById(id);
 
 const LANG = {
   fr: {
-    title: 'NoorCast', slogan: '🎬 Lumière, caméra, ROBOT !',
+    title: 'نُورْكَاسْت NoorCast', slogan: '🎬 Lumière, caméra, ROBOT !',
     statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
     sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
@@ -742,7 +742,7 @@ const LANG = {
     vignetteLabel: '🎥 Effet vignette sur le canvas', vignetteIntensity: 'Intensité',
   },
   en: {
-    title: 'NoorCast', slogan: '🎬 Lights, camera, ROBOT!',
+    title: 'نُورْكَاسْت NoorCast', slogan: '🎬 Lights, camera, ROBOT!',
     statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
     sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
@@ -1458,7 +1458,7 @@ const LANG = {
     vignetteLabel: '🎥 Vignette effect on canvas', vignetteIntensity: 'Intensity',
   },
   ar: {
-    title: 'NoorCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
+    title: 'نُورْكَاسْت', slogan: '🎬 أضواء، كاميرا، روبوت!',
     statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
     sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
