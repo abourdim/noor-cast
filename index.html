@@ -334,17 +334,34 @@
                   <option value="heart">❤️ Heart</option>
                 </select>
                 <span class="tc-toolbar-sep"></span>
+                <!-- v0.7.114: per-source opacity -->
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="sourceOpacity">Opacity</span><input type="range" class="tc-toolbar-range" id="tcSrcOpacity" min="0" max="100" step="1" value="100" style="width:60px" /></label>
+                <span class="tc-toolbar-sep"></span>
+                <!-- v0.7.151: per-source color filter -->
+                <select class="tc-toolbar-select" id="tcSrcFilter" title="Filter" style="font-size:11px">
+                  <option value="none">No filter</option>
+                  <option value="grayscale(1)">Grayscale</option>
+                  <option value="sepia(1)">Sepia</option>
+                  <option value="invert(1)">Invert</option>
+                  <option value="brightness(1.5)">Bright</option>
+                  <option value="contrast(1.5)">Contrast</option>
+                </select>
+                <span class="tc-toolbar-sep"></span>
+                <!-- v0.7.155: per-source badge -->
+                <input type="text" class="tc-toolbar-num" id="tcSrcBadgeText" placeholder="Badge" style="width:60px;font-size:11px" />
+                <input type="color" class="tc-toolbar-color" id="tcSrcBadgeColor" title="Badge color" value="#e74c3c" />
+                <span class="tc-toolbar-sep"></span>
                 <input type="color" class="tc-toolbar-color" id="tcSrcBorderColor" title="Border color" value="#ffffff" />
                 <input type="number" class="tc-toolbar-num" id="tcSrcBorderWidth" title="Border width" min="0" max="10" value="0" style="width:48px" />
                 <span class="tc-toolbar-sep"></span>
                 <!-- v0.7.128: per-source drop shadow controls -->
                 <input type="color" class="tc-toolbar-color" id="tcSrcShadowColor" title="Shadow color" value="#000000" />
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="shadowBlur">Blur<input type="range" class="tc-toolbar-range" id="tcSrcShadowBlur" min="0" max="30" step="1" value="0" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="shadowOffsetX">X<input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetX" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="shadowOffsetY">Y<input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetY" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowBlur">Blur</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowBlur" min="0" max="30" step="1" value="0" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowOffsetX">X</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetX" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowOffsetY">Y</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetY" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
                 <span class="tc-toolbar-sep"></span>
                 <!-- v0.7.144: per-source corner radius slider -->
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="cornerRadius">Radius<input type="range" class="tc-toolbar-range" id="tcSrcCornerRadius" min="0" max="50" step="1" value="0" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="cornerRadius">Radius</span><input type="range" class="tc-toolbar-range" id="tcSrcCornerRadius" min="0" max="50" step="1" value="0" style="width:60px" /></label>
                 <span class="tc-toolbar-sep"></span>
                 <!-- v0.7.119: source crop range sliders -->
                 <label class="tc-toolbar-label" style="font-size:11px">T<input type="range" class="tc-toolbar-range" id="tcSrcCropTop" min="0" max="40" step="1" value="0" style="width:60px" /></label>
@@ -353,7 +370,7 @@
                 <label class="tc-toolbar-label" style="font-size:11px">R<input type="range" class="tc-toolbar-range" id="tcSrcCropRight" min="0" max="40" step="1" value="0" style="width:60px" /></label>
                 <span class="tc-toolbar-sep"></span>
                 <!-- v0.7.123: source rotation slider -->
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="sourceRotation">Rotation<input type="range" class="tc-toolbar-range" id="tcSrcRotation" min="-180" max="180" step="1" value="0" style="width:70px" /><span id="tcSrcRotationVal">0°</span></label>
+                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="sourceRotation">Rotation</span><input type="range" class="tc-toolbar-range" id="tcSrcRotation" min="-180" max="180" step="1" value="0" style="width:70px" /><span id="tcSrcRotationVal">0°</span></label>
                 <span class="tc-toolbar-sep"></span>
                 <!-- v0.7.136: source alignment buttons (center/edges) -->
                 <button class="tc-toolbar-btn" id="tcSrcAlignLeft" title="Align left">⬅</button>
