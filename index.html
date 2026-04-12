@@ -242,6 +242,22 @@
             <div class="tc-side-title" style="margin-top:14px">🤖 <span data-i18n="sensors">Capteurs</span></div>
             <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
             <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
+            <!-- v0.7.162: micro:bit firmware helper -->
+            <details class="tc-microbit-fw" style="margin-top:8px">
+              <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">⚙ micro:bit firmware</summary>
+              <div style="padding:6px 0">
+                <p style="font-size:.72rem;color:rgba(255,255,255,.5);margin:0 0 6px">Flash this to your micro:bit to enable Bluetooth sensors:</p>
+                <pre id="tcMicrobitCode" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 10px;font-size:.7rem;color:#a3e635;margin:0 0 8px;white-space:pre;overflow-x:auto">bluetooth.startAccelerometerService()
+bluetooth.startButtonService()
+basic.forever(() => {
+    basic.pause(100)
+})</pre>
+                <div style="display:flex;gap:6px">
+                  <button class="tc-btn-full" id="tcCopyFwBtn" style="flex:1;font-size:.72rem;padding:5px">📋 Copy</button>
+                  <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-btn-full" style="flex:1;font-size:.72rem;padding:5px;text-align:center;text-decoration:none">🔗 Open MakeCode</a>
+                </div>
+              </div>
+            </details>
           </aside>
 
           <!-- CENTER: Canvas preview -->

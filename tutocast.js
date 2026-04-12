@@ -14413,6 +14413,11 @@ function wireEvents() {
   });
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
+  // v0.7.162: copy micro:bit firmware code to clipboard
+  $('tcCopyFwBtn')?.addEventListener('click', () => {
+    const code = $('tcMicrobitCode')?.textContent || '';
+    navigator.clipboard.writeText(code).then(() => showToast('📋 Code copied!', 1400)).catch(() => {});
+  });
 
   // v0.7.161: text picker dropdown toggle
   $('tcAddTextDropdown')?.addEventListener('click', () => {
