@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.113</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.114</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -187,7 +187,7 @@
             <span class="tc-tool-icon">⏳</span><span class="tc-tool-label" data-i18n="countdownTimer">Timer</span>
           </button>
           <span class="tc-tools-sep"></span>
-          <!-- v0.7.113: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
+          <!-- v0.7.114: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
           <canvas id="tcMicMeter" class="tc-mic-meter" width="80" height="12" title="Mic level"></canvas>
         </div>
 
@@ -239,7 +239,7 @@
               <canvas id="tcOverlayCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
               <div class="tc-stage-hint" id="tcStageHint" data-i18n="stageHint">👆 Ajoute une source pour commencer</div>
               <div class="tc-countdown" id="tcCountdown"></div>
-              <!-- v0.7.113: auto-advance countdown pill -->
+              <!-- v0.7.114: auto-advance countdown pill -->
               <div class="tc-autoadv-pill" id="tcAutoAdvPill" style="display:none"></div>
               <!-- v0.7.20: broadcast-style teleprompter with auto-scroll + persist + font/width controls -->
               <div class="tc-teleprompter" id="tcTeleprompter" style="display:none">
@@ -281,6 +281,9 @@
                   <option value="star">⭐ Star</option>
                   <option value="heart">❤️ Heart</option>
                 </select>
+                <span class="tc-toolbar-sep"></span>
+                <label class="tc-toolbar-label" for="tcSrcOpacity" data-i18n="sourceOpacity">Opacité</label>
+                <input type="range" id="tcSrcOpacity" min="0" max="100" value="100" class="tc-toolbar-range" title="Opacity">
                 <span class="tc-toolbar-sep"></span>
                 <button class="tc-toolbar-btn tc-toolbar-del" id="tcSrcToolbarDel" title="Delete">✕</button>
               </div>
@@ -465,7 +468,7 @@
             <div class="tc-take-rating" id="tcTakeRating"></div>
           </div>
           <div class="tc-take-actions">
-            <!-- v0.7.113: inline filename editor — primed in Recorder.finish() -->
+            <!-- v0.7.114: inline filename editor — primed in Recorder.finish() -->
             <div class="tc-take-title-wrap">
               <label class="sidebar-label" data-i18n="takeTitle">📝 Nom du fichier</label>
               <input type="text" id="tcTakeTitleInput" class="sidebar-select" maxlength="100" />
@@ -1076,7 +1079,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.113</strong></span>
+      <span class="badge"><strong>v0.7.114</strong></span>
     </div>
   </aside>
 
@@ -1150,7 +1153,7 @@
               <span data-i18n="screensaverLabel">💤 Screensaver après 90s d'inactivité</span>
             </label>
           </div>
-          <!-- v0.7.113: opt-in scene auto-advance timer -->
+          <!-- v0.7.114: opt-in scene auto-advance timer -->
           <div class="sidebar-group">
             <label class="toggle-ctrl">
               <input type="checkbox" id="tcAutoAdvChk" class="checkbox-ctrl" />
@@ -1466,7 +1469,7 @@
 
     <div class="sidebar-footer">
       <span>TutoCast</span>
-      <span class="badge"><strong>v0.7.113</strong></span>
+      <span class="badge"><strong>v0.7.114</strong></span>
     </div>
   </aside>
 
@@ -1498,7 +1501,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Événements et messages</span>
-      <span class="badge"><strong>v0.7.113</strong></span>
+      <span class="badge"><strong>v0.7.114</strong></span>
     </div>
   </aside>
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.109 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.114 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.113';
+const APP_VERSION = '0.7.114';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 18:00';
@@ -368,6 +368,7 @@ const LANG = {
     brandSloganSize: '📐 Taille du slogan',
     brandLogoTint: '🎨 Couleur du logo (silhouette)',
     sourceTitlePh: 'Titre (ex: 💻 Mon code)',
+    sourceOpacity: 'Opacité',
     sourceShape: 'Forme',
     filter_none: '— Filtre —',
     filter_bw: 'N&B',
@@ -990,6 +991,7 @@ const LANG = {
     brandSloganSize: '📐 Slogan size',
     brandLogoTint: '🎨 Logo color (silhouette)',
     sourceTitlePh: 'Title (e.g. 💻 My code)',
+    sourceOpacity: 'Opacity',
     sourceShape: 'Shape',
     filter_none: '— Filter —',
     filter_bw: 'B&W',
@@ -1604,6 +1606,7 @@ const LANG = {
     brandSloganSize: '📐 حجم الشعار النصي',
     brandLogoTint: '🎨 لون الشعار (ظلّي)',
     sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
+    sourceOpacity: 'شفافية',
     sourceShape: 'الشكل',
     filter_none: '— فلتر —',
     filter_bw: 'أبيض وأسود',
@@ -2741,6 +2744,10 @@ const Engine = {
     // honour the manual toggles here too.
     if (src.visible === false || src.hidden) return;
 
+    // v0.7.114: per-source opacity — wrap entire draw in globalAlpha
+    ctx.save();
+    ctx.globalAlpha = src.opacity ?? 1;
+
     // v0.7.62: image sources (from clipboard paste) take a simplified draw
     // path — shape clip + drawImage — bypassing the video filter/mirror/
     // blur/title chain, since they're static bitmaps that don't need any
@@ -2762,6 +2769,7 @@ const Engine = {
       ctx.drawImage(src.img, x, y, w, h);
       ctx.restore();
       ctx.restore();
+      ctx.restore(); // v0.7.114: close globalAlpha wrapper
       return;
     }
 
@@ -2895,6 +2903,7 @@ const Engine = {
 
     // Close the rotation wrapper opened earlier
     if (rot !== 0) ctx.restore();
+    ctx.restore(); // v0.7.114: close globalAlpha wrapper
   },
 
   /* v0.7.13: draw a clean Canva-style selection outline around the
@@ -3072,7 +3081,7 @@ const Engine = {
         id: this.nextId++, type: 'screen', stream, video,
         label: t('sourceScreen'),
         x: 0, y: 0, w: this.width, h: this.height,
-        shape: 'rect', visible: true, mirrored: false,
+        shape: 'rect', visible: true, mirrored: false, opacity: 1,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3119,7 +3128,7 @@ const Engine = {
         id: this.nextId++, type: 'cam', stream, video,
         label: label || `Camera ${n + 1}`,
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
-        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
+        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked, opacity: 1,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3162,6 +3171,7 @@ const Engine = {
           visible: true,
           hidden: false,
           custom: true,
+          opacity: 1,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3708,6 +3718,7 @@ const Scenes = {
         label: s.label,
         x: s.x, y: s.y, w: s.w, h: s.h,
         shape: s.shape || 'rect',
+        opacity: s.opacity ?? 1,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3754,6 +3765,7 @@ const Scenes = {
       target.x = snap.x; target.y = snap.y;
       target.w = snap.w; target.h = snap.h;
       target.shape = snap.shape;
+      target.opacity = snap.opacity ?? 1;
       target.custom = true;
     });
   },
@@ -8063,6 +8075,13 @@ const SourceToolbar = {
       Engine.onSourcesChanged();
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.114: per-source opacity slider
+    $('tcSrcOpacity')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.opacity = parseInt(e.target.value, 10) / 100;
+    });
+    $('tcSrcOpacity')?.addEventListener('click', (e) => e.stopPropagation());
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -8106,6 +8125,9 @@ const SourceToolbar = {
     if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
       shapeSel.value = s.shape || 'rect';
     }
+    // v0.7.114: sync opacity slider to current source
+    const opSlider = $('tcSrcOpacity');
+    if (opSlider) opSlider.value = Math.round((s.opacity ?? 1) * 100);
   },
 };
 
@@ -8169,6 +8191,7 @@ const SourceContextMenu = {
         hidden: false,
         custom: true,   // duplicates are always pinned so scenes don't overwrite
         pinned: true,
+        opacity: s.opacity ?? 1,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();

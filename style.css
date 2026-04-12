@@ -2356,6 +2356,19 @@ body.log-open .app {
   padding: 4px 10px;
   font-size: 1rem;
 }
+/* v0.7.114: per-source opacity slider in the source toolbar */
+.tc-source-toolbar .tc-toolbar-label {
+  color: #d1d5db;
+  font-size: .72rem;
+  white-space: nowrap;
+  user-select: none;
+}
+.tc-source-toolbar .tc-toolbar-range {
+  width: 70px;
+  height: 4px;
+  cursor: pointer;
+  accent-color: #a3e635;
+}
 /* v0.7.15: shape <select> inside the source toolbar */
 .tc-toolbar-select {
   background: rgba(255, 255, 255, .06);

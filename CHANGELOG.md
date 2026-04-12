@@ -3,27 +3,28 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.113 — 2026-04-12 (Canvas countdown timer overlay)
+## v0.7.114 — 2026-04-12 (Per-source opacity slider)
 
-A visible countdown timer drawn on the canvas (baked into recordings).
-The teacher sets a duration (1-60 min, default 5 min) in Settings and
-presses the tools-bar **⏳ Timer** button to start. The timer counts
-down as `MM:SS` in a dark rounded pill at the top-center of the stage.
-When it hits `0:00` it flashes red three times over 1.5 s then auto-hides.
-Clicking the button again while running cancels immediately.
+Each source now has an opacity slider (0-100%, default 100%) in the
+floating source toolbar. Drag the slider to fade any source in or out
+on the canvas. Opacity is persisted in scene snapshots and restored
+when switching scenes.
 
 ### Added
-- `CountdownTimer` object in `tutocast.js`: `running`, `endAt`,
-  `durationSec`, `setup()`, `start()`, `stop()`, `toggle()`,
-  `render(ctx, W, H)`, `_drawPill(ctx, W, text, red)`.
-- Tools-bar button `⏳ Timer` (`#tcTimerBtn`) toggling start/stop.
-- Settings input `#tcTimerDur` (number, 1-60 min) in the General section.
-- `CountdownTimer.render()` called from `Engine.render()` after
-  `ClockOverlay`, drawing a rounded dark pill with white monospace text
-  at top-center. End-of-timer flash: red pill with `0:00` blinks 3 times
-  over 1.5 s then auto-hides.
-- i18n keys `countdownTimer` and `timerDuration` in FR, EN, AR.
-- localStorage key `tc-timer-dur` for persisting the duration setting.
+- `opacity` field (default `1`) on every source object (screen, cam,
+  image) at creation time.
+- Opacity range input (`#tcSrcOpacity`) in `.tc-source-toolbar` with
+  label, wired to `Engine.selectedSource.opacity`.
+- `ctx.save(); ctx.globalAlpha = src.opacity ?? 1; ... ctx.restore()`
+  wrapping in `Engine.drawSource()` (both image and video paths).
+- Opacity included in scene snapshot save/restore and source duplicate.
+- i18n key `sourceOpacity` in FR (`Opacité`), EN (`Opacity`),
+  AR (`شفافية`).
+- CSS `.tc-toolbar-label` and `.tc-toolbar-range` in `style.css`.
+
+### Changed
+- `APP_VERSION` bumped to `0.7.114`, `BUILD_DATE` updated.
+- Version tags in `index.html` (header subtitle + 3 footer badges).
 
 ---
 
