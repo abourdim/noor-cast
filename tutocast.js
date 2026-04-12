@@ -8471,6 +8471,9 @@ const PreviewZoom = {
     badge.className = 'tc-preview-zoom-badge';
     badge.id = 'tcPreviewZoomBadge';
     badge.style.display = 'none';
+    badge.style.cursor = 'pointer';
+    badge.title = 'Click to reset zoom to 100%';
+    badge.addEventListener('click', (e) => { e.stopPropagation(); this.reset(); });
     this._stage.appendChild(badge);
     this._badge = badge;
 
