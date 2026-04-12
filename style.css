@@ -1621,6 +1621,7 @@ body.log-open .app {
   display: block;
 }
 .tc-stage canvas.tc-overlay { pointer-events: none; }
+.tc-stage canvas.tc-grid-overlay { z-index: 2; pointer-events: none; }
 .tc-stage.drawing canvas.tc-overlay { pointer-events: auto; cursor: crosshair; }
 .tc-stage-hint {
   position: absolute; inset: 0;

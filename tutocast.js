@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.114';
+const APP_VERSION = '0.7.115';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 18:00';
@@ -103,6 +103,7 @@ const LANG = {
     ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
     spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
+    gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
@@ -726,6 +727,7 @@ const LANG = {
     ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
     spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
+    gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
@@ -1346,6 +1348,7 @@ const LANG = {
     ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
     spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
+    gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
@@ -6646,6 +6649,74 @@ const Watermark = {
   },
 };
 
+/* v0.7.115 — Rule-of-thirds grid overlay.
+   Draws 2 horizontal + 2 vertical lines dividing the stage into 9 equal
+   zones. Rendered on a dedicated HTML <canvas> overlay that sits on top
+   of the stage but is NOT part of the captureStream pipeline — so the
+   grid is teacher-only and never appears in recordings.
+   Persisted in localStorage as tc-grid-overlay. Toggled via toolbar
+   button (#) or hotkey G. */
+const GridOverlay = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+
+  init() {
+    this._canvas = $('tcGridCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+    this.render();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-grid-overlay') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-grid-overlay', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    this.render();
+    const btn = $('tcGridBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    showToast(this.visible
+      ? '# ' + (t('gridOverlayOn') || 'Rule-of-thirds on')
+      : '# ' + (t('gridOverlayOff') || 'Rule-of-thirds off'), 1200);
+  },
+
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    const w = cvs.width;
+    const h = cvs.height;
+    ctx.clearRect(0, 0, w, h);
+    if (!this.visible) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.30)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 8]);
+    ctx.beginPath();
+    // Two vertical lines at 1/3 and 2/3
+    const x1 = Math.round(w / 3);
+    const x2 = Math.round((w * 2) / 3);
+    ctx.moveTo(x1, 0); ctx.lineTo(x1, h);
+    ctx.moveTo(x2, 0); ctx.lineTo(x2, h);
+    // Two horizontal lines at 1/3 and 2/3
+    const y1 = Math.round(h / 3);
+    const y2 = Math.round((h * 2) / 3);
+    ctx.moveTo(0, y1); ctx.lineTo(w, y1);
+    ctx.moveTo(0, y2); ctx.lineTo(w, y2);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 /* v0.7.82 — Brand presets: 3 numbered slots that snapshot the current
    Brand state (logo + slogan + colors + effect + filter + tint) into
    localStorage so teachers can switch between identities (class vs
@@ -10910,6 +10981,7 @@ const KeyBindings = {
     quiz: 'q', teleprompter: 't',
     captions: 'c',  // v0.7.75
     bigMarker: 'b',  // v0.7.78
+    grid: 'g',       // v0.7.115
   },
   current: {},
 
@@ -11234,6 +11306,7 @@ function setupHotkeys() {
           case 'zoom': Zoom.toggle(); break;
           case 'quiz': QuizCard.prompt(); break;
           case 'teleprompter': Teleprompter.toggle(); break;
+          case 'grid': GridOverlay.toggle(); break;  // v0.7.115
           case 'captions': {
             // v0.7.75: 'C' toggles LiveCaptions.enabled at runtime,
             // bypassing the persisted setting for the current session.
@@ -11539,6 +11612,7 @@ function wireEvents() {
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
   $('tcCursorTrailBtn')?.addEventListener('click', () => CursorTrail.toggle());
+  $('tcGridBtn')?.addEventListener('click', () => GridOverlay.toggle());  // v0.7.115
   // v0.7.104: emoji reaction burst button + palette
   const reactBtn = $('tcReactBtn');
   if (reactBtn) {
@@ -12078,7 +12152,7 @@ async function init() {
   Minimap.setup();
   Screensaver.setup();  // v0.7.81
   SceneAutoAdvance.setup();  // v0.7.112
-  CountdownTimer.setup();   // v0.7.113
+  GridOverlay.init();  // v0.7.115
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 

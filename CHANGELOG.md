@@ -3,28 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.114 — 2026-04-12 (Per-source opacity slider)
+## v0.7.115 — 2026-04-12 (Rule-of-thirds grid overlay)
 
-Each source now has an opacity slider (0-100%, default 100%) in the
-floating source toolbar. Drag the slider to fade any source in or out
-on the canvas. Opacity is persisted in scene snapshots and restored
-when switching scenes.
+A toggle-able rule-of-thirds grid overlay helps teachers frame their
+camera and compose scenes. Two horizontal and two vertical dashed white
+lines (30% opacity) divide the canvas into 9 equal zones. The grid is
+rendered on a dedicated HTML `<canvas>` overlay that sits above the
+stage but outside the `captureStream()` pipeline, so it is teacher-only
+and never appears in recordings.
 
 ### Added
-- `opacity` field (default `1`) on every source object (screen, cam,
-  image) at creation time.
-- Opacity range input (`#tcSrcOpacity`) in `.tc-source-toolbar` with
-  label, wired to `Engine.selectedSource.opacity`.
-- `ctx.save(); ctx.globalAlpha = src.opacity ?? 1; ... ctx.restore()`
-  wrapping in `Engine.drawSource()` (both image and video paths).
-- Opacity included in scene snapshot save/restore and source duplicate.
-- i18n key `sourceOpacity` in FR (`Opacité`), EN (`Opacity`),
-  AR (`شفافية`).
-- CSS `.tc-toolbar-label` and `.tc-toolbar-range` in `style.css`.
-
-### Changed
-- `APP_VERSION` bumped to `0.7.114`, `BUILD_DATE` updated.
-- Version tags in `index.html` (header subtitle + 3 footer badges).
+- `GridOverlay` object in `tutocast.js`: `visible`, `init()`, `load()`,
+  `toggle()`, `render()`. Persisted in `localStorage` as
+  `tc-grid-overlay`.
+- Dedicated overlay canvas `<canvas id="tcGridCanvas">` in `index.html`
+  with class `tc-grid-overlay` (CSS: `z-index: 2; pointer-events: none`).
+- Tools bar button `#` (`#tcGridBtn`) toggling the grid.
+- Hotkey `G` via `KeyBindings.DEFAULTS.grid`.
+- i18n keys `gridOverlay`, `gridOverlayOn`, `gridOverlayOff` in FR, EN,
+  AR.
 
 ---
 
