@@ -2753,10 +2753,7 @@ body.tc-simple #tcResetLayoutBtn,
 body.tc-simple #tcSaveSceneBtn,
 body.tc-simple #tcAddTextDropdown,
 body.tc-simple #tcTextPicker { display: none !important; }
-/* Left sidebar: hide sensors + micro:bit */
-body.tc-simple .tc-microbit-fw,
-body.tc-simple #btConnectBtn,
-body.tc-simple #tcBtValues { display: none !important; }
+/* micro:bit visible in all modes */
 /* Rec bar: hide Pause and Marker */
 body.tc-simple #tcPauseBtn,
 body.tc-simple #tcMarkBtn { display: none !important; }
