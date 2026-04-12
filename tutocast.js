@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.109';
+const APP_VERSION = '0.7.110';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 12:00';
+const BUILD_DATE = '2026-04-12 09:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -161,9 +161,9 @@ const LANG = {
     layoutReset: '🔓 Disposition réinitialisée',
     collapseSidebar: 'Cacher la sidebar',
     expandSidebar: 'Afficher la sidebar',
-    focusMode: 'Focus',
-    focusOn: '⛶ Mode focus activé',
-    focusOff: '⛶ Mode focus désactivé',
+    randomScene: 'Scène aléatoire',
+    noScenesToShuffle: 'Aucune scène disponible',
+    onlyOneScene: 'Une seule scène',
     saveScene: 'Sauvegarder la disposition',
     promptSaveScene: 'Nom de cette scène ?',
     promptDuplicateScene: 'Nom de la copie ?',
@@ -779,9 +779,9 @@ const LANG = {
     layoutReset: '🔓 Layout reset',
     collapseSidebar: 'Collapse sidebar',
     expandSidebar: 'Expand sidebar',
-    focusMode: 'Focus',
-    focusOn: '⛶ Focus mode on',
-    focusOff: '⛶ Focus mode off',
+    randomScene: 'Random scene',
+    noScenesToShuffle: 'No scenes available',
+    onlyOneScene: 'Only one scene',
     saveScene: 'Save this layout',
     promptSaveScene: 'Name for this scene?',
     promptDuplicateScene: 'Name of the copy?',
@@ -1389,9 +1389,9 @@ const LANG = {
     layoutReset: '🔓 تمت إعادة ضبط التخطيط',
     collapseSidebar: 'إخفاء الشريط الجانبي',
     expandSidebar: 'إظهار الشريط الجانبي',
-    focusMode: 'تركيز',
-    focusOn: '⛶ وضع التركيز مُفعَّل',
-    focusOff: '⛶ وضع التركيز مُعطَّل',
+    randomScene: 'مشهد عشوائي',
+    noScenesToShuffle: 'لا توجد مشاهد',
+    onlyOneScene: 'مشهد واحد فقط',
     saveScene: 'حفظ التخطيط',
     promptSaveScene: 'اسم هذا المشهد؟',
     promptDuplicateScene: 'اسم النسخة؟',
@@ -3610,6 +3610,24 @@ const Scenes = {
   reapply() {
     const s = this.presets.find(p => p.key === this.active);
     if (s) s.apply(Engine);
+  },
+
+  /* v0.7.110: pick a random scene (skip current). Hotkey ? mapped in
+     setupKeyboard, button 🎲 in the tools bar. */
+  random() {
+    if (this.presets.length === 0) {
+      showToast('🎲 ' + (t('noScenesToShuffle') || 'No scenes available'), 1800);
+      return;
+    }
+    const others = this.presets.filter(p => p.key !== this.active);
+    if (others.length === 0) {
+      showToast('🎲 ' + (t('onlyOneScene') || 'Only one scene'), 1800);
+      return;
+    }
+    const pick = others[Math.floor(Math.random() * others.length)];
+    this.switch(pick.key);
+    const label = pick.custom ? pick.label : t('scene_' + pick.key);
+    showToast('🎲 ' + (t('randomScene') || 'Random scene') + ' : ' + pick.icon + ' ' + label, 1800);
   },
 
   /* v0.7.32: reorder scenes by drag-and-drop. Persists the order to
@@ -10959,11 +10977,10 @@ function setupHotkeys() {
       e.preventDefault();
       return;
     }
-    // v0.7.24: ? toggles the keyboard cheat sheet overlay. The check uses
-    // e.key === '?' directly because on most layouts ? is Shift+/, and the
-    // lowercased k would be '/' either way — we accept both.
+    // v0.7.110: ? (Shift+/) triggers random scene shuffle.
+    // (Previously toggled the cheat sheet, now accessible via its button.)
     if (e.key === '?' || (k === '/' && e.shiftKey)) {
-      Cheatsheet.toggle();
+      Scenes.random();
       e.preventDefault();
       return;
     }

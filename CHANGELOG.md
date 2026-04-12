@@ -3,30 +3,29 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.109 — 2026-04-12 (Full focus / distraction-free preview mode)
+## v0.7.110 — 2026-04-12 (Random scene shuffle)
 
-Toggle that hides the left sidebar, right sidebar, tools bar, and rec
-bar so only the stage canvas remains — a superset of the v0.7.94
-right-sidebar collapse. Activate via the new **⛶ Focus** button in the
-tools bar or the **Shift+F** hotkey. Press **Escape** to leave focus
-mode. State is persisted in `localStorage` key `tc-focus-mode`.
+A "🎲" button in the tools bar and the `?` hotkey (Shift+/) pick a
+random scene from the presets list and switch to it instantly, skipping
+the currently active scene.  Edge cases (zero scenes, only one scene)
+show an explanatory toast instead.
 
 ### Added
-- `FocusMode` object in `tutocast.js`: `on` flag, `setup()` (loads
-  persisted state), `toggle()`, `_apply()` which toggles
-  `document.body.classList('tc-focus')`.
-- Tools-bar button `#tcFocusBtn` (⛶ icon, `Shift+F` kbd hint) wired to
-  `FocusMode.toggle()`.
-- `Shift+F` hotkey in the main keyboard handler.
-- `Escape` exits focus mode before maximize mode.
-- CSS: `body.tc-focus` hides `.tc-sidebar`, `.tc-sidebar-scenes`,
-  `.tc-rsidebar-toggle`, `.tc-tools-bar`, `.tc-rec-bar` and stretches
-  `.tc-stage` to fill the viewport.
-- i18n keys `focusMode`, `focusOn`, `focusOff` in FR, EN, AR.
+- `Scenes.random()` method in `tutocast.js`: filters out the active
+  scene, picks a random alternative, calls `Scenes.switch()`, and
+  shows a toast with the scene name.
+- Tools-bar button `🎲` (`#tcRandomSceneBtn`) calling `Scenes.random()`.
+- `?` (Shift+/) hotkey rewired from the cheat-sheet toggle to
+  `Scenes.random()`.  The cheat sheet remains accessible via its
+  button in the UI.
+- i18n keys `randomScene`, `noScenesToShuffle`, `onlyOneScene` in
+  FR / EN / AR.
 
 ### Changed
-- `APP_VERSION` → `0.7.109`, `BUILD_DATE` bumped, header comment and
-  `index.html` version badge updated.
+- `APP_VERSION` → `'0.7.110'`, `BUILD_DATE` updated.
+- Four version tags in `index.html` bumped to v0.7.110.
+
+---
 
 ## v0.7.111 — 2026-04-11 (Always-visible audio level meter in tools bar)
 
