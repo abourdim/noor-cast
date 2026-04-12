@@ -1409,6 +1409,17 @@
               <span data-i18n="audioVizLabel">🎵 Visualiseur audio sur le canvas</span>
             </label>
           </div>
+          <!-- v0.7.154: canvas vignette effect -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcVignetteToggle" class="checkbox-ctrl" />
+              <span data-i18n="vignetteLabel">🎥 Effet vignette sur le canvas</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <label class="sidebar-label" data-i18n="vignetteIntensity" style="flex:0 0 auto;margin:0">Intensité</label>
+              <input type="range" id="tcVignetteIntensity" min="0.1" max="1" step="0.05" value="0.5" class="sidebar-select" style="flex:1" />
+            </div>
+          </div>
           <!-- v0.7.141: large recording elapsed timer on canvas -->
           <div class="sidebar-group">
             <label class="toggle-ctrl">

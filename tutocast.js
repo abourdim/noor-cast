@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.155 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.154 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.155';
+const APP_VERSION = '0.7.154';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -709,6 +709,8 @@ const LANG = {
     hotkeyRefTab: 'Raccourcis', hotkeyRefSearch: 'Filtrer les raccourcis...', hotkeyRefNoMatch: 'Aucun raccourci trouvé',
     // v0.7.138: multi-source selection
     selectAll: 'Tout', multiSelected: 'sources sélectionnées', multiDeselected: 'Sélection vidée',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 Effet vignette sur le canvas', vignetteIntensity: 'Intensité',
   },
   en: {
     title: 'TutoCast', slogan: '🎬 Lights, camera, ROBOT!',
@@ -1397,6 +1399,8 @@ const LANG = {
     hotkeyRefTab: 'Hotkeys', hotkeyRefSearch: 'Filter shortcuts...', hotkeyRefNoMatch: 'No shortcuts found',
     // v0.7.138: multi-source selection
     selectAll: 'All', multiSelected: 'sources selected', multiDeselected: 'Selection cleared',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 Vignette effect on canvas', vignetteIntensity: 'Intensity',
   },
   ar: {
     title: 'TutoCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
@@ -2071,6 +2075,8 @@ const LANG = {
     hotkeyRefTab: 'اختصارات', hotkeyRefSearch: 'تصفية الاختصارات...', hotkeyRefNoMatch: 'لم يتم العثور على اختصارات',
     // v0.7.138: multi-source selection
     selectAll: 'الكل', multiSelected: 'مصادر محددة', multiDeselected: 'تم مسح التحديد',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 تأثير فينييت على الكانفا', vignetteIntensity: 'الشدة',
   }
 };
 
@@ -2937,8 +2943,8 @@ const Engine = {
     // v0.7.148: piano keyboard overlay for music teachers
     PianoOverlay.render(ctx, width, height);
 
-    // v0.7.152: cinematic letterbox bars (top + bottom black bars)
-    Letterbox.render(ctx, width, height);
+    // v0.7.154: canvas vignette effect (dark gradient edges)
+    Vignette.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -11217,6 +11223,46 @@ const PianoOverlay = {
   },
 };
 
+/* ─────────── Vignette — dark gradient edges around the canvas
+
+   Classic camera/film look: radial gradient from center (transparent) to
+   edges (black with configurable alpha).  Drawn ON the canvas via
+   Engine.render() so it's baked into recordings.  Toggle + intensity
+   slider in Settings, persisted as tc-vignette / tc-vignette-intensity. */
+const Vignette = {
+  visible: false,
+  intensity: 0.5,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-vignette') === '1';
+      const v = parseFloat(localStorage.getItem('tc-vignette-intensity'));
+      if (!isNaN(v)) this.intensity = Math.max(0.1, Math.min(1, v));
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-vignette', v ? '1' : '0'); } catch {}
+  },
+  setIntensity(v) {
+    this.intensity = Math.max(0.1, Math.min(1, v));
+    try { localStorage.setItem('tc-vignette-intensity', String(this.intensity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    ctx.save();
+    const cx = W / 2, cy = H / 2;
+    const r = Math.sqrt(cx * cx + cy * cy);
+    const grad = ctx.createRadialGradient(cx, cy, r * 0.35, cx, cy, r);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, `rgba(0, 0, 0, ${this.intensity})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+};
+
 /* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
 
    Teacher sets a duration (1-60 min, default 5 min) in Settings and
@@ -14599,6 +14645,18 @@ function wireEvents() {
     avEl.addEventListener('change', (e) => AudioViz.setVisible(e.target.checked));
   }
 
+  // v0.7.154: canvas vignette effect
+  const vigEl = $('tcVignetteToggle');
+  if (vigEl) {
+    vigEl.checked = Vignette.visible;
+    vigEl.addEventListener('change', (e) => Vignette.setVisible(e.target.checked));
+  }
+  const vigInt = $('tcVignetteIntensity');
+  if (vigInt) {
+    vigInt.value = Vignette.intensity;
+    vigInt.addEventListener('input', (e) => Vignette.setIntensity(parseFloat(e.target.value)));
+  }
+
   // v0.7.141: recording elapsed timer toggle
   const reEl = $('tcRecElapsedToggle');
   if (reEl) {
@@ -14834,6 +14892,7 @@ async function init() {
   ClockOverlay.load();  // v0.7.90
   RecIndicator.load();  // v0.7.120
   AudioViz.load();  // v0.7.135
+  Vignette.load();  // v0.7.154
   RecElapsed.load();  // v0.7.141
   LiveCaptions.load();
   SceneIntroText.load();

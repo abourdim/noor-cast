@@ -3,23 +3,23 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.155 — 2026-04-12 (On-canvas source badge/label stamp)
+## v0.7.154 — 2026-04-12 (Canvas vignette effect)
 
-Each source can now display a small colored pill badge at its top-right corner
-(e.g. "LIVE", "REPLAY", "DEMO", or any custom text up to 12 characters). The
-badge is drawn on the canvas and is visible in recordings.
+Optional dark-edge vignette overlay drawn on the canvas, visible in recordings.
+A radial gradient fades from transparent at the center to black at the edges,
+creating a classic camera/film look. Intensity is configurable via a slider.
 
 ### Added
-- `badgeText` (string, default `''`) and `badgeColor` (hex, default `#e74c3c`)
-  fields on every source object (screen, camera, image).
-- `Engine._drawSourceBadge(ctx, src, x, y, w)` helper — draws a pill-shaped
-  background with white centered text at the source's top-right corner.
-- Called from both the image and video draw paths in `Engine.drawSource()`.
-- Source toolbar: text input `#tcSrcBadgeText` + color picker `#tcSrcBadgeColor`
-  with live sync in `SourceToolbar.updatePosition()`.
-- Badge fields persisted in scene snapshots, `SceneAutoSave`, `duplicateScene`,
-  source context-menu duplicate, mirror duplicate, and `LayoutHistory`.
-- i18n key `sourceBadge` in fr / en / ar.
+- `Vignette` object with `visible: false`, `intensity: 0.5`, `load()`,
+  `setVisible(v)`, `setIntensity(v)`, `render(ctx, W, H)`.
+- Render: radial gradient from center (transparent) to edges (black with
+  `intensity` alpha), drawn as `fillRect` with the gradient.
+- `Engine.render()` calls `Vignette.render()` after PianoOverlay.
+- Settings toggle `#tcVignetteToggle` + intensity range slider
+  `#tcVignetteIntensity` (0.1-1.0, step 0.05) in the Recording section.
+- Persistence via `tc-vignette` (toggle) and `tc-vignette-intensity` (slider)
+  in localStorage.
+- i18n keys `vignetteLabel`, `vignetteIntensity` in fr / en / ar.
 
 ## v0.7.148 — 2026-04-12 (Keyboard piano overlay for music teachers)
 
