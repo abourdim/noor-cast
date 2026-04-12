@@ -10025,7 +10025,7 @@ const SourceToolbar = {
     const shapeColorSec = $('tcSspShapeColor');
     if (shapeColorSec) shapeColorSec.style.display = s.type === 'shape' ? '' : 'none';
     const shapeColorEl = $('tcSrcShapeColor');
-    if (shapeColorEl && s.type === 'shape') shapeColorEl.value = s.shapeColor || '#a3e635';
+    if (shapeColorEl && s.type === 'shape' && document.activeElement !== shapeColorEl) shapeColorEl.value = s.shapeColor || '#a3e635';
     // v0.7.114: sync opacity (skip if user is actively dragging the slider)
     const opEl = $('tcSrcOpacity');
     if (opEl && document.activeElement !== opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);
@@ -10038,7 +10038,7 @@ const SourceToolbar = {
       bcEl.value = s.borderColor || '#ffffff';
     }
     const bwEl = $('tcSrcBorderWidth');
-    if (bwEl && bwEl.value !== String(s.borderWidth || 0)) {
+    if (bwEl && document.activeElement !== bwEl && bwEl.value !== String(s.borderWidth || 0)) {
       bwEl.value = s.borderWidth || 0;
     }
     // v0.7.128: sync shadow controls
@@ -10065,7 +10065,7 @@ const SourceToolbar = {
     }
     // v0.7.155: sync badge text + color
     const btEl = $('tcSrcBadgeText');
-    if (btEl && btEl.value !== (s.badgeText || '')) {
+    if (btEl && document.activeElement !== btEl && btEl.value !== (s.badgeText || '')) {
       btEl.value = s.badgeText || '';
     }
     const bcBadgeEl = $('tcSrcBadgeColor');
@@ -10077,13 +10077,13 @@ const SourceToolbar = {
       const el = $('tcSrcCrop' + dir);
       if (!el) return;
       const v = String(Math.round((s['crop' + dir] || 0) * 100));
-      if (el.value !== v) el.value = v;
+      if (document.activeElement !== el && el.value !== v) el.value = v;
     });
     // v0.7.123: sync rotation slider
     const rotEl = $('tcSrcRotation');
     if (rotEl) {
       const deg = String(Math.round((s.rotation || 0) * 180 / Math.PI));
-      if (rotEl.value !== deg) rotEl.value = deg;
+      if (document.activeElement !== rotEl && rotEl.value !== deg) rotEl.value = deg;
       const valEl = $('tcSrcRotationVal');
       if (valEl) valEl.textContent = deg + '\u00B0';
     }
