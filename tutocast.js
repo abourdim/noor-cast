@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.120 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.121 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.122';
+const APP_VERSION = '0.7.121';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 22:00';
+const BUILD_DATE = '2026-04-12 21:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -314,6 +314,8 @@ const LANG = {
     autoAdvScenes: '⏩ Avance auto des scènes',
     autoAdvSec: 'Intervalle (sec)',
     countdownTimer: '⏳ Minuteur',
+    colorPicker: '🎨 Pipette',
+    colorCopied: 'Copié',
     timerDuration: 'Durée minuteur (min)',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
@@ -953,6 +955,8 @@ const LANG = {
     autoAdvScenes: '⏩ Auto-advance scenes',
     autoAdvSec: 'Interval (sec)',
     countdownTimer: '⏳ Timer',
+    colorPicker: '🎨 Color picker',
+    colorCopied: 'Copied',
     timerDuration: 'Timer duration (min)',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
@@ -1584,6 +1588,8 @@ const LANG = {
     autoAdvScenes: '⏩ تقدم تلقائي للمشاهد',
     autoAdvSec: 'الفاصل الزمني (ثانية)',
     countdownTimer: '⏳ مؤقت',
+    colorPicker: '🎨 منتقي اللون',
+    colorCopied: 'تم النسخ',
     timerDuration: 'مدة المؤقت (دقيقة)',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
@@ -6143,6 +6149,8 @@ const Drag = {
 
   _onDown(e) {
     if (e.button !== 0) return;
+    // v0.7.121: color picker intercepts the click before any drag/select logic
+    if (ColorPicker.active && ColorPicker.pick(e)) return;
     if (Whiteboard.on) return;
     const [mx, my] = this._stageToCanvas(e);
     // v0.7.21: arm click-vs-drag detector for AutoZoom
@@ -9564,6 +9572,67 @@ const CountdownTimer = {
   },
 };
 
+/* ─────────── v0.7.121: ColorPicker — canvas eyedropper tool
+
+   When active, the stage cursor becomes a crosshair.  Clicking anywhere
+   reads the pixel color via ctx.getImageData, converts it to #RRGGBB hex,
+   copies to the clipboard, and shows a toast with a colored square swatch.
+   One-shot mode: deactivates after a single pick.  Also cancelled by Escape.
+   Toggled via the 🎨 Pick button in the tools bar. */
+const ColorPicker = {
+  active: false,
+
+  toggle() {
+    this.active = !this.active;
+    const btn = $('tcColorPickerBtn');
+    if (btn) btn.classList.toggle('active', this.active);
+    const stage = $('tcStage');
+    if (stage) stage.classList.toggle('picking-color', this.active);
+    if (this.active) {
+      showToast(t('colorPicker') || '🎨 Pick', 1200);
+      log('color picker on', 'info');
+    } else {
+      log('color picker off', 'info');
+    }
+  },
+
+  deactivate() {
+    if (!this.active) return;
+    this.active = false;
+    const btn = $('tcColorPickerBtn');
+    if (btn) btn.classList.remove('active');
+    const stage = $('tcStage');
+    if (stage) stage.classList.remove('picking-color');
+  },
+
+  pick(e) {
+    if (!this.active) return false;
+    if (!Engine || !Engine.ctx) return false;
+    const stage = $('tcStage');
+    if (!stage) return false;
+    const r = stage.getBoundingClientRect();
+    const cx = ((e.clientX - r.left) / r.width) * Engine.width;
+    const cy = ((e.clientY - r.top) / r.height) * Engine.height;
+    const px = Engine.ctx.getImageData(Math.round(cx), Math.round(cy), 1, 1).data;
+    const hex = '#' + [px[0], px[1], px[2]].map(c => c.toString(16).padStart(2, '0')).join('');
+    // Copy to clipboard
+    try { navigator.clipboard.writeText(hex); } catch {}
+    // Toast with colored swatch
+    const label = (t('colorCopied') || 'Copied') + ' ' + hex;
+    const toast = $('tcToast');
+    if (toast) {
+      toast.innerHTML = `<span style="display:inline-block;width:14px;height:14px;background:${hex};border:1px solid #fff;border-radius:3px;vertical-align:middle;margin-right:6px"></span>${label}`;
+      toast.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+    log(`🎨 picked ${hex}`, 'info');
+    // One-shot: deactivate after picking
+    this.deactivate();
+    return true;  // signal that the click was consumed
+  },
+};
+
 /* ─────────── SilenceWatch — flash a ⚠ chip when the mic has been quiet too long
 
    The cheap-and-honest alternative to "uh/um detection". We can't run
@@ -11689,6 +11758,8 @@ function setupHotkeys() {
       }
     }
     if (k === 'escape') {
+      // v0.7.121: cancel color picker if active
+      if (ColorPicker.active) { ColorPicker.deactivate(); return; }
       // v0.7.24: cheat sheet gets closed first if open
       if (Cheatsheet.el && Cheatsheet.el.style.display === 'flex') {
         Cheatsheet.hide();
@@ -12024,6 +12095,7 @@ function wireEvents() {
   });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
+  $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
   $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());

@@ -3,26 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.122 — 2026-04-12 (Source position lock)
+## v0.7.121 — 2026-04-12 (Canvas color picker / eyedropper tool)
 
-Each source (screen, camera, image) can now be locked so it cannot be
-dragged or resized on the canvas. Prevents accidental repositioning
-during recording. Toggle via the floating source toolbar, the sidebar
-source row, or the right-click context menu.
+A tools-bar eyedropper button (Pick) that reads the pixel color at
+any point on the canvas. Click the button, then click anywhere on the
+stage: the hex color is copied to the clipboard and a toast shows the
+swatch. One-shot mode -- deactivates after picking. Cancel with Escape.
 
 ### Added
-- `locked: false` default on every source at creation (screen, camera,
-  image).
-- `Drag._onDown()`: skip drag/resize when source is locked; show a
-  brief toast instead. Selection still works so the toolbar is visible.
-- Source toolbar: 🔒/🔓 toggle button (`tcSrcToolbarLock`), icon synced
-  in `SourceToolbar.updatePosition()`.
-- Sidebar source row: lock icon button in `Engine.onSourcesChanged()`.
-- `SourceContextMenu`: lock/unlock action wired to `data-action="lock"`.
-- `locked` persisted in custom scene snapshots, scene restore,
-  scene duplication, and source duplication.
-- i18n keys `lockSource`, `unlockSource`, `ctxLock`, `sourceLocked`,
-  `sourceUnlocked` in FR, EN, AR.
+- `ColorPicker` object in `tutocast.js`: `active`, `toggle()`,
+  `deactivate()`, `pick(e)` -- reads pixel via `ctx.getImageData`,
+  converts to `#RRGGBB`, copies to clipboard, toasts with swatch.
+- Tools bar button `#tcColorPickerBtn` in `index.html`,
+  wired to `ColorPicker.toggle()`.
+- Crosshair cursor on stage while picker is active
+  (`.tc-stage.picking-color` in `style.css`).
+- Escape key cancels the picker.
+- Click intercepted in `Drag._onDown()` before drag/select logic.
+- i18n keys `colorPicker`, `colorCopied` in FR, EN, AR.
 
 ---
 

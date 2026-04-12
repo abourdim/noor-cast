@@ -1623,6 +1623,9 @@ body.log-open .app {
 .tc-stage canvas.tc-overlay { pointer-events: none; }
 .tc-stage canvas.tc-grid-overlay { z-index: 2; pointer-events: none; }
 .tc-stage.drawing canvas.tc-overlay { pointer-events: auto; cursor: crosshair; }
+/* v0.7.121: crosshair cursor while color picker is active */
+.tc-stage.picking-color { cursor: crosshair !important; }
+.tc-stage.picking-color canvas { cursor: crosshair !important; }
 .tc-stage-hint {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
