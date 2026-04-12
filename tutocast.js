@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.143 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.145 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.142';
+const APP_VERSION = '0.7.145';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -2894,6 +2894,9 @@ const Engine = {
 
     // v0.7.141: large recording elapsed timer (bottom-center pill)
     RecElapsed.render(ctx, width, height);
+
+    // v0.7.145: recording pause/resume indicator overlay
+    PauseOverlay.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -10560,6 +10563,37 @@ const RecElapsed = {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, W / 2, y + pillH / 2);
+
+    ctx.restore();
+  },
+};
+
+/* ─────────── PauseOverlay — v0.7.145 recording pause/resume indicator
+
+   When the recording is paused (Recorder.state === 'paused'), draws a
+   semi-transparent dark fullscreen overlay with a large centered
+   "⏸ PAUSED" label.  This is drawn on the output canvas so it appears
+   in the recorded video — intentional, so the final file clearly shows
+   where the teacher paused.  Rendered from Engine.render() after
+   RecElapsed and before Screensaver. */
+const PauseOverlay = {
+  render(ctx, W, H) {
+    if (Recorder.state !== 'paused') return;
+
+    ctx.save();
+
+    // Semi-transparent dark overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Centered "⏸ PAUSED" text
+    const fontSize = Math.max(48, Math.min(W * 0.08, 120));
+    ctx.font = `800 ${fontSize}px "Segoe UI", system-ui, sans-serif`;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('\u23F8 PAUSED', W / 2, H / 2);
 
     ctx.restore();
   },

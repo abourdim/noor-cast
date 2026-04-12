@@ -3,20 +3,18 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.143 — 2026-04-12 (Canvas background color picker)
+## v0.7.145 — 2026-04-12 (Recording pause/resume indicator)
 
-A color picker in Settings > General lets you change the canvas background color
-(default black). The chosen color is applied as `ctx.fillRect` at the start of
-`Engine.render()` before drawing sources, and persists in `tc-canvas-bg`
-localStorage. The minimap also respects the custom background color.
+When the recording is paused, a large semi-transparent dark overlay with
+centered "⏸ PAUSED" text now covers the canvas. This is drawn on the
+output canvas so it appears in the recorded video, making it obvious to
+both the teacher and the final viewer that recording was paused.
 
 ### Added
-- `CanvasBg` object in `tutocast.js`: `load()`, `set(hex)`, `current` (default
-  `#000000`), backed by `tc-canvas-bg` localStorage key.
-- Color picker `#tcCanvasBgColor` in settings General section.
-- i18n key `canvasBgColor` (FR / EN / AR).
-- `Engine.render()` and `Minimap._draw()` use `CanvasBg.current` for the
-  background fill instead of hard-coded `#000`.
+- `PauseOverlay` object in `tutocast.js`: `render(ctx, W, H)` — draws
+  a dark overlay with white "⏸ PAUSED" label when `Recorder.state === 'paused'`.
+- Called from `Engine.render()` after `RecElapsed` and before `Screensaver`.
+- Font size is responsive (8% of canvas width, clamped 48-120px).
 
 ## v0.7.138 — 2026-04-12 (Multi-source selection)
 
