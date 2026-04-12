@@ -2750,9 +2750,7 @@ body.tc-simple .tc-set-section:nth-of-type(2) { display: none !important; }
 body.tc-simple .tc-set-section:nth-of-type(5) { display: none !important; }
 /* Right sidebar: hide save/reset buttons, text section */
 body.tc-simple #tcResetLayoutBtn,
-body.tc-simple #tcSaveSceneBtn,
-body.tc-simple #tcAddTextDropdown,
-body.tc-simple #tcTextPicker { display: none !important; }
+body.tc-simple #tcSaveSceneBtn { display: none !important; }
 /* micro:bit visible in all modes */
 /* Rec bar: hide Pause and Marker */
 body.tc-simple #tcPauseBtn,
