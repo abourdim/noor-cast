@@ -1348,10 +1348,10 @@ body.log-open .app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   TUTOCAST — Studio, sources, scenes, rec bar, ticker, overlays
+   NOORCAST — Studio, sources, scenes, rec bar, ticker, overlays
    ═══════════════════════════════════════════════════════════════════ */
 
-/* TutoCast needs more room than the base template — widen aggressively.
+/* NoorCast needs more room than the base template — widen aggressively.
    On <1280px viewports we still fill the width; on wide monitors we cap
    at 1760px so the sidebars don't stretch absurdly far from the canvas. */
 .app { max-width: min(1760px, calc(100vw - 24px)); }

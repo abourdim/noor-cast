@@ -1,6 +1,6 @@
-# TutoCast User Guide
+# NoorCast User Guide
 
-> **TutoCast** — Record multi-camera tutorial videos from your browser.
+> **NoorCast** — Record multi-camera tutorial videos from your browser.
 > Zero install, zero account, zero cloud. Everything stays on your computer.
 
 ---
@@ -86,7 +86,7 @@ Click a source → click **🎨** in the toolbar → Style popup opens with:
 
 1. Sign into the **same Apple ID** on both devices
 2. Connect to the **same Wi-Fi network**
-3. Open TutoCast in Chrome on your Mac
+3. Open NoorCast in Chrome on your Mac
 4. Click **+ Camera** — your iPhone appears as "iPhone Camera"
 5. Select it and click **+ Add**
 
@@ -103,7 +103,7 @@ This is Apple's **Continuity Camera** — zero setup.
 2. Install it (adds a virtual camera driver)
 3. Open DroidCam Client, enter your phone's IP, click **Start**
 
-**In TutoCast:**
+**In NoorCast:**
 1. Click **+ Camera** — "DroidCam Source" appears in the dropdown
 2. Select it, click **+ Add**
 3. Drag and resize on the canvas
@@ -135,7 +135,7 @@ This is Apple's **Continuity Camera** — zero setup.
 3. **Android:** enable USB debugging in Developer Options
 4. Open Iriun on the phone — it connects via USB (faster, no lag)
 
-**In TutoCast:**
+**In NoorCast:**
 1. Click **+ Camera** in the left sidebar
 2. Select **"Iriun Webcam"** from the dropdown
 3. Click **+ Add** — your phone's camera appears on the canvas
@@ -144,7 +144,7 @@ This is Apple's **Continuity Camera** — zero setup.
 **Portrait (vertical) mode:**
 1. Hold your phone **vertically** (portrait)
 2. Iriun automatically sends the vertical feed — no black bars, no rotation needed
-3. In TutoCast, resize the source to a tall narrow rectangle to match
+3. In NoorCast, resize the source to a tall narrow rectangle to match
 
 **Settings in the Iriun phone app:**
 - **Camera:** tap to switch between front/back camera
@@ -155,8 +155,8 @@ This is Apple's **Continuity Camera** — zero setup.
 **Troubleshooting Iriun:**
 - **Phone says "Waiting for connection":** make sure the desktop driver is installed (check system tray on Windows, menu bar on Mac)
 - **Lag or stuttering:** switch to USB, or lower resolution in the phone app
-- **"Iriun Webcam" not in TutoCast dropdown:** restart Chrome after installing the driver
-- **Black screen in TutoCast:** close any other app using the camera (Zoom, Teams), then retry
+- **"Iriun Webcam" not in NoorCast dropdown:** restart Chrome after installing the driver
+- **Black screen in NoorCast:** close any other app using the camera (Zoom, Teams), then retry
 
 ### Option D: Camo (pro quality — best image controls)
 
@@ -187,7 +187,7 @@ This is Apple's **Continuity Camera** — zero setup.
 3. Your phone appears — select it
 4. Connection is automatic but slightly more lag than USB
 
-**In TutoCast:**
+**In NoorCast:**
 1. Click **+ Camera** in the left sidebar
 2. Select **"Camo"** from the dropdown
 3. Click **+ Add** — the feed appears on the canvas
@@ -195,7 +195,7 @@ This is Apple's **Continuity Camera** — zero setup.
 **Portrait (vertical) mode:**
 1. Hold your phone vertically — Camo sends the portrait feed
 2. Rotate the phone — Camo auto-switches orientation
-3. In TutoCast, resize the source to match the aspect ratio
+3. In NoorCast, resize the source to match the aspect ratio
 
 **Camo Studio controls (on your computer):**
 - **Zoom:** digital zoom slider — zoom into the robot without moving the phone
@@ -220,11 +220,11 @@ This is Apple's **Continuity Camera** — zero setup.
 | Portrait mode | ✅ | ✅ |
 
 **Troubleshooting Camo:**
-- **"Camo" not in TutoCast dropdown:** restart Chrome after installing Camo Studio
+- **"Camo" not in NoorCast dropdown:** restart Chrome after installing Camo Studio
 - **Black screen:** make sure Camo Studio is open on the computer (unlike Iriun, Camo needs the desktop app running)
 - **Lag on Wi-Fi:** switch to USB — always more stable
 - **"No devices found":** check that Camo app is open on the phone and both are on the same network
-- **Watermark on free tier:** the small Reincubate logo appears in the corner — upgrade to Pro to remove it, or crop it out in TutoCast using the Crop sliders in Style
+- **Watermark on free tier:** the small Reincubate logo appears in the corner — upgrade to Pro to remove it, or crop it out in NoorCast using the Crop sliders in Style
 
 ### Tips for phone cameras
 
@@ -246,7 +246,7 @@ The teacher uses a phone in their pocket or clipped to their collar as a **wirel
 **Setup:**
 1. Phone runs DroidCam or Iriun with **audio enabled**
 2. Phone goes in teacher's pocket or clips to collar
-3. In TutoCast, select "DroidCam Source" or "Iriun Webcam" as the **Mic** source
+3. In NoorCast, select "DroidCam Source" or "Iriun Webcam" as the **Mic** source
 4. Laptop webcam or USB cam films the teacher
 5. Audio comes from the phone mic — close to the mouth, clear voice
 
@@ -260,10 +260,10 @@ When the phone is **mounted on the robot**, the phone mic captures motor sounds,
 
 **Setup:**
 1. Phone mounted on/near the robot with DroidCam/Iriun (audio enabled)
-2. In TutoCast, select the phone as the **Mic** source
+2. In NoorCast, select the phone as the **Mic** source
 3. The recording captures close-up robot sounds
 
-**Limitation:** TutoCast uses one mic for the entire recording. You can't switch mics per scene. So either:
+**Limitation:** NoorCast uses one mic for the entire recording. You can't switch mics per scene. So either:
 - Record with phone mic (robot sounds clear, teacher voice distant)
 - Record with laptop mic (teacher voice clear, robot sounds faint)
 
@@ -278,7 +278,7 @@ The teacher speaks into the laptop mic, and the **phone mounted on the robot pla
 2. On the phone: **mute the phone mic**, turn volume up
 3. On the laptop: **unmute the laptop mic**
 4. The teacher's voice plays through the phone speaker on the robot
-5. TutoCast runs separately on the laptop, recording normally
+5. NoorCast runs separately on the laptop, recording normally
 
 **Alternative apps:**
 - **AudioRelay** ([audiorelay.net](https://audiorelay.net)) — routes laptop mic to phone speaker over Wi-Fi. Free, low latency.
@@ -292,14 +292,14 @@ The teacher walks around the classroom holding the phone, filming students' work
 
 **Setup:**
 1. Phone runs Iriun with audio enabled
-2. In TutoCast: phone as both Camera AND Mic source
+2. In NoorCast: phone as both Camera AND Mic source
 3. Teacher walks around, filming student projects, narrating
 4. Screen share on laptop shows the code/instructions
 5. Switch between "Walking" scene (phone cam) and "Code" scene (screen share)
 
 ### Use case 5: Phone as portable monitor (cast laptop screen)
 
-Students standing around the robot can't see the laptop screen. Cast the TutoCast preview to the phone so they see what's being recorded.
+Students standing around the robot can't see the laptop screen. Cast the NoorCast preview to the phone so they see what's being recorded.
 
 **Setup:**
 - **Windows:** use Miracast screen mirroring (Settings → Display → Connect to a wireless display) or Chrome Remote Desktop on the phone
@@ -353,13 +353,13 @@ You can **mix and match** — e.g. laptop webcam + 1 USB cam + 2 phones via Droi
 ### Using the Robot Tuto template
 
 1. On first launch, pick **🤖 Robot Tuto**
-2. TutoCast creates 5 steps: **Intro → Code → Robot → Sensors → Recap**
+2. NoorCast creates 5 steps: **Intro → Code → Robot → Sensors → Recap**
 3. Click each step to switch scenes during recording
 4. Each switch automatically drops a chapter marker in the video
 
 ### Connecting your micro:bit
 
-TutoCast can read your **micro:bit sensors live** via Web Bluetooth:
+NoorCast can read your **micro:bit sensors live** via Web Bluetooth:
 
 1. Click **📡 Connect micro:bit** in the left sidebar
 2. Pair your micro:bit in the browser popup
@@ -448,7 +448,7 @@ For teachers who film themselves **building and assembling robots** on a desk:
 
 ## Scenes
 
-TutoCast has **6 built-in scene presets** that arrange your sources in different layouts:
+NoorCast has **6 built-in scene presets** that arrange your sources in different layouts:
 
 | Scene | Layout |
 |-------|--------|
@@ -619,4 +619,4 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*TutoCast v0.7.167 — A professional tool for teachers who code with robots*
+*NoorCast v0.7.167 — A professional tool for teachers who code with robots*

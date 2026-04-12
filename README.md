@@ -1,10 +1,10 @@
-# 🎬 TutoCast
+# 🎬 NoorCast
 
 > **Crée tes tutos comme un pro !** — A kids-friendly, browser-based multi-camera
 > screen recorder. Designed for teachers explaining code with a micro:bit and
 > a robot. Zero install, zero account, zero cloud.
 
-TutoCast is a single-page web app that lets you record tutorial videos with up
+NoorCast is a single-page web app that lets you record tutorial videos with up
 to **unlimited cameras + screens + microphone simultaneously**, compose them into
 live-switchable scenes, annotate with on-screen text, freeze the screen mid-
 explanation, draw on it, and even **read your micro:bit sensors live via Web
@@ -17,7 +17,7 @@ huge red REC button, confetti at the end.
 
 ## 👩‍🏫 For teachers (the actual pitch)
 
-TutoCast is built for **one specific person**: a teacher explaining code with
+NoorCast is built for **one specific person**: a teacher explaining code with
 a robot. If that's you, here's what you get that nobody else offers:
 
 - **No install, no account, no cloud.** Open `index.html` in a Chromebook.
@@ -29,7 +29,7 @@ a robot. If that's you, here's what you get that nobody else offers:
   chapter marker, tilting the robot drives the laser pointer. Hands-free
   recording while you hold the robot.
 - **Guided templates.** Pick `📚 Full lesson`, `🤖 Robot demo`,
-  `🔧 Fix-it`, or `🤖 Robot Tuto` on first launch and TutoCast walks
+  `🔧 Fix-it`, or `🤖 Robot Tuto` on first launch and NoorCast walks
   you through a 5-step sequence. Zero decision fatigue.
 - **60+ features.** Source flip/crop/rotate/opacity/shadow/border/filter,
   countdown timer, emoji reactions, sticky notes, sound board, undo/redo,
@@ -53,7 +53,7 @@ generates a shareable PNG of your tutorial's stats.
 
 The original use case: a teacher explaining code running on a **BBC micro:bit**,
 with the **robot moving on a table** and an **IHM/sensor** visible on a separate
-camera, while **talking to the class**. TutoCast composes all these angles into
+camera, while **talking to the class**. NoorCast composes all these angles into
 one video with scene presets for every stage of the tutorial:
 
 | # | Scene | Layout |
@@ -177,7 +177,7 @@ Opt-in toggle adds a **2.5 s intro card** (brand title + scene name
 canvas via radial-gradient backdrop + accent glow + big typography.
 
 ### ⏸ Auto-pause on tab switch (v0.7.26)
-Opt-in setting: when you tab away from TutoCast mid-recording,
+Opt-in setting: when you tab away from NoorCast mid-recording,
 `visibilitychange` triggers `Recorder.autoPause()`. Come back → auto-resume.
 Never capture accidental tab switches again. A user who manually paused
 before tabbing away stays paused (no surprise resume).
@@ -187,7 +187,7 @@ When a recording with micro:bit samples finishes, a compact canvas
 chart appears above the download buttons showing the accelerometer
 X/Y/Z lines over the take duration, plus button A/B presses as
 vertical ticks at the bottom. Auto-scales to observed range.
-Unique to TutoCast — no other tutorial tool surfaces sensor data
+Unique to NoorCast — no other tutorial tool surfaces sensor data
 this way.
 
 ### 📊 My tutorials history (v0.7.28)
@@ -311,14 +311,14 @@ too, but you lose the micro:bit sensor integration.
 
 ### Option 1 — local file (simplest)
 ```bash
-git clone https://github.com/abourdim/tutocast.git
-cd tutocast
+git clone https://github.com/abourdim/noorcast.git
+cd noorcast
 open index.html    # macOS
 ```
 
 ### Option 2 — local HTTP server (cleaner, required for PWA install)
 ```bash
-cd tutocast
+cd noorcast
 python3 -m http.server 8000
 # open http://localhost:8000/
 ```
@@ -362,7 +362,7 @@ python3 -m http.server 8000
 | File | Lines | Purpose |
 |---|---|---|
 | `index.html` | ~1,800 | UI shell: header, studio grid, source/text/context toolbars, settings panel (5 sections), help panel (6 tabs), rec bar, take panel, ticker |
-| `tutocast.js` | ~15,200 | All app logic: i18n (350 keys × 3 langs), engine (canvas renderer, 26 overlay passes), recorder (MediaRecorder + trim + silence removal), 110+ singleton objects covering scenes, drag, sensors, gamification, onboarding, and 60+ features |
+| `noorcast.js` | ~15,200 | All app logic: i18n (350 keys × 3 langs), engine (canvas renderer, 26 overlay passes), recorder (MediaRecorder + trim + silence removal), 110+ singleton objects covering scenes, drag, sensors, gamification, onboarding, and 60+ features |
 | `style.css` | ~4,800 | 8 themes, responsive layout, 44 component-specific rule groups |
 | `manifest.json` | ~12 | PWA manifest |
 | `icon.svg` | ~25 | PWA icon (static clapperboard + play + LED) |
@@ -376,10 +376,10 @@ No build step, no dependencies, no `node_modules`. Just open `index.html` or run
 
 ## 🙏 Credits
 
-TutoCast is built on top of the **[Workshop-DIY web app template](https://github.com/abourdim)**
+NoorCast is built on top of the **[Workshop-DIY web app template](https://github.com/abourdim)**
 by abourdim — themes, splash, panels, and the i18n / log shell are inherited
 from that template. The recording engine, scene system, sensor overlay, and
-all TutoCast-specific logic live in `tutocast.js`.
+all NoorCast-specific logic live in `noorcast.js`.
 
 ---
 

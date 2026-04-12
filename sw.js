@@ -1,11 +1,11 @@
-/* TutoCast Service Worker v0.7.158
+/* NoorCast Service Worker v0.7.158
    Cache-first for app shell, network-first for fonts. */
 
-const CACHE_NAME = 'tutocast-v168';
+const CACHE_NAME = 'noorcast-v168';
 const APP_SHELL = [
   './',
   './index.html',
-  './tutocast.js',
+  './noorcast.js',
   './style.css',
   './icon.svg',
   './logo.svg',

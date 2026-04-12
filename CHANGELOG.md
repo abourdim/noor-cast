@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **TutoCast** are documented here. This project follows
+All notable changes to **NoorCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
 ## v0.7.156 — 2026-04-12 (Remote cameras guide + Robot template + Camera wizard)
@@ -76,7 +76,7 @@ are selected, dragging moves them all together. A "Select All" button in the
 tools bar selects all visible sources. Escape clears the selection.
 
 ### Added
-- `MultiSelect` object in `tutocast.js`: `sources[]`, `add(src)`, `remove(src)`,
+- `MultiSelect` object in `noorcast.js`: `sources[]`, `add(src)`, `remove(src)`,
   `clear()`, `has(src)`, `moveAll(dx, dy)`, `selectAll()`.
 - Shift+click on a source toggles it in/out of the multi-selection set.
   Normal click replaces the selection as before.
@@ -96,7 +96,7 @@ user's current bindings; hard-coded combos (Ctrl+S, Shift+R, etc.) are
 listed alongside them. A filter input at the top narrows rows instantly.
 
 ### Added
-- `HotkeyRef` object in `tutocast.js`: `build()` scans `KeyBindings.current`
+- `HotkeyRef` object in `noorcast.js`: `build()` scans `KeyBindings.current`
   plus a `FIXED` array of non-rebindable combos and renders `<kbd>` + label
   rows into a grid. `filter(query)` hides non-matching rows.
 - "Hotkeys" tab button (`data-tab="hotkeys"`) in the Help panel tab bar
@@ -117,14 +117,14 @@ because they are rendered on a dedicated HTML overlay canvas, outside the
 captureStream pipeline (same approach as GridOverlay).
 
 ### Added
-- `SourceLabels` object in `tutocast.js`: `visible`, `toggle()`, `render()`,
+- `SourceLabels` object in `noorcast.js`: `visible`, `toggle()`, `render()`,
   `init()`, `load()`, `_save()`. Draws a dark rounded pill with white text
   at each visible source's bottom-left corner on a separate overlay canvas
   (`tcSourceLabelsCanvas`).
 - `<canvas id="tcSourceLabelsCanvas">` in `index.html` — overlay canvas that
   sits on top of the stage but is NOT part of the captureStream pipeline.
 - Settings checkbox `#tcSourceLabelsToggle` in `index.html`, wired in
-  `tutocast.js`. Default: off. Persisted as `tc-source-labels`.
+  `noorcast.js`. Default: off. Persisted as `tc-source-labels`.
 - `SourceLabels.render()` called from `Engine.render()` each frame.
 - i18n keys `sourceLabels`, `sourceLabelsOn`, `sourceLabelsOff` in FR, EN, AR.
 
@@ -137,14 +137,14 @@ custom scene is loaded, the scene is automatically saved after a 1-second
 debounce. Prevents lost layout work.
 
 ### Added
-- `Scenes.saveScene(key)` method in `tutocast.js`: silently re-captures
+- `Scenes.saveScene(key)` method in `noorcast.js`: silently re-captures
   the current layout into a custom scene's snapshot (no prompt).
-- `SceneAutoSave` object in `tutocast.js`: `enabled`, `_timer`,
+- `SceneAutoSave` object in `noorcast.js`: `enabled`, `_timer`,
   `trigger()` (debounced 1s), `setup()`, `load()`, `setEnabled(v)`.
 - `SceneAutoSave.trigger()` called on drag-end, resize-end, shape change,
   border color/width change, and crop slider changes.
 - Settings checkbox `#tcSceneAutoSaveToggle` in `index.html`, wired in
-  `tutocast.js`. Default: on. Persisted as `tc-scene-autosave`.
+  `noorcast.js`. Default: on. Persisted as `tc-scene-autosave`.
 - Toast "Scene auto-saved" (800ms) when auto-save fires.
 - i18n keys `sceneAutoSave`, `sceneAutoSaved` in FR, EN, AR.
 
@@ -158,7 +158,7 @@ stage: the hex color is copied to the clipboard and a toast shows the
 swatch. One-shot mode -- deactivates after picking. Cancel with Escape.
 
 ### Added
-- `ColorPicker` object in `tutocast.js`: `active`, `toggle()`,
+- `ColorPicker` object in `noorcast.js`: `active`, `toggle()`,
   `deactivate()`, `pick(e)` -- reads pixel via `ctx.getImageData`,
   converts to `#RRGGBB`, copies to clipboard, toasts with swatch.
 - Tools bar button `#tcColorPickerBtn` in `index.html`,
@@ -202,7 +202,7 @@ in the top-right corner of the stage shows the countdown until the
 next scene switch.
 
 ### Added
-- `SceneAutoAdvance` object in `tutocast.js`: `enabled`, `intervalSec`,
+- `SceneAutoAdvance` object in `noorcast.js`: `enabled`, `intervalSec`,
   `setup()`, `start()`, `stop()`, `_scheduleNext()`, `_advance()`,
   `_tick()` (rAF-driven countdown pill update).
 - Settings UI: checkbox `#tcAutoAdvChk` + number input `#tcAutoAdvSec`
@@ -226,7 +226,7 @@ analyser, no new animation frame, zero ongoing cost when the mic is
 live.
 
 ### Added
-- `MicMeter` object in `tutocast.js`: owns a 80×12 `<canvas>`, draws a
+- `MicMeter` object in `noorcast.js`: owns a 80×12 `<canvas>`, draws a
   green → yellow → red gradient scaled from the linear RMS fed by
   `MicBoost._startGateLoop`, plus faint tick marks for readability.
 - Tools-bar element `<canvas id="tcMicMeter" class="tc-mic-meter">` at
@@ -253,7 +253,7 @@ existing Laser pipeline — own offscreen canvas, own `render()` method,
 composited by `Engine.render()` right after Laser.
 
 ### Added
-- `Ripples` object in `tutocast.js` mirroring the `Laser` shape:
+- `Ripples` object in `noorcast.js` mirroring the `Laser` shape:
   `enabled`, `particles[]`, dedicated 1920×1080 offscreen canvas,
   `setup()`, `toggle()`, `add(x, y)`, `render()`.
 - `Engine.render()` now calls `Ripples.render()` + composites
@@ -337,7 +337,7 @@ for 1.5s then zooms back, ScreenStudio-style, toggle via the 🎯 button
 in the tools bar. Implemented on top of the existing Zoom infrastructure.
 
 ### Added
-- `AutoZoom` object next to `Zoom` in `tutocast.js`. Owns: `enabled`
+- `AutoZoom` object next to `Zoom` in `noorcast.js`. Owns: `enabled`
   (button toggle), click-vs-drag detector (`armDown` / `onUp`, distance
   < 5 canvas px AND time < 500ms), screen-source hit test, and 1.5s
   hold timer. Drives `Zoom.cx` / `Zoom.cy` / `Zoom.target` and reuses
@@ -860,7 +860,7 @@ the tutorial's stats, rendered via pure Canvas2D.
   count, micro:bit connected, chapter count, template used, current
   theme accent, timestamp
 - **`BadgeCard.exportPng()`**: renders the card with a theme-accent
-  gradient background, outer frame, TutoCast logo + version, headline,
+  gradient background, outer frame, NoorCast logo + version, headline,
   a 2×2 stat grid, template badge in the bottom-right corner if one
   was active, slogan + date footer
 - Triggered from a new `🏆 Badge` button in the Take panel
@@ -879,7 +879,7 @@ highlighted orange callout above the 7 steps:
 - **Title**: "⭐ Première fois ? Commence ici"
 - **Body**: explains the <5-minute onboarding loop and the no-install
   promise
-- **Teacher sub-callout** (green-bordered): explains the TutoCast
+- **Teacher sub-callout** (green-bordered): explains the NoorCast
   mission for teachers specifically — teach code with a robot, use
   the "🤖 Démo robot" template, 100% local
 
@@ -912,7 +912,7 @@ New top-level pitch section immediately after the headline, explaining:
 
 ## v0.5.0 — 2026-04-11
 
-Six features in one release. Four Tier-1 "this is what makes TutoCast
+Six features in one release. Four Tier-1 "this is what makes NoorCast
 unique" items and two Tier-2 polish items. All verified end-to-end via
 the Preview MCP harness.
 
@@ -924,7 +924,7 @@ cursor tracking), QR code (complexity). Documented reasons on request.
 
 ### Added — 🤖 micro:bit Superpowers
 
-TutoCast's unique angle: because Web Bluetooth reads the accelerometer
+NoorCast's unique angle: because Web Bluetooth reads the accelerometer
 and buttons, we can use the physical robot as a recording remote. No
 other screen recorder on the planet can do this.
 
@@ -951,7 +951,7 @@ exist, a third download link appears in the Take panel alongside the
 - Timestamps are aligned to `Recorder.elapsed() / 1000` so the CSV
   maps directly onto the video timeline
 - Hidden by default; only shown when samples exist
-- Unique to TutoCast because of the Web Bluetooth integration —
+- Unique to NoorCast because of the Web Bluetooth integration —
   researchers and physics teachers can finally correlate robot
   motion with tutorial timestamps in a spreadsheet
 
@@ -1011,7 +1011,7 @@ Opt-in toggle in the Settings panel (`🤖 Auto-overlay when the robot
 jolts`). When enabled, the accelerometer callback computes
 `|acceleration|` and, if it exceeds `1.6 g`, drops a big `🤖` text
 overlay for 1.8 seconds. 3-second cooldown so continuous motion
-doesn't spam the canvas. Fun, on-brand, unique to TutoCast.
+doesn't spam the canvas. Fun, on-brand, unique to NoorCast.
 
 ### Changed — Sensors accelerometer callback
 
@@ -1042,7 +1042,7 @@ via the Preview MCP harness.
 
 ### Added — 🖐 Drag-drop source repositioning
 
-Every competitor has it. TutoCast now does too, with a twist that fits
+Every competitor has it. NoorCast now does too, with a twist that fits
 the scene-based workflow.
 
 - **Click-drag any visible source** (screen or cam) on the stage to
@@ -1147,7 +1147,7 @@ position, size, and shape across scene switches.
 
 Three competitor-parity features, deliberately scoped tight. Built after
 an honest audit of what Descript / ScreenStudio / Loom / Camtasia have
-that TutoCast didn't — and what makes sense to build given the
+that NoorCast didn't — and what makes sense to build given the
 "100% local, zero dependencies, kids + robots + Chromebook" mission.
 
 ### Added — ✂️ Trim (biggest feature)
@@ -1242,7 +1242,7 @@ Reported: the working area is too small. Correct.
 
 Three bottlenecks conspiring to squish the canvas preview:
 
-1. **`.app { max-width: 1240px }`** — the TutoCast override of the base
+1. **`.app { max-width: 1240px }`** — the NoorCast override of the base
    workshop-diy `820px` cap was still far too narrow. On a 1920px
    viewport you lost ~680px to margins; on 1600px you lost ~360px.
 2. **`.tc-studio-grid { grid-template-columns: 220px 1fr 220px }`** —
@@ -1568,7 +1568,7 @@ a pile of dead code closed.
   (defined in all three languages, never referenced).
 
 ### Notes
-- Line counts: `tutocast.js` ~1680 L, `index.html` 452 L. Zero dependencies.
+- Line counts: `noorcast.js` ~1680 L, `index.html` 452 L. Zero dependencies.
 - All 169+ i18n keys remain balanced across FR / EN / AR.
 
 ## v0.1.1 — 2026-04-10
@@ -1652,7 +1652,7 @@ First release. Kids-friendly browser-based multi-camera tutorial recorder.
 
 ### Privacy & architecture
 - 100% local, zero backend, zero telemetry, zero third-party calls at runtime (except Google Fonts CSS in `<head>`, removable).
-- Single-file app: `index.html` + `tutocast.js` + `style.css`, no build step.
+- Single-file app: `index.html` + `noorcast.js` + `style.css`, no build step.
 - Workshop-DIY template shell kept for themes + splash + panels.
 
 ### Known limits

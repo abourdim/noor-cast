@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.159 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.159 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -23,7 +23,7 @@ const $ = (id) => document.getElementById(id);
 
 const LANG = {
   fr: {
-    title: 'TutoCast', slogan: '🎬 Lumière, caméra, ROBOT !',
+    title: 'NoorCast', slogan: '🎬 Lumière, caméra, ROBOT !',
     statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
     sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
@@ -92,7 +92,7 @@ const LANG = {
     export: 'Exporter', filterAll: 'Tout',
     copied: 'Copié !', copyFail: 'Échec',
     logCleared: 'Journal effacé',
-    ready: '🚀 TutoCast prêt !',
+    ready: '🚀 NoorCast prêt !',
     needSources: '⚠️ Ajoute au moins une source avant d\'enregistrer',
     recStarted: '🔴 Enregistrement démarré',
     recStopped: '⏹ Enregistrement terminé',
@@ -218,8 +218,8 @@ const LANG = {
     badgeExported: 'Badge exporté',
     badgeError: '✗ Impossible de générer le badge',
     firstTimeTitle: 'Première fois ? Commence ici',
-    firstTimeBody: 'Les 7 étapes ci-dessous t\'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. TutoCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.',
-    firstTimeTeacher: '👩‍🏫 Pour les profs : TutoCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.',
+    firstTimeBody: 'Les 7 étapes ci-dessous t\'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. NoorCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.',
+    firstTimeTeacher: '👩‍🏫 Pour les profs : NoorCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.',
     brandSection: '🏷 Marque (logo + slogan)',
     brandPresets: '📁 Presets de marque',
     brandSave: 'Sauvegarder :',
@@ -266,7 +266,7 @@ const LANG = {
     bulkFiles: 'fichiers',
     bulkNoTake: '⚠ Aucun tuto à télécharger',
     shareTake: 'Partager',
-    shareText: 'Mon tuto fait avec TutoCast 🎬',
+    shareText: 'Mon tuto fait avec NoorCast 🎬',
     shareDone: 'Partagé',
     shareError: '❌ Erreur de partage',
     shareNotSupported: '❌ Partage natif non supporté — utilise Télécharger',
@@ -475,8 +475,8 @@ const LANG = {
     badge_veteran: 'Vétéran (10 tutos)',
     badge_marathon: 'Marathon (30 min)',
     badge_library: 'Bibliothèque (5 scènes)',
-    faq_q1: "Qu'est-ce que TutoCast ?",
-    faq_a1: "TutoCast est un outil web pour enregistrer des tutos vidéo avec plusieurs caméras (écran + webcams + micro) directement depuis ton navigateur. Zéro install, zéro compte, tout reste chez toi.",
+    faq_q1: "Qu'est-ce que NoorCast ?",
+    faq_a1: "NoorCast est un outil web pour enregistrer des tutos vidéo avec plusieurs caméras (écran + webcams + micro) directement depuis ton navigateur. Zéro install, zéro compte, tout reste chez toi.",
     faq_q2: "Comment ajouter plusieurs caméras ?",
     faq_a2: "Dans le panneau de gauche, choisis une caméra dans la liste et clique sur « + ». Tu peux répéter pour ajouter jusqu'à 3 caméras (ex. une pour ton robot, une pour toi, une pour l'écran du micro:bit).",
     faq_q3: "Je peux lire les capteurs de mon micro:bit ?",
@@ -499,14 +499,14 @@ const LANG = {
     howto_6: "Utilise les touches 1-9 pour changer de scène en live. L pour laser pointer, F pour geler l'écran, D pour dessiner.",
     howto_7: "Clique ⏹ Stop. Ton tuto est téléchargé en .webm, avec les chapitres en .vtt.",
     wiki_multicam_title: "🎥 Multi-caméras",
-    wiki_multicam: "TutoCast peut afficher simultanément jusqu'à 3 caméras + 1 écran + le micro. Chaque source est une boîte déplaçable dans la scène. Tu peux définir sa forme (rectangle ou cercle), sa taille et sa position.",
+    wiki_multicam: "NoorCast peut afficher simultanément jusqu'à 3 caméras + 1 écran + le micro. Chaque source est une boîte déplaçable dans la scène. Tu peux définir sa forme (rectangle ou cercle), sa taille et sa position.",
     wiki_scenes_title: "🎭 Scènes",
     wiki_scenes: "Une scène est un layout : position/taille/visibilité de chaque source + textes actifs. Tu peux switcher entre les scènes pendant l'enregistrement avec les touches 1-9 ou en cliquant. Cut sec, pas de latence.",
     wiki_sensor_title: "🤖 Capteurs micro:bit",
-    wiki_sensor: "Via Web Bluetooth, TutoCast se connecte directement au micro:bit et lit en temps réel ses capteurs (accéléromètre, luminosité, température, boutons). Les valeurs s'affichent en overlay sur la vidéo, parfait pour expliquer un capteur à des élèves.",
+    wiki_sensor: "Via Web Bluetooth, NoorCast se connecte directement au micro:bit et lit en temps réel ses capteurs (accéléromètre, luminosité, température, boutons). Les valeurs s'affichent en overlay sur la vidéo, parfait pour expliquer un capteur à des élèves.",
     wiki_privacy_title: "🔒 Privacy",
     wiki_privacy: "Tout reste local. Les flux vidéo sont traités par le navigateur, compositionnés sur un canvas, et enregistrés en mémoire via MediaRecorder. Le fichier final est téléchargé sur ton disque. Aucun serveur, aucune télémétrie.",
-    news_010: "Première version de TutoCast 🎉",
+    news_010: "Première version de NoorCast 🎉",
     news_010_1: "Multi-caméras (écran + jusqu'à 3 cams + micro)",
     news_010_2: "6 scènes prêtes à l'emploi (Code, Robot, Capteurs, Code+Robot, Studio, Toi)",
     news_010_3: "Textes overlay avec bibliothèque de presets kid-friendly",
@@ -569,7 +569,7 @@ const LANG = {
     news_040_6: "Pulse visuelle sur chaque marker (M) — retour visible que la marque est enregistrée",
     news_050: "micro:bit superpouvoirs + trim intelligent 🤖🔇",
     news_050_1: "Bouton A du micro:bit = zoom · Bouton B = marker · Inclinaison = position du laser",
-    news_050_2: "Export CSV des capteurs aligné sur la timeline du tuto (Unique à TutoCast)",
+    news_050_2: "Export CSV des capteurs aligné sur la timeline du tuto (Unique à NoorCast)",
     news_050_3: "Trim automatique des silences > 2s — un clic après l'enregistrement, zéro éditeur externe",
     news_050_4: "Chip d'alerte silence en temps réel (>1.8s de micro muet, visible toi seul)",
     news_050_5: "Touche Q = carte question overlay (kid-friendly quiz)",
@@ -684,7 +684,7 @@ const LANG = {
     // v0.7.156: remote cameras help tab
     helpCamerasTab: "📷 Caméras",
     cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
-    cam_continuity_body: "Aucune installation requise. Même Wi-Fi + même Apple ID = l'iPhone apparaît comme caméra dans TutoCast. Idéal pour filmer le robot depuis un iPhone.",
+    cam_continuity_body: "Aucune installation requise. Même Wi-Fi + même Apple ID = l'iPhone apparaît comme caméra dans NoorCast. Idéal pour filmer le robot depuis un iPhone.",
     cam_droidcam_title: "📲 DroidCam (Android / iOS)",
     cam_droidcam_body: "Gratuit. Installez l'appli sur le téléphone + le pilote sur le PC. Connectez en USB ou Wi-Fi. Le téléphone apparaît comme webcam virtuelle.",
     cam_iriun_title: "📡 Iriun Webcam (tous OS)",
@@ -742,7 +742,7 @@ const LANG = {
     vignetteLabel: '🎥 Effet vignette sur le canvas', vignetteIntensity: 'Intensité',
   },
   en: {
-    title: 'TutoCast', slogan: '🎬 Lights, camera, ROBOT!',
+    title: 'NoorCast', slogan: '🎬 Lights, camera, ROBOT!',
     statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
     sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
@@ -811,7 +811,7 @@ const LANG = {
     export: 'Export', filterAll: 'All',
     copied: 'Copied!', copyFail: 'Copy failed',
     logCleared: 'Log cleared',
-    ready: '🚀 TutoCast ready!',
+    ready: '🚀 NoorCast ready!',
     needSources: '⚠️ Add at least one source before recording',
     recStarted: '🔴 Recording started',
     recStopped: '⏹ Recording stopped',
@@ -937,8 +937,8 @@ const LANG = {
     badgeExported: 'Badge exported',
     badgeError: '✗ Could not generate the badge',
     firstTimeTitle: 'First time? Start here',
-    firstTimeBody: 'The 7 steps below take you from zero to your first downloaded tutorial in under 5 minutes. TutoCast runs on a Chromebook or any desktop browser, no account, no install.',
-    firstTimeTeacher: '👩‍🏫 For teachers: TutoCast is built to explain code with a robot (micro:bit, Arduino, LEGO). Use the "🤖 Robot demo" template for a guided 5-step sequence. Your videos stay 100% on your computer.',
+    firstTimeBody: 'The 7 steps below take you from zero to your first downloaded tutorial in under 5 minutes. NoorCast runs on a Chromebook or any desktop browser, no account, no install.',
+    firstTimeTeacher: '👩‍🏫 For teachers: NoorCast is built to explain code with a robot (micro:bit, Arduino, LEGO). Use the "🤖 Robot demo" template for a guided 5-step sequence. Your videos stay 100% on your computer.',
     brandSection: '🏷 Brand (logo + slogan)',
     brandPresets: '📁 Brand presets',
     brandSave: 'Save:',
@@ -985,7 +985,7 @@ const LANG = {
     bulkFiles: 'files',
     bulkNoTake: '⚠ No take to download',
     shareTake: 'Share',
-    shareText: 'My tuto made with TutoCast 🎬',
+    shareText: 'My tuto made with NoorCast 🎬',
     shareDone: 'Shared',
     shareError: '❌ Share error',
     shareNotSupported: '❌ Web Share not supported — use Download',
@@ -1194,8 +1194,8 @@ const LANG = {
     badge_veteran: 'Veteran (10 tutos)',
     badge_marathon: 'Marathon (30 min)',
     badge_library: 'Library (5 scenes)',
-    faq_q1: "What is TutoCast?",
-    faq_a1: "TutoCast is a web tool to record tutorial videos with multiple cameras (screen + webcams + mic) directly from your browser. Zero install, zero account, everything stays on your computer.",
+    faq_q1: "What is NoorCast?",
+    faq_a1: "NoorCast is a web tool to record tutorial videos with multiple cameras (screen + webcams + mic) directly from your browser. Zero install, zero account, everything stays on your computer.",
     faq_q2: "How do I add multiple cameras?",
     faq_a2: "In the left panel, pick a camera from the dropdown and click +. Repeat to add up to 3 cameras (e.g. one on your robot, one on you, one on the micro:bit screen).",
     faq_q3: "Can I read my micro:bit sensors?",
@@ -1218,14 +1218,14 @@ const LANG = {
     howto_6: "Use keys 1-9 to switch scenes live. L for laser pointer, F to freeze the screen, D to draw.",
     howto_7: "Click ⏹ Stop. Your tutorial downloads as .webm with chapters in .vtt.",
     wiki_multicam_title: "🎥 Multi-camera",
-    wiki_multicam: "TutoCast can display up to 3 cameras + 1 screen + the mic simultaneously. Each source is a draggable box in the scene. You can set its shape (rectangle or circle), size and position.",
+    wiki_multicam: "NoorCast can display up to 3 cameras + 1 screen + the mic simultaneously. Each source is a draggable box in the scene. You can set its shape (rectangle or circle), size and position.",
     wiki_scenes_title: "🎭 Scenes",
     wiki_scenes: "A scene is a layout: position/size/visibility of each source + active texts. You can switch between scenes during the recording with keys 1-9 or by clicking. Hard cut, no latency.",
     wiki_sensor_title: "🤖 micro:bit sensors",
-    wiki_sensor: "Via Web Bluetooth, TutoCast connects directly to the micro:bit and reads its sensors in real time (accelerometer, light, temperature, buttons). Values show as overlay on the video, perfect for explaining a sensor to students.",
+    wiki_sensor: "Via Web Bluetooth, NoorCast connects directly to the micro:bit and reads its sensors in real time (accelerometer, light, temperature, buttons). Values show as overlay on the video, perfect for explaining a sensor to students.",
     wiki_privacy_title: "🔒 Privacy",
     wiki_privacy: "Everything stays local. Video streams are processed by the browser, composed on a canvas, and recorded in memory via MediaRecorder. The final file is downloaded to your disk. No server, no telemetry.",
-    news_010: "First release of TutoCast 🎉",
+    news_010: "First release of NoorCast 🎉",
     news_010_1: "Multi-camera (screen + up to 3 cams + mic)",
     news_010_2: "6 ready-made scenes (Code, Robot, Sensors, Code+Robot, Studio, You)",
     news_010_3: "Text overlays with kid-friendly preset library",
@@ -1288,7 +1288,7 @@ const LANG = {
     news_040_6: "Visible pulse on every marker (M) — the teacher gets instant confirmation",
     news_050: "micro:bit superpowers + smart trim 🤖🔇",
     news_050_1: "micro:bit button A = zoom · button B = marker · tilt = laser position",
-    news_050_2: "Sensor CSV export aligned with the tutorial timeline (unique to TutoCast)",
+    news_050_2: "Sensor CSV export aligned with the tutorial timeline (unique to NoorCast)",
     news_050_3: "Auto-trim silences > 2s — one click post-record, no external editor",
     news_050_4: "Live silence warning chip (>1.8s quiet mic, visible to you only)",
     news_050_5: "Q key = quiz card overlay (kid-friendly mid-recording question)",
@@ -1401,7 +1401,7 @@ const LANG = {
     tpl_robotcam_s5: "Recap",
     helpCamerasTab: "📷 Cameras",
     cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
-    cam_continuity_body: "No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in TutoCast. Perfect for filming the robot.",
+    cam_continuity_body: "No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in NoorCast. Perfect for filming the robot.",
     cam_droidcam_title: "📲 DroidCam (Android / iOS)",
     cam_droidcam_body: "Free. Install the app on your phone + the driver on your PC. Connect via USB or Wi-Fi. The phone appears as a virtual webcam.",
     cam_iriun_title: "📡 Iriun Webcam (all platforms)",
@@ -1458,7 +1458,7 @@ const LANG = {
     vignetteLabel: '🎥 Vignette effect on canvas', vignetteIntensity: 'Intensity',
   },
   ar: {
-    title: 'TutoCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
+    title: 'NoorCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
     statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
     sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
@@ -1525,7 +1525,7 @@ const LANG = {
     export: 'تصدير', filterAll: 'الكل',
     copied: 'تم النسخ!', copyFail: 'فشل',
     logCleared: 'تم المسح',
-    ready: '🚀 TutoCast جاهز!',
+    ready: '🚀 NoorCast جاهز!',
     needSources: '⚠️ أضف مصدرًا أولاً',
     recStarted: '🔴 بدأ التسجيل',
     recStopped: '⏹ انتهى التسجيل',
@@ -1645,8 +1645,8 @@ const LANG = {
     badgeExported: 'تم تصدير الشارة',
     badgeError: '✗ تعذّر إنشاء الشارة',
     firstTimeTitle: 'أول مرة؟ ابدأ من هنا',
-    firstTimeBody: 'الخطوات السبع أدناه تأخذك من الصفر إلى أول درس محمّل في أقل من 5 دقائق. يعمل TutoCast على Chromebook أو أي متصفح سطح مكتب، بدون حساب، بدون تثبيت.',
-    firstTimeTeacher: '👩‍🏫 للمعلّمين: TutoCast مصمّم لشرح الكود مع روبوت (micro:bit، Arduino، LEGO). استخدم قالب «🤖 عرض روبوت» لتسلسل موجّه من 5 خطوات. فيديوهاتك تبقى 100% على حاسوبك.',
+    firstTimeBody: 'الخطوات السبع أدناه تأخذك من الصفر إلى أول درس محمّل في أقل من 5 دقائق. يعمل NoorCast على Chromebook أو أي متصفح سطح مكتب، بدون حساب، بدون تثبيت.',
+    firstTimeTeacher: '👩‍🏫 للمعلّمين: NoorCast مصمّم لشرح الكود مع روبوت (micro:bit، Arduino، LEGO). استخدم قالب «🤖 عرض روبوت» لتسلسل موجّه من 5 خطوات. فيديوهاتك تبقى 100% على حاسوبك.',
     brandSection: '🏷 العلامة (شعار + شعار نصي)',
     brandPresets: '📁 إعدادات العلامة',
     brandSave: 'حفظ:',
@@ -1693,7 +1693,7 @@ const LANG = {
     bulkFiles: 'ملفات',
     bulkNoTake: '⚠ لا يوجد درس للتحميل',
     shareTake: 'مشاركة',
-    shareText: 'درسي المصنوع بـ TutoCast 🎬',
+    shareText: 'درسي المصنوع بـ NoorCast 🎬',
     shareDone: 'تمت المشاركة',
     shareError: '❌ خطأ في المشاركة',
     shareNotSupported: '❌ المشاركة الأصلية غير مدعومة — استخدم تنزيل',
@@ -1896,8 +1896,8 @@ const LANG = {
     badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
     badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
     badge_veteran: 'متمرس (10 دروس)', badge_marathon: 'ماراثون (30 دقيقة)', badge_library: 'مكتبة (5 مشاهد)',
-    faq_q1: "ما هو TutoCast؟",
-    faq_a1: "TutoCast أداة ويب لتسجيل دروس فيديو بعدة كاميرات (شاشة + كاميرات + ميكروفون) مباشرة من متصفحك. بدون تثبيت، بدون حساب، كل شيء يبقى على حاسوبك.",
+    faq_q1: "ما هو NoorCast؟",
+    faq_a1: "NoorCast أداة ويب لتسجيل دروس فيديو بعدة كاميرات (شاشة + كاميرات + ميكروفون) مباشرة من متصفحك. بدون تثبيت، بدون حساب، كل شيء يبقى على حاسوبك.",
     faq_q2: "كيف أضيف عدة كاميرات؟",
     faq_a2: "في اللوحة اليسرى، اختر كاميرا من القائمة واضغط على +. يمكنك تكرار ذلك لإضافة حتى 3 كاميرات (مثلاً واحدة للروبوت، واحدة لك، وواحدة لشاشة micro:bit).",
     faq_q3: "هل يمكنني قراءة مستشعرات micro:bit؟",
@@ -1920,14 +1920,14 @@ const LANG = {
     howto_6: "استخدم الأرقام 1-9 لتبديل المشاهد مباشرة. L للّيزر، F لتجميد الشاشة، D للرسم.",
     howto_7: "انقر ⏹ إيقاف. سيتم تحميل درسك بصيغة .webm مع الفصول بصيغة .vtt.",
     wiki_multicam_title: "🎥 كاميرات متعددة",
-    wiki_multicam: "يعرض TutoCast حتى 3 كاميرات + شاشة + ميكروفون في آن واحد. كل مصدر عبارة عن صندوق قابل للسحب في المشهد. يمكنك تحديد شكله (مستطيل أو دائرة) وحجمه وموقعه.",
+    wiki_multicam: "يعرض NoorCast حتى 3 كاميرات + شاشة + ميكروفون في آن واحد. كل مصدر عبارة عن صندوق قابل للسحب في المشهد. يمكنك تحديد شكله (مستطيل أو دائرة) وحجمه وموقعه.",
     wiki_scenes_title: "🎭 المشاهد",
     wiki_scenes: "المشهد هو تخطيط: موضع/حجم/رؤية كل مصدر + النصوص النشطة. يمكنك التبديل بين المشاهد أثناء التسجيل بالأرقام 1-9 أو بالنقر. قطع فوري بدون تأخير.",
     wiki_sensor_title: "🤖 مستشعرات micro:bit",
-    wiki_sensor: "عبر Web Bluetooth يتصل TutoCast مباشرة بـ micro:bit ويقرأ مستشعراته في الوقت الحقيقي (مقياس التسارع، الضوء، الحرارة، الأزرار). تظهر القيم كطبقة فوق الفيديو، مثالية لشرح مستشعر للطلاب.",
+    wiki_sensor: "عبر Web Bluetooth يتصل NoorCast مباشرة بـ micro:bit ويقرأ مستشعراته في الوقت الحقيقي (مقياس التسارع، الضوء، الحرارة، الأزرار). تظهر القيم كطبقة فوق الفيديو، مثالية لشرح مستشعر للطلاب.",
     wiki_privacy_title: "🔒 الخصوصية",
     wiki_privacy: "كل شيء يبقى محليًا. يعالج المتصفح تدفقات الفيديو ويركّبها على لوحة ويسجلها في الذاكرة عبر MediaRecorder. يُحمَّل الملف النهائي إلى قرصك. بدون خادم، بدون تتبع.",
-    news_010: "الإصدار الأول من TutoCast 🎉",
+    news_010: "الإصدار الأول من NoorCast 🎉",
     news_010_1: "كاميرات متعددة (شاشة + حتى 3 كاميرات + ميكروفون)",
     news_010_2: "6 مشاهد جاهزة (كود، روبوت، مستشعرات، كود+روبوت، استوديو، أنت)",
     news_010_3: "نصوص تراكبية مع مكتبة ملائمة للأطفال",
@@ -2103,7 +2103,7 @@ const LANG = {
     tpl_robotcam_s5: "الخلاصة",
     helpCamerasTab: "📷 كاميرات",
     cam_continuity_title: "📱 Continuity Camera (ماك + آيفون)",
-    cam_continuity_body: "لا حاجة للتثبيت. نفس الواي فاي + نفس Apple ID = الآيفون يظهر ككاميرا في TutoCast.",
+    cam_continuity_body: "لا حاجة للتثبيت. نفس الواي فاي + نفس Apple ID = الآيفون يظهر ككاميرا في NoorCast.",
     cam_droidcam_title: "📲 DroidCam (أندرويد / iOS)",
     cam_droidcam_body: "مجاني. ثبّت التطبيق على الهاتف + برنامج التشغيل على الحاسوب. اتصل عبر USB أو واي فاي.",
     cam_iriun_title: "📡 Iriun Webcam (جميع الأنظمة)",
@@ -2462,7 +2462,7 @@ const PipPopout = {
   _setupMediaSession() {
     if (!navigator.mediaSession) return;
     try {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: 'TutoCast' });
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'NoorCast' });
       navigator.mediaSession.setActionHandler('play', () => {
         if (Recorder.state === 'idle') Recorder.start();
       });
@@ -5810,7 +5810,7 @@ const Recorder = {
         try {
           const ext = this.recorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
           const handle = await showSaveFilePicker({
-            suggestedName: `tutocast-${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.${ext}`,
+            suggestedName: `noorcast-${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.${ext}`,
             types: [{ description: 'Video', accept: { [`video/${ext}`]: [`.${ext}`] } }],
           });
           this._fileWriter = await handle.createWritable();
@@ -6084,7 +6084,7 @@ const Recorder = {
     $('tcTake').style.display = 'block';
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
-    const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
     const ext = this.extForMime(mimeType);
     const dl = $('tcDownloadBtn');
     dl.href = url; dl.download = `${fname}.${ext}`;
@@ -6129,7 +6129,7 @@ const Recorder = {
           // Regenerate the .md download to include updated notes
           const dlMd2 = $('tcDownloadMd');
           if (dlMd2) {
-            const curName = (titleInput ? titleInput.value.trim() : '') || 'tutocast-take';
+            const curName = (titleInput ? titleInput.value.trim() : '') || 'noorcast-take';
             const md2 = Chapters.toMarkdown(curName, notesArea.value);
             const mdBlob2 = new Blob([md2], { type: 'text/markdown' });
             const mdUrl2 = URL.createObjectURL(mdBlob2);
@@ -6341,7 +6341,7 @@ const Chapters = {
   },
 
   toMarkdown(filename, notes) {
-    const base = filename || 'tutocast-take';
+    const base = filename || 'noorcast-take';
     let out = `# ${base} — chapters\n\n`;
     if (this.items.length === 0) {
       out += '_No chapters_\n';
@@ -9227,7 +9227,7 @@ const Trim = {
     const url = URL.createObjectURL(outBlob);
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
-    const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-trim`;
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-trim`;
     const ext = Recorder.extForMime(outBlob.type);
     const a = document.createElement('a');
     a.href = url; a.download = `${fname}.${ext}`;
@@ -9461,7 +9461,7 @@ const SilenceTrim = {
     const url = URL.createObjectURL(outBlob);
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
-    const fname = `tutocast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-nosilence`;
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-nosilence`;
     const ext = Recorder.extForMime(outBlob.type);
     const a = document.createElement('a');
     a.href = url; a.download = `${fname}.${ext}`;
@@ -9478,7 +9478,7 @@ const SilenceTrim = {
 
 /* BadgeCard — generates a 1200×630 PNG achievement card after a recording.
    Social-share-ready dimensions (OpenGraph / Twitter card). Pure canvas
-   drawing, zero deps. Renders TutoCast branding + duration + camera count
+   drawing, zero deps. Renders NoorCast branding + duration + camera count
    + chapter count + micro:bit status + template used (if any). */
 const BadgeCard = {
   W: 1200, H: 630,
@@ -9534,13 +9534,13 @@ const BadgeCard = {
     ctx.lineWidth = 6;
     ctx.strokeRect(20, 20, this.W - 40, this.H - 40);
 
-    // Big trophy emoji + "TutoCast" logo in top-left
+    // Big trophy emoji + "NoorCast" logo in top-left
     ctx.font = '700 110px "Righteous", Arial, sans-serif';
     ctx.fillStyle = s.themeAccent;
     ctx.textBaseline = 'top';
     ctx.fillText('🎬', 60, 56);
     ctx.fillStyle = '#fff';
-    ctx.fillText('TutoCast', 200, 56);
+    ctx.fillText('NoorCast', 200, 56);
 
     // Version tag
     ctx.font = '500 28px "Orbitron", monospace';
@@ -9627,7 +9627,7 @@ const BadgeCard = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const now = s.date;
-      const fname = `tutocast-${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}-${pad2(now.getHours())}-${pad2(now.getMinutes())}-badge.png`;
+      const fname = `noorcast-${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}-${pad2(now.getHours())}-${pad2(now.getMinutes())}-badge.png`;
       a.href = url; a.download = fname;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -10516,12 +10516,12 @@ const ShareTake = {
     const ext = (Recorder._lastMime && Recorder._lastMime.includes('mp4')) ? 'mp4' : 'webm';
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
-    const name = `tutocast-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}.${ext}`;
+    const name = `noorcast-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}.${ext}`;
     const file = new File([Recorder._lastBlob], name, { type: Recorder._lastBlob.type });
     try {
       await navigator.share({
-        title: 'TutoCast',
-        text: t('shareText') || 'Mon tuto fait avec TutoCast 🎬',
+        title: 'NoorCast',
+        text: t('shareText') || 'Mon tuto fait avec NoorCast 🎬',
         files: [file],
       });
       showToast('📤 ' + (t('shareDone') || 'Partagé'), 1500);
@@ -10564,7 +10564,7 @@ function snapshot() {
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       a.href = url;
-      a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+      a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       log(t('snapshotSaved'), 'success');
@@ -10591,7 +10591,7 @@ function snapshot() {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     a.href = url;
-    a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${mult}x.png`;
+    a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${mult}x.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     log(`${t('snapshotSaved')} (${mult}×)`, 'success');
@@ -10662,7 +10662,7 @@ const SnapshotAnnotator = {
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       a.href = url;
-      a.download = `tutocast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-annotated.png`;
+      a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-annotated.png`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       log(t('snapshotSaved') || '📸 Capture enregistrée', 'success');
@@ -12393,7 +12393,7 @@ const LiveCaptions = {
 
 /* ─────────── SensorTimeline — record micro:bit samples to CSV ───────────
 
-   Unique to TutoCast: because we read the micro:bit's accelerometer and
+   Unique to NoorCast: because we read the micro:bit's accelerometer and
    buttons over Web Bluetooth, we can capture a timestamp-aligned sensor
    log alongside the video. Researchers and physics teachers can load
    the CSV in a spreadsheet and correlate robot motion with tutorial
@@ -12759,7 +12759,7 @@ const Dashboard = {
    or sharing setup between machines. */
 const SettingsIO = {
   exportAll() {
-    const data = { v: 1, type: 'tutocast-settings', app: APP_VERSION, exportedAt: new Date().toISOString(), keys: {} };
+    const data = { v: 1, type: 'noorcast-settings', app: APP_VERSION, exportedAt: new Date().toISOString(), keys: {} };
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -12773,7 +12773,7 @@ const SettingsIO = {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     a.href = url;
-    a.download = `tutocast-settings-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.download = `noorcast-settings-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast(t('settingsExported') || '⚙️ Paramètres exportés', 1800);
@@ -12784,7 +12784,7 @@ const SettingsIO = {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        if (!data || typeof data !== 'object' || data.v !== 1 || data.type !== 'tutocast-settings') {
+        if (!data || typeof data !== 'object' || data.v !== 1 || data.type !== 'noorcast-settings') {
           showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
           return;
         }
@@ -12811,7 +12811,7 @@ const SettingsIO = {
    would want to re-import on another machine — badges, history,
    preferences, brand logo, tutorial text presets, scene order.
    Streams, video blobs, and recording chunks are NOT included;
-   this is a "my TutoCast setup" backup, not a "my recordings"
+   this is a "my NoorCast setup" backup, not a "my recordings"
    archive. */
 const SessionBundle = {
   export() {
@@ -12853,7 +12853,7 @@ const SessionBundle = {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     a.href = url;
-    a.download = `tutocast-session-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.download = `noorcast-session-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast(t('bundleExported') || '📦 Session exportée', 1800);
@@ -13003,7 +13003,7 @@ const Sensors = {
   /* v0.7.171: UART-only BLE connection (inspired by bit-playground).
      All data flows through a single UART service as text lines.
      Firmware sends: A:x,y,z  BA:1  BB:0  TP:23  L:128  S:200
-     TutoCast sends: P:90  TI:45  LED:1f1f1f1f1f  TEST  HELLO */
+     NoorCast sends: P:90  TI:45  LED:1f1f1f1f1f  TEST  HELLO */
   async connect() {
     if (!navigator.bluetooth) {
       showToast('❌ Web Bluetooth non supporté (Chrome/Edge requis)', 3000);
@@ -13045,7 +13045,7 @@ const Sensors = {
           if (!this._uartTx && isWriter(ch)) this._uartTx = ch;
         }
       }
-      if (!notifyChar) throw new Error('UART not found — flash the TutoCast firmware first (click ⚙ above)');
+      if (!notifyChar) throw new Error('UART not found — flash the NoorCast firmware first (click ⚙ above)');
       await notifyChar.startNotifications();
       this._uartBuf = '';
       notifyChar.addEventListener('characteristicvaluechanged', (e) => {
@@ -13329,7 +13329,7 @@ const Sensors = {
   _handleUartLine(line) {
     if (!line || line.startsWith('ECHO:') || line.startsWith('LOG:')) return;
     this.values = this.values || {};
-    // ACC:x,y,z (bit-playground format) or A:x,y,z (TutoCast format)
+    // ACC:x,y,z (bit-playground format) or A:x,y,z (NoorCast format)
     if (line.startsWith('ACC:') || line.startsWith('A:')) {
       const parts = line.substring(line.indexOf(':') + 1).split(',');
       if (parts.length >= 3) {
@@ -13591,7 +13591,7 @@ const Jingle = {
 /* v0.7.25: IntroOutro — cinematic fade-in + fade-out cards baked into
    the recording. Opt-in via Settings > Recording > tcIntroOutroToggle.
    - Intro (2.5 s after Recorder.start): dark panel with theme accent
-     gradient, big TutoCast/brand title + slogan + current scene name.
+     gradient, big NoorCast/brand title + slogan + current scene name.
      Fades in over 0-400 ms, holds, fades out over 2100-2500 ms to
      reveal the actual scene underneath.
    - Outro (2 s before Recorder.stop): dark panel with "Merci !" +
@@ -13684,7 +13684,7 @@ const IntroOutro = {
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = accent;
       ctx.shadowBlur = 30;
-      const title = (Brand.slogan && Brand.slogan.text) ? Brand.slogan.text : 'TutoCast';
+      const title = (Brand.slogan && Brand.slogan.text) ? Brand.slogan.text : 'NoorCast';
       ctx.fillText(title, W / 2, H / 2 - 60);
       // Scene name
       ctx.shadowBlur = 0;
@@ -14070,7 +14070,7 @@ const V100Celebration = {
     modal.innerHTML = `
       <div class="tc-v100-card">
         <div class="tc-v100-number">100</div>
-        <div class="tc-v100-title">TutoCast v0.7.100</div>
+        <div class="tc-v100-title">NoorCast v0.7.100</div>
         <div class="tc-v100-subtitle" data-i18n="v100Subtitle">100 releases of kid-friendly tutorial recording 🎬</div>
         <div class="tc-v100-features">
           <div>🎚 Live captions + mic boost + noise gate + ducking</div>
@@ -14972,7 +14972,7 @@ function wireEvents() {
     const txt = logHistory.map(l => `[${new Date(l.time).toLocaleTimeString()}] [${l.type}] ${l.msg}`).join('\n');
     const blob = new Blob([txt], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'tutocast-log.txt'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = 'noorcast-log.txt'; a.click();
   });
 
   // Lang & theme
@@ -16299,14 +16299,14 @@ window.onerror = (msg, src, line, col, err) => {
   const detail = `${msg} at ${src}:${line}:${col}`;
   try { log('error', `Uncaught error: ${detail}`); } catch {}
   try { showToast(`⚠ Error: ${msg}`, 5000); } catch {}
-  console.error('[TutoCast] Uncaught:', err || detail);
+  console.error('[NoorCast] Uncaught:', err || detail);
   return false; // let default handler also fire
 };
 window.addEventListener('unhandledrejection', (e) => {
   const reason = e.reason?.message || e.reason || 'unknown';
   try { log('error', `Unhandled promise rejection: ${reason}`); } catch {}
   try { showToast(`⚠ Async error: ${reason}`, 5000); } catch {}
-  console.error('[TutoCast] Unhandled rejection:', e.reason);
+  console.error('[NoorCast] Unhandled rejection:', e.reason);
 });
 
 if (document.readyState === 'loading') {
