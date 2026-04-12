@@ -625,15 +625,13 @@
           </aside>
         </div>
 
-        <!-- Template step strip — "Pick a template" pill when inactive, step progression when a template is running -->
-        <div class="tc-template-strip" id="tcTemplateStrip"></div>
-
         <!-- v0.7.34: Snapshot gallery strip — shows thumbnails of every
              snapshot taken during the session. Hidden when empty. -->
         <div class="tc-snapshot-strip" id="tcSnapshotStrip" style="display:none"></div>
 
-        <!-- BIG REC BUTTON BAR -->
+        <!-- REC BAR (template strip moved inline) -->
         <div class="tc-rec-bar">
+          <div class="tc-template-strip" id="tcTemplateStrip" style="margin:0"></div>
           <button class="tc-rec-btn" id="tcRecBtn" aria-label="Record">
             <span class="tc-rec-icon">⏺</span>
             <span class="tc-rec-label" data-i18n="recStart">ENREGISTRER</span>
