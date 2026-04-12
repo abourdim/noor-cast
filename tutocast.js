@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.118 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.119 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.118';
+const APP_VERSION = '0.7.119';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 19:00';
+const BUILD_DATE = '2026-04-12 21:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -376,8 +376,10 @@ const LANG = {
     sourceBorder: 'Bordure',
     borderColor: 'Couleur bordure',
     borderWidth: 'Épaisseur bordure',
-    flipH: 'Retourner H',
-    flipV: 'Retourner V',
+    cropTop: 'Rogner haut',
+    cropBottom: 'Rogner bas',
+    cropLeft: 'Rogner gauche',
+    cropRight: 'Rogner droite',
     filter_none: '— Filtre —',
     filter_bw: 'N&B',
     filter_sepia: 'Sépia',
@@ -1007,8 +1009,10 @@ const LANG = {
     sourceBorder: 'Border',
     borderColor: 'Border color',
     borderWidth: 'Border width',
-    flipH: 'Flip H',
-    flipV: 'Flip V',
+    cropTop: 'Crop top',
+    cropBottom: 'Crop bottom',
+    cropLeft: 'Crop left',
+    cropRight: 'Crop right',
     filter_none: '— Filter —',
     filter_bw: 'B&W',
     filter_sepia: 'Sepia',
@@ -1630,8 +1634,10 @@ const LANG = {
     sourceBorder: 'إطار',
     borderColor: 'لون الإطار',
     borderWidth: 'سمك الإطار',
-    flipH: 'قلب أفقي',
-    flipV: 'قلب عمودي',
+    cropTop: 'قص أعلى',
+    cropBottom: 'قص أسفل',
+    cropLeft: 'قص يسار',
+    cropRight: 'قص يمين',
     filter_none: '— فلتر —',
     filter_bw: 'أبيض وأسود',
     filter_sepia: 'سيبيا',
@@ -2796,7 +2802,15 @@ const Engine = {
       this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
       ctx.save();
       ctx.clip();
-      ctx.drawImage(src.img, x, y, w, h);
+      // v0.7.119: source crop for images
+      const imgNW = src.img.naturalWidth || src.img.width;
+      const imgNH = src.img.naturalHeight || src.img.height;
+      const icT = src.cropTop || 0, icB = src.cropBottom || 0;
+      const icL = src.cropLeft || 0, icR = src.cropRight || 0;
+      const isx = icL * imgNW, isy = icT * imgNH;
+      const isw = imgNW - (icL + icR) * imgNW;
+      const ish = imgNH - (icT + icB) * imgNH;
+      ctx.drawImage(src.img, isx, isy, isw, ish, x, y, w, h);
       ctx.restore();
       // v0.7.117: per-source colored border/frame
       if (src.borderWidth > 0 && src.borderColor) {
@@ -2869,7 +2883,7 @@ const Engine = {
       this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
       ctx.clip();
       ctx.filter = 'blur(24px) ' + (filter !== 'none' ? filter : '');
-      this._drawVideoRespectingMirror(video, x - 12, y - 12, w + 24, h + 24, mirrored);
+      this._drawVideoRespectingMirror(video, x - 12, y - 12, w + 24, h + 24, mirrored, src);
       ctx.filter = 'none';
       ctx.restore();
 
@@ -2889,7 +2903,7 @@ const Engine = {
         ctx.clip();
       }
       ctx.filter = filter;
-      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored);
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored, src);
       ctx.filter = 'none';
       ctx.restore();
     } else {
@@ -2904,9 +2918,9 @@ const Engine = {
       const chromaCanvas = ChromaKey.process(src);
       if (chromaCanvas) {
         // drawImage a canvas like a video
-        this._drawVideoRespectingMirror(chromaCanvas, x, y, w, h, src.mirrored);
+        this._drawVideoRespectingMirror(chromaCanvas, x, y, w, h, src.mirrored, src);
       } else {
-        this._drawVideoRespectingMirror(src.video, x, y, w, h, src.mirrored);
+        this._drawVideoRespectingMirror(src.video, x, y, w, h, src.mirrored, src);
       }
       ctx.filter = 'none';
       ctx.restore();
@@ -3107,16 +3121,27 @@ const Engine = {
 
   /* Draw a video frame honouring the mirrored flag. Extracted because the
      blur path needs two draws and duplicating the transform is ugly. */
-  _drawVideoRespectingMirror(video, x, y, w, h, mirrored) {
+  _drawVideoRespectingMirror(video, x, y, w, h, mirrored, cropSrc) {
     const ctx = this.ctx;
+    // v0.7.119: source crop — compute source rect from crop fractions
+    const nw = video.videoWidth || video.naturalWidth || video.width || w;
+    const nh = video.videoHeight || video.naturalHeight || video.height || h;
+    const cT = (cropSrc && cropSrc.cropTop) || 0;
+    const cB = (cropSrc && cropSrc.cropBottom) || 0;
+    const cL = (cropSrc && cropSrc.cropLeft) || 0;
+    const cR = (cropSrc && cropSrc.cropRight) || 0;
+    const sx = cL * nw;
+    const sy = cT * nh;
+    const sw = nw - (cL + cR) * nw;
+    const sh = nh - (cT + cB) * nh;
     if (mirrored) {
       ctx.save();
       ctx.translate(x + w, y);
       ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, w, h);
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
       ctx.restore();
     } else {
-      ctx.drawImage(video, x, y, w, h);
+      ctx.drawImage(video, sx, sy, sw, sh, x, y, w, h);
     }
   },
 
@@ -3138,7 +3163,7 @@ const Engine = {
         x: 0, y: 0, w: this.width, h: this.height,
         shape: 'rect', visible: true, mirrored: false,
         borderColor: '', borderWidth: 0,
-        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3187,7 +3212,7 @@ const Engine = {
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
         borderColor: '', borderWidth: 0,
-        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3231,7 +3256,7 @@ const Engine = {
           hidden: false,
           custom: true,
           borderColor: '', borderWidth: 0,
-          flipH: false, flipV: false,
+          cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3780,8 +3805,8 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        flipH: !!s.flipH,
-        flipV: !!s.flipV,
+        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3830,8 +3855,10 @@ const Scenes = {
       target.shape = snap.shape;
       target.borderColor = snap.borderColor || '';
       target.borderWidth = snap.borderWidth || 0;
-      target.flipH = !!snap.flipH;
-      target.flipV = !!snap.flipV;
+      target.cropTop = snap.cropTop || 0;
+      target.cropBottom = snap.cropBottom || 0;
+      target.cropLeft = snap.cropLeft || 0;
+      target.cropRight = snap.cropRight || 0;
       target.custom = true;
     });
   },
@@ -3866,8 +3893,8 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        flipH: !!s.flipH,
-        flipV: !!s.flipV,
+        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -8226,18 +8253,16 @@ const SourceToolbar = {
       s.borderWidth = Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
     });
     $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
-    // v0.7.118: horizontal/vertical flip toggles
-    $('tcSrcToolbarFlipH')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const s = sel(); if (!s) return;
-      s.flipH = !s.flipH;
-      showToast('↔ ' + t('flipH') + (s.flipH ? ' ✓' : ' ✗'), 1200);
-    });
-    $('tcSrcToolbarFlipV')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const s = sel(); if (!s) return;
-      s.flipV = !s.flipV;
-      showToast('↕ ' + t('flipV') + (s.flipV ? ' ✓' : ' ✗'), 1200);
+    // v0.7.119: source crop range sliders
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
+      const elId = 'tcSrcCrop' + dir;
+      const prop = 'crop' + dir;
+      $(elId)?.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const s = sel(); if (!s) return;
+        s[prop] = Math.max(0, Math.min(0.4, parseInt(e.target.value, 10) / 100));
+      });
+      $(elId)?.addEventListener('click', (e) => e.stopPropagation());
     });
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -8291,6 +8316,13 @@ const SourceToolbar = {
     if (bwEl && bwEl.value !== String(s.borderWidth || 0)) {
       bwEl.value = s.borderWidth || 0;
     }
+    // v0.7.119: sync crop sliders
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
+      const el = $('tcSrcCrop' + dir);
+      if (!el) return;
+      const v = String(Math.round((s['crop' + dir] || 0) * 100));
+      if (el.value !== v) el.value = v;
+    });
   },
 };
 
@@ -8356,8 +8388,8 @@ const SourceContextMenu = {
         pinned: true,
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
-        flipH: !!s.flipH,
-        flipV: !!s.flipV,
+        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
@@ -8975,8 +9007,8 @@ const LayoutHistory = {
       custom: s.custom,
       borderColor: s.borderColor || '',
       borderWidth: s.borderWidth || 0,
-      flipH: !!s.flipH,
-      flipV: !!s.flipV,
+      cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+      cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
     }));
   },
 
@@ -9023,8 +9055,10 @@ const LayoutHistory = {
       s.custom = entry.custom;
       s.borderColor = entry.borderColor || '';
       s.borderWidth = entry.borderWidth || 0;
-      s.flipH = !!entry.flipH;
-      s.flipV = !!entry.flipV;
+      s.cropTop = entry.cropTop || 0;
+      s.cropBottom = entry.cropBottom || 0;
+      s.cropLeft = entry.cropLeft || 0;
+      s.cropRight = entry.cropRight || 0;
     });
     Engine.onSourcesChanged();
     this._suppress = false;

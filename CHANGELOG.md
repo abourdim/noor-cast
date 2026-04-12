@@ -3,27 +3,28 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.118 — 2026-04-12 (Horizontal/vertical source flip)
+## v0.7.119 — 2026-04-12 (Source crop/zoom via range sliders)
 
-Each source (screen, camera, image) can now be flipped horizontally
-and/or vertically. Two toggle buttons in the floating source toolbar
-(`↔ Flip H` and `↕ Flip V`) control per-source `flipH` / `flipV`
-flags. Applied via `ctx.scale(-1,1)` / `ctx.scale(1,-1)` in
-`Engine.drawSource()`, inside the rotation wrapper so flips compose
-with rotation. Persists in custom scene snapshots and undo/redo.
+Each source (screen, camera, image) now has four crop range sliders
+(Top, Bottom, Left, Right) in the floating source toolbar, each
+adjustable from 0 to 40%. The crop values clip the source rect via
+the 9-argument `drawImage` overload, letting teachers zoom into a
+region of a screen share or camera feed. Crop values persist in
+scene snapshots, source duplication, and undo/redo history.
 
 ### Added
-- `flipH: false`, `flipV: false` defaults on every source at creation
-  (screen, camera, image).
-- `Engine.drawSource()`: `ctx.scale` flip transforms before content
-  draw, applied inside the rotation wrapper for both image and
-  video/screen paths.
-- Source toolbar: `<button id="tcSrcToolbarFlipH">↔</button>` +
-  `<button id="tcSrcToolbarFlipV">↕</button>` wired in
-  `SourceToolbar.setup()` as toggle buttons.
-- Flip props persisted in custom scene snapshots, scene restore,
+- `cropTop`, `cropBottom`, `cropLeft`, `cropRight` defaults (0) on
+  every source at creation (screen, camera, image).
+- `Engine._drawVideoRespectingMirror()`: 9-arg `drawImage` with
+  computed source rect from crop fractions.
+- `Engine.drawSource()` image path: crop via source rect.
+- Source toolbar: 4 `<input type="range">` sliders (T/B/L/R)
+  wired in `SourceToolbar.setup()` with live sync in
+  `updatePosition()`.
+- Crop props persisted in custom scene snapshots, scene restore,
   source duplication, and `LayoutHistory` undo/redo.
-- i18n keys `flipH`, `flipV` in FR, EN, AR.
+- i18n keys `cropTop`, `cropBottom`, `cropLeft`, `cropRight` in
+  FR, EN, AR.
 
 ---
 

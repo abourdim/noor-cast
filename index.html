@@ -301,8 +301,11 @@
                 <input type="color" class="tc-toolbar-color" id="tcSrcBorderColor" title="Border color" value="#ffffff" />
                 <input type="number" class="tc-toolbar-num" id="tcSrcBorderWidth" title="Border width" min="0" max="10" value="0" style="width:48px" />
                 <span class="tc-toolbar-sep"></span>
-                <button class="tc-toolbar-btn" id="tcSrcToolbarFlipH" title="Flip H">↔</button>
-                <button class="tc-toolbar-btn" id="tcSrcToolbarFlipV" title="Flip V">↕</button>
+                <!-- v0.7.119: source crop range sliders -->
+                <label class="tc-toolbar-label" style="font-size:11px">T<input type="range" class="tc-toolbar-range" id="tcSrcCropTop" min="0" max="40" step="1" value="0" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px">B<input type="range" class="tc-toolbar-range" id="tcSrcCropBottom" min="0" max="40" step="1" value="0" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px">L<input type="range" class="tc-toolbar-range" id="tcSrcCropLeft" min="0" max="40" step="1" value="0" style="width:60px" /></label>
+                <label class="tc-toolbar-label" style="font-size:11px">R<input type="range" class="tc-toolbar-range" id="tcSrcCropRight" min="0" max="40" step="1" value="0" style="width:60px" /></label>
                 <span class="tc-toolbar-sep"></span>
                 <button class="tc-toolbar-btn tc-toolbar-del" id="tcSrcToolbarDel" title="Delete">✕</button>
               </div>
