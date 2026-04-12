@@ -3638,6 +3638,75 @@ body.tc-focus .tc-stage {
 }
 .tc-cheat-row span { flex: 1; }
 
+/* v0.7.134: hotkey reference panel inside Help sidebar */
+.tc-hkref-search {
+  width: 100%;
+  padding: 7px 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  background: rgba(0,0,0,.3);
+  color: #e5e7eb;
+  font-size: .82rem;
+  outline: none;
+}
+.tc-hkref-search:focus {
+  border-color: var(--accent);
+}
+.tc-hkref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+@media (max-width: 480px) {
+  .tc-hkref-grid { grid-template-columns: 1fr; }
+}
+.tc-hkref-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: .8rem;
+  color: rgba(255,255,255,.85);
+  background: rgba(255,255,255,.025);
+}
+.tc-hkref-row:hover {
+  background: rgba(255,255,255,.06);
+}
+.tc-hkref-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.tc-hkref-keys kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: ui-monospace, monospace;
+  font-size: .72rem;
+  background: rgba(0,0,0,.4);
+  border: 1px solid rgba(255,255,255,.18);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: #fbbf24;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.tc-hkref-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tc-hkref-nomatch {
+  text-align: center;
+  padding: 18px 0;
+  color: rgba(255,255,255,.4);
+  font-size: .82rem;
+}
+
 /* v0.7.36: first-time guided tour — spotlight + tooltip */
 .tc-tour-modal {
   position: fixed;

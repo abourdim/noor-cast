@@ -686,6 +686,8 @@ const LANG = {
     // v0.7.100: milestone celebration
     v100Subtitle: '100 releases de tuto vidéo pour enfants 🎬',
     v100Continue: 'Continuer',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'Raccourcis', hotkeyRefSearch: 'Filtrer les raccourcis...', hotkeyRefNoMatch: 'Aucun raccourci trouvé',
   },
   en: {
     title: 'TutoCast', slogan: '🎬 Lights, camera, ROBOT!',
@@ -1351,6 +1353,8 @@ const LANG = {
     // v0.7.100: milestone celebration
     v100Subtitle: '100 releases of kid-friendly tutorial recording 🎬',
     v100Continue: 'Continue',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'Hotkeys', hotkeyRefSearch: 'Filter shortcuts...', hotkeyRefNoMatch: 'No shortcuts found',
   },
   ar: {
     title: 'TutoCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
@@ -2002,6 +2006,8 @@ const LANG = {
     // v0.7.100: milestone celebration
     v100Subtitle: '100 إصدارًا لتسجيل الدروس الملائم للأطفال 🎬',
     v100Continue: 'متابعة',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'اختصارات', hotkeyRefSearch: 'تصفية الاختصارات...', hotkeyRefNoMatch: 'لم يتم العثور على اختصارات',
   }
 };
 
@@ -12303,6 +12309,133 @@ const HelpSearch = {
   },
 };
 
+/* v0.7.134: HotkeyRef — dynamic hotkey reference panel inside the Help sidebar.
+   Scans KeyBindings + hard-coded combos and renders a searchable two-column
+   grid. Rows are generated at runtime so rebinds are always reflected. */
+const HotkeyRef = {
+  _container: null,
+  _input: null,
+  _grid: null,
+  _noMatch: null,
+
+  /* All hard-coded (non-rebindable) shortcuts. Each entry:
+     { keys: 'Ctrl+S', label: i18n-key, fallback: string } */
+  FIXED: [
+    { keys: '1-9', labelKey: 'cheatScene', fallback: 'Switch scene' },
+    { keys: 'Shift+R', labelKey: 'cheatMiscInstantRec', fallback: 'Instant rec' },
+    { keys: 'Shift+F', labelKey: 'focusModeToggle', fallback: 'Focus mode' },
+    { keys: '?', labelKey: 'sceneRandom', fallback: 'Random scene' },
+    { keys: 'Ctrl+S', labelKey: 'cheatRecSaveAll', fallback: 'Save all files' },
+    { keys: 'Ctrl+D', labelKey: 'cheatTextDup', fallback: 'Duplicate text' },
+    { keys: 'Ctrl+Z', labelKey: 'cheatMiscRetry', fallback: 'Undo / retry 30s' },
+    { keys: 'Ctrl+Shift+Z', labelKey: 'layoutRedo', fallback: 'Redo layout' },
+    { keys: 'Ctrl+Y', labelKey: 'layoutRedo', fallback: 'Redo layout' },
+    { keys: 'Ctrl+Shift+D', labelKey: 'cheatMiscDebug', fallback: 'Debug HUD' },
+    { keys: 'Ctrl+V', labelKey: 'cheatMiscPasteImg', fallback: 'Paste image' },
+    { keys: 'Shift+Alt+\u2190/\u2192', labelKey: 'cheatSceneMove', fallback: 'Reorder scene' },
+    { keys: 'Alt+1-9', labelKey: 'sourceToggle', fallback: 'Toggle source visibility' },
+    { keys: '[ / ]', labelKey: 'cheatTextLayer', fallback: 'Layer back / front' },
+    { keys: 'Shift+[ / ]', labelKey: 'cheatTextLayerX', fallback: 'Layer extreme' },
+    { keys: ', / .', labelKey: 'cheatTextRotL', fallback: 'Rotate text' },
+    { keys: '/', labelKey: 'cheatTextRotReset', fallback: 'Reset rotation' },
+    { keys: 'Del', labelKey: 'cheatTextDel', fallback: 'Delete selection' },
+    { keys: 'Esc', labelKey: 'cheatMiscEsc', fallback: 'Close panels' },
+  ],
+
+  /* Labels for rebindable actions (mirrors RebindModal) */
+  _actionLabel(action) {
+    const map = {
+      rec: 'cheatRecStart', pause: 'cheatRecPause', marker: 'cheatRecMark',
+      snapshot: 'cheatRecSnap', laser: 'cheatToolLaser', freeze: 'cheatToolFreeze',
+      draw: 'cheatToolDraw', zoom: 'cheatToolZoom', quiz: 'cheatToolQuiz',
+      teleprompter: 'cheatToolTele', captions: 'cheatToolCaptions',
+      bigMarker: 'cheatRecBig', grid: 'gridLabel',
+    };
+    const fallback = {
+      rec: 'Record / stop', pause: 'Pause / resume', marker: 'Add marker',
+      snapshot: 'Photo snapshot', laser: 'Laser on/off', freeze: 'Freeze screen',
+      draw: 'Whiteboard', zoom: 'Manual zoom', quiz: 'Quiz card',
+      teleprompter: 'Teleprompter', captions: 'Captions on/off',
+      bigMarker: 'Big marker', grid: 'Grid overlay',
+    };
+    return t(map[action]) || fallback[action] || action;
+  },
+
+  setup() {
+    this._container = $('helpHotkeys');
+    if (!this._container) return;
+    // Build search input
+    this._input = document.createElement('input');
+    this._input.type = 'search';
+    this._input.className = 'tc-hkref-search';
+    this._input.placeholder = t('hotkeyRefSearch') || 'Filter shortcuts...';
+    this._container.appendChild(this._input);
+    // Grid
+    this._grid = document.createElement('div');
+    this._grid.className = 'tc-hkref-grid';
+    this._container.appendChild(this._grid);
+    // No-match message
+    this._noMatch = document.createElement('div');
+    this._noMatch.className = 'tc-hkref-nomatch';
+    this._noMatch.style.display = 'none';
+    this._noMatch.textContent = t('hotkeyRefNoMatch') || 'No shortcuts found';
+    this._container.appendChild(this._noMatch);
+
+    this._input.addEventListener('input', () => this.filter(this._input.value));
+    this.build();
+  },
+
+  build() {
+    if (!this._grid) return;
+    this._grid.innerHTML = '';
+
+    // 1) Rebindable shortcuts from KeyBindings
+    Object.keys(KeyBindings.DEFAULTS).forEach(action => {
+      const key = (KeyBindings.current[action] || KeyBindings.DEFAULTS[action]).toUpperCase();
+      this._addRow(key, this._actionLabel(action));
+    });
+
+    // 2) Hard-coded shortcuts
+    this.FIXED.forEach(f => {
+      this._addRow(f.keys, t(f.labelKey) || f.fallback);
+    });
+  },
+
+  _addRow(keys, label) {
+    const row = document.createElement('div');
+    row.className = 'tc-hkref-row';
+    // Build kbd elements for the key combo
+    const kbdWrap = document.createElement('span');
+    kbdWrap.className = 'tc-hkref-keys';
+    keys.split('+').forEach((part, i) => {
+      if (i > 0) kbdWrap.appendChild(document.createTextNode('+'));
+      const kbd = document.createElement('kbd');
+      kbd.textContent = part.trim();
+      kbdWrap.appendChild(kbd);
+    });
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'tc-hkref-label';
+    labelSpan.textContent = label;
+    row.appendChild(kbdWrap);
+    row.appendChild(labelSpan);
+    row._searchText = (keys + ' ' + label).toLowerCase();
+    this._grid.appendChild(row);
+  },
+
+  filter(query) {
+    const q = (query || '').trim().toLowerCase();
+    if (!this._grid) return;
+    const rows = this._grid.querySelectorAll('.tc-hkref-row');
+    let visible = 0;
+    rows.forEach(row => {
+      const show = q === '' || row._searchText.includes(q);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (this._noMatch) this._noMatch.style.display = visible === 0 ? '' : 'none';
+  },
+};
+
 const KeyBindings = {
   /* v0.7.66: action → key binding lookup. Loaded from localStorage
      on startup; falls back to defaults. Rebinding via the Settings
@@ -13589,6 +13722,7 @@ async function init() {
   setupHelpTabs();
   HelpSearch.setup();
   KeyBindings.load();
+  HotkeyRef.setup();  // v0.7.134
   setupHotkeys();
   wireEvents();
 

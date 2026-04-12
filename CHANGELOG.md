@@ -3,20 +3,23 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.137 — 2026-04-12 (Export / import settings as JSON)
+## v0.7.134 — 2026-04-12 (Dynamic hotkey reference panel)
 
-Two new buttons in Settings > General let teachers export all `tc-*`
-localStorage keys as a JSON file and import them back. Useful for backup
-or sharing setup between machines.
+New "Hotkeys" tab in the Help sidebar that auto-generates a searchable
+two-column grid of every keyboard shortcut. Rebindable keys reflect the
+user's current bindings; hard-coded combos (Ctrl+S, Shift+R, etc.) are
+listed alongside them. A filter input at the top narrows rows instantly.
 
 ### Added
-- `SettingsIO` object in `tutocast.js`: `exportAll()` gathers every `tc-*`
-  localStorage key into a JSON blob and triggers download;
-  `importAll(file)` reads a JSON file, sets all keys, and reloads the page.
-- Two buttons in Settings panel (General section): "Export settings" and
-  "Import settings" with a hidden file input for import.
-- i18n keys `exportSettings`, `importSettings`, `settingsExported`,
-  `settingsImported`, `settingsConfirm` in FR, EN, AR.
+- `HotkeyRef` object in `tutocast.js`: `build()` scans `KeyBindings.current`
+  plus a `FIXED` array of non-rebindable combos and renders `<kbd>` + label
+  rows into a grid. `filter(query)` hides non-matching rows.
+- "Hotkeys" tab button (`data-tab="hotkeys"`) in the Help panel tab bar
+  (`index.html`).
+- `<div id="helpHotkeys">` container populated at runtime by `HotkeyRef.setup()`.
+- CSS classes `.tc-hkref-*` in `style.css` for search input, grid layout,
+  row styling, kbd badges, and no-match message.
+- i18n keys `hotkeyRefTab`, `hotkeyRefSearch`, `hotkeyRefNoMatch` in FR, EN, AR.
 
 ---
 
