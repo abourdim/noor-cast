@@ -7515,6 +7515,8 @@ const Drag = {
       const oppY = bottom ? s.startY : s.startY + s.startH;
       let newW = Math.abs(mx - oppX);
       let newH = Math.abs(my - oppY);
+      // v0.7.167: shapes get free resize + smaller minimum
+      const isShape = s.ref && s.ref.type === 'shape';
       // Minimum sizes (shapes can go smaller)
       const minW = isShape ? 20 : 80;
       const minH = isShape ? 20 : 60;
@@ -7526,7 +7528,6 @@ const Drag = {
       // user can press/release mid-drag.
       // v0.7.142: per-source aspectLock overrides Shift — ratio always kept.
       const forceLock = !!(s.ref && s.ref.aspectLock);
-      const isShape = s.ref && s.ref.type === 'shape';
       const freeResize = isShape || !forceLock && (!!e.shiftKey || s.freeResize);
       if (s.kind === 'source' && !freeResize) {
         const keepByWidth = newW / s.aspect > newH;
