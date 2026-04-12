@@ -3,20 +3,23 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.147 — 2026-04-12 (Scene preview tooltip on hover)
+## v0.7.144 — 2026-04-12 (Per-source rounded corners)
 
-Hovering a scene button in the sidebar now shows a small 160x90 canvas preview
-of the scene layout. Colored rectangles visualize where each source would be
-positioned: blue for screen, green for camera, orange for facecam.
+Each source now has a corner radius slider (0-50 px) in the floating source
+toolbar. When set above 0, a rounded-rect clip path is applied via
+`ctx.clip()` before drawing the source content — works on image, video, and
+blur paths. Default is 0 (sharp corners). Persists in scenes and duplication.
 
 ### Added
-- `ScenePreview` object in `tutocast.js`: `show(sceneKey, anchorEl)`, `hide()`.
-  Lazy-creates a single shared tooltip with an offscreen canvas that draws
-  colored rectangles for each source in the scene's `preview` array.
-- `mouseenter` / `mouseleave` listeners on scene buttons in `renderScenes()`
-  to trigger the preview tooltip with a 250ms hover delay.
-- `.tc-scene-preview` CSS class in `style.css` with backdrop blur, border glow,
-  and fade-in/out transition matching the existing tooltip style.
+- `cornerRadius` property (default `0`) on every source (screen, cam, image).
+- `Engine._applyCornerRadius()`: rounded-rect clip helper called in the image
+  path, the default video path, and the blur pass of `drawSource()`.
+- Range slider `#tcSrcCornerRadius` (min 0, max 50) in the source toolbar
+  (`index.html`), with input listener + sync in `SourceToolbar.updatePosition`.
+- `cornerRadius` persisted in scene snapshots (`saveScene`, `addCustom`,
+  `duplicateScene`), restored in `_applyCustomSnapshot`, and copied in the
+  source context-menu duplicate action.
+- i18n key `cornerRadius` in fr / en / ar.
 
 ## v0.7.138 — 2026-04-12 (Multi-source selection)
 

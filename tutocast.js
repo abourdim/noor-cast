@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.147 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.144 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.147';
+const APP_VERSION = '0.7.144';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -414,6 +414,7 @@ const LANG = {
     shadowBlur: 'Flou ombre',
     shadowOffsetX: 'Décalage X ombre',
     shadowOffsetY: 'Décalage Y ombre',
+    cornerRadius: 'Coins arrondis',
     cropTop: 'Rogner haut',
     cropBottom: 'Rogner bas',
     cropLeft: 'Rogner gauche',
@@ -1091,6 +1092,7 @@ const LANG = {
     shadowBlur: 'Shadow blur',
     shadowOffsetX: 'Shadow offset X',
     shadowOffsetY: 'Shadow offset Y',
+    cornerRadius: 'Corner radius',
     cropTop: 'Crop top',
     cropBottom: 'Crop bottom',
     cropLeft: 'Crop left',
@@ -1760,6 +1762,7 @@ const LANG = {
     shadowBlur: 'ضبابية الظل',
     shadowOffsetX: 'إزاحة X للظل',
     shadowOffsetY: 'إزاحة Y للظل',
+    cornerRadius: 'نصف قطر الزوايا',
     cropTop: 'قص أعلى',
     cropBottom: 'قص أسفل',
     cropLeft: 'قص يسار',
@@ -3024,6 +3027,8 @@ const Engine = {
       }
       ctx.save();
       ctx.clip();
+      // v0.7.144: per-source corner radius (image path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
       // v0.7.119: source crop for images
       const imgNW = src.img.naturalWidth || src.img.width;
       const imgNH = src.img.naturalHeight || src.img.height;
@@ -3117,6 +3122,8 @@ const Engine = {
       ctx.save();
       this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
       ctx.clip();
+      // v0.7.144: per-source corner radius (blur path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
       ctx.filter = 'blur(24px) ' + (filter !== 'none' ? filter : '');
       this._drawVideoRespectingMirror(video, x - 12, y - 12, w + 24, h + 24, mirrored, src);
       ctx.filter = 'none';
@@ -3146,6 +3153,8 @@ const Engine = {
       ctx.save();
       this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
       ctx.clip();
+      // v0.7.144: per-source corner radius (video path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
       ctx.filter = filter;
       // v0.7.68: chroma key pre-process — returns an offscreen canvas with
       // alpha zeroed on matching pixels. When set, we draw THAT canvas instead
@@ -3295,6 +3304,22 @@ const Engine = {
     }
   },
 
+  /* v0.7.144: apply a rounded-rect clip when cornerRadius > 0.
+     Called just before content draw; stacks on top of any existing shape clip. */
+  _applyCornerRadius(ctx, src, x, y, w, h) {
+    const cr = src.cornerRadius || 0;
+    if (cr <= 0) return;
+    const rr = Math.min(cr, Math.min(w, h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+    ctx.lineTo(x + w, y + h - rr); ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    ctx.lineTo(x + rr, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+    ctx.lineTo(x, y + rr); ctx.quadraticCurveTo(x, y, x + rr, y);
+    ctx.closePath();
+    ctx.clip();
+  },
+
   /* Build a canvas path for the given shape. Centralized so glow + clip
      + background-blur all use the exact same geometry.
      v0.7.15: added hexagon, octagon, diamond, star, heart, pill. */
@@ -3432,6 +3457,7 @@ const Engine = {
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false,
         rotation: 0,
+        cornerRadius: 0,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3483,6 +3509,7 @@ const Engine = {
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false,
         rotation: 0,
+        cornerRadius: 0,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3529,6 +3556,7 @@ const Engine = {
           shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
           locked: false,
           rotation: 0,
+          cornerRadius: 0,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -4099,6 +4127,7 @@ const Scenes = {
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
         rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -4154,6 +4183,7 @@ const Scenes = {
       target.locked = !!snap.locked;
       target.aspectLock = !!snap.aspectLock;
       target.rotation = snap.rotation || 0;
+      target.cornerRadius = snap.cornerRadius || 0;
       target.custom = true;
     });
   },
@@ -4194,6 +4224,7 @@ const Scenes = {
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
         aspectLock: !!s.aspectLock,
+        cornerRadius: s.cornerRadius || 0,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -4284,6 +4315,7 @@ const Scenes = {
         shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
         aspectLock: !!s.aspectLock,
+        cornerRadius: s.cornerRadius || 0,
       }));
     if (snapshot.length === 0) return false;
     scene.snapshot = snapshot;
@@ -9345,6 +9377,14 @@ const SourceToolbar = {
       SceneAutoSave.trigger();
     });
     $('tcSrcShadowOffsetY')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.144: per-source corner radius slider
+    $('tcSrcCornerRadius')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.cornerRadius = Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcCornerRadius')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.119: source crop range sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
       const elId = 'tcSrcCrop' + dir;
@@ -9468,6 +9508,11 @@ const SourceToolbar = {
     if (syEl && syEl.value !== String(s.shadowOffsetY ?? 5)) {
       syEl.value = s.shadowOffsetY ?? 5;
     }
+    // v0.7.144: sync corner radius slider
+    const crEl = $('tcSrcCornerRadius');
+    if (crEl && crEl.value !== String(s.cornerRadius || 0)) {
+      crEl.value = s.cornerRadius || 0;
+    }
     // v0.7.119: sync crop sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
       const el = $('tcSrcCrop' + dir);
@@ -9565,6 +9610,7 @@ const SourceContextMenu = {
         locked: !!s.locked,
         aspectLock: !!s.aspectLock,
         rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
