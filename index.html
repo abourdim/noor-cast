@@ -133,110 +133,71 @@
              above the studio grid. Frees the right sidebar from 7 stacked
              buttons and puts the live tools one click away from the stage. -->
         <div class="tc-tools-bar" id="tcToolsBar">
-          <!-- v0.7.131: undo/redo layout buttons -->
+          <!-- Essential tools — always visible -->
           <button class="tc-tool-btn" id="tcUndoBtn" title="Undo (Ctrl+Z)">
             <span class="tc-tool-icon">↩</span><span class="tc-tool-label" data-i18n="undo">Annuler</span>
           </button>
           <button class="tc-tool-btn" id="tcRedoBtn" title="Redo (Ctrl+Y)">
             <span class="tc-tool-icon">↪</span><span class="tc-tool-label" data-i18n="redo">Rétablir</span>
           </button>
-          <!-- v0.7.138: select all visible sources -->
-          <button class="tc-tool-btn" id="tcSelectAllBtn" title="Select all sources">
-            <span class="tc-tool-icon">☐</span><span class="tc-tool-label" data-i18n="selectAll">Tout</span>
-          </button>
           <span class="tc-tools-sep"></span>
-          <button class="tc-tool-btn" id="tcLaserBtn" title="Laser (L)" data-tip-key="tip_laser" data-tip-kbd="L" data-tip-title="Laser pointer">
+          <button class="tc-tool-btn" id="tcLaserBtn" title="Laser (L)">
             <span class="tc-tool-icon">🔴</span><span class="tc-tool-label" data-i18n="laser">Laser</span><kbd>L</kbd>
           </button>
-          <button class="tc-tool-btn" id="tcRipplesBtn" title="Click ripples" data-tip-key="tip_ripples" data-tip-title="Click ripples">
-            <span class="tc-tool-icon">💧</span><span class="tc-tool-label" data-i18n="ripples">Ripples</span>
-          </button>
-          <button class="tc-tool-btn" id="tcCursorTrailBtn" title="Cursor trail">
-            <span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="trail">Trail</span>
-          </button>
-          <button class="tc-tool-btn" id="tcGridBtn" title="Rule-of-thirds grid (G)">
-            <span class="tc-tool-icon">#</span><span class="tc-tool-label" data-i18n="gridOverlay">Grid</span><kbd>G</kbd>
-          </button>
-          <button class="tc-tool-btn" id="tcSpotlightBtn" title="Cursor spotlight">
-            <span class="tc-tool-icon">💡</span><span class="tc-tool-label" data-i18n="spotlight">Spot</span>
-          </button>
-          <button class="tc-tool-btn" id="tcFreezeBtn" title="Freeze (F)" data-tip-key="tip_freeze" data-tip-kbd="F" data-tip-title="Freeze screen">
+          <button class="tc-tool-btn" id="tcFreezeBtn" title="Freeze (F)">
             <span class="tc-tool-icon">❄️</span><span class="tc-tool-label" data-i18n="freeze">Geler</span><kbd>F</kbd>
           </button>
-          <button class="tc-tool-btn" id="tcWhiteboardBtn" title="Draw (D)" data-tip-key="tip_whiteboard" data-tip-kbd="D" data-tip-title="Whiteboard">
+          <button class="tc-tool-btn" id="tcWhiteboardBtn" title="Draw (D)">
             <span class="tc-tool-icon">✏️</span><span class="tc-tool-label" data-i18n="whiteboard">Dessiner</span><kbd>D</kbd>
           </button>
-          <button class="tc-tool-btn" id="tcZoomBtn" title="Zoom (Z)" data-tip-key="tip_zoom" data-tip-kbd="Z" data-tip-title="Zoom">
-            <span class="tc-tool-icon">🔍</span><span class="tc-tool-label" data-i18n="zoom">Zoom</span><kbd>Z</kbd>
-          </button>
-          <button class="tc-tool-btn" id="tcAutoZoomBtn" title="Auto-zoom on click" data-tip-key="tip_autozoom" data-tip-title="Auto-zoom">
-            <span class="tc-tool-icon">🎯</span><span class="tc-tool-label" data-i18n="autoZoom">AutoZ</span>
-          </button>
-          <span class="tc-tools-sep"></span>
-          <button class="tc-tool-btn" id="tcTeleBtn" title="Teleprompter" data-tip-key="tip_tele" data-tip-kbd="T" data-tip-title="Teleprompter">
-            <span class="tc-tool-icon">📜</span><span class="tc-tool-label" data-i18n="teleprompter">Tele</span>
-          </button>
-          <button class="tc-tool-btn" id="tcStickyNoteBtn" title="Sticky note">
-            <span class="tc-tool-icon">🗒️</span><span class="tc-tool-label" data-i18n="stickyNoteBtn">Note</span>
-          </button>
-          <button class="tc-tool-btn" id="tcSnapBtn" title="Snapshot (S)" data-tip-key="tip_snap" data-tip-kbd="S" data-tip-title="Snapshot">
+          <button class="tc-tool-btn" id="tcSnapBtn" title="Snapshot (S)">
             <span class="tc-tool-icon">📸</span><span class="tc-tool-label" data-i18n="snapshot">Photo</span><kbd>S</kbd>
           </button>
-          <button class="tc-tool-btn" id="tcReactBtn" title="React">
-            <span class="tc-tool-icon">😀</span><span class="tc-tool-label" data-i18n="reactBtn">React</span>
-          </button>
-          <div class="tc-react-palette" id="tcReactPalette" style="display:none">
-            <button class="tc-react-emoji" data-emoji="👍">👍</button>
-            <button class="tc-react-emoji" data-emoji="❤️">❤️</button>
-            <button class="tc-react-emoji" data-emoji="🎉">🎉</button>
-            <button class="tc-react-emoji" data-emoji="🔥">🔥</button>
-            <button class="tc-react-emoji" data-emoji="💡">💡</button>
-            <button class="tc-react-emoji" data-emoji="⭐">⭐</button>
-          </div>
-          <button class="tc-tool-btn" id="tcSfxBtn" title="Sound board">
-            <span class="tc-tool-icon">🔊</span><span class="tc-tool-label" data-i18n="soundBoard">SFX</span>
-          </button>
-          <div class="tc-sfx-palette" id="tcSfxPalette" style="display:none">
-            <button class="tc-sfx-trigger" data-sfx="ding">🔔 <span data-i18n="sbDing">Ding</span></button>
-            <button class="tc-sfx-trigger" data-sfx="buzz">❌ <span data-i18n="sbBuzz">Buzz</span></button>
-            <button class="tc-sfx-trigger" data-sfx="clap">👏 <span data-i18n="sbClap">Clap</span></button>
-            <button class="tc-sfx-trigger" data-sfx="roll">🥁 <span data-i18n="sbRoll">Roll</span></button>
-            <button class="tc-sfx-trigger" data-sfx="whistle">🎵 <span data-i18n="sbWhistle">Whistle</span></button>
-            <button class="tc-sfx-trigger" data-sfx="whoosh">💨 <span data-i18n="sbWhoosh">Whoosh</span></button>
-          </div>
-          <button class="tc-tool-btn" id="tcFullscreenBtn" title="Fullscreen" data-tip-key="tip_fullscreen" data-tip-title="Fullscreen">
+          <button class="tc-tool-btn" id="tcFullscreenBtn" title="Fullscreen">
             <span class="tc-tool-icon">⛶</span><span class="tc-tool-label" data-i18n="fullscreen">Plein</span>
           </button>
-          <button class="tc-tool-btn" id="tcFocusBtn" title="Focus mode (Shift+F)">
-            <span class="tc-tool-icon">🔳</span><span class="tc-tool-label" data-i18n="focusMode">Focus</span><kbd>⇧F</kbd>
-          </button>
-          <button class="tc-tool-btn" id="tcRandomSceneBtn" title="Random scene (?)" onclick="Scenes.random()">
-            <span class="tc-tool-icon">🎲</span><span class="tc-tool-label" data-i18n="randomScene">Aléatoire</span><kbd>?</kbd>
-          </button>
-          <!-- v0.7.121: canvas color picker / eyedropper tool -->
-          <button class="tc-tool-btn" id="tcColorPickerBtn" title="Color picker">
-            <span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="colorPicker">Pick</span>
-          </button>
-          <!-- v0.7.124: quick canvas text stamp -->
-          <button class="tc-tool-btn" id="tcTextStampBtn" title="Text stamp">
-            <span class="tc-tool-icon">✏️</span><span class="tc-tool-label" data-i18n="textStamp">Text</span>
-          </button>
-          <!-- v0.7.113: canvas countdown timer toggle -->
-          <button class="tc-tool-btn" id="tcTimerBtn" title="Countdown timer">
-            <span class="tc-tool-icon">⏳</span><span class="tc-tool-label" data-i18n="countdownTimer">Timer</span>
-          </button>
-          <!-- v0.7.148: piano keyboard overlay for music teachers -->
-          <button class="tc-tool-btn" id="tcPianoBtn" title="Piano overlay">
-            <span class="tc-tool-icon">🎹</span><span class="tc-tool-label" data-i18n="pianoOverlay">Piano</span>
-          </button>
-          <!-- v0.7.152: cinematic letterbox bars -->
-          <button class="tc-tool-btn" id="tcLetterboxBtn" title="Cinematic letterbox bars">
-            <span class="tc-tool-icon">🎬</span><span class="tc-tool-label" data-i18n="letterboxBars">Bars</span>
-          </button>
           <span class="tc-tools-sep"></span>
-          <!-- v0.7.132: PiP active indicator badge -->
+          <!-- v0.7.157: overflow menu for 17 additional tools -->
+          <button class="tc-tool-btn" id="tcMoreToolsBtn" title="More tools">
+            <span class="tc-tool-icon">⋯</span><span class="tc-tool-label">More</span>
+          </button>
+          <div class="tc-more-tools-popup" id="tcMoreToolsPopup" style="display:none">
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Canvas</div>
+              <button class="tc-tool-btn" id="tcRipplesBtn" title="Click ripples"><span class="tc-tool-icon">💧</span><span class="tc-tool-label" data-i18n="ripples">Ripples</span></button>
+              <button class="tc-tool-btn" id="tcCursorTrailBtn" title="Cursor trail"><span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="trail">Trail</span></button>
+              <button class="tc-tool-btn" id="tcGridBtn" title="Grid (G)"><span class="tc-tool-icon">#</span><span class="tc-tool-label" data-i18n="gridOverlay">Grid</span><kbd>G</kbd></button>
+              <button class="tc-tool-btn" id="tcSpotlightBtn" title="Spotlight"><span class="tc-tool-icon">💡</span><span class="tc-tool-label" data-i18n="spotlight">Spot</span></button>
+              <button class="tc-tool-btn" id="tcZoomBtn" title="Zoom (Z)"><span class="tc-tool-icon">🔍</span><span class="tc-tool-label" data-i18n="zoom">Zoom</span><kbd>Z</kbd></button>
+              <button class="tc-tool-btn" id="tcAutoZoomBtn" title="Auto-zoom"><span class="tc-tool-icon">🎯</span><span class="tc-tool-label" data-i18n="autoZoom">AutoZ</span></button>
+              <button class="tc-tool-btn" id="tcLetterboxBtn" title="Letterbox bars"><span class="tc-tool-icon">🎬</span><span class="tc-tool-label" data-i18n="letterboxBars">Bars</span></button>
+            </div>
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Overlays</div>
+              <button class="tc-tool-btn" id="tcTeleBtn" title="Teleprompter (T)"><span class="tc-tool-icon">📜</span><span class="tc-tool-label" data-i18n="teleprompter">Tele</span><kbd>T</kbd></button>
+              <button class="tc-tool-btn" id="tcTimerBtn" title="Countdown timer"><span class="tc-tool-icon">⏳</span><span class="tc-tool-label" data-i18n="countdownTimer">Timer</span></button>
+              <button class="tc-tool-btn" id="tcTextStampBtn" title="Text stamp"><span class="tc-tool-icon">✏️</span><span class="tc-tool-label" data-i18n="textStamp">Text</span></button>
+              <button class="tc-tool-btn" id="tcStickyNoteBtn" title="Sticky note"><span class="tc-tool-icon">🗒️</span><span class="tc-tool-label" data-i18n="stickyNoteBtn">Note</span></button>
+              <button class="tc-tool-btn" id="tcReactBtn" title="React"><span class="tc-tool-icon">😀</span><span class="tc-tool-label" data-i18n="reactBtn">React</span></button>
+              <div class="tc-react-palette" id="tcReactPalette" style="display:none">
+                <button class="tc-react-emoji" data-emoji="👍">👍</button><button class="tc-react-emoji" data-emoji="❤️">❤️</button><button class="tc-react-emoji" data-emoji="🎉">🎉</button><button class="tc-react-emoji" data-emoji="🔥">🔥</button><button class="tc-react-emoji" data-emoji="💡">💡</button><button class="tc-react-emoji" data-emoji="⭐">⭐</button>
+              </div>
+              <button class="tc-tool-btn" id="tcPianoBtn" title="Piano overlay"><span class="tc-tool-icon">🎹</span><span class="tc-tool-label" data-i18n="pianoOverlay">Piano</span></button>
+            </div>
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Tools</div>
+              <button class="tc-tool-btn" id="tcSelectAllBtn" title="Select all"><span class="tc-tool-icon">☐</span><span class="tc-tool-label" data-i18n="selectAll">Tout</span></button>
+              <button class="tc-tool-btn" id="tcSfxBtn" title="Sound board"><span class="tc-tool-icon">🔊</span><span class="tc-tool-label" data-i18n="soundBoard">SFX</span></button>
+              <div class="tc-sfx-palette" id="tcSfxPalette" style="display:none">
+                <button class="tc-sfx-trigger" data-sfx="ding">🔔 <span data-i18n="sbDing">Ding</span></button><button class="tc-sfx-trigger" data-sfx="buzz">❌ <span data-i18n="sbBuzz">Buzz</span></button><button class="tc-sfx-trigger" data-sfx="clap">👏 <span data-i18n="sbClap">Clap</span></button><button class="tc-sfx-trigger" data-sfx="roll">🥁 <span data-i18n="sbRoll">Roll</span></button><button class="tc-sfx-trigger" data-sfx="whistle">🎵 <span data-i18n="sbWhistle">Whistle</span></button><button class="tc-sfx-trigger" data-sfx="whoosh">💨 <span data-i18n="sbWhoosh">Whoosh</span></button>
+              </div>
+              <button class="tc-tool-btn" id="tcFocusBtn" title="Focus (Shift+F)"><span class="tc-tool-icon">🔳</span><span class="tc-tool-label" data-i18n="focusMode">Focus</span><kbd>⇧F</kbd></button>
+              <button class="tc-tool-btn" id="tcRandomSceneBtn" title="Random (?)" onclick="Scenes.random()"><span class="tc-tool-icon">🎲</span><span class="tc-tool-label" data-i18n="randomScene">Random</span><kbd>?</kbd></button>
+              <button class="tc-tool-btn" id="tcColorPickerBtn" title="Color picker"><span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="colorPicker">Pick</span></button>
+            </div>
+          </div>
+          <span class="tc-tools-sep"></span>
           <span id="tcPipBadge" class="tc-pip-badge" style="display:none" data-i18n="pipActive">PiP</span>
-          <!-- v0.7.115: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
           <canvas id="tcMicMeter" class="tc-mic-meter" width="80" height="12" title="Mic level"></canvas>
         </div>
 
@@ -1357,224 +1318,57 @@
       <details class="tc-set-section" open>
         <summary class="tc-set-summary">🎬 <span data-i18n="setSecRecording">Enregistrement</span></summary>
         <div class="tc-set-body">
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="soundToggle" class="checkbox-ctrl" checked />
-              <span data-i18n="soundEffects">🔊 Effets sonores</span>
-            </label>
-          </div>
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcMirrorCam" class="checkbox-ctrl" />
-              <span data-i18n="mirrorCam">🪞 Miroir webcam</span>
-            </label>
-          </div>
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcCountdownEnabled" class="checkbox-ctrl" checked />
-              <span data-i18n="countdownOn">⏱ Compte à rebours</span>
-            </label>
-            <div class="tc-countdown-secs-row">
-              <label class="sidebar-label" data-i18n="countdownSecs">Secondes :</label>
-              <input type="number" id="tcCountdownSecs" min="1" max="10" step="1" value="3" class="sidebar-select" style="max-width: 80px" />
+
+          <!-- Sub-accordion: Capture -->
+          <details class="tc-set-sub" open>
+            <summary>🎥 Capture</summary>
+            <div class="sidebar-group">
+              <label class="toggle-ctrl"><input type="checkbox" id="tcCountdownEnabled" class="checkbox-ctrl" checked /><span data-i18n="countdownOn">⏱ Compte à rebours</span></label>
+              <div class="tc-countdown-secs-row"><label class="sidebar-label" data-i18n="countdownSecs">Secondes :</label><input type="number" id="tcCountdownSecs" min="1" max="10" step="1" value="3" class="sidebar-select" style="max-width:80px" /></div>
             </div>
-          </div>
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcSensorOverlayToggle" class="checkbox-ctrl" />
-              <span data-i18n="sensorOverlayLabel">🤖 Overlay auto si la robot bouge fort</span>
-            </label>
-          </div>
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcJingleToggle" class="checkbox-ctrl" />
-              <span data-i18n="jingleLabel">🎵 Jingle d'intro (1.5s)</span>
-            </label>
-          </div>
-          <!-- v0.7.95: timelapse mode (record at reduced captureStream fps) -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcTimelapseToggle" class="checkbox-ctrl" />
-              <span data-i18n="timelapseLabel">⏩ Timelapse</span>
-            </label>
-            <div id="tcTimelapseOptions" style="display:none; margin-top:6px">
-              <label class="sidebar-label">× <input type="number" id="tcTimelapseMult" min="2" max="20" step="1" value="4" class="sidebar-select" style="max-width:80px" /></label>
-            </div>
-          </div>
-          <!-- v0.7.65: recording time goal -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcTimeGoalToggle" class="checkbox-ctrl" />
-              <span data-i18n="timeGoalLabel">⏳ Objectif de durée</span>
-            </label>
-            <div id="tcTimeGoalOptions" style="display:none; margin-top:6px">
-              <label class="sidebar-label" data-i18n="timeGoalMinutes">Minutes :</label>
-              <input type="number" id="tcTimeGoalMinutes" class="sidebar-select" min="0.5" max="60" step="0.5" value="5" />
-              <label class="toggle-ctrl" style="margin-top:6px">
-                <input type="checkbox" id="tcTimeGoalAutoStop" class="checkbox-ctrl" />
-                <span data-i18n="timeGoalAutoStop">Arrêt automatique à l'objectif</span>
-              </label>
-            </div>
-          </div>
-          <!-- v0.7.90: opt-in on-canvas clock overlay -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcClockToggle" class="checkbox-ctrl" />
-              <span data-i18n="clockLabel">🕐 Afficher l'heure dans un coin</span>
-            </label>
-            <label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem">
-              <input type="checkbox" id="tcClockDateToggle" class="checkbox-ctrl" checked />
-              <span data-i18n="clockDateLabel">+ date</span>
-            </label>
-          </div>
-          <!-- v0.7.120: pulsing REC dot indicator -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcRecIndicatorToggle" class="checkbox-ctrl" checked />
-              <span data-i18n="recIndicatorLabel">🔴 Pastille REC pendant l'enregistrement</span>
-            </label>
-          </div>
-          <!-- v0.7.135: on-canvas audio waveform visualizer -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcAudioVizToggle" class="checkbox-ctrl" />
-              <span data-i18n="audioVizLabel">🎵 Visualiseur audio sur le canvas</span>
-            </label>
-          </div>
-          <!-- v0.7.154: canvas vignette effect -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcVignetteToggle" class="checkbox-ctrl" />
-              <span data-i18n="vignetteLabel">🎥 Effet vignette sur le canvas</span>
-            </label>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-              <label class="sidebar-label" data-i18n="vignetteIntensity" style="flex:0 0 auto;margin:0">Intensité</label>
-              <input type="range" id="tcVignetteIntensity" min="0.1" max="1" step="0.05" value="0.5" class="sidebar-select" style="flex:1" />
-            </div>
-          </div>
-          <!-- v0.7.141: large recording elapsed timer on canvas -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcRecElapsedToggle" class="checkbox-ctrl" />
-              <span data-i18n="recElapsedLabel">⏱ Chrono écoulé pendant l'enregistrement</span>
-            </label>
-          </div>
-          <!-- v0.7.152: cinematic letterbox bars -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcLetterboxToggle" class="checkbox-ctrl" />
-              <span data-i18n="letterboxLabel">🎬 Barres cinématiques (letterbox)</span>
-            </label>
-            <label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem">
-              <span data-i18n="letterboxHeight">Hauteur des barres (%)</span>
-              <input type="range" id="tcLetterboxHeight" min="5" max="20" step="1" value="10" style="width:80px;margin-left:6px" />
-              <span id="tcLetterboxHeightVal" style="font-size:.75rem;margin-left:4px">10%</span>
-            </label>
-          </div>
-          <!-- v0.7.34: cinematic intro/outro cards baked into the recording -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcIntroOutroToggle" class="checkbox-ctrl" />
-              <span data-i18n="introOutroLabel">🎬 Cartes intro/outro cinématiques</span>
-            </label>
-          </div>
-          <!-- v0.7.34: auto-pause on tab focus loss -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcAutoPauseToggle" class="checkbox-ctrl" />
-              <span data-i18n="autoPauseLabel">⏸ Pause auto quand tu changes d'onglet</span>
-            </label>
-          </div>
-          <!-- v0.7.57: live captions overlay via WebSpeech API -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcCaptionsToggle" class="checkbox-ctrl" />
-              <span data-i18n="captionsLabel">💬 Sous-titres live (Chrome/Edge)</span>
-            </label>
-          </div>
-          <!-- v0.7.54: opt-in snapshot annotation modal -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcSnapAnnotToggle" class="checkbox-ctrl" />
-              <span data-i18n="snapAnnotLabel">✏️ Annoter la capture avant sauvegarde</span>
-            </label>
-          </div>
-          <!-- v0.7.37: auto scene intro text overlay -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcSceneIntroToggle" class="checkbox-ctrl" />
-              <span data-i18n="sceneIntroLabel">🎭 Texte d'intro auto sur changement de scène</span>
-            </label>
-          </div>
-          <!-- v0.7.64 / v0.7.153: scene transition mode selector -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <span data-i18n="sceneTransitionLabel">🎞 Transition entre scènes</span>
-              <select id="tcSceneTransitionSelect" class="checkbox-ctrl" style="margin-left:8px">
-                <option value="none" data-i18n="transitionNone">Aucune</option>
-                <option value="fade" data-i18n="transitionFade">Fondu</option>
-                <option value="wipe" data-i18n="transitionWipe">Balayage</option>
-              </select>
-            </label>
-          </div>
-          <!-- v0.7.128: auto-save scene on source changes -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcSceneAutoSaveToggle" class="checkbox-ctrl" checked />
-              <span data-i18n="sceneAutoSave">💾 Sauvegarde auto de la scène quand les sources changent</span>
-            </label>
-          </div>
-          <!-- v0.7.130: source name labels on canvas -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcSourceLabelsToggle" class="checkbox-ctrl" />
-              <span data-i18n="sourceLabels">🏷 Afficher le nom des sources sur le canvas</span>
-            </label>
-          </div>
-          <!-- v0.7.140: FPS counter overlay -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcFpsCounterToggle" class="checkbox-ctrl" />
-              <span data-i18n="fpsCounter">🎯 Compteur FPS sur le canvas</span>
-            </label>
-          </div>
-          <!-- v0.7.69: mic boost + noise gate -->
-          <div class="sidebar-group">
-            <label class="sidebar-label" data-i18n="micBoost">🎚 Boost du micro</label>
-            <input type="range" id="tcMicBoostSlider" class="tc-brand-range" min="0" max="4" step="0.1" value="1" />
-            <span class="tc-slider-value" id="tcMicBoostValue">1.0×</span>
-          </div>
-          <div class="sidebar-group">
-            <label class="sidebar-label" data-i18n="micGate">🔇 Seuil silence (dB)</label>
-            <input type="range" id="tcMicGateSlider" class="tc-brand-range" min="-60" max="-20" step="1" value="-50" />
-            <span class="tc-slider-value" id="tcMicGateValue">-50 dB</span>
-          </div>
-          <!-- v0.7.83: opt-in volume ducking -->
-          <div class="sidebar-group">
-            <label class="toggle-ctrl">
-              <input type="checkbox" id="tcDuckToggle" class="checkbox-ctrl" />
-              <span data-i18n="duckLabel">🔉 Baisser l'audio des sources quand tu parles</span>
-            </label>
-          </div>
-          <div class="sidebar-group">
-            <label class="sidebar-label" data-i18n="outputFormat">🎞 Format de sortie</label>
-            <select id="tcFormatSelect" class="sidebar-select" aria-label="Output format">
-              <option value="auto" data-i18n="formatAuto">Auto (MP4 si possible)</option>
-              <option value="mp4" data-i18n="formatMp4">MP4 (H.264/AAC)</option>
-              <option value="webm" data-i18n="formatWebm">WebM (VP9/Opus)</option>
-            </select>
-          </div>
-          <!-- v0.7.58: stage aspect ratio presets -->
-          <div class="sidebar-group">
-            <label class="sidebar-label" data-i18n="stageAspect">📐 Format de la scène</label>
-            <select id="tcStageAspectSelect" class="sidebar-select">
-              <option value="16:9">16:9 — 1920×1080 (défaut)</option>
-              <option value="9:16">9:16 — 1080×1920 (portrait / TikTok)</option>
-              <option value="1:1">1:1 — 1080×1080 (square / Instagram)</option>
-              <option value="4:3">4:3 — 1440×1080 (classique)</option>
-            </select>
-            <div class="tc-ticker-hint" data-i18n="stageAspectHint">Ne change pas pendant un enregistrement</div>
-          </div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcMirrorCam" class="checkbox-ctrl" /><span data-i18n="mirrorCam">🪞 Miroir webcam</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTimelapseToggle" class="checkbox-ctrl" /><span data-i18n="timelapseLabel">⏩ Timelapse</span></label><div id="tcTimelapseOptions" style="display:none;margin-top:6px"><label class="sidebar-label">× <input type="number" id="tcTimelapseMult" min="2" max="20" step="1" value="4" class="sidebar-select" style="max-width:80px" /></label></div></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTimeGoalToggle" class="checkbox-ctrl" /><span data-i18n="timeGoalLabel">⏳ Objectif de durée</span></label><div id="tcTimeGoalOptions" style="display:none;margin-top:6px"><label class="sidebar-label" data-i18n="timeGoalMinutes">Minutes :</label><input type="number" id="tcTimeGoalMinutes" class="sidebar-select" min="0.5" max="60" step="0.5" value="5" /><label class="toggle-ctrl" style="margin-top:6px"><input type="checkbox" id="tcTimeGoalAutoStop" class="checkbox-ctrl" /><span data-i18n="timeGoalAutoStop">Arrêt automatique</span></label></div></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="outputFormat">🎞 Format de sortie</label><select id="tcFormatSelect" class="sidebar-select"><option value="auto" data-i18n="formatAuto">Auto (MP4 si possible)</option><option value="mp4" data-i18n="formatMp4">MP4</option><option value="webm" data-i18n="formatWebm">WebM</option></select></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="stageAspect">📐 Format de la scène</label><select id="tcStageAspectSelect" class="sidebar-select"><option value="16:9">16:9 — 1920×1080</option><option value="9:16">9:16 — 1080×1920</option><option value="1:1">1:1 — 1080×1080</option><option value="4:3">4:3 — 1440×1080</option></select><div class="tc-ticker-hint" data-i18n="stageAspectHint">Ne change pas pendant un enregistrement</div></div>
+          </details>
+
+          <!-- Sub-accordion: Overlays -->
+          <details class="tc-set-sub">
+            <summary>🎨 Overlays</summary>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcClockToggle" class="checkbox-ctrl" /><span data-i18n="clockLabel">🕐 Horloge</span></label><label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem"><input type="checkbox" id="tcClockDateToggle" class="checkbox-ctrl" checked /><span data-i18n="clockDateLabel">+ date</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcRecIndicatorToggle" class="checkbox-ctrl" checked /><span data-i18n="recIndicatorLabel">🔴 Pastille REC</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcRecElapsedToggle" class="checkbox-ctrl" /><span data-i18n="recElapsedLabel">⏱ Chrono écoulé</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcCaptionsToggle" class="checkbox-ctrl" /><span data-i18n="captionsLabel">💬 Sous-titres live</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSceneIntroToggle" class="checkbox-ctrl" /><span data-i18n="sceneIntroLabel">🎭 Texte d'intro scène</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcLetterboxToggle" class="checkbox-ctrl" /><span data-i18n="letterboxLabel">🎬 Letterbox</span></label><label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem"><span data-i18n="letterboxHeight">Hauteur (%)</span><input type="range" id="tcLetterboxHeight" min="5" max="20" step="1" value="10" style="width:80px;margin-left:6px" /><span id="tcLetterboxHeightVal" style="font-size:.75rem;margin-left:4px">10%</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcVignetteToggle" class="checkbox-ctrl" /><span data-i18n="vignetteLabel">🎥 Vignette</span></label><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><label class="sidebar-label" data-i18n="vignetteIntensity" style="flex:0 0 auto;margin:0">Intensité</label><input type="range" id="tcVignetteIntensity" min="0.1" max="1" step="0.05" value="0.5" class="sidebar-select" style="flex:1" /></div></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcAudioVizToggle" class="checkbox-ctrl" /><span data-i18n="audioVizLabel">🎵 Visualiseur audio</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcIntroOutroToggle" class="checkbox-ctrl" /><span data-i18n="introOutroLabel">🎬 Intro/outro</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSourceLabelsToggle" class="checkbox-ctrl" /><span data-i18n="sourceLabels">🏷 Noms des sources</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcFpsCounterToggle" class="checkbox-ctrl" /><span data-i18n="fpsCounter">🎯 Compteur FPS</span></label></div>
+          </details>
+
+          <!-- Sub-accordion: Audio -->
+          <details class="tc-set-sub">
+            <summary>🔊 Audio</summary>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="soundToggle" class="checkbox-ctrl" checked /><span data-i18n="soundEffects">🔊 Effets sonores</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcJingleToggle" class="checkbox-ctrl" /><span data-i18n="jingleLabel">🎵 Jingle d'intro</span></label></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="micBoost">🎚 Boost micro</label><input type="range" id="tcMicBoostSlider" class="tc-brand-range" min="0" max="4" step="0.1" value="1" /><span class="tc-slider-value" id="tcMicBoostValue">1.0×</span></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="micGate">🔇 Seuil silence (dB)</label><input type="range" id="tcMicGateSlider" class="tc-brand-range" min="-60" max="-20" step="1" value="-50" /><span class="tc-slider-value" id="tcMicGateValue">-50 dB</span></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcDuckToggle" class="checkbox-ctrl" /><span data-i18n="duckLabel">🔉 Volume ducking</span></label></div>
+          </details>
+
+          <!-- Sub-accordion: Behavior -->
+          <details class="tc-set-sub">
+            <summary>⚙️ Comportement</summary>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcAutoPauseToggle" class="checkbox-ctrl" /><span data-i18n="autoPauseLabel">⏸ Pause auto (changement d'onglet)</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSensorOverlayToggle" class="checkbox-ctrl" /><span data-i18n="sensorOverlayLabel">🤖 Overlay capteur auto</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><span data-i18n="sceneTransitionLabel">🎞 Transition scènes</span><select id="tcSceneTransitionSelect" class="checkbox-ctrl" style="margin-left:8px"><option value="none" data-i18n="transitionNone">Aucune</option><option value="fade" data-i18n="transitionFade">Fondu</option><option value="wipe" data-i18n="transitionWipe">Balayage</option></select></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSceneAutoSaveToggle" class="checkbox-ctrl" checked /><span data-i18n="sceneAutoSave">💾 Sauvegarde auto scène</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSnapAnnotToggle" class="checkbox-ctrl" /><span data-i18n="snapAnnotLabel">✏️ Annoter les captures</span></label></div>
+          </details>
+
         </div>
       </details>
 

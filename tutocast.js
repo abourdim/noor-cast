@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.156 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.157 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.156';
+const APP_VERSION = '0.7.157';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -14482,6 +14482,18 @@ function wireEvents() {
     if (!pal || pal.style.display === 'none') return;
     if (e.target.closest('#tcSfxBtn') || e.target.closest('#tcSfxPalette')) return;
     pal.style.display = 'none';
+  });
+  // v0.7.157: More Tools overflow popup toggle + click-outside
+  $('tcMoreToolsBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const pop = $('tcMoreToolsPopup');
+    if (pop) pop.style.display = pop.style.display === 'none' ? '' : 'none';
+  });
+  document.addEventListener('click', (e) => {
+    const pop = $('tcMoreToolsPopup');
+    if (!pop || pop.style.display === 'none') return;
+    if (e.target.closest('#tcMoreToolsBtn') || e.target.closest('#tcMoreToolsPopup')) return;
+    pop.style.display = 'none';
   });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());

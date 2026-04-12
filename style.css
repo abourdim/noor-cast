@@ -2529,6 +2529,69 @@ body.log-open .app {
   background: rgba(255, 255, 255, .12);
   margin: 0 4px;
 }
+/* v0.7.157: tools bar overflow popup */
+.tc-more-tools-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 10px;
+  width: min(420px, 90vw);
+  padding: 14px;
+  background: var(--card-bg, #1e293b);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.55);
+  z-index: 200;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.tc-mtp-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tc-mtp-group .tc-tool-btn {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+}
+.tc-mtp-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.4;
+  padding: 2px 4px 4px;
+  font-family: var(--font-head);
+}
+@media (max-width: 600px) {
+  .tc-more-tools-popup { grid-template-columns: 1fr 1fr; width: 90vw; }
+}
+/* v0.7.157: settings sub-accordions inside main sections */
+.tc-set-sub {
+  margin: 6px 0;
+  border-radius: 8px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.tc-set-sub[open] { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+.tc-set-sub > summary {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.85;
+}
+.tc-set-sub > summary::-webkit-details-marker { display: none; }
+.tc-set-sub > summary::before { content: '▸'; font-size: 10px; transition: transform .15s; }
+.tc-set-sub[open] > summary::before { transform: rotate(90deg); }
+.tc-set-sub > summary:hover { opacity: 1; background: rgba(255,255,255,.04); }
+.tc-set-sub > .sidebar-group:first-of-type { margin-top: 4px; }
+.tc-set-sub > .sidebar-group { padding: 0 10px; }
 /* v0.7.132: PiP active indicator badge in the tools bar */
 .tc-pip-badge {
   display: inline-block;
