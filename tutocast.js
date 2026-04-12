@@ -13267,11 +13267,11 @@ const Sensors = {
 
   // v0.7.171: parse all incoming UART lines (unified protocol)
   _handleUartLine(line) {
-    if (!line) return;
+    if (!line || line.startsWith('ECHO:') || line.startsWith('LOG:')) return;
     this.values = this.values || {};
-    // A:x,y,z — accelerometer (milli-g)
-    if (line.startsWith('A:')) {
-      const parts = line.substring(2).split(',');
+    // ACC:x,y,z (bit-playground format) or A:x,y,z (TutoCast format)
+    if (line.startsWith('ACC:') || line.startsWith('A:')) {
+      const parts = line.substring(line.indexOf(':') + 1).split(',');
       if (parts.length >= 3) {
         this.values.x = parseInt(parts[0], 10) / 1000;
         this.values.y = parseInt(parts[1], 10) / 1000;
@@ -13281,10 +13281,10 @@ const Sensors = {
       }
       return;
     }
-    // BA:1 / BA:0 — button A
-    if (line.startsWith('BA:')) {
+    // BA:1 / BTN:A:1 — button A
+    if (line.startsWith('BA:') || line.startsWith('BTN:A:')) {
       const prev = this.values.a || 0;
-      this.values.a = parseInt(line.substring(3), 10);
+      this.values.a = parseInt(line.substring(line.lastIndexOf(':') + 1), 10);
       this.updatePanel();
       if (prev === 0 && this.values.a !== 0) {
         if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') SoundBoard.play('clap');
@@ -13292,22 +13292,52 @@ const Sensors = {
       }
       return;
     }
-    // BB:1 / BB:0 — button B
-    if (line.startsWith('BB:')) {
+    // BB:1 / BTN:B:1 — button B
+    if (line.startsWith('BB:') || line.startsWith('BTN:B:')) {
       const prev = this.values.b || 0;
-      this.values.b = parseInt(line.substring(3), 10);
+      this.values.b = parseInt(line.substring(line.lastIndexOf(':') + 1), 10);
       this.updatePanel();
       if (prev === 0 && this.values.b !== 0) Chapters.addMarker();
       return;
     }
-    // TP:23 — temperature
-    if (line.startsWith('TP:')) { this.values.temp = parseInt(line.substring(3), 10); return; }
-    // L:128 — light level
-    if (line.startsWith('L:')) { this.values.light = parseInt(line.substring(2), 10); return; }
-    // S:200 — sound level (v2)
-    if (line.startsWith('S:')) { this.values.sound = parseInt(line.substring(2), 10); return; }
+    // TP:23 / TEMP:23 — temperature
+    if (line.startsWith('TP:') || line.startsWith('TEMP:')) {
+      this.values.temp = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+    }
+    // L:128 / LIGHT:128 — light level
+    if (line.startsWith('L:') || line.startsWith('LIGHT:')) {
+      this.values.light = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+    }
+    // S:200 / SOUND:200 — sound level (v2)
+    if (line.startsWith('S:') || line.startsWith('SOUND:')) {
+      this.values.sound = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+    }
+    // LEDS:r0,r1,r2,r3,r4 — sync LED grid from micro:bit (bit-playground format)
+    if (line.startsWith('LEDS:')) {
+      const parts = line.substring(5).split(',');
+      if (parts.length >= 5) {
+        this._syncLedGrid(parts.map(p => parseInt(p, 10)));
+      }
+      return;
+    }
     // OK — test response
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
+    // INFO: / SERVO: / EVENT: — bit-playground ack (ignore silently)
+    if (line.startsWith('INFO:') || line.startsWith('SERVO') || line.startsWith('EVENT:') || line.startsWith('TAB:')) return;
+  },
+
+  // v0.7.172: sync the web LED grid from micro:bit telemetry
+  _syncLedGrid(rows) {
+    const grid = $('tcLedGrid');
+    if (!grid) return;
+    const cells = grid.querySelectorAll('div, button');
+    if (cells.length < 25) return;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const on = (rows[r] >> c) & 1;
+        cells[r * 5 + c].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+      }
+    }
   },
 
   // v0.7.171: process accelerometer data (extracted from old BLE handler)
@@ -15021,11 +15051,12 @@ function wireEvents() {
   $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
   // v0.7.170: pan/tilt D-pad
   const SERVO_STEP = 10;
-  $('tcPanLeft')?.addEventListener('click', () => { Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
-  $('tcPanRight')?.addEventListener('click', () => { Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
-  $('tcTiltUp')?.addEventListener('click', () => { Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
-  $('tcTiltDown')?.addEventListener('click', () => { Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
-  $('tcPanCenter')?.addEventListener('click', () => { Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
+  // D-pad: move servo + show arrow on micro:bit LEDs
+  $('tcPanLeft')?.addEventListener('click', () => { Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; Sensors.sendUart('CMD:LEFT'); });
+  $('tcPanRight')?.addEventListener('click', () => { Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; Sensors.sendUart('CMD:RIGHT'); });
+  $('tcTiltUp')?.addEventListener('click', () => { Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; Sensors.sendUart('CMD:UP'); });
+  $('tcTiltDown')?.addEventListener('click', () => { Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; Sensors.sendUart('CMD:DOWN'); });
+  $('tcPanCenter')?.addEventListener('click', () => { Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; Sensors.sendUart('CMD:CLEAR'); });
   // v0.7.170: LED 5x5 grid editor
   // v0.7.170: LED 5x5 grid with drag-to-paint (inspired by bit-playground)
   const ledGrid = $('tcLedGrid');
@@ -15073,6 +15104,17 @@ function wireEvents() {
       btn.title = name;
       btn.addEventListener('click', () => {
         pat.forEach((v, i) => setLed(i, !!v));
+        // Send immediately — no need to click Send button
+        const bytes = [0, 0, 0, 0, 0];
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            if (pat[row * 5 + col]) bytes[row] |= (1 << (4 - col));
+          }
+        }
+        Sensors.setLeds(bytes);
+        // Also send CMD for bit-playground firmware
+        const cmdMap = { heart: 'HEART', smile: 'SMILE', check: 'CLEAR', cross: 'SAD', arrow: 'UP' };
+        if (cmdMap[name]) Sensors.sendUart('CMD:' + cmdMap[name]);
       });
       presetRow.appendChild(btn);
     });
