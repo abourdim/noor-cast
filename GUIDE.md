@@ -619,4 +619,4 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*TutoCast v0.7.167 — Made with ❤️ for teachers who code with robots*
+*TutoCast v0.7.167 — A professional tool for teachers who code with robots*
