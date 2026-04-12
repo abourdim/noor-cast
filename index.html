@@ -273,6 +273,8 @@
               <canvas id="tcGridCanvas" width="1920" height="1080" class="tc-overlay tc-grid-overlay"></canvas>
               <!-- v0.7.130: source name labels overlay — separate canvas so labels never enter captureStream -->
               <canvas id="tcSourceLabelsCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
+              <!-- v0.7.140: FPS counter overlay — separate canvas so counter never enters captureStream -->
+              <canvas id="tcFpsCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
               <div class="tc-stage-hint" id="tcStageHint" data-i18n="stageHint">👆 Ajoute une source pour commencer</div>
               <div class="tc-countdown" id="tcCountdown"></div>
               <!-- v0.7.115: auto-advance countdown pill -->
@@ -1404,6 +1406,13 @@
             <label class="toggle-ctrl">
               <input type="checkbox" id="tcSourceLabelsToggle" class="checkbox-ctrl" />
               <span data-i18n="sourceLabels">🏷 Afficher le nom des sources sur le canvas</span>
+            </label>
+          </div>
+          <!-- v0.7.140: FPS counter overlay -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcFpsCounterToggle" class="checkbox-ctrl" />
+              <span data-i18n="fpsCounter">🎯 Compteur FPS sur le canvas</span>
             </label>
           </div>
           <!-- v0.7.69: mic boost + noise gate -->

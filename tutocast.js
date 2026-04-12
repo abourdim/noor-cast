@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.139';
+const APP_VERSION = '0.7.140';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -108,6 +108,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
     sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
+    fpsCounter: '🎯 Compteur FPS sur le canvas', fpsCounterOn: 'Compteur FPS activé', fpsCounterOff: 'Compteur FPS désactivé',
     alignLeft: 'Aligner à gauche', alignRight: 'Aligner à droite', alignTop: 'Aligner en haut', alignBottom: 'Aligner en bas', alignCenterH: 'Centrer horizontalement', alignCenterV: 'Centrer verticalement',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
@@ -776,6 +777,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
     sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
+    fpsCounter: '🎯 Show FPS counter on canvas', fpsCounterOn: 'FPS counter on', fpsCounterOff: 'FPS counter off',
     alignLeft: 'Align left', alignRight: 'Align right', alignTop: 'Align top', alignBottom: 'Align bottom', alignCenterH: 'Center horizontally', alignCenterV: 'Center vertically',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
@@ -1441,6 +1443,7 @@ const LANG = {
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
     sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
+    fpsCounter: '🎯 عداد الإطارات على اللوحة', fpsCounterOn: 'عداد الإطارات مُفعَّل', fpsCounterOff: 'عداد الإطارات مُعطَّل',
     alignLeft: 'محاذاة لليسار', alignRight: 'محاذاة لليمين', alignTop: 'محاذاة للأعلى', alignBottom: 'محاذاة للأسفل', alignCenterH: 'توسيط أفقي', alignCenterV: 'توسيط عمودي',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
@@ -2829,6 +2832,10 @@ const Engine = {
     // v0.7.130: source name labels — drawn on a separate overlay canvas
     // (not on the main captureStream canvas) so they're teacher-only.
     SourceLabels.render();
+
+    // v0.7.140: FPS counter — teacher-only overlay canvas, never recorded.
+    FpsCounter.tick();
+    FpsCounter.render();
 
     // v0.7.64: scene transition fade overlay (drawn on top of everything)
     SceneTransition.render(ctx, width, height);
@@ -7341,6 +7348,110 @@ const SourceLabels = {
       ctx.fillStyle = '#fff';
       ctx.fillText(text, px + padX, py + pillH - padY);
     });
+  },
+};
+
+/* v0.7.140 — FPS counter overlay.
+   Opt-in frames-per-second pill drawn on a dedicated HTML overlay canvas
+   (tcFpsCanvas) that sits on top of the stage but is NOT part of the
+   captureStream pipeline — so the counter is teacher-only and never
+   appears in recordings (same approach as GridOverlay / SourceLabels).
+   tick() is called every Engine.render() frame; it recomputes the FPS
+   value every 500 ms. render() draws a small dark pill with the current
+   FPS at the top-right corner of the overlay canvas.
+   Persisted in localStorage as tc-fps-counter. Toggled via Settings. */
+const FpsCounter = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+  _frames: 0,
+  _lastTime: 0,
+  _fps: 0,
+
+  init() {
+    this._canvas = $('tcFpsCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+    this._lastTime = performance.now();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-fps-counter') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-fps-counter', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    if (!this.visible) this._clear();
+    showToast(this.visible
+      ? (t('fpsCounterOn') || 'FPS counter on')
+      : (t('fpsCounterOff') || 'FPS counter off'), 1200);
+  },
+
+  /** Called every frame from Engine.render(). Recomputes fps every 500 ms. */
+  tick() {
+    if (!this.visible) return;
+    this._frames++;
+    const now = performance.now();
+    if (now - this._lastTime >= 500) {
+      this._fps = Math.round((this._frames * 1000) / (now - this._lastTime));
+      this._frames = 0;
+      this._lastTime = now;
+    }
+  },
+
+  /** Draws the FPS pill on the overlay canvas. */
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    if (!this.visible) return;
+
+    const text = this._fps + ' FPS';
+    const fontSize = 13;
+    const padX = 8;
+    const padY = 4;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textBaseline = 'top';
+    const tw = ctx.measureText(text).width;
+    const pillW = tw + padX * 2;
+    const pillH = fontSize + padY * 2;
+    const margin = 12;
+    const px = cvs.width - pillW - margin;
+    const py = margin;
+
+    // dark pill background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    const r = 5;
+    ctx.moveTo(px + r, py);
+    ctx.lineTo(px + pillW - r, py);
+    ctx.quadraticCurveTo(px + pillW, py, px + pillW, py + r);
+    ctx.lineTo(px + pillW, py + pillH - r);
+    ctx.quadraticCurveTo(px + pillW, py + pillH, px + pillW - r, py + pillH);
+    ctx.lineTo(px + r, py + pillH);
+    ctx.quadraticCurveTo(px, py + pillH, px, py + pillH - r);
+    ctx.lineTo(px, py + r);
+    ctx.quadraticCurveTo(px, py, px + r, py);
+    ctx.closePath();
+    ctx.fill();
+
+    // green text for healthy fps, yellow for mid, red for low
+    const color = this._fps >= 50 ? '#2ecc71' : this._fps >= 25 ? '#f1c40f' : '#e74c3c';
+    ctx.fillStyle = color;
+    ctx.fillText(text, px + padX, py + padY);
+  },
+
+  _clear() {
+    if (this._canvas && this._ctx) {
+      this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    }
   },
 };
 
@@ -13605,6 +13716,12 @@ function wireEvents() {
     slEl.checked = SourceLabels.visible;
     slEl.addEventListener('change', () => SourceLabels.toggle());
   }
+  // v0.7.140: FPS counter overlay
+  const fpsEl = $('tcFpsCounterToggle');
+  if (fpsEl) {
+    fpsEl.checked = FpsCounter.visible;
+    fpsEl.addEventListener('change', () => FpsCounter.toggle());
+  }
   // v0.7.81: opt-in idle screensaver mode
   const ssEl = $('tcScreensaverToggle');
   if (ssEl) {
@@ -13790,6 +13907,7 @@ async function init() {
   SnapGrid.setup();          // v0.7.126
   GridOverlay.init();  // v0.7.115
   SourceLabels.init(); // v0.7.130
+  FpsCounter.init();   // v0.7.140
   PreviewZoom.setup();  // v0.7.133
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109

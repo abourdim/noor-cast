@@ -3,26 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.139 — 2026-04-12 (Inline scene rename)
+## v0.7.140 — 2026-04-12 (FPS counter overlay)
 
-Double-click any scene button label to rename it in place. The label becomes
-a contentEditable span; press Enter or click away to save, Escape to cancel.
-Names are capped at 30 characters and HTML is stripped. Preset scene renames
-persist in `tc-scene-overrides`; custom scene renames persist in the existing
-`tc-scene-custom` store.
+Opt-in frames-per-second counter drawn on a dedicated overlay canvas so it
+is teacher-only and never appears in recordings. Shows a colour-coded pill
+(green/yellow/red) at the top-right corner of the stage. FPS is recomputed
+every 500 ms from the existing `Engine.render()` loop. Toggle in Settings;
+persisted in `localStorage` as `tc-fps-counter`.
 
 ### Added
-- `Scenes.renameScene(key, newName)` in `tutocast.js`: strips HTML, enforces
-  30-char limit, sets `overrideName` on presets or `label` on custom scenes,
-  persists and re-renders.
-- `Scenes._savePresetOverrides()` / `Scenes._loadPresetOverrides()`: persist
-  renamed preset labels in `localStorage` key `tc-scene-overrides`.
-- `dblclick` handler on `.tc-scene-label` in `renderScenes()`: activates
-  contentEditable, selects all text, saves on blur/Enter, cancels on Escape.
-  `stopPropagation` prevents the click from triggering a scene switch.
-- i18n keys `sceneRenamed` and `sceneRenameTip` in fr / en / ar.
-- CSS class `.tc-scene-label.editing` in `style.css` for the active rename
-  visual (accent outline, dark background).
+- `FpsCounter` object in `tutocast.js`: `init()`, `tick()` (called each
+  frame, recomputes every 500 ms), `render()` (draws pill on overlay
+  canvas), `toggle()`, `load()`, `_save()`, `_clear()`.
+- `<canvas id="tcFpsCanvas">` overlay in `index.html` — outside the
+  captureStream pipeline so the counter never enters recordings.
+- Settings checkbox `tcFpsCounterToggle` with `data-i18n="fpsCounter"`.
+- i18n keys `fpsCounter`, `fpsCounterOn`, `fpsCounterOff` in FR, EN, AR.
+
+---
 
 ## v0.7.134 — 2026-04-12 (Dynamic hotkey reference panel)
 
