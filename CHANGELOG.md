@@ -3,20 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.150 — 2026-04-12 (Docs rollup for v0.7.98 → v0.7.149)
+## v0.7.148 — 2026-04-12 (Keyboard piano overlay for music teachers)
 
-Documentation-only release. The help panel's News tab now includes a
-consolidated summary of all ~50 features shipped from v0.7.98 to v0.7.149,
-grouped by category: source tools, canvas, audio, scenes, UI, tools,
-recording, and fun.
+A small two-octave piano keyboard (C4-B5) drawn at the bottom of the canvas,
+visible in recordings. Letter keys A-L play white notes, W/E/T/Y/U/O/P play
+sharps. Uses Web Audio oscillators routed to both speakers and the recording
+destination. Active keys light up in the accent color. Toggle via the 🎹 Piano
+button in the tools bar.
 
 ### Added
-- Consolidated news entry in the help panel News tab covering v0.7.98-v0.7.149.
-
-### Changed
-- `APP_VERSION` bumped to `0.7.150`.
-- `BUILD_DATE` updated.
-- Version tag in `index.html` header updated to `v0.7.150`.
+- `PianoOverlay` object with `visible`, `_keys[]` (16 note mappings), `toggle()`,
+  `render(ctx, W, H)`, `_playNote(keyObj)`, `_stopNote(keyName)`, `_stopAll()`,
+  `handleKeyDown(e)`, `handleKeyUp(e)`.
+- Keyboard mapping: A=C4, S=D4, D=E4, F=F4, G=G4, H=A4, J=B4, K=C5, L=D5
+  (white); W=C#4, E=D#4, T=F#4, Y=G#4, U=A#4, O=C#5, P=D#5 (black).
+- `Engine.render()` calls `PianoOverlay.render()` after PauseOverlay.
+- Tools bar button `#tcPianoBtn` with 🎹 icon.
+- Global `keydown` intercept in `setupHotkeys()` — piano captures note keys
+  before other hotkeys when visible; `keyup` listener stops the note.
+- i18n key `pianoOverlay` in fr / en / ar.
 
 ## v0.7.144 — 2026-04-12 (Per-source rounded corners)
 

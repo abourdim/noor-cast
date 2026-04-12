@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.147 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.148 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -332,6 +332,7 @@ const LANG = {
     snapGrid: '📐 Aligner sur la grille',
     gridSize: 'Taille grille (px)',
     countdownTimer: '⏳ Minuteur',
+    pianoOverlay: '🎹 Piano',
     colorPicker: '🎨 Pipette',
     colorCopied: 'Copié',
     sceneTime: 'Temps par scène',
@@ -1012,6 +1013,7 @@ const LANG = {
     snapGrid: '📐 Snap to grid',
     gridSize: 'Grid size (px)',
     countdownTimer: '⏳ Timer',
+    pianoOverlay: '🎹 Piano',
     colorPicker: '🎨 Color picker',
     colorCopied: 'Copied',
     sceneTime: 'Time per scene',
@@ -1684,6 +1686,7 @@ const LANG = {
     snapGrid: '📐 محاذاة إلى الشبكة',
     gridSize: 'حجم الشبكة (بكسل)',
     countdownTimer: '⏳ مؤقت',
+    pianoOverlay: '🎹 بيانو',
     colorPicker: '🎨 منتقي اللون',
     colorCopied: 'تم النسخ',
     sceneTime: 'الوقت لكل مشهد',
@@ -2909,6 +2912,9 @@ const Engine = {
 
     // v0.7.145: recording pause/resume indicator overlay
     PauseOverlay.render(ctx, width, height);
+
+    // v0.7.148: piano keyboard overlay for music teachers
+    PianoOverlay.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -10839,6 +10845,150 @@ const PauseOverlay = {
   },
 };
 
+/* ─────────── PianoOverlay — on-canvas 2-octave keyboard for music teachers
+
+   Draws a small piano keyboard (C4-B5) at the bottom of the canvas.
+   When the teacher presses letter keys (A-L = white notes, W-P = sharps),
+   the corresponding key lights up in the accent color and a Web Audio
+   oscillator plays the note. Toggle via the tools-bar 🎹 Piano button.
+   Rendered by Engine.render() so the overlay is baked into recordings. */
+const PianoOverlay = {
+  visible: false,
+  _activeKeys: {},  // keyName -> { osc, gain } for currently held notes
+  _keys: [
+    // White keys: keyboard letter, note name, frequency
+    { key: 'a', note: 'C4',  freq: 261.63, type: 'white' },
+    { key: 's', note: 'D4',  freq: 293.66, type: 'white' },
+    { key: 'd', note: 'E4',  freq: 329.63, type: 'white' },
+    { key: 'f', note: 'F4',  freq: 349.23, type: 'white' },
+    { key: 'g', note: 'G4',  freq: 392.00, type: 'white' },
+    { key: 'h', note: 'A4',  freq: 440.00, type: 'white' },
+    { key: 'j', note: 'B4',  freq: 493.88, type: 'white' },
+    { key: 'k', note: 'C5',  freq: 523.25, type: 'white' },
+    { key: 'l', note: 'D5',  freq: 587.33, type: 'white' },
+    // Black keys: keyboard letter, note name, frequency, position index among whites
+    { key: 'w', note: 'C#4', freq: 277.18, type: 'black', after: 0 },
+    { key: 'e', note: 'D#4', freq: 311.13, type: 'black', after: 1 },
+    { key: 't', note: 'F#4', freq: 369.99, type: 'black', after: 3 },
+    { key: 'y', note: 'G#4', freq: 415.30, type: 'black', after: 4 },
+    { key: 'u', note: 'A#4', freq: 466.16, type: 'black', after: 5 },
+    { key: 'o', note: 'C#5', freq: 554.37, type: 'black', after: 7 },
+    { key: 'p', note: 'D#5', freq: 622.25, type: 'black', after: 8 },
+  ],
+
+  toggle() {
+    this.visible = !this.visible;
+    const btn = $('tcPianoBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    if (!this.visible) this._stopAll();
+  },
+
+  _playNote(keyObj) {
+    if (this._activeKeys[keyObj.key]) return; // already playing
+    try {
+      const ac = Engine.audioCtx || Sfx.ctx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(keyObj.freq, ac.currentTime);
+      gain.gain.setValueAtTime(0.18, ac.currentTime);
+      osc.connect(gain);
+      // Route to both recording destination and speakers
+      if (Engine.audioDest) gain.connect(Engine.audioDest);
+      gain.connect(ac.destination);
+      osc.start();
+      this._activeKeys[keyObj.key] = { osc, gain };
+    } catch {}
+  },
+
+  _stopNote(keyName) {
+    const entry = this._activeKeys[keyName];
+    if (!entry) return;
+    try {
+      const ac = Engine.audioCtx || Sfx.ctx();
+      entry.gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.08);
+      entry.osc.stop(ac.currentTime + 0.1);
+    } catch {}
+    delete this._activeKeys[keyName];
+  },
+
+  _stopAll() {
+    Object.keys(this._activeKeys).forEach(k => this._stopNote(k));
+  },
+
+  handleKeyDown(e) {
+    if (!this.visible) return false;
+    const k = e.key.toLowerCase();
+    const keyObj = this._keys.find(x => x.key === k);
+    if (!keyObj) return false;
+    this._playNote(keyObj);
+    return true;
+  },
+
+  handleKeyUp(e) {
+    if (!this.visible) return;
+    const k = e.key.toLowerCase();
+    this._stopNote(k);
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+
+    const whites = this._keys.filter(k => k.type === 'white');
+    const blacks = this._keys.filter(k => k.type === 'black');
+    const numWhite = whites.length;
+
+    // Dimensions — piano sits at the bottom of the canvas
+    const pianoH = Math.round(H * 0.12);
+    const pianoW = Math.round(W * 0.5);
+    const pianoX = Math.round((W - pianoW) / 2);
+    const pianoY = H - pianoH - 20;
+    const whiteW = Math.floor(pianoW / numWhite);
+    const accent = Engine._accentColor || '#a3e635';
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+
+    // Draw white keys
+    for (let i = 0; i < numWhite; i++) {
+      const x = pianoX + i * whiteW;
+      const active = !!this._activeKeys[whites[i].key];
+      ctx.fillStyle = active ? accent : '#f0f0f0';
+      ctx.fillRect(x, pianoY, whiteW - 2, pianoH);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, pianoY, whiteW - 2, pianoH);
+      // Key label
+      ctx.fillStyle = active ? '#000' : '#888';
+      ctx.font = `bold ${Math.max(10, whiteW * 0.28)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(whites[i].key.toUpperCase(), x + (whiteW - 2) / 2, pianoY + pianoH - 6);
+    }
+
+    // Draw black keys
+    const blackH = Math.round(pianoH * 0.6);
+    const blackW = Math.round(whiteW * 0.6);
+    for (const bk of blacks) {
+      const x = pianoX + (bk.after + 1) * whiteW - blackW / 2 - 1;
+      const active = !!this._activeKeys[bk.key];
+      ctx.fillStyle = active ? accent : '#222';
+      ctx.fillRect(x, pianoY, blackW, blackH);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, pianoY, blackW, blackH);
+      // Key label
+      ctx.fillStyle = active ? '#000' : '#aaa';
+      ctx.font = `bold ${Math.max(9, blackW * 0.35)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(bk.key.toUpperCase(), x + blackW / 2, pianoY + blackH - 4);
+    }
+
+    ctx.restore();
+  },
+};
+
 /* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
 
    Teacher sets a duration (1-60 min, default 5 min) in Settings and
@@ -13322,6 +13472,10 @@ function setupHotkeys() {
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    // v0.7.148: piano overlay intercepts note keys when visible
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && PianoOverlay.handleKeyDown(e)) {
+      e.preventDefault(); return;
+    }
     const k = e.key.toLowerCase();
     // v0.7.87: Ctrl/Cmd+S saves every file of the current take at once
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
@@ -13549,6 +13703,11 @@ function setupHotkeys() {
       if (app && app.classList.contains('maximized')) { toggleMaximize(); return; }
       closeAllPanels();
     }
+  });
+
+  // v0.7.148: piano overlay — release note on keyup
+  document.addEventListener('keyup', (e) => {
+    PianoOverlay.handleKeyUp(e);
   });
 
   // v0.7.62: Ctrl+V / Cmd+V pastes a clipboard image as an overlay source.
@@ -13897,6 +14056,7 @@ function wireEvents() {
   });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
+  $('tcPianoBtn')?.addEventListener('click', () => PianoOverlay.toggle());
   $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
   $('tcTextStampBtn')?.addEventListener('click', () => TextStamps.togglePopup());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
