@@ -212,6 +212,8 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+/* Global: prevent white-on-white dropdown options in dark themes */
+select option { background: #1e293b; color: #e2e8e0; }
 
 body {
   min-height: 100vh;
