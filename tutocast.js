@@ -7515,16 +7515,19 @@ const Drag = {
       const oppY = bottom ? s.startY : s.startY + s.startH;
       let newW = Math.abs(mx - oppX);
       let newH = Math.abs(my - oppY);
-      // Minimum sizes
-      newW = Math.max(80, newW);
-      newH = Math.max(60, newH);
+      // Minimum sizes (shapes can go smaller)
+      const minW = isShape ? 20 : 80;
+      const minH = isShape ? 20 : 60;
+      newW = Math.max(minW, newW);
+      newH = Math.max(minH, newH);
       // v0.7.17: sources lock aspect ratio by default (kid-safe). Hold
       // Shift while dragging the corner to break the lock and resize
       // freely. Shift state is read live from the move event so the
       // user can press/release mid-drag.
       // v0.7.142: per-source aspectLock overrides Shift — ratio always kept.
       const forceLock = !!(s.ref && s.ref.aspectLock);
-      const freeResize = !forceLock && (!!e.shiftKey || s.freeResize);
+      const isShape = s.ref && s.ref.type === 'shape';
+      const freeResize = isShape || !forceLock && (!!e.shiftKey || s.freeResize);
       if (s.kind === 'source' && !freeResize) {
         const keepByWidth = newW / s.aspect > newH;
         if (keepByWidth) newH = newW / s.aspect; else newW = newH * s.aspect;
