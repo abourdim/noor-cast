@@ -188,6 +188,92 @@ This is Apple's **Continuity Camera** — zero setup.
 
 ---
 
+## 📱 Creative Phone Use Cases
+
+Beyond using phones as cameras, here are advanced setups:
+
+### Use case 1: Phone as wireless microphone (free!)
+
+The teacher uses a phone in their pocket or clipped to their collar as a **wireless mic**. No cables, no hardware cost.
+
+**Setup:**
+1. Phone runs DroidCam or Iriun with **audio enabled**
+2. Phone goes in teacher's pocket or clips to collar
+3. In TutoCast, select "DroidCam Source" or "Iriun Webcam" as the **Mic** source
+4. Laptop webcam or USB cam films the teacher
+5. Audio comes from the phone mic — close to the mouth, clear voice
+
+**Even better:** wear Bluetooth earbuds connected to the phone. The earbud mic is right at your mouth — crystal clear audio, zero cables.
+
+**Note:** If you're already using the phone as a robot camera, you need **two phones** — one for the robot camera, one as the wireless mic.
+
+### Use case 2: Robot sounds from phone mic
+
+When the phone is **mounted on the robot**, the phone mic captures motor sounds, servo clicks, and wheel noise that the laptop mic across the room would miss.
+
+**Setup:**
+1. Phone mounted on/near the robot with DroidCam/Iriun (audio enabled)
+2. In TutoCast, select the phone as the **Mic** source
+3. The recording captures close-up robot sounds
+
+**Limitation:** TutoCast uses one mic for the entire recording. You can't switch mics per scene. So either:
+- Record with phone mic (robot sounds clear, teacher voice distant)
+- Record with laptop mic (teacher voice clear, robot sounds faint)
+
+**Workaround:** Record the main tutorial with laptop mic, then do a separate 10-second "listen to the robot" clip with phone mic selected.
+
+### Use case 3: Phone as classroom loudspeaker
+
+The teacher speaks into the laptop mic, and the **phone mounted on the robot plays their voice** through its speaker — so students standing around the robot can hear instructions clearly.
+
+**Setup (Google Meet method — simplest):**
+1. Open a Google Meet call on both the laptop and the phone
+2. On the phone: **mute the phone mic**, turn volume up
+3. On the laptop: **unmute the laptop mic**
+4. The teacher's voice plays through the phone speaker on the robot
+5. TutoCast runs separately on the laptop, recording normally
+
+**Alternative apps:**
+- **AudioRelay** ([audiorelay.net](https://audiorelay.net)) — routes laptop mic to phone speaker over Wi-Fi. Free, low latency.
+- **Voxer** or any walkie-talkie app — push-to-talk from laptop to phone
+
+**Best for:** classroom demos where 10+ students crowd around a table watching the robot. The teacher stays at the laptop but their voice comes from the robot's location.
+
+### Use case 4: Walking teacher with phone
+
+The teacher walks around the classroom holding the phone, filming students' work. The phone is both camera AND mic (captures the teacher's narration + what they see).
+
+**Setup:**
+1. Phone runs Iriun with audio enabled
+2. In TutoCast: phone as both Camera AND Mic source
+3. Teacher walks around, filming student projects, narrating
+4. Screen share on laptop shows the code/instructions
+5. Switch between "Walking" scene (phone cam) and "Code" scene (screen share)
+
+### Use case 5: Phone as portable monitor (cast laptop screen)
+
+Students standing around the robot can't see the laptop screen. Cast the TutoCast preview to the phone so they see what's being recorded.
+
+**Setup:**
+- **Windows:** use Miracast screen mirroring (Settings → Display → Connect to a wireless display) or Chrome Remote Desktop on the phone
+- **Mac:** use AirPlay to mirror to an iPhone/iPad nearby
+- **Any OS:** open Chrome Remote Desktop ([remotedesktop.google.com](https://remotedesktop.google.com)) on both devices — the phone shows the laptop screen
+
+The phone becomes a portable monitor for students. No extra hardware.
+
+### Summary: which phone does what
+
+| Phone role | Camera used? | Mic used? | Where is it? |
+|-----------|-------------|----------|-------------|
+| Robot camera | Yes | Optional | Mounted on robot |
+| Sensor camera | Yes | No | Pointed at breadboard |
+| Wireless mic | No | Yes | In pocket / on collar |
+| Classroom speaker | No | No (speaker only) | On robot (via Google Meet) |
+| Walking camera + mic | Yes | Yes | In teacher's hand |
+| Portable monitor | No | No | Near students (screen cast) |
+
+---
+
 ## 🤖 Robot Tutorial Setup
 
 ### Recommended camera layout (unlimited cameras + screens)
