@@ -13069,31 +13069,23 @@ const Sensors = {
   drawOverlay(ctx) {
     if (!this.values) return;
     const v = this.values;
+    const W = ctx.canvas.width, H = ctx.canvas.height;
     ctx.save();
-    ctx.font = '700 36px Orbitron, monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    const pad = 16;
-    const x = 40, y = 40;
-    const lines = [
-      `🤖 micro:bit`,
-      `A:${v.a ?? '-'}  B:${v.b ?? '-'}`,
-      `X:${(v.x ?? 0).toFixed(2)}`,
-      `Y:${(v.y ?? 0).toFixed(2)}`,
-      `Z:${(v.z ?? 0).toFixed(2)}`,
-    ];
-    const w = 340, h = lines.length * 44 + pad * 2;
-    ctx.fillStyle = 'rgba(0,0,0,.65)';
+    // Compact inline strip at bottom-left
+    const text = `🤖 A:${v.a??'-'} B:${v.b??'-'}  X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`;
+    ctx.font = '600 16px ui-monospace, monospace';
+    const tm = ctx.measureText(text);
+    const px = 8, py = 4;
+    const bw = tm.width + px * 2, bh = 22;
+    const bx = 10, by = H - bh - 10;
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
     ctx.beginPath();
-    const r = 16;
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.roundRect(bx, by, bw, bh, 6);
     ctx.fill();
     ctx.fillStyle = '#a3e635';
-    lines.forEach((line, i) => ctx.fillText(line, x + pad, y + pad + i * 44));
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + px, by + bh / 2);
     ctx.restore();
 
     // v0.7.163: live accelerometer graph (bottom-right corner)
