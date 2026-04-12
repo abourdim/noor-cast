@@ -3,18 +3,21 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.145 — 2026-04-12 (Recording pause/resume indicator)
+## v0.7.146 — 2026-04-12 (Source info HUD on hover)
 
-When the recording is paused, a large semi-transparent dark overlay with
-centered "⏸ PAUSED" text now covers the canvas. This is drawn on the
-output canvas so it appears in the recorded video, making it obvious to
-both the teacher and the final viewer that recording was paused.
+Hovering a source on the canvas now shows a small HUD tooltip displaying the
+source name, type (Screen/Camera/Image), dimensions (WxH), and position (X,Y).
+Teacher-only HTML overlay positioned near the cursor, styled with dark
+background and monospace text.
 
 ### Added
-- `PauseOverlay` object in `tutocast.js`: `render(ctx, W, H)` — draws
-  a dark overlay with white "⏸ PAUSED" label when `Recorder.state === 'paused'`.
-- Called from `Engine.render()` after `RecElapsed` and before `Screensaver`.
-- Font size is responsive (8% of canvas width, clamped 48-120px).
+- `SourceHud` object in `tutocast.js`: `show(src, clientX, clientY)`, `hide()`.
+  Lazy-creates a fixed-position `#tcSourceHud` div with source metadata.
+- Wired into `Drag` stage `mousemove` handler alongside `LayerBadge`: shows the
+  HUD when hovering a source, hides on mouseout or during drag operations.
+- CSS for `#tcSourceHud` in `style.css`: dark semi-transparent background,
+  monospace font, accent-colored source name, viewport-clamped positioning.
+- i18n keys `hudType`, `hudPos`, `hudSize` in fr/en/ar.
 
 ## v0.7.138 — 2026-04-12 (Multi-source selection)
 

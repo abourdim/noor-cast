@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.145';
+const APP_VERSION = '0.7.146';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -108,6 +108,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
     sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
+    hudType: 'Type', hudPos: 'Position', hudSize: 'Taille',
     fpsCounter: '🎯 Compteur FPS sur le canvas', fpsCounterOn: 'Compteur FPS activé', fpsCounterOff: 'Compteur FPS désactivé',
     alignLeft: 'Aligner à gauche', alignRight: 'Aligner à droite', alignTop: 'Aligner en haut', alignBottom: 'Aligner en bas', alignCenterH: 'Centrer horizontalement', alignCenterV: 'Centrer verticalement',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
@@ -784,6 +785,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
     sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
+    hudType: 'Type', hudPos: 'Position', hudSize: 'Size',
     fpsCounter: '🎯 Show FPS counter on canvas', fpsCounterOn: 'FPS counter on', fpsCounterOff: 'FPS counter off',
     alignLeft: 'Align left', alignRight: 'Align right', alignTop: 'Align top', alignBottom: 'Align bottom', alignCenterH: 'Center horizontally', alignCenterV: 'Center vertically',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
@@ -1457,6 +1459,7 @@ const LANG = {
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
     sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
+    hudType: 'النوع', hudPos: 'الموضع', hudSize: 'الحجم',
     fpsCounter: '🎯 عداد الإطارات على اللوحة', fpsCounterOn: 'عداد الإطارات مُفعَّل', fpsCounterOff: 'عداد الإطارات مُعطَّل',
     alignLeft: 'محاذاة لليسار', alignRight: 'محاذاة لليمين', alignTop: 'محاذاة للأعلى', alignBottom: 'محاذاة للأسفل', alignCenterH: 'توسيط أفقي', alignCenterV: 'توسيط عمودي',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
@@ -6509,23 +6512,26 @@ const Drag = {
     // Uses the same _hitTest as mousedown so the hover layer matches
     // exactly what a click would select. Cleared on mouseleave.
     this.stage.addEventListener('mousemove', (e) => {
-      if (this.state) { LayerBadge.hide(); return; }
+      if (this.state) { LayerBadge.hide(); SourceHud.hide(); return; }
       const [mx, my] = this._stageToCanvas(e);
       const hit = this._hitTest(mx, my);
       if (hit && hit.kind === 'source') {
         const idx = Engine.sources.indexOf(hit.ref);
-        if (idx < 0) { LayerBadge.hide(); return; }
+        if (idx < 0) { LayerBadge.hide(); SourceHud.hide(); return; }
         // Layer number from BACK = array index + 1 (index 0 is drawn first = back).
         const total = Engine.sources.filter(s => s.type !== 'mic').length;
         const layerFromBack = Engine.sources
           .slice(0, idx + 1)
           .filter(s => s.type !== 'mic').length;
         LayerBadge.showAt(e.clientX, e.clientY, layerFromBack, total);
+        // v0.7.146: source info HUD
+        SourceHud.show(hit.ref, e.clientX, e.clientY);
       } else {
         LayerBadge.hide();
+        SourceHud.hide();
       }
     });
-    this.stage.addEventListener('mouseleave', () => LayerBadge.hide());
+    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); });
     // v0.7.53: Ctrl+wheel on the stage = smooth zoom toward the cursor.
     // Without Ctrl, let the page scroll normally.
     this.stage.addEventListener('wheel', (e) => {
@@ -7054,6 +7060,48 @@ const LayerBadge = {
     let top  = clientY + pad;
     const w = el.offsetWidth || 56;
     const h = el.offsetHeight || 22;
+    if (left + w + 4 > window.innerWidth)  left = clientX - w - pad;
+    if (top  + h + 4 > window.innerHeight) top  = clientY - h - pad;
+    el.style.left = Math.max(4, left) + 'px';
+    el.style.top  = Math.max(4, top)  + 'px';
+  },
+  hide() {
+    if (this.el) this.el.style.display = 'none';
+  },
+};
+
+/* ─────────── SourceHud — info tooltip on source hover (v0.7.146) ────────
+   Lazy-creates a small fixed-position HUD that displays source name,
+   dimensions (WxH), position (X,Y), and type (screen/camera/image).
+   Shown as an HTML overlay near the cursor, teacher-only. */
+const SourceHud = {
+  el: null,
+  _ensure() {
+    if (this.el) return this.el;
+    this.el = document.createElement('div');
+    this.el.id = 'tcSourceHud';
+    this.el.style.display = 'none';
+    document.body.appendChild(this.el);
+    return this.el;
+  },
+  show(src, clientX, clientY) {
+    const el = this._ensure();
+    const typeLabel = src.type === 'screen' ? t('sourceScreen')
+      : src.type === 'cam' ? t('sourceCam')
+      : src.type === 'image' ? 'Image'
+      : src.type;
+    const name = src.label || typeLabel;
+    el.innerHTML =
+      `<strong>${name}</strong><br>` +
+      `${t('hudType')}: ${typeLabel}<br>` +
+      `${t('hudSize')}: ${Math.round(src.w)}x${Math.round(src.h)}<br>` +
+      `${t('hudPos')}: ${Math.round(src.x)}, ${Math.round(src.y)}`;
+    el.style.display = 'block';
+    const pad = 18;
+    let left = clientX + pad;
+    let top  = clientY + pad;
+    const w = el.offsetWidth || 140;
+    const h = el.offsetHeight || 70;
     if (left + w + 4 > window.innerWidth)  left = clientX - w - pad;
     if (top  + h + 4 > window.innerHeight) top  = clientY - h - pad;
     el.style.left = Math.max(4, left) + 'px';
