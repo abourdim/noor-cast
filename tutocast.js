@@ -9772,12 +9772,18 @@ const SourceToolbar = {
       SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
-    // v0.7.167: debounce flag — skip updatePosition sync for 500ms after user edits
-    this._userEditUntil = 0;
-    const markUserEdit = () => { SourceToolbar._userEditUntil = Date.now() + 500; };
-    // Wire all Style popup inputs to mark user edit
-    $('tcSrcStylePopup')?.addEventListener('input', markUserEdit);
-    $('tcSrcStylePopup')?.addEventListener('change', markUserEdit);
+    // v0.7.167: skip updatePosition sync while user is interacting with Style popup
+    this._userEditing = false;
+    const popup = $('tcSrcStylePopup');
+    if (popup) {
+      popup.addEventListener('pointerdown', () => { SourceToolbar._userEditing = true; });
+      popup.addEventListener('input', () => { SourceToolbar._userEditing = true; });
+      popup.addEventListener('change', () => { SourceToolbar._userEditing = true; });
+      // Release: delay clearing the flag so the final value sticks
+      document.addEventListener('pointerup', () => {
+        if (SourceToolbar._userEditing) setTimeout(() => { SourceToolbar._userEditing = false; }, 100);
+      });
+    }
     // v0.7.114: per-source opacity
     $('tcSrcOpacity')?.addEventListener('input', (e) => {
       e.stopPropagation();
@@ -10018,7 +10024,7 @@ const SourceToolbar = {
     this.el.style.top = `${vpTop}px`;
     // v0.7.15: sync the shape select to the current source shape
     // v0.7.167: skip Style popup value sync while user is actively editing
-    const userEditing = Date.now() < (this._userEditUntil || 0);
+    const userEditing = this._userEditing;
 
     const shapeSel = $('tcSrcToolbarShape');
     if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
