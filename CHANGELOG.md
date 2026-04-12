@@ -3,6 +3,28 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.128 — 2026-04-12 (Per-source drop shadow)
+
+Each source gets an optional drop shadow with color picker, blur slider
+(0-30 px), and X/Y offset sliders (-20 to +20 px). Applied via canvas
+shadow properties in `Engine.drawSource()`. Default: no shadow (blur=0).
+
+### Added
+- Shadow fields `shadowColor`, `shadowBlur`, `shadowOffsetX`,
+  `shadowOffsetY` on every source object (screen, cam, image).
+- Shadow rendering pass in `Engine.drawSource()` for both image and
+  video paths: fills the source shape with shadow before clipping.
+- Source toolbar controls in `index.html`: color picker
+  `#tcSrcShadowColor`, range sliders `#tcSrcShadowBlur`,
+  `#tcSrcShadowOffsetX`, `#tcSrcShadowOffsetY`.
+- Event wiring + sync in `SourceToolbar` (tutocast.js).
+- Shadow fields persisted in scene snapshots (save, restore, duplicate)
+  and `LayoutHistory` (undo/redo).
+- i18n keys `sourceShadow`, `shadowColor`, `shadowBlur`,
+  `shadowOffsetX`, `shadowOffsetY` in FR, EN, AR.
+
+---
+
 ## v0.7.127 — 2026-04-12 (Auto-save scene on source changes)
 
 When the teacher moves, resizes, or changes properties of sources while a

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.127 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.128 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.127';
+const APP_VERSION = '0.7.128';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:00';
+const BUILD_DATE = '2026-04-12 23:30';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -390,6 +390,11 @@ const LANG = {
     sourceBorder: 'Bordure',
     borderColor: 'Couleur bordure',
     borderWidth: 'Épaisseur bordure',
+    sourceShadow: 'Ombre portée',
+    shadowColor: 'Couleur ombre',
+    shadowBlur: 'Flou ombre',
+    shadowOffsetX: 'Décalage X ombre',
+    shadowOffsetY: 'Décalage Y ombre',
     cropTop: 'Rogner haut',
     cropBottom: 'Rogner bas',
     cropLeft: 'Rogner gauche',
@@ -1037,6 +1042,11 @@ const LANG = {
     sourceBorder: 'Border',
     borderColor: 'Border color',
     borderWidth: 'Border width',
+    sourceShadow: 'Drop shadow',
+    shadowColor: 'Shadow color',
+    shadowBlur: 'Shadow blur',
+    shadowOffsetX: 'Shadow offset X',
+    shadowOffsetY: 'Shadow offset Y',
     cropTop: 'Crop top',
     cropBottom: 'Crop bottom',
     cropLeft: 'Crop left',
@@ -1676,6 +1686,11 @@ const LANG = {
     sourceBorder: 'إطار',
     borderColor: 'لون الإطار',
     borderWidth: 'سمك الإطار',
+    sourceShadow: 'ظل مسقط',
+    shadowColor: 'لون الظل',
+    shadowBlur: 'ضبابية الظل',
+    shadowOffsetX: 'إزاحة X للظل',
+    shadowOffsetY: 'إزاحة Y للظل',
     cropTop: 'قص أعلى',
     cropBottom: 'قص أسفل',
     cropLeft: 'قص يسار',
@@ -2848,6 +2863,17 @@ const Engine = {
         ctx.translate(-cx, -cy);
       }
       this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+      // v0.7.128: per-source drop shadow (image path)
+      if (src.shadowBlur > 0) {
+        ctx.save();
+        ctx.shadowColor = src.shadowColor || '#000000';
+        ctx.shadowBlur = src.shadowBlur;
+        ctx.shadowOffsetX = src.shadowOffsetX || 0;
+        ctx.shadowOffsetY = src.shadowOffsetY || 0;
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.save();
       ctx.clip();
       // v0.7.119: source crop for images
@@ -2905,6 +2931,19 @@ const Engine = {
       ctx.translate(cx, cy);
       ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1);
       ctx.translate(-cx, -cy);
+    }
+
+    // v0.7.128: per-source drop shadow (video path)
+    if (src.shadowBlur > 0) {
+      ctx.save();
+      ctx.shadowColor = src.shadowColor || '#000000';
+      ctx.shadowBlur = src.shadowBlur;
+      ctx.shadowOffsetX = src.shadowOffsetX || 0;
+      ctx.shadowOffsetY = src.shadowOffsetY || 0;
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.fill();
+      ctx.restore();
     }
 
     // --- Glow border (always on, uses current theme accent) ---
@@ -3211,6 +3250,7 @@ const Engine = {
         x: 0, y: 0, w: this.width, h: this.height,
         shape: 'rect', visible: true, mirrored: false,
         borderColor: '', borderWidth: 0,
+        shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false,
         rotation: 0,
       };
@@ -3261,6 +3301,7 @@ const Engine = {
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
         shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
         borderColor: '', borderWidth: 0,
+        shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false,
         rotation: 0,
       };
@@ -3306,6 +3347,7 @@ const Engine = {
           hidden: false,
           custom: true,
           borderColor: '', borderWidth: 0,
+          shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
           locked: false,
           rotation: 0,
         };
@@ -3871,6 +3913,10 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
         rotation: s.rotation || 0,
       }));
@@ -3921,6 +3967,10 @@ const Scenes = {
       target.shape = snap.shape;
       target.borderColor = snap.borderColor || '';
       target.borderWidth = snap.borderWidth || 0;
+      target.shadowColor = snap.shadowColor || '#000000';
+      target.shadowBlur = snap.shadowBlur || 0;
+      target.shadowOffsetX = snap.shadowOffsetX ?? 5;
+      target.shadowOffsetY = snap.shadowOffsetY ?? 5;
       target.locked = !!snap.locked;
       target.rotation = snap.rotation || 0;
       target.custom = true;
@@ -3957,6 +4007,10 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
       }));
     } else {
@@ -4042,6 +4096,10 @@ const Scenes = {
         shape: s.shape || 'rect',
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
       }));
     if (snapshot.length === 0) return false;
@@ -8451,6 +8509,35 @@ const SourceToolbar = {
       SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.128: per-source drop shadow controls
+    $('tcSrcShadowColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowColor')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowBlur')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowBlur = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowBlur')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowOffsetX')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowOffsetX = Math.max(-20, Math.min(20, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowOffsetX')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowOffsetY')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowOffsetY = Math.max(-20, Math.min(20, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowOffsetY')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.119: source crop range sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
       const elId = 'tcSrcCrop' + dir;
@@ -8535,6 +8622,23 @@ const SourceToolbar = {
     const bwEl = $('tcSrcBorderWidth');
     if (bwEl && bwEl.value !== String(s.borderWidth || 0)) {
       bwEl.value = s.borderWidth || 0;
+    }
+    // v0.7.128: sync shadow controls
+    const scEl = $('tcSrcShadowColor');
+    if (scEl && scEl.value !== (s.shadowColor || '#000000')) {
+      scEl.value = s.shadowColor || '#000000';
+    }
+    const sbEl = $('tcSrcShadowBlur');
+    if (sbEl && sbEl.value !== String(s.shadowBlur || 0)) {
+      sbEl.value = s.shadowBlur || 0;
+    }
+    const sxEl = $('tcSrcShadowOffsetX');
+    if (sxEl && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
+      sxEl.value = s.shadowOffsetX ?? 5;
+    }
+    const syEl = $('tcSrcShadowOffsetY');
+    if (syEl && syEl.value !== String(s.shadowOffsetY ?? 5)) {
+      syEl.value = s.shadowOffsetY ?? 5;
     }
     // v0.7.119: sync crop sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
@@ -8626,6 +8730,10 @@ const SourceContextMenu = {
         pinned: true,
         borderColor: s.borderColor || '',
         borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
         locked: !!s.locked,
         rotation: s.rotation || 0,
       };
@@ -9245,6 +9353,10 @@ const LayoutHistory = {
       custom: s.custom,
       borderColor: s.borderColor || '',
       borderWidth: s.borderWidth || 0,
+      shadowColor: s.shadowColor || '#000000',
+      shadowBlur: s.shadowBlur || 0,
+      shadowOffsetX: s.shadowOffsetX ?? 5,
+      shadowOffsetY: s.shadowOffsetY ?? 5,
       cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
       cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
       rotation: s.rotation || 0,
@@ -9294,6 +9406,10 @@ const LayoutHistory = {
       s.custom = entry.custom;
       s.borderColor = entry.borderColor || '';
       s.borderWidth = entry.borderWidth || 0;
+      s.shadowColor = entry.shadowColor || '#000000';
+      s.shadowBlur = entry.shadowBlur || 0;
+      s.shadowOffsetX = entry.shadowOffsetX ?? 5;
+      s.shadowOffsetY = entry.shadowOffsetY ?? 5;
       s.cropTop = entry.cropTop || 0;
       s.cropBottom = entry.cropBottom || 0;
       s.cropLeft = entry.cropLeft || 0;
