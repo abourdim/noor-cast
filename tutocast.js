@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.137 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.139 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.137';
+const APP_VERSION = '0.7.139';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -45,6 +45,7 @@ const LANG = {
     mirrorCam: '🪞 Miroir webcam', countdownOn: '⏱ Compte à rebours', countdownSecs: 'Secondes :',
     scene_code: 'Code', scene_robot: 'Robot', scene_sensors: 'Capteurs',
     scene_coderobot: 'Code + Robot', scene_studio: 'Studio', scene_you: 'Toi',
+    sceneRenamed: 'Scène renommée', sceneRenameTip: 'Double-clic pour renommer',
     txt_bravo: '⭐ Bravo !', txt_step1: '🎯 Étape 1', txt_step2: '🎯 Étape 2', txt_step3: '🎯 Étape 3',
     txt_watch: '👀 Regarde', txt_tip: '💡 Astuce !', txt_careful: '⚠️ Attention', txt_oops: '🙈 Oups !',
     txt_yourturn: '💪 À toi !', txt_done: '🎉 Fini !',
@@ -712,6 +713,7 @@ const LANG = {
     mirrorCam: '🪞 Mirror webcam', countdownOn: '⏱ Countdown', countdownSecs: 'Seconds:',
     scene_code: 'Code', scene_robot: 'Robot', scene_sensors: 'Sensors',
     scene_coderobot: 'Code + Robot', scene_studio: 'Studio', scene_you: 'You',
+    sceneRenamed: 'Scene renamed', sceneRenameTip: 'Double-click to rename',
     txt_bravo: '⭐ Well done!', txt_step1: '🎯 Step 1', txt_step2: '🎯 Step 2', txt_step3: '🎯 Step 3',
     txt_watch: '👀 Watch', txt_tip: '💡 Tip!', txt_careful: '⚠️ Careful', txt_oops: '🙈 Oops!',
     txt_yourturn: '💪 Your turn!', txt_done: '🎉 Done!',
@@ -1377,6 +1379,7 @@ const LANG = {
     mirrorCam: '🪞 مرآة', countdownOn: '⏱ العد التنازلي', countdownSecs: 'الثواني:',
     scene_code: 'كود', scene_robot: 'روبوت', scene_sensors: 'مستشعرات',
     scene_coderobot: 'كود + روبوت', scene_studio: 'استوديو', scene_you: 'أنت',
+    sceneRenamed: 'تمت إعادة التسمية', sceneRenameTip: 'انقر مرتين لإعادة التسمية',
     txt_bravo: '⭐ أحسنت!', txt_step1: '🎯 الخطوة 1', txt_step2: '🎯 الخطوة 2', txt_step3: '🎯 الخطوة 3',
     txt_watch: '👀 انظر', txt_tip: '💡 نصيحة!', txt_careful: '⚠️ انتبه', txt_oops: '🙈 أخطأت!',
     txt_yourturn: '💪 دورك!', txt_done: '🎉 انتهى!',
@@ -3904,7 +3907,7 @@ const Scenes = {
     this.render();
     // v0.7.125: notify per-scene time tracker of the switch
     SceneTimer.onSceneSwitch(key);
-    const labelForLog = s.custom ? s.label : t('scene_' + key);
+    const labelForLog = s.custom ? s.label : (s.overrideName || t('scene_' + key));
     log(`${t('sceneChanged')} : ${s.icon} ${labelForLog}`, 'info');
     Chapters.add(labelForLog);
     // v0.7.37: auto intro text card, opt-in in Settings
@@ -4082,7 +4085,7 @@ const Scenes = {
   duplicateScene(key) {
     const src = this.presets.find(p => p.key === key);
     if (!src) return;
-    const baseLabel = src.custom ? src.label : t('scene_' + src.key);
+    const baseLabel = src.custom ? src.label : (src.overrideName || t('scene_' + src.key));
     const label = prompt(t('promptDuplicateScene') || 'Nom de la copie ?', (baseLabel || 'Scene') + ' (copie)');
     if (!label || !label.trim()) return;
     const W = Engine.width || 1920, H = Engine.height || 1080;
@@ -4204,6 +4207,50 @@ const Scenes = {
     this.saveCustom();
     this.render();
     return true;
+  },
+
+  /* v0.7.139: rename a scene inline. For custom scenes the label is stored
+     directly; for preset scenes we add an `overrideName` property so the
+     original i18n key is still available as fallback. */
+  renameScene(key, newName) {
+    const scene = this.presets.find(p => p.key === key);
+    if (!scene) return;
+    const clean = newName.replace(/<[^>]*>/g, '').trim().slice(0, 30);
+    if (!clean) return;
+    if (scene.custom) {
+      scene.label = clean;
+    } else {
+      scene.overrideName = clean;
+    }
+    this.saveCustom();
+    // v0.7.139: also persist preset overrides
+    this._savePresetOverrides();
+    this.render();
+    showToast('✏️ ' + t('sceneRenamed'), 1200);
+  },
+
+  _savePresetOverrides() {
+    try {
+      const overrides = {};
+      this.presets.forEach(p => { if (!p.custom && p.overrideName) overrides[p.key] = p.overrideName; });
+      if (Object.keys(overrides).length) {
+        localStorage.setItem('tc-scene-overrides', JSON.stringify(overrides));
+      } else {
+        localStorage.removeItem('tc-scene-overrides');
+      }
+    } catch {}
+  },
+
+  _loadPresetOverrides() {
+    try {
+      const raw = localStorage.getItem('tc-scene-overrides');
+      if (!raw) return;
+      const overrides = JSON.parse(raw);
+      if (typeof overrides !== 'object') return;
+      this.presets.forEach(p => {
+        if (!p.custom && overrides[p.key]) p.overrideName = overrides[p.key];
+      });
+    } catch {}
   },
 
   render() {
@@ -4570,17 +4617,56 @@ function renderScenes() {
     btn.className = 'tc-scene-btn' + (Scenes.active === s.key ? ' active' : '');
     btn.draggable = true;
     btn.dataset.sceneKey = s.key;
-    const sceneLabel = s.custom ? s.label : t('scene_' + s.key);
+    const sceneLabel = s.custom ? s.label : (s.overrideName || t('scene_' + s.key));
     btn.innerHTML = `
       ${sceneThumbSvg(s.preview)}
       <span class="tc-scene-icon">${s.icon}</span>
-      <span class="tc-scene-label">${sceneLabel}</span>
+      <span class="tc-scene-label" title="${t('sceneRenameTip')}">${sceneLabel}</span>
       <kbd class="tc-scene-kbd">${i + 1}</kbd>
       <span class="tc-scene-grip" aria-hidden="true">⋮⋮</span>
       <button class="tc-scene-dup" data-dup="${s.key}" title="Duplicate">📋</button>
       ${s.custom ? '<button class="tc-scene-del" data-del="' + s.key + '" title="Delete">✕</button>' : ''}
     `;
     btn.addEventListener('click', () => Scenes.switch(s.key));
+    // v0.7.139: inline rename on double-click of label
+    const labelSpan = btn.querySelector('.tc-scene-label');
+    if (labelSpan) {
+      labelSpan.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (labelSpan.contentEditable === 'true') return;
+        labelSpan.contentEditable = 'true';
+        labelSpan.classList.add('editing');
+        labelSpan.focus();
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(labelSpan);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        const commitRename = () => {
+          labelSpan.contentEditable = 'false';
+          labelSpan.classList.remove('editing');
+          labelSpan.removeEventListener('blur', commitRename);
+          labelSpan.removeEventListener('keydown', onKey);
+          Scenes.renameScene(s.key, labelSpan.textContent);
+        };
+        const onKey = (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); labelSpan.blur(); }
+          if (ev.key === 'Escape') {
+            labelSpan.textContent = sceneLabel;
+            labelSpan.blur();
+          }
+        };
+        const onPaste = (ev) => {
+          ev.preventDefault();
+          const text = (ev.clipboardData || window.clipboardData).getData('text/plain').slice(0, 30);
+          document.execCommand('insertText', false, text);
+        };
+        labelSpan.addEventListener('blur', commitRename);
+        labelSpan.addEventListener('keydown', onKey);
+        labelSpan.addEventListener('paste', onPaste);
+      });
+    }
     // v0.7.101: quick-duplicate button (top-left, hover-revealed)
     const dupBtn = btn.querySelector('.tc-scene-dup');
     if (dupBtn) {
@@ -13666,6 +13752,7 @@ async function init() {
   IntroOutro.load();
   History.load();
   Scenes.loadCustom();  // v0.7.48: restore custom scenes
+  Scenes._loadPresetOverrides(); // v0.7.139: restore renamed presets
   Scenes.loadOrder();  // v0.7.32: restore persisted scene order before first render
   Brand.load();
   Watermark.load();  // v0.7.98

@@ -3,6 +3,27 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.139 — 2026-04-12 (Inline scene rename)
+
+Double-click any scene button label to rename it in place. The label becomes
+a contentEditable span; press Enter or click away to save, Escape to cancel.
+Names are capped at 30 characters and HTML is stripped. Preset scene renames
+persist in `tc-scene-overrides`; custom scene renames persist in the existing
+`tc-scene-custom` store.
+
+### Added
+- `Scenes.renameScene(key, newName)` in `tutocast.js`: strips HTML, enforces
+  30-char limit, sets `overrideName` on presets or `label` on custom scenes,
+  persists and re-renders.
+- `Scenes._savePresetOverrides()` / `Scenes._loadPresetOverrides()`: persist
+  renamed preset labels in `localStorage` key `tc-scene-overrides`.
+- `dblclick` handler on `.tc-scene-label` in `renderScenes()`: activates
+  contentEditable, selects all text, saves on blur/Enter, cancels on Escape.
+  `stopPropagation` prevents the click from triggering a scene switch.
+- i18n keys `sceneRenamed` and `sceneRenameTip` in fr / en / ar.
+- CSS class `.tc-scene-label.editing` in `style.css` for the active rename
+  visual (accent outline, dark background).
+
 ## v0.7.134 — 2026-04-12 (Dynamic hotkey reference panel)
 
 New "Hotkeys" tab in the Help sidebar that auto-generates a searchable
