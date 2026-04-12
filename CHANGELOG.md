@@ -3,21 +3,20 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.146 — 2026-04-12 (Source info HUD on hover)
+## v0.7.147 — 2026-04-12 (Scene preview tooltip on hover)
 
-Hovering a source on the canvas now shows a small HUD tooltip displaying the
-source name, type (Screen/Camera/Image), dimensions (WxH), and position (X,Y).
-Teacher-only HTML overlay positioned near the cursor, styled with dark
-background and monospace text.
+Hovering a scene button in the sidebar now shows a small 160x90 canvas preview
+of the scene layout. Colored rectangles visualize where each source would be
+positioned: blue for screen, green for camera, orange for facecam.
 
 ### Added
-- `SourceHud` object in `tutocast.js`: `show(src, clientX, clientY)`, `hide()`.
-  Lazy-creates a fixed-position `#tcSourceHud` div with source metadata.
-- Wired into `Drag` stage `mousemove` handler alongside `LayerBadge`: shows the
-  HUD when hovering a source, hides on mouseout or during drag operations.
-- CSS for `#tcSourceHud` in `style.css`: dark semi-transparent background,
-  monospace font, accent-colored source name, viewport-clamped positioning.
-- i18n keys `hudType`, `hudPos`, `hudSize` in fr/en/ar.
+- `ScenePreview` object in `tutocast.js`: `show(sceneKey, anchorEl)`, `hide()`.
+  Lazy-creates a single shared tooltip with an offscreen canvas that draws
+  colored rectangles for each source in the scene's `preview` array.
+- `mouseenter` / `mouseleave` listeners on scene buttons in `renderScenes()`
+  to trigger the preview tooltip with a 250ms hover delay.
+- `.tc-scene-preview` CSS class in `style.css` with backdrop blur, border glow,
+  and fade-in/out transition matching the existing tooltip style.
 
 ## v0.7.138 — 2026-04-12 (Multi-source selection)
 

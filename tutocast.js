@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.145 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.147 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.146';
+const APP_VERSION = '0.7.147';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -4717,6 +4717,9 @@ function renderScenes() {
       ${s.custom ? '<button class="tc-scene-del" data-del="' + s.key + '" title="Delete">✕</button>' : ''}
     `;
     btn.addEventListener('click', () => Scenes.switch(s.key));
+    // v0.7.147: scene preview tooltip on hover
+    btn.addEventListener('mouseenter', () => ScenePreview.show(s.key, btn));
+    btn.addEventListener('mouseleave', () => ScenePreview.hide());
     // v0.7.139: inline rename on double-click of label
     const labelSpan = btn.querySelector('.tc-scene-label');
     if (labelSpan) {
@@ -4837,6 +4840,104 @@ function sceneThumbSvg(preview) {
     ${rects}
   </svg>`;
 }
+
+/* v0.7.147: ScenePreview — hover tooltip with a small canvas rendering
+   of the scene layout. Shows colored rectangles (screen=blue, cam=green,
+   face=orange) matching the preview rects. A single shared element is
+   lazy-created and positioned near the hovered scene button. */
+const ScenePreview = {
+  el: null,
+  canvas: null,
+  timer: null,
+  W: 160,
+  H: 90,
+
+  _ensureEl() {
+    if (this.el) return;
+    this.el = document.createElement('div');
+    this.el.className = 'tc-scene-preview';
+    this.el.style.display = 'none';
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = this.W;
+    this.canvas.height = this.H;
+    this.canvas.style.display = 'block';
+    this.canvas.style.borderRadius = '4px';
+    this.el.appendChild(this.canvas);
+    document.body.appendChild(this.el);
+  },
+
+  show(sceneKey, anchorEl) {
+    this._ensureEl();
+    const scene = Scenes.presets.find(p => p.key === sceneKey);
+    if (!scene || !scene.preview || !scene.preview.length) return;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this._draw(scene.preview);
+      this._position(anchorEl);
+      this.el.style.display = 'block';
+      requestAnimationFrame(() => this.el.classList.add('visible'));
+    }, 250);
+  },
+
+  hide() {
+    clearTimeout(this.timer);
+    if (!this.el) return;
+    this.el.classList.remove('visible');
+    setTimeout(() => {
+      if (this.el && !this.el.classList.contains('visible')) {
+        this.el.style.display = 'none';
+      }
+    }, 150);
+  },
+
+  _draw(preview) {
+    const ctx = this.canvas.getContext('2d');
+    const W = this.W, H = this.H;
+    // Background
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, W, H, 4);
+    ctx.fill();
+    // Draw each source rect
+    preview.forEach(r => {
+      const x = r.x * W, y = r.y * H, w = r.w * W, h = r.h * H;
+      let fill, stroke;
+      if (r.kind === 'screen') { fill = 'rgba(56,189,248,.7)'; stroke = '#0ea5e9'; }
+      else if (r.kind === 'face') { fill = 'rgba(251,146,60,.7)'; stroke = '#ea580c'; }
+      else { fill = 'rgba(163,230,53,.7)'; stroke = '#65a30d'; }
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.2;
+      if (r.shape === 'circle') {
+        const cx = x + w / 2, cy = y + h / 2;
+        const radius = Math.min(w, h) / 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 3);
+        ctx.fill();
+        ctx.stroke();
+      }
+    });
+  },
+
+  _position(anchor) {
+    const r = anchor.getBoundingClientRect();
+    const tw = this.el.offsetWidth;
+    const th = this.el.offsetHeight;
+    // Try to show above the button; fall back to below if not enough room
+    let left = r.left + r.width / 2 - tw / 2;
+    let top = r.top - th - 8;
+    if (top < 8) top = r.bottom + 8;
+    // Clamp horizontally
+    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+    this.el.style.left = left + 'px';
+    this.el.style.top = top + 'px';
+  },
+};
 
 /* ─────────── Templates ─────────── */
 
