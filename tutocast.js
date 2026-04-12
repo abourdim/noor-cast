@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.126 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.127 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.126';
+const APP_VERSION = '0.7.127';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:30';
+const BUILD_DATE = '2026-04-12 23:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -306,6 +306,8 @@ const LANG = {
     outroPlaying: '🎬 Outro en cours…',
     autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
     captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
+    sceneAutoSave: '💾 Sauvegarde auto de la scène quand les sources changent',
+    sceneAutoSaved: '💾 Scène sauvegardée auto',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
     sceneTransitionLabel: '🎞 Transition fondu entre scènes',
     duckLabel: "🔉 Baisser l'audio des sources quand tu parles",
@@ -951,6 +953,8 @@ const LANG = {
     outroPlaying: '🎬 Outro playing…',
     autoPauseLabel: '⏸ Auto-pause when you switch tab',
     captionsLabel: '💬 Live captions (Chrome/Edge)',
+    sceneAutoSave: '💾 Auto-save scene on source changes',
+    sceneAutoSaved: '💾 Scene auto-saved',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
     sceneTransitionLabel: '🎞 Scene transition fade',
     duckLabel: '🔉 Duck source audio when you speak',
@@ -1588,6 +1592,8 @@ const LANG = {
     outroPlaying: '🎬 الخاتمة قيد التشغيل…',
     autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
     captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
+    sceneAutoSave: '💾 حفظ تلقائي للمشهد عند تغيير المصادر',
+    sceneAutoSaved: '💾 تم حفظ المشهد تلقائيًا',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
     sceneTransitionLabel: '🎞 انتقال مع تلاشي بين المشاهد',
     duckLabel: '🔉 خفض صوت المصادر عند التحدث',
@@ -4019,6 +4025,38 @@ const Scenes = {
     } catch {}
   },
 
+  /* v0.7.127: silently re-capture the current layout into a custom scene's
+     snapshot (no prompt). Used by SceneAutoSave to persist layout tweaks
+     the teacher made by dragging/resizing/editing source properties. Only
+     works for custom scenes — preset scenes are code-defined. */
+  saveScene(key) {
+    const scene = this.presets.find(p => p.key === key);
+    if (!scene || !scene.custom) return false;
+    const W = Engine.width || 1920, H = Engine.height || 1080;
+    const snapshot = Engine.sources
+      .filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden)
+      .map(s => ({
+        type: s.type,
+        label: s.label,
+        x: s.x, y: s.y, w: s.w, h: s.h,
+        shape: s.shape || 'rect',
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        locked: !!s.locked,
+      }));
+    if (snapshot.length === 0) return false;
+    scene.snapshot = snapshot;
+    scene.apply = (e) => this._applyCustomSnapshot(snapshot, e);
+    scene.preview = snapshot.map(s => ({
+      kind: s.type === 'screen' ? 'screen' : s.type === 'cam' ? 'cam' : 'face',
+      x: s.x / W, y: s.y / H, w: s.w / W, h: s.h / H,
+      shape: s.shape,
+    }));
+    this.saveCustom();
+    this.render();
+    return true;
+  },
+
   render() {
     renderScenes();
     // v0.7.91: scroll the active scene button into view if scrolled out
@@ -4029,6 +4067,45 @@ const Scenes = {
       }
     });
   }
+};
+
+/* v0.7.127: SceneAutoSave — debounced auto-save of the active custom scene
+   whenever the teacher moves, resizes, or changes properties of sources.
+   Prevents lost work by persisting layout tweaks automatically.
+   Opt-in via Settings checkbox, persisted as tc-scene-autosave. */
+const SceneAutoSave = {
+  enabled: true,
+  _timer: null,
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-scene-autosave');
+      if (v !== null) this.enabled = v === '1';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-scene-autosave', v ? '1' : '0'); } catch {}
+  },
+
+  /** Debounced trigger — clears previous timer, sets 1s timeout. */
+  trigger() {
+    if (!this.enabled) return;
+    // Only auto-save if the active scene is a custom scene
+    const scene = Scenes.presets.find(p => p.key === Scenes.active);
+    if (!scene || !scene.custom) return;
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = setTimeout(() => {
+      this._timer = null;
+      if (Scenes.saveScene(Scenes.active)) {
+        showToast(t('sceneAutoSaved') || '💾 Scene auto-saved', 800);
+      }
+    }, 1000);
+  },
+
+  setup() {
+    this.load();
+  },
 };
 
 /* v0.7.64: Opt-in scene transition fade effect.
@@ -6470,7 +6547,10 @@ const Drag = {
     }
     Drag._activeGuides = null;  // v0.7.42: clear alignment guides on drag-end
     Drag._gridVisible = false;  // v0.7.46: clear grid overlay on drag-end
-    if (wasDragOrResize) LayoutHistory.capture();
+    if (wasDragOrResize) {
+      LayoutHistory.capture();
+      SceneAutoSave.trigger(); // v0.7.127: auto-save scene on drag/resize end
+    }
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
     // miss _hitTest still trigger auto-zoom when the coords land on a
@@ -8353,6 +8433,7 @@ const SourceToolbar = {
       s.shape = e.target.value;
       showToast('◻ ' + s.shape, 1200);
       Engine.onSourcesChanged();
+      SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.117: per-source border color + width
@@ -8360,12 +8441,14 @@ const SourceToolbar = {
       e.stopPropagation();
       const s = sel(); if (!s) return;
       s.borderColor = e.target.value;
+      SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcBorderColor')?.addEventListener('click', (e) => e.stopPropagation());
     $('tcSrcBorderWidth')?.addEventListener('input', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
       s.borderWidth = Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger(); // v0.7.127
     });
     $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.119: source crop range sliders
@@ -8376,6 +8459,7 @@ const SourceToolbar = {
         e.stopPropagation();
         const s = sel(); if (!s) return;
         s[prop] = Math.max(0, Math.min(0.4, parseInt(e.target.value, 10) / 100));
+        SceneAutoSave.trigger(); // v0.7.127
       });
       $(elId)?.addEventListener('click', (e) => e.stopPropagation());
     });
@@ -12743,6 +12827,12 @@ function wireEvents() {
     stEl.checked = SceneTransition.enabled;
     stEl.addEventListener('change', (e) => SceneTransition.setEnabled(e.target.checked));
   }
+  // v0.7.127: auto-save scene on source changes
+  const asEl = $('tcSceneAutoSaveToggle');
+  if (asEl) {
+    asEl.checked = SceneAutoSave.enabled;
+    asEl.addEventListener('change', (e) => SceneAutoSave.setEnabled(e.target.checked));
+  }
   // v0.7.81: opt-in idle screensaver mode
   const ssEl = $('tcScreensaverToggle');
   if (ssEl) {
@@ -12884,6 +12974,7 @@ async function init() {
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();
+  SceneAutoSave.setup();  // v0.7.127
   Screensaver.load();  // v0.7.81
   IntroOutro.load();
   History.load();

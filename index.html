@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.126</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.127</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -1345,6 +1345,13 @@
             <label class="toggle-ctrl">
               <input type="checkbox" id="tcSceneTransitionToggle" class="checkbox-ctrl" />
               <span data-i18n="sceneTransitionLabel">🎞 Transition fondu entre scènes</span>
+            </label>
+          </div>
+          <!-- v0.7.127: auto-save scene on source changes -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcSceneAutoSaveToggle" class="checkbox-ctrl" checked />
+              <span data-i18n="sceneAutoSave">💾 Sauvegarde auto de la scène quand les sources changent</span>
             </label>
           </div>
           <!-- v0.7.69: mic boost + noise gate -->
