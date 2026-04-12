@@ -1749,75 +1749,99 @@
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
       </div>
       <pre class="tc-fw-code" id="tcMicrobitCode">/**
- * TutoCast — micro:bit BLE Firmware
+ * TutoCast — micro:bit BLE Firmware V2
  *
- * UART over Bluetooth LE — sensors, servos, LEDs
+ * UART over Bluetooth LE
+ * Compatible with both TutoCast and bit-playground
  *
  * TELEMETRY (micro:bit → browser):
- *   A:x,y,z      accelerometer (milli-g, every 100ms)
- *   BA:1 / BB:1   button A / B pressed
- *   TP:n          temperature (°C)
- *   L:n           light level (0-255)
- *   S:n           sound level (0-255, V2 only)
+ *   A:x,y,z       accelerometer (milli-g)
+ *   BA:1 / BB:1    button pressed
+ *   TP:n           temperature (°C)
+ *   L:n            light (0-255)
+ *   S:n            sound (0-255, V2)
+ *   LEDS:r0,r1,r2,r3,r4  LED state (sync)
  *
  * COMMANDS (browser → micro:bit):
- *   P:angle       pan servo on P1 (0-180)
- *   TI:angle      tilt servo on P2 (0-180)
- *   LED:hex       set 5x5 LED matrix (5 hex bytes)
- *   TEST          flash checkmark + reply "OK"
- *   HELLO         flash heart on connect
+ *   P:angle        pan servo P1 (0-180)
+ *   TI:angle       tilt servo P2 (0-180)
+ *   LED:hex        5x5 matrix (5 hex bytes)
+ *   CMD:HEART/SMILE/SAD/CLEAR/UP/DOWN/LEFT/RIGHT
+ *   TEST           checkmark + reply "OK"
+ *   HELLO          heart on connect
  */
 bluetooth.startUartService()
-let pan = 90, tilt = 90
+let pan = 90, tilt = 90, ledsDirty = false
+
+bluetooth.onBluetoothConnected(() => {
+    basic.showIcon(IconNames.Yes)
+})
 
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     let cmd = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
     if (cmd.indexOf("P:") == 0) {
         pan = parseInt(cmd.substr(2))
         pins.servoWritePin(AnalogPin.P1, pan)
-    }
-    if (cmd.indexOf("TI:") == 0) {
+    } else if (cmd.indexOf("TI:") == 0) {
         tilt = parseInt(cmd.substr(3))
         pins.servoWritePin(AnalogPin.P2, tilt)
-    }
-    if (cmd == "TEST") {
+    } else if (cmd == "TEST") {
         basic.showIcon(IconNames.Yes)
-        basic.pause(500)
-        basic.clearScreen()
+        basic.pause(500); basic.clearScreen()
         bluetooth.uartWriteLine("OK")
-    }
-    if (cmd == "HELLO") {
+    } else if (cmd == "HELLO") {
         basic.showIcon(IconNames.Heart)
-        basic.pause(300)
-        basic.clearScreen()
-    }
-    if (cmd.indexOf("LED:") == 0) {
+        basic.pause(300); basic.clearScreen()
+    } else if (cmd.indexOf("LED:") == 0) {
         let hex = cmd.substr(4)
         for (let r = 0; r < 5; r++) {
-            let byte = parseInt(hex.substr(r * 2, 2), 16)
+            let b = parseInt(hex.substr(r * 2, 2), 16)
             for (let c = 0; c < 5; c++) {
-                if ((byte >> (4 - c)) & 1) led.plot(c, r)
+                if ((b >> (4 - c)) & 1) led.plot(c, r)
                 else led.unplot(c, r)
             }
         }
+        ledsDirty = true
+    } else if (cmd.indexOf("CMD:") == 0) {
+        let c = cmd.substr(4)
+        if (c == "HEART") basic.showIcon(IconNames.Heart)
+        else if (c == "SMILE") basic.showIcon(IconNames.Happy)
+        else if (c == "SAD") basic.showIcon(IconNames.Sad)
+        else if (c == "CLEAR") basic.clearScreen()
+        else if (c == "UP") basic.showArrow(ArrowNames.North)
+        else if (c == "DOWN") basic.showArrow(ArrowNames.South)
+        else if (c == "LEFT") basic.showArrow(ArrowNames.West)
+        else if (c == "RIGHT") basic.showArrow(ArrowNames.East)
+        ledsDirty = true
     }
 })
 
-input.onButtonPressed(Button.A, () => {
-    bluetooth.uartWriteLine("BA:1")
-})
-input.onButtonPressed(Button.B, () => {
-    bluetooth.uartWriteLine("BB:1")
-})
+input.onButtonPressed(Button.A, () => bluetooth.uartWriteLine("BA:1"))
+input.onButtonPressed(Button.B, () => bluetooth.uartWriteLine("BB:1"))
 
+// Telemetry + LED sync loop
+let prevLeds = ""
 basic.forever(() => {
-    let ax = input.acceleration(Dimension.X)
-    let ay = input.acceleration(Dimension.Y)
-    let az = input.acceleration(Dimension.Z)
-    bluetooth.uartWriteLine("A:" + ax + "," + ay + "," + az)
+    bluetooth.uartWriteLine("A:" + input.acceleration(Dimension.X) + "," + input.acceleration(Dimension.Y) + "," + input.acceleration(Dimension.Z))
     bluetooth.uartWriteLine("TP:" + input.temperature())
     bluetooth.uartWriteLine("L:" + input.lightLevel())
     bluetooth.uartWriteLine("S:" + input.soundLevel())
+    // Sync LED state to browser
+    if (ledsDirty) {
+        let ls = ""
+        for (let r = 0; r < 5; r++) {
+            let v = 0
+            for (let c = 0; c < 5; c++) {
+                if (led.point(c, r)) v |= (1 << c)
+            }
+            ls += (r > 0 ? "," : "") + v
+        }
+        if (ls != prevLeds) {
+            bluetooth.uartWriteLine("LEDS:" + ls)
+            prevLeds = ls
+        }
+        ledsDirty = false
+    }
     basic.pause(100)
 })</pre>
     </div>
