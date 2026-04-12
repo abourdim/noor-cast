@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.132 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.133 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.132';
+const APP_VERSION = '0.7.133';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -107,6 +107,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
     sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
+    previewZoomReset: 'Zoom aperçu réinitialisé',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
@@ -765,6 +766,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
     sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
+    previewZoomReset: 'Preview zoom reset',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
@@ -1420,6 +1422,7 @@ const LANG = {
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
     sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
+    previewZoomReset: 'إعادة تعيين تكبير المعاينة',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
@@ -7425,6 +7428,77 @@ const AutoZoom = {
   },
 };
 
+/* v0.7.133: PreviewZoom — Ctrl+scroll wheel zooms the preview canvas for the
+   teacher. CSS transform scale on the stage container. Zoom range 50%–200%.
+   Double-click to reset. Shows current zoom % in a corner badge.
+   NOT in recording — CSS transform doesn't affect captureStream. */
+const PreviewZoom = {
+  scale: 1,
+  MIN: 0.5,
+  MAX: 2.0,
+  STEP: 0.1,
+  _badge: null,
+  _stage: null,
+
+  setup() {
+    this._stage = $('tcStage');
+    if (!this._stage) return;
+    // Create zoom badge
+    const badge = document.createElement('div');
+    badge.className = 'tc-preview-zoom-badge';
+    badge.id = 'tcPreviewZoomBadge';
+    badge.style.display = 'none';
+    this._stage.appendChild(badge);
+    this._badge = badge;
+
+    // Ctrl+wheel handler on the stage wrapper
+    const wrap = this._stage.closest('.tc-stage-wrap');
+    if (wrap) {
+      wrap.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? this.STEP : -this.STEP;
+        this.zoom(delta);
+      }, { passive: false });
+    }
+
+    // Double-click to reset
+    this._stage.addEventListener('dblclick', (e) => {
+      if (this.scale === 1) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.reset();
+    });
+  },
+
+  zoom(delta) {
+    const prev = this.scale;
+    this.scale = Math.round(Math.min(this.MAX, Math.max(this.MIN, this.scale + delta)) * 100) / 100;
+    if (this.scale === prev) return;
+    this._apply();
+  },
+
+  reset() {
+    this.scale = 1;
+    this._apply();
+    showToast(t('previewZoomReset') || 'Preview zoom reset', 1200);
+  },
+
+  _apply() {
+    if (!this._stage) return;
+    if (this.scale === 1) {
+      this._stage.style.transform = '';
+      if (this._badge) this._badge.style.display = 'none';
+    } else {
+      this._stage.style.transform = `scale(${this.scale})`;
+      if (this._badge) {
+        this._badge.textContent = `${Math.round(this.scale * 100)}%`;
+        this._badge.style.display = '';
+      }
+    }
+  },
+};
+
 /* Teleprompter — overlay visible on stage only, NEVER drawn to canvas.
    v0.7.20: expanded from a static box into a broadcast-style prompter:
    auto-scroll with speed control, persistent script (localStorage),
@@ -13320,6 +13394,7 @@ async function init() {
   SnapGrid.setup();          // v0.7.126
   GridOverlay.init();  // v0.7.115
   SourceLabels.init(); // v0.7.130
+  PreviewZoom.setup();  // v0.7.133
   MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 

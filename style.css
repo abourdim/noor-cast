@@ -1637,6 +1637,18 @@ body.log-open .app {
 }
 .tc-stage.has-sources .tc-stage-hint { display: none; }
 
+/* v0.7.133: preview zoom badge + stage-wrap overflow for zoomed state */
+.tc-stage-wrap { overflow: visible; }
+.tc-stage { transform-origin: center center; transition: transform .15s ease; }
+.tc-preview-zoom-badge {
+  position: absolute; top: 8px; right: 8px; z-index: 20;
+  background: rgba(0,0,0,.65); color: #fff;
+  font-family: var(--font-mono, 'Fira Code', monospace);
+  font-size: .75rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  pointer-events: none; user-select: none;
+}
+
 /* Countdown overlay */
 .tc-countdown {
   position: absolute; inset: 0;

@@ -3,6 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.133 — 2026-04-12 (Mouse wheel canvas zoom — teacher-only)
+
+Ctrl+scroll wheel zooms the preview canvas for the teacher. CSS transform
+scale on the stage container. Zoom range 50%–200%, 10% steps. Double-click
+to reset. Shows current zoom % in a corner badge. Does NOT affect recording
+— CSS transform doesn't touch the captureStream pipeline.
+
+### Added
+- `PreviewZoom` object in `tutocast.js`: `scale`, `setup()`, `zoom(delta)`,
+  `reset()`, `_apply()`. Applies `transform: scale(N)` on `.tc-stage`.
+- `.tc-preview-zoom-badge` CSS — small monospace pill at top-right of the
+  stage showing the current zoom percentage. Hidden at 100%.
+- `Ctrl+wheel` handler on `.tc-stage-wrap` — zooms in/out by 10% per tick.
+- Double-click on `.tc-stage` resets zoom to 100% with a toast.
+- i18n key `previewZoomReset` in FR, EN, AR.
+- `PreviewZoom.setup()` called during app init.
+
+---
+
 ## v0.7.130 — 2026-04-12 (On-canvas source name label)
 
 Optional small text label showing the source name (e.g. "Camera 1", "Screen")
