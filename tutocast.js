@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.159';
+const APP_VERSION = '0.7.160';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -9764,6 +9764,35 @@ const SourceToolbar = {
       Engine.removeSource(s.id);
       Drag.selectedSourceId = null;
     });
+    // v0.7.160: Style popup toggle + position
+    $('tcSrcStyleBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pop = $('tcSrcStylePopup');
+      if (!pop) return;
+      const showing = pop.style.display !== 'none';
+      if (showing) { pop.style.display = 'none'; return; }
+      const btn = $('tcSrcStyleBtn');
+      const r = btn.getBoundingClientRect();
+      pop.style.display = '';
+      pop.style.top = 'auto'; pop.style.bottom = 'auto';
+      const ph = pop.offsetHeight, pw = pop.offsetWidth;
+      let left = r.left;
+      if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+      if (left < 8) left = 8;
+      pop.style.left = left + 'px';
+      // Open above if room, else below
+      if (r.top - ph - 8 > 0) {
+        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        pop.style.top = (r.bottom + 8) + 'px';
+      }
+    });
+    document.addEventListener('click', (e) => {
+      const pop = $('tcSrcStylePopup');
+      if (!pop || pop.style.display === 'none') return;
+      if (e.target.closest('#tcSrcStyleBtn') || e.target.closest('#tcSrcStylePopup')) return;
+      pop.style.display = 'none';
+    });
   },
   updatePosition() {
     if (!this.el) return;
@@ -14535,15 +14564,22 @@ function wireEvents() {
     if (!pop) return;
     const showing = pop.style.display !== 'none';
     if (showing) { pop.style.display = 'none'; return; }
-    // Position fixed popup above the More button
+    // Position fixed popup — prefer above, fall back to below if clipped
     const btn = $('tcMoreToolsBtn');
     const r = btn.getBoundingClientRect();
     pop.style.display = '';
-    const pw = pop.offsetWidth;
+    pop.style.bottom = 'auto'; pop.style.top = 'auto';
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
     let left = r.right - pw;
     if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
     pop.style.left = left + 'px';
-    pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+    // Try above; if not enough room, go below
+    if (r.top - ph - 8 > 0) {
+      pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+    } else {
+      pop.style.top = (r.bottom + 8) + 'px';
+    }
   });
   document.addEventListener('click', (e) => {
     const pop = $('tcMoreToolsPopup');

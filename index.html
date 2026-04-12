@@ -284,78 +284,65 @@
               <div class="tc-silence-chip" id="tcSilenceChip">⚠ <span data-i18n="silenceChip">Tu es silencieux…</span></div>
               <!-- v0.7.20: Floating HTML toolbar for the selected SOURCE (video / screen).
                    Replaces the canvas-drawn ✕/👁 buttons that used to overlap the video. -->
+              <!-- v0.7.160: kid-friendly source toolbar — 6 big buttons + Style popup -->
               <div class="tc-source-toolbar" id="tcSourceToolbar" style="display:none">
-                <button class="tc-toolbar-btn" id="tcSrcToolbarHide" title="Hide (eye)">👁</button>
-                <button class="tc-toolbar-btn" id="tcSrcToolbarPin"  title="Pin / Unpin">📌</button>
-                <button class="tc-toolbar-btn" id="tcSrcToolbarLock" title="Lock / Unlock position">🔓</button>
-                <button class="tc-toolbar-btn" id="tcSrcToolbarAspect" title="Lock / Unlock aspect ratio">🔗</button>
-                <!-- v0.7.20: shape picker (select) instead of cycle button -->
+                <button class="tc-toolbar-btn" id="tcSrcToolbarHide" title="Hide">👁</button>
+                <button class="tc-toolbar-btn" id="tcSrcToolbarPin" title="Pin">📌</button>
+                <button class="tc-toolbar-btn" id="tcSrcToolbarLock" title="Lock">🔓</button>
                 <select class="tc-toolbar-select" id="tcSrcToolbarShape" title="Shape">
-                  <option value="rect">⬛ Rectangle</option>
-                  <option value="rounded">🔲 Rounded</option>
-                  <option value="circle">⚪ Circle</option>
-                  <option value="pill">💊 Pill</option>
-                  <option value="hexagon">⬢ Hexagon</option>
-                  <option value="octagon">🛑 Octagon</option>
-                  <option value="diamond">🔶 Diamond</option>
-                  <option value="star">⭐ Star</option>
-                  <option value="heart">❤️ Heart</option>
+                  <option value="rect">⬛</option><option value="rounded">🔲</option>
+                  <option value="circle">⚪</option><option value="pill">💊</option>
+                  <option value="hexagon">⬢</option><option value="octagon">🛑</option>
+                  <option value="diamond">🔶</option><option value="star">⭐</option>
+                  <option value="heart">❤️</option>
                 </select>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.114: per-source opacity -->
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="sourceOpacity">Opacity</span><input type="range" class="tc-toolbar-range" id="tcSrcOpacity" min="0" max="100" step="1" value="100" style="width:60px" /></label>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.151: per-source color filter -->
-                <select class="tc-toolbar-select" id="tcSrcFilter" title="Filter" style="font-size:11px">
-                  <option value="none">No filter</option>
-                  <option value="bw">Grayscale</option>
-                  <option value="sepia">Sepia</option>
-                  <option value="invert">Invert</option>
-                  <option value="bright">Bright</option>
-                  <option value="contrast">Contrast</option>
-                  <option value="vintage">Vintage</option>
-                  <option value="cool">Cool</option>
-                  <option value="warm">Warm</option>
-                </select>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.155: per-source badge -->
-                <input type="text" class="tc-toolbar-num" id="tcSrcBadgeText" placeholder="Badge" style="width:60px;font-size:11px" />
-                <input type="color" class="tc-toolbar-color" id="tcSrcBadgeColor" title="Badge color" value="#e74c3c" />
-                <span class="tc-toolbar-sep"></span>
-                <input type="color" class="tc-toolbar-color" id="tcSrcBorderColor" title="Border color" value="#ffffff" />
-                <input type="number" class="tc-toolbar-num" id="tcSrcBorderWidth" title="Border width" min="0" max="10" value="0" style="width:48px" />
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.128: per-source drop shadow controls -->
-                <input type="color" class="tc-toolbar-color" id="tcSrcShadowColor" title="Shadow color" value="#000000" />
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowBlur">Blur</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowBlur" min="0" max="30" step="1" value="0" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowOffsetX">X</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetX" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="shadowOffsetY">Y</span><input type="range" class="tc-toolbar-range" id="tcSrcShadowOffsetY" min="-20" max="20" step="1" value="5" style="width:60px" /></label>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.144: per-source corner radius slider -->
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="cornerRadius">Radius</span><input type="range" class="tc-toolbar-range" id="tcSrcCornerRadius" min="0" max="50" step="1" value="0" style="width:60px" /></label>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.119: source crop range sliders -->
-                <label class="tc-toolbar-label" style="font-size:11px">T<input type="range" class="tc-toolbar-range" id="tcSrcCropTop" min="0" max="40" step="1" value="0" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px">B<input type="range" class="tc-toolbar-range" id="tcSrcCropBottom" min="0" max="40" step="1" value="0" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px">L<input type="range" class="tc-toolbar-range" id="tcSrcCropLeft" min="0" max="40" step="1" value="0" style="width:60px" /></label>
-                <label class="tc-toolbar-label" style="font-size:11px">R<input type="range" class="tc-toolbar-range" id="tcSrcCropRight" min="0" max="40" step="1" value="0" style="width:60px" /></label>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.123: source rotation slider -->
-                <label class="tc-toolbar-label" style="font-size:11px"><span data-i18n="sourceRotation">Rotation</span><input type="range" class="tc-toolbar-range" id="tcSrcRotation" min="-180" max="180" step="1" value="0" style="width:70px" /><span id="tcSrcRotationVal">0°</span></label>
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.155: on-canvas source badge -->
-                <label class="tc-toolbar-label" style="font-size:11px" data-i18n="sourceBadge">Badge<input type="text" class="tc-toolbar-input" id="tcSrcBadgeText" placeholder="LIVE" maxlength="12" style="width:60px" /></label>
-                <input type="color" class="tc-toolbar-color" id="tcSrcBadgeColor" title="Badge color" value="#e74c3c" />
-                <span class="tc-toolbar-sep"></span>
-                <!-- v0.7.136: source alignment buttons (center/edges) -->
-                <button class="tc-toolbar-btn" id="tcSrcAlignLeft" title="Align left">⬅</button>
-                <button class="tc-toolbar-btn" id="tcSrcAlignRight" title="Align right">➡</button>
-                <button class="tc-toolbar-btn" id="tcSrcAlignTop" title="Align top">⬆</button>
-                <button class="tc-toolbar-btn" id="tcSrcAlignBottom" title="Align bottom">⬇</button>
-                <button class="tc-toolbar-btn" id="tcSrcAlignCenterH" title="Center horizontally">↔</button>
-                <button class="tc-toolbar-btn" id="tcSrcAlignCenterV" title="Center vertically">↕</button>
-                <span class="tc-toolbar-sep"></span>
+                <button class="tc-toolbar-btn" id="tcSrcStyleBtn" title="Style">🎨</button>
                 <button class="tc-toolbar-btn tc-toolbar-del" id="tcSrcToolbarDel" title="Delete">✕</button>
+              </div>
+              <!-- v0.7.160: Style popup — all source properties in a compact panel -->
+              <div class="tc-src-style-popup" id="tcSrcStylePopup" style="display:none">
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🎨 Look</div>
+                  <label class="tc-ssp-row">Opacity <input type="range" id="tcSrcOpacity" min="0" max="100" value="100" /></label>
+                  <label class="tc-ssp-row">Filter <select id="tcSrcFilter"><option value="none">—</option><option value="bw">B&W</option><option value="sepia">Sepia</option><option value="invert">Invert</option><option value="bright">Bright</option><option value="contrast">Contrast</option><option value="vintage">Vintage</option><option value="cool">Cool</option><option value="warm">Warm</option></select></label>
+                  <label class="tc-ssp-row">Corners <input type="range" id="tcSrcCornerRadius" min="0" max="50" value="0" /></label>
+                  <label class="tc-ssp-row">Rotation <input type="range" id="tcSrcRotation" min="-180" max="180" value="0" /><span id="tcSrcRotationVal">0°</span></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🖼 Frame</div>
+                  <label class="tc-ssp-row">Border <input type="color" id="tcSrcBorderColor" value="#ffffff" /> <input type="number" id="tcSrcBorderWidth" min="0" max="10" value="0" style="width:40px" /></label>
+                  <label class="tc-ssp-row">Shadow <input type="color" id="tcSrcShadowColor" value="#000000" /> <input type="range" id="tcSrcShadowBlur" min="0" max="30" value="0" style="width:60px" /></label>
+                  <label class="tc-ssp-row">Offset <input type="range" id="tcSrcShadowOffsetX" min="-20" max="20" value="5" style="width:50px" /> <input type="range" id="tcSrcShadowOffsetY" min="-20" max="20" value="5" style="width:50px" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">✂ Crop</div>
+                  <div class="tc-ssp-grid2">
+                    <label>T <input type="range" id="tcSrcCropTop" min="0" max="40" value="0" /></label>
+                    <label>B <input type="range" id="tcSrcCropBottom" min="0" max="40" value="0" /></label>
+                    <label>L <input type="range" id="tcSrcCropLeft" min="0" max="40" value="0" /></label>
+                    <label>R <input type="range" id="tcSrcCropRight" min="0" max="40" value="0" /></label>
+                  </div>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🏷 Badge</div>
+                  <label class="tc-ssp-row"><input type="text" id="tcSrcBadgeText" placeholder="LIVE" maxlength="12" style="width:70px" /> <input type="color" id="tcSrcBadgeColor" value="#e74c3c" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">↔ Align</div>
+                  <div class="tc-ssp-align">
+                    <button class="tc-toolbar-btn" id="tcSrcAlignLeft" title="Left">⬅</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignCenterH" title="Center H">↔</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignRight" title="Right">➡</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignTop" title="Top">⬆</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignCenterV" title="Center V">↕</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignBottom" title="Bottom">⬇</button>
+                  </div>
+                </div>
+                <div class="tc-ssp-section">
+                  <button class="tc-toolbar-btn" id="tcSrcToolbarAspect" title="Aspect lock">🔗</button>
+                  <button class="tc-toolbar-btn" id="tcSrcFlipH" title="Flip H">↔</button>
+                  <button class="tc-toolbar-btn" id="tcSrcFlipV" title="Flip V">↕</button>
+                </div>
               </div>
               <!-- v0.7.47: whiteboard color + thickness + eraser picker -->
               <div class="tc-wb-picker" id="tcWbPicker" style="display:none">
