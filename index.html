@@ -145,13 +145,9 @@
 
       <!-- ═══════════════════ MAIN STUDIO CARD ═══════════════════ -->
       <div class="card tc-studio" id="mainCard">
-        <div class="card-header">
-          <div>
-            <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.152</span></div>
-          </div>
-          <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
-          <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
+        <!-- Studio header removed to save space — maximize button kept -->
+        <div style="display:flex;justify-content:flex-end;padding:2px 8px 0">
+          <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)" style="opacity:.4;font-size:.8rem">⛶</button>
         </div>
 
         <!-- v0.7.20: Floating horizontal tools bar — Canva-style icon pill
