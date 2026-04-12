@@ -3,6 +3,19 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.149 — 2026-04-12 (Source duplicate as mirror)
+
+New "Duplicate as mirror" button in the source context menu. Duplicates the
+selected source, flips it horizontally via `flipH`, and positions it
+symmetrically on the opposite side of the canvas — useful for artistic
+mirror-effect layouts.
+
+### Added
+- `data-action="mirrorDup"` button in the source context menu (`index.html`).
+- Handler in `SourceContextMenu.setup()`: deep-copies the source, sets
+  `clone.flipH = !src.flipH`, positions at `x = canvasW - src.x - src.w`.
+- i18n keys `mirrorSource` and `ctxMirrorDup` in fr / en / ar.
+
 ## v0.7.144 — 2026-04-12 (Per-source rounded corners)
 
 Each source now has a corner radius slider (0-50 px) in the floating source

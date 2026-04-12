@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.147';
+const APP_VERSION = '0.7.149';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -164,7 +164,9 @@ const LANG = {
     ctxShape: 'Forme ▸',
     ctxPip: 'Pop out (PiP)',
     ctxMirror: 'Miroir',
+    ctxMirrorDup: 'Dupliquer en miroir',
     ctxDel: 'Supprimer',
+    mirrorSource: 'Dupliqué en miroir',
     mirrorOnlyCam: '❌ Caméras uniquement',
     mirrorOn: 'Miroir activé',
     mirrorOff: 'Miroir désactivé',
@@ -842,7 +844,9 @@ const LANG = {
     ctxShape: 'Shape ▸',
     ctxPip: 'Pop out (PiP)',
     ctxMirror: 'Mirror',
+    ctxMirrorDup: 'Duplicate as mirror',
     ctxDel: 'Delete',
+    mirrorSource: 'Duplicated as mirror',
     mirrorOnlyCam: '❌ Cameras only',
     mirrorOn: 'Mirror on',
     mirrorOff: 'Mirror off',
@@ -1512,7 +1516,9 @@ const LANG = {
     ctxShape: 'الشكل ▸',
     ctxPip: 'إخراج (PiP)',
     ctxMirror: 'مرآة',
+    ctxMirrorDup: 'نسخ معكوس',
     ctxDel: 'حذف',
+    mirrorSource: 'تم النسخ المعكوس',
     mirrorOnlyCam: '❌ الكاميرات فقط',
     mirrorOn: 'مرآة مُفعَّلة',
     mirrorOff: 'مرآة مُعطَّلة',
@@ -9680,6 +9686,45 @@ const SourceContextMenu = {
         ? '🪞 ' + (t('mirrorOn') || 'Miroir activé')
         : '🪞 ' + (t('mirrorOff') || 'Miroir désactivé'), 1200);
       Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    // v0.7.149: duplicate source as mirror — flip horizontally, position symmetrically
+    this.el.querySelector('[data-action="mirrorDup"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      const canvasW = Engine.canvas ? Engine.canvas.width : 1920;
+      const copy = {
+        id: Engine.nextId++,
+        type: s.type,
+        stream: s.stream,
+        video: s.video,
+        label: (s.label || 'Source') + ' (mirror)',
+        x: canvasW - s.x - s.w,
+        y: s.y,
+        w: s.w,
+        h: s.h,
+        shape: s.shape || 'rect',
+        visible: true,
+        mirrored: !!s.mirrored,
+        hidden: false,
+        custom: true,
+        pinned: true,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
+        rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
+        flipH: !s.flipH,
+      };
+      Engine.sources.push(copy);
+      Engine.onSourcesChanged();
+      showToast('🔀 ' + t('mirrorSource'), 1400);
       this.hide();
     });
 
