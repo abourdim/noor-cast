@@ -3128,7 +3128,9 @@ const Engine = {
       const cx = x + w / 2, cy = y + h / 2;
       const r = Math.min(w, h) / 2;
       const rot = src.rotation || 0;
-      ctx.save();
+      ctx.save(); // opacity wrapper
+      ctx.globalAlpha = src.opacity ?? 1;
+      ctx.save(); // transform wrapper
       if (rot !== 0) { ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy); }
       if (src.flipH || src.flipV) { ctx.translate(cx, cy); ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1); ctx.translate(-cx, -cy); }
       // Shadow
@@ -3145,7 +3147,6 @@ const Engine = {
       }
       // Main fill
       ctx.fillStyle = src.shapeColor || '#a3e635';
-      ctx.globalAlpha = src.opacity ?? 1;
       this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
       if (src.cornerRadius > 0) this._applyCornerRadius(ctx, src, x, y, w, h);
       ctx.fill();
@@ -3153,8 +3154,8 @@ const Engine = {
       this._drawBorder(ctx, src, x, y, w, h);
       if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
       this._drawTitleChip(ctx, src, x, y, w, h);
-      ctx.restore();
-      ctx.restore(); // globalAlpha
+      ctx.restore(); // transform
+      ctx.restore(); // opacity
       return;
     }
 
