@@ -15483,7 +15483,7 @@ function wireEvents() {
     p.addEventListener('mousedown', e => e.stopPropagation());
   });
   // Logo panel controls
-  $('tcLogoPanelSize')?.addEventListener('input', e => { Brand.setLogoSize(parseInt(e.target.value)); });
+  $('tcLogoPanelSize')?.addEventListener('input', e => { Brand.resizeLogo(parseInt(e.target.value)); });
   $('tcLogoPanelOpacity')?.addEventListener('input', e => { Brand.setLogoOpacity(parseInt(e.target.value) / 100); });
   $('tcLogoPanelEffect')?.addEventListener('change', e => { Brand.setEffect(e.target.value); });
   $('tcLogoPanelFilter')?.addEventListener('change', e => { Brand.logo.filter = e.target.value; Brand.save(); });
