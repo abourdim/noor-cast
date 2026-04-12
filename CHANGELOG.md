@@ -3,24 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.116 — 2026-04-12 (Quick sound-board with procedural SFX)
+## v0.7.117 — 2026-04-12 (Per-source colored border/frame)
 
-A small sound-board panel with 6 trigger buttons for common teaching
-sound effects. Each sound is procedurally generated via Web Audio API
-oscillators and noise buffers — no external audio files. Sounds are
-routed through both `Engine.audioDest` (captured by MediaRecorder) and
-`audioCtx.destination` (teacher monitor).
+Each source (screen, camera, image) can now display an optional colored
+border drawn on the canvas. Pick a color and width (0-10 px, 0 = none)
+from the floating source toolbar. The border is visible in recordings
+and persists across scenes.
 
 ### Added
-- `SoundBoard` object in `tutocast.js` with 6 procedural sounds:
-  ding (bell), buzz (wrong answer), clap (applause noise burst),
-  roll (drum roll with tremolo), whistle (sine sweep), whoosh
-  (filtered noise sweep).
-- Tools bar button `🔊 SFX` (`#tcSfxBtn`) that opens a popup palette
-  with 6 labeled trigger buttons.
-- CSS `.tc-sfx-palette` / `.tc-sfx-trigger` in `style.css`.
-- i18n keys `soundBoard`, `sbDing`, `sbBuzz`, `sbClap`, `sbRoll`,
-  `sbWhistle`, `sbWhoosh` in FR, EN, AR.
+- `borderColor` and `borderWidth` defaults on every source at creation
+  (screen, camera, image).
+- `Engine.drawSource()`: `ctx.strokeRect` pass after content draw when
+  `borderWidth > 0`, applied inside the rotation wrapper so borders
+  rotate with the source.
+- Source toolbar: `<input type="color" id="tcSrcBorderColor">` +
+  `<input type="number" id="tcSrcBorderWidth">` wired in
+  `SourceToolbar.setup()` with live sync in `updatePosition()`.
+- Border props persisted in custom scene snapshots, scene restore,
+  source duplication, and `LayoutHistory` undo/redo.
+- i18n keys `sourceBorder`, `borderColor`, `borderWidth` in FR, EN, AR.
 
 ---
 

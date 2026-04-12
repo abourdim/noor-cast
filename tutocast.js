@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.116 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.117 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.116';
+const APP_VERSION = '0.7.117';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 18:00';
@@ -373,6 +373,9 @@ const LANG = {
     sourceTitlePh: 'Titre (ex: 💻 Mon code)',
     sourceOpacity: 'Opacité',
     sourceShape: 'Forme',
+    sourceBorder: 'Bordure',
+    borderColor: 'Couleur bordure',
+    borderWidth: 'Épaisseur bordure',
     filter_none: '— Filtre —',
     filter_bw: 'N&B',
     filter_sepia: 'Sépia',
@@ -999,6 +1002,9 @@ const LANG = {
     sourceTitlePh: 'Title (e.g. 💻 My code)',
     sourceOpacity: 'Opacity',
     sourceShape: 'Shape',
+    sourceBorder: 'Border',
+    borderColor: 'Border color',
+    borderWidth: 'Border width',
     filter_none: '— Filter —',
     filter_bw: 'B&W',
     filter_sepia: 'Sepia',
@@ -1617,6 +1623,9 @@ const LANG = {
     sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
     sourceOpacity: 'شفافية',
     sourceShape: 'الشكل',
+    sourceBorder: 'إطار',
+    borderColor: 'لون الإطار',
+    borderWidth: 'سمك الإطار',
     filter_none: '— فلتر —',
     filter_bw: 'أبيض وأسود',
     filter_sepia: 'سيبيا',
@@ -2777,6 +2786,12 @@ const Engine = {
       ctx.clip();
       ctx.drawImage(src.img, x, y, w, h);
       ctx.restore();
+      // v0.7.117: per-source colored border/frame
+      if (src.borderWidth > 0 && src.borderColor) {
+        ctx.strokeStyle = src.borderColor;
+        ctx.lineWidth = src.borderWidth;
+        ctx.strokeRect(x, y, w, h);
+      }
       ctx.restore();
       ctx.restore(); // v0.7.114: close globalAlpha wrapper
       return;
@@ -2907,6 +2922,15 @@ const Engine = {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(src.title, tx + tw / 2, ty + th / 2);
+      ctx.restore();
+    }
+
+    // v0.7.117: per-source colored border/frame
+    if (src.borderWidth > 0 && src.borderColor) {
+      ctx.save();
+      ctx.strokeStyle = src.borderColor;
+      ctx.lineWidth = src.borderWidth;
+      ctx.strokeRect(x, y, w, h);
       ctx.restore();
     }
 
@@ -3090,7 +3114,8 @@ const Engine = {
         id: this.nextId++, type: 'screen', stream, video,
         label: t('sourceScreen'),
         x: 0, y: 0, w: this.width, h: this.height,
-        shape: 'rect', visible: true, mirrored: false, opacity: 1,
+        shape: 'rect', visible: true, mirrored: false,
+        borderColor: '', borderWidth: 0,
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3137,7 +3162,8 @@ const Engine = {
         id: this.nextId++, type: 'cam', stream, video,
         label: label || `Camera ${n + 1}`,
         x: pos.x, y: pos.y, w: pos.w, h: pos.h,
-        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked, opacity: 1,
+        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
+        borderColor: '', borderWidth: 0,
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3180,7 +3206,7 @@ const Engine = {
           visible: true,
           hidden: false,
           custom: true,
-          opacity: 1,
+          borderColor: '', borderWidth: 0,
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -3727,7 +3753,8 @@ const Scenes = {
         label: s.label,
         x: s.x, y: s.y, w: s.w, h: s.h,
         shape: s.shape || 'rect',
-        opacity: s.opacity ?? 1,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -3774,7 +3801,8 @@ const Scenes = {
       target.x = snap.x; target.y = snap.y;
       target.w = snap.w; target.h = snap.h;
       target.shape = snap.shape;
-      target.opacity = snap.opacity ?? 1;
+      target.borderColor = snap.borderColor || '';
+      target.borderWidth = snap.borderWidth || 0;
       target.custom = true;
     });
   },
@@ -3807,6 +3835,8 @@ const Scenes = {
         label: s.label || '',
         x: s.x, y: s.y, w: s.w, h: s.h,
         shape: s.shape || 'rect',
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -8152,13 +8182,19 @@ const SourceToolbar = {
       Engine.onSourcesChanged();
     });
     $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
-    // v0.7.114: per-source opacity slider
-    $('tcSrcOpacity')?.addEventListener('input', (e) => {
+    // v0.7.117: per-source border color + width
+    $('tcSrcBorderColor')?.addEventListener('input', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
-      s.opacity = parseInt(e.target.value, 10) / 100;
+      s.borderColor = e.target.value;
     });
-    $('tcSrcOpacity')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcBorderColor')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcBorderWidth')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.borderWidth = Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+    });
+    $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -8202,9 +8238,15 @@ const SourceToolbar = {
     if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
       shapeSel.value = s.shape || 'rect';
     }
-    // v0.7.114: sync opacity slider to current source
-    const opSlider = $('tcSrcOpacity');
-    if (opSlider) opSlider.value = Math.round((s.opacity ?? 1) * 100);
+    // v0.7.117: sync border color + width inputs
+    const bcEl = $('tcSrcBorderColor');
+    if (bcEl && bcEl.value !== (s.borderColor || '#ffffff')) {
+      bcEl.value = s.borderColor || '#ffffff';
+    }
+    const bwEl = $('tcSrcBorderWidth');
+    if (bwEl && bwEl.value !== String(s.borderWidth || 0)) {
+      bwEl.value = s.borderWidth || 0;
+    }
   },
 };
 
@@ -8268,7 +8310,8 @@ const SourceContextMenu = {
         hidden: false,
         custom: true,   // duplicates are always pinned so scenes don't overwrite
         pinned: true,
-        opacity: s.opacity ?? 1,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
@@ -8884,6 +8927,8 @@ const LayoutHistory = {
       visible: s.visible,
       hidden: s.hidden,
       custom: s.custom,
+      borderColor: s.borderColor || '',
+      borderWidth: s.borderWidth || 0,
     }));
   },
 
@@ -8928,6 +8973,8 @@ const LayoutHistory = {
       s.visible = entry.visible;
       s.hidden = entry.hidden;
       s.custom = entry.custom;
+      s.borderColor = entry.borderColor || '';
+      s.borderWidth = entry.borderWidth || 0;
     });
     Engine.onSourcesChanged();
     this._suppress = false;
