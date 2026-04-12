@@ -23,6 +23,8 @@
 </head>
 
 <body>
+<!-- v0.7.158: skip-to-content link for accessibility -->
+<a href="#tcToolsBar" class="tc-skip-link">Skip to main content</a>
   <!-- ═══════════════════ SPLASH SCREEN ═══════════════════ -->
   <div class="splash" id="splash" onclick="dismissSplash()">
     <div class="splash-inner">
@@ -245,7 +247,7 @@
           <!-- CENTER: Canvas preview -->
           <div class="tc-stage-wrap">
             <div class="tc-stage" id="tcStage">
-              <canvas id="tcCanvas" width="1920" height="1080"></canvas>
+              <canvas id="tcCanvas" width="1920" height="1080" role="img" aria-label="Live preview canvas showing camera and screen sources"></canvas>
               <canvas id="tcOverlayCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
               <!-- v0.7.115: rule-of-thirds grid overlay — separate canvas so it never enters captureStream -->
               <canvas id="tcGridCanvas" width="1920" height="1080" class="tc-overlay tc-grid-overlay"></canvas>
@@ -484,7 +486,7 @@
           <!-- v0.7.20: moved the timer here from the card header so there's
                just one "00:00" on the page, next to the REC button where the
                eye naturally goes during recording. -->
-          <div class="tc-rec-timer" id="tcRecIndicator">
+          <div class="tc-rec-timer" id="tcRecIndicator" role="timer" aria-live="polite" aria-label="Recording timer">
             <span class="tc-rec-dot"></span>
             <span class="tc-rec-time" id="tcRecTime">00:00</span>
           </div>
@@ -1552,5 +1554,7 @@
   </div>
 
   <script src="tutocast.js"></script>
+  <!-- v0.7.158: PWA service worker registration -->
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});</script>
 </body>
 </html>

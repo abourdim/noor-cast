@@ -3,6 +3,20 @@
    8 themes (6 dark + 2 light) via [data-theme] on <html>
    ═══════════════════════════════════════════════════════════════════ */
 
+/* v0.7.158: skip-to-content link for keyboard/screen-reader users */
+.tc-skip-link {
+  position: absolute; left: -9999px; top: auto;
+  width: 1px; height: 1px; overflow: hidden;
+  z-index: 99999;
+  background: var(--accent, #a3e635); color: #000;
+  padding: 8px 16px; font-weight: 700; border-radius: 4px;
+  text-decoration: none;
+}
+.tc-skip-link:focus {
+  position: fixed; left: 16px; top: 16px;
+  width: auto; height: auto; overflow: visible;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Righteous&family=Tajawal:wght@400;500;700&family=Bangers&family=Orbitron:wght@500;700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════

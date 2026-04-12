@@ -3295,47 +3295,9 @@ const Engine = {
       ctx.restore();
     }
 
-    // --- Per-source title chip (v0.7.0, lower-third style) ---
-    if (src.title && src.title.trim()) {
-      ctx.save();
-      const titleSize = Math.max(18, Math.min(42, h * 0.08));
-      ctx.font = `700 ${titleSize}px Righteous, Bangers, sans-serif`;
-      const padX = 14, padY = 8;
-      const m = ctx.measureText(src.title);
-      const tw = m.width + padX * 2;
-      const th = titleSize * 1.2 + padY * 2;
-      // Anchor under the source's bottom center, pushed 12px down
-      const tx = x + (w - tw) / 2;
-      const ty = y + h + 12;
-      // Rounded chip background
-      const rr = 10;
-      ctx.fillStyle = 'rgba(0,0,0,.72)';
-      ctx.beginPath();
-      ctx.moveTo(tx + rr, ty);
-      ctx.lineTo(tx + tw - rr, ty); ctx.quadraticCurveTo(tx + tw, ty, tx + tw, ty + rr);
-      ctx.lineTo(tx + tw, ty + th - rr); ctx.quadraticCurveTo(tx + tw, ty + th, tx + tw - rr, ty + th);
-      ctx.lineTo(tx + rr, ty + th); ctx.quadraticCurveTo(tx, ty + th, tx, ty + th - rr);
-      ctx.lineTo(tx, ty + rr); ctx.quadraticCurveTo(tx, ty, tx + rr, ty);
-      ctx.fill();
-      // Accent left bar
-      ctx.fillStyle = Engine._accentColor || '#a3e635';
-      ctx.fillRect(tx, ty, 4, th);
-      // Label text
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(src.title, tx + tw / 2, ty + th / 2);
-      ctx.restore();
-    }
-
-    // v0.7.117: per-source colored border/frame
-    if (src.borderWidth > 0 && src.borderColor) {
-      ctx.save();
-      ctx.strokeStyle = src.borderColor;
-      ctx.lineWidth = src.borderWidth;
-      ctx.strokeRect(x, y, w, h);
-      ctx.restore();
-    }
+    // v0.7.158: extracted helpers for title chip + border
+    this._drawTitleChip(ctx, src, x, y, w, h);
+    this._drawBorder(ctx, src, x, y, w, h);
 
     // v0.7.155: on-canvas source badge/label stamp (video path)
     if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
@@ -3350,6 +3312,45 @@ const Engine = {
   /* v0.7.155: draw a small colored pill badge at the top-right corner of a
      source. Called from drawSource() for both image and video paths when
      src.badgeText is non-empty. */
+  /* v0.7.158: extracted from drawSource for readability */
+  _drawTitleChip(ctx, src, x, y, w, h) {
+    if (!src.title || !src.title.trim()) return;
+    ctx.save();
+    const titleSize = Math.max(18, Math.min(42, h * 0.08));
+    ctx.font = `700 ${titleSize}px Righteous, Bangers, sans-serif`;
+    const padX = 14, padY = 8;
+    const m = ctx.measureText(src.title);
+    const tw = m.width + padX * 2;
+    const th = titleSize * 1.2 + padY * 2;
+    const tx = x + (w - tw) / 2;
+    const ty = y + h + 12;
+    const rr = 10;
+    ctx.fillStyle = 'rgba(0,0,0,.72)';
+    ctx.beginPath();
+    ctx.moveTo(tx + rr, ty);
+    ctx.lineTo(tx + tw - rr, ty); ctx.quadraticCurveTo(tx + tw, ty, tx + tw, ty + rr);
+    ctx.lineTo(tx + tw, ty + th - rr); ctx.quadraticCurveTo(tx + tw, ty + th, tx + tw - rr, ty + th);
+    ctx.lineTo(tx + rr, ty + th); ctx.quadraticCurveTo(tx, ty + th, tx, ty + th - rr);
+    ctx.lineTo(tx, ty + rr); ctx.quadraticCurveTo(tx, ty, tx + rr, ty);
+    ctx.fill();
+    ctx.fillStyle = this._accentColor || '#a3e635';
+    ctx.fillRect(tx, ty, 4, th);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(src.title, tx + tw / 2, ty + th / 2);
+    ctx.restore();
+  },
+
+  _drawBorder(ctx, src, x, y, w, h) {
+    if (!(src.borderWidth > 0 && src.borderColor)) return;
+    ctx.save();
+    ctx.strokeStyle = src.borderColor;
+    ctx.lineWidth = src.borderWidth;
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  },
+
   _drawSourceBadge(ctx, src, x, y, w) {
     const text = src.badgeText;
     const color = src.badgeColor || '#e74c3c';
