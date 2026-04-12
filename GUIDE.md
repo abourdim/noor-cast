@@ -61,11 +61,55 @@ This is Apple's **Continuity Camera** — zero setup.
 2. Select it, click **+ Add**
 3. Drag and resize on the canvas
 
-### Option C: Iriun Webcam (all platforms)
+### Option C: Iriun Webcam (all platforms — recommended for vertical/portrait)
 
-1. Install **Iriun Webcam** on phone + computer ([iriun.com](https://iriun.com))
-2. Open both apps — they auto-connect on the same Wi-Fi
-3. In TutoCast: **+ Camera** → select "Iriun Webcam"
+**Why Iriun:** Free, works on Windows/Mac/Linux, supports **portrait (vertical) mode** — DroidCam does not. Best choice for filming a robot from above or a breadboard in portrait orientation.
+
+**On your phone (iPhone or Android):**
+1. Go to App Store or Play Store
+2. Search **"Iriun Webcam"** — install it (free)
+3. Open the app — it shows "Waiting for connection..."
+4. Your phone camera preview appears fullscreen
+
+**On your computer:**
+1. Go to [iriun.com](https://iriun.com)
+2. Download the desktop client for your OS (Windows / Mac / Linux)
+3. Install it — this adds a virtual camera driver called "Iriun Webcam"
+4. **No need to open the desktop app** — the driver runs automatically in the background
+
+**Connecting (Wi-Fi):**
+1. Make sure phone and computer are on the **same Wi-Fi network**
+2. Open Iriun on the phone — it auto-discovers your computer
+3. The phone screen shows "Connected" with a live preview
+
+**Connecting (USB — recommended for stability):**
+1. Plug your phone into the computer with a USB cable
+2. **iPhone:** trust the computer when prompted
+3. **Android:** enable USB debugging in Developer Options
+4. Open Iriun on the phone — it connects via USB (faster, no lag)
+
+**In TutoCast:**
+1. Click **+ Camera** in the left sidebar
+2. Select **"Iriun Webcam"** from the dropdown
+3. Click **+ Add** — your phone's camera appears on the canvas
+4. Drag and resize as needed
+
+**Portrait (vertical) mode:**
+1. Hold your phone **vertically** (portrait)
+2. Iriun automatically sends the vertical feed — no black bars, no rotation needed
+3. In TutoCast, resize the source to a tall narrow rectangle to match
+
+**Settings in the Iriun phone app:**
+- **Camera:** tap to switch between front/back camera
+- **Resolution:** 640p (default) is fine; 1080p uses more CPU
+- **Orientation:** auto-detects — just rotate your phone
+- **Mirror:** toggle if the image is flipped
+
+**Troubleshooting Iriun:**
+- **Phone says "Waiting for connection":** make sure the desktop driver is installed (check system tray on Windows, menu bar on Mac)
+- **Lag or stuttering:** switch to USB, or lower resolution in the phone app
+- **"Iriun Webcam" not in TutoCast dropdown:** restart Chrome after installing the driver
+- **Black screen in TutoCast:** close any other app using the camera (Zoom, Teams), then retry
 
 ### Option D: Camo (pro quality)
 
