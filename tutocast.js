@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.160';
+const APP_VERSION = '0.7.163';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -12804,12 +12804,42 @@ const Sensors = {
           if (SensorTimeline.recording) SensorTimeline.sample(this.values);
           // v0.5.0: if opted in, drop a 🤖 overlay when the robot jerks hard.
           // Cooldown 3s so we don't spam the canvas during continuous motion.
+          const mag = Math.sqrt(this.values.x * this.values.x + this.values.y * this.values.y + this.values.z * this.values.z);
           if (this.autoOverlayEnabled) {
-            const mag = Math.sqrt(this.values.x * this.values.x + this.values.y * this.values.y + this.values.z * this.values.z);
             if (mag > 1.6 && Date.now() - this._lastAutoOverlayAt > 3000) {
               this._lastAutoOverlayAt = Date.now();
               TextOverlays.add('🤖', { size: 120, ttl: 1800, y: Engine.height / 2 });
             }
+          }
+          // v0.7.163: shake-to-switch scene (strong jerk > 2.2g, cooldown 2s)
+          if (this._shakeToScene && mag > 2.2 && Date.now() - (this._lastShakeAt || 0) > 2000) {
+            this._lastShakeAt = Date.now();
+            if (typeof Scenes.random === 'function') Scenes.random();
+          }
+          // v0.7.163: shake = confetti burst (medium jerk > 1.8g, cooldown 3s)
+          if (this._shakeConfetti && mag > 1.8 && Date.now() - (this._lastShakeConfettiAt || 0) > 3000) {
+            this._lastShakeConfettiAt = Date.now();
+            if (typeof Confetti !== 'undefined' && Confetti.burst) Confetti.burst();
+          }
+          // v0.7.163: tilt controls emoji reaction drift direction
+          if (typeof Reactions !== 'undefined' && Reactions._particles.length) {
+            Reactions._particles.forEach(p => { p.vx += this.values.x * 0.3; });
+          }
+          // v0.7.163: feed live graph overlay
+          if (this._liveGraph && this._graphSamples) {
+            this._graphSamples.push({ t: Date.now(), x: this.values.x, y: this.values.y, z: this.values.z });
+            if (this._graphSamples.length > 200) this._graphSamples.shift();
+          }
+          // v0.7.163: motion trail — accumulate position from acceleration
+          if (this._motionTrail && this._trailPoints) {
+            this._trailVx = (this._trailVx || 0) + this.values.x * 0.02;
+            this._trailVy = (this._trailVy || 0) + this.values.y * 0.02;
+            this._trailX = (this._trailX || 0.5) + this._trailVx;
+            this._trailY = (this._trailY || 0.5) + this._trailVy;
+            this._trailX = Math.max(0, Math.min(1, this._trailX));
+            this._trailY = Math.max(0, Math.min(1, this._trailY));
+            this._trailPoints.push({ x: this._trailX, y: this._trailY, t: Date.now() });
+            if (this._trailPoints.length > 300) this._trailPoints.shift();
           }
         });
       } catch (e) { /* accelerometer optional */ }
@@ -12823,9 +12853,14 @@ const Sensors = {
           const prev = this.values.a || 0;
           this.values.a = e.target.value.getUint8(0);
           this.updatePanel();
-          // Edge-trigger: button A pressed (transition from 0 → non-zero) → toggle zoom.
-          // Lets teachers hit the real physical button on the micro:bit to zoom in/out.
-          if (prev === 0 && this.values.a !== 0) Zoom.toggle();
+          // Edge-trigger: button A pressed (transition from 0 → non-zero)
+          if (prev === 0 && this.values.a !== 0) {
+            if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') {
+              SoundBoard.play('clap'); // v0.7.163: Button A = applause SFX
+            } else {
+              Zoom.toggle(); // default: toggle zoom
+            }
+          }
         });
         const bChar = await btnSvc.getCharacteristic('e95dda91-251d-470a-a062-fa1922dfa9a8');
         await bChar.startNotifications();
@@ -12885,7 +12920,96 @@ const Sensors = {
     ctx.fillStyle = '#a3e635';
     lines.forEach((line, i) => ctx.fillText(line, x + pad, y + pad + i * 44));
     ctx.restore();
-  }
+
+    // v0.7.163: live accelerometer graph (bottom-right corner)
+    if (this._liveGraph && this._graphSamples && this._graphSamples.length > 1) {
+      const gw = 280, gh = 100, gx = ctx.canvas.width - gw - 20, gy = ctx.canvas.height - gh - 20;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.strokeStyle = 'rgba(255,255,255,.1)';
+      ctx.strokeRect(gx, gy, gw, gh);
+      const samples = this._graphSamples;
+      const drawLine = (key, color) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        samples.forEach((s, i) => {
+          const px = gx + (i / (samples.length - 1)) * gw;
+          const py = gy + gh / 2 - (s[key] || 0) * (gh / 4);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      };
+      drawLine('x', '#ef4444');
+      drawLine('y', '#22c55e');
+      drawLine('z', '#38bdf8');
+      ctx.font = '10px monospace';
+      ctx.fillStyle = '#ef4444'; ctx.fillText('X', gx + 4, gy + 12);
+      ctx.fillStyle = '#22c55e'; ctx.fillText('Y', gx + 18, gy + 12);
+      ctx.fillStyle = '#38bdf8'; ctx.fillText('Z', gx + 32, gy + 12);
+      ctx.restore();
+    }
+
+    // v0.7.163: motion trail (center of canvas, fading dots)
+    if (this._motionTrail && this._trailPoints && this._trailPoints.length > 1) {
+      ctx.save();
+      const W = ctx.canvas.width, H = ctx.canvas.height;
+      const now = Date.now();
+      this._trailPoints.forEach((p, i) => {
+        const age = (now - p.t) / 5000; // fade over 5 seconds
+        if (age > 1) return;
+        ctx.globalAlpha = 1 - age;
+        ctx.fillStyle = `hsl(${(i * 3) % 360}, 80%, 60%)`;
+        ctx.beginPath();
+        ctx.arc(p.x * W, p.y * H, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // v0.7.163: temperature overlay (top-right, if available)
+    if (this._showTemp && this.values.temp != null) {
+      ctx.save();
+      ctx.font = '700 28px Orbitron, monospace';
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      const tw = 160, th = 40, tx = ctx.canvas.width - tw - 20, ty = 20;
+      ctx.fillRect(tx, ty, tw, th);
+      ctx.fillStyle = '#fb923c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`🌡 ${this.values.temp}°C`, tx + tw / 2, ty + th / 2);
+      ctx.restore();
+    }
+
+    // v0.7.163: light level bar (top-right, below temp)
+    if (this._showLight && this.values.light != null) {
+      ctx.save();
+      const lw = 160, lh = 20, lx = ctx.canvas.width - lw - 20, ly = this._showTemp ? 70 : 20;
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(lx, ly, lw, lh);
+      const level = Math.min(1, (this.values.light || 0) / 255);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(lx, ly, lw * level, lh);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`💡 ${this.values.light || 0}`, lx + lw / 2, ly + lh / 2);
+      ctx.restore();
+    }
+  },
+
+  // v0.7.163: micro:bit feature flags (toggled from settings or JS)
+  _shakeToScene: false,
+  _shakeConfetti: false,
+  _btnAAction: 'zoom', // 'zoom' or 'sfx'
+  _liveGraph: false,
+  _graphSamples: [],
+  _motionTrail: false,
+  _trailPoints: [],
+  _showTemp: false,
+  _showLight: false,
 };
 
 /* ─────────── 7. Kid polish: sfx, debug hud, badges, confetti, ticker ─────────── */
@@ -15087,6 +15211,39 @@ function wireEvents() {
     sensorOverlayEl.addEventListener('change', (e) => {
       Sensors.autoOverlayEnabled = e.target.checked;
       try { localStorage.setItem('tc-sensor-overlay', e.target.checked ? '1' : '0'); } catch {}
+    });
+  }
+  // v0.7.163: micro:bit feature toggles
+  const mbToggles = [
+    ['tcShakeSceneToggle', '_shakeToScene', 'tc-shake-scene'],
+    ['tcShakeConfettiToggle', '_shakeConfetti', 'tc-shake-confetti'],
+    ['tcLiveGraphToggle', '_liveGraph', 'tc-live-graph'],
+    ['tcMotionTrailToggle', '_motionTrail', 'tc-motion-trail'],
+    ['tcShowTempToggle', '_showTemp', 'tc-show-temp'],
+    ['tcShowLightToggle', '_showLight', 'tc-show-light'],
+  ];
+  mbToggles.forEach(([elId, prop, lsKey]) => {
+    const el = $(elId);
+    if (!el) return;
+    try { el.checked = localStorage.getItem(lsKey) === '1'; } catch {}
+    Sensors[prop] = el.checked;
+    if (prop === '_liveGraph' && el.checked) Sensors._graphSamples = [];
+    if (prop === '_motionTrail' && el.checked) Sensors._trailPoints = [];
+    el.addEventListener('change', (e) => {
+      Sensors[prop] = e.target.checked;
+      if (prop === '_liveGraph') Sensors._graphSamples = [];
+      if (prop === '_motionTrail') Sensors._trailPoints = [];
+      try { localStorage.setItem(lsKey, e.target.checked ? '1' : '0'); } catch {}
+    });
+  });
+  // Button A action toggle
+  const btnASfxEl = $('tcBtnASfxToggle');
+  if (btnASfxEl) {
+    try { btnASfxEl.checked = localStorage.getItem('tc-btn-a-sfx') === '1'; } catch {}
+    Sensors._btnAAction = btnASfxEl.checked ? 'sfx' : 'zoom';
+    btnASfxEl.addEventListener('change', (e) => {
+      Sensors._btnAAction = e.target.checked ? 'sfx' : 'zoom';
+      try { localStorage.setItem('tc-btn-a-sfx', e.target.checked ? '1' : '0'); } catch {}
     });
   }
 
