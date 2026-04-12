@@ -13015,14 +13015,24 @@ const Sensors = {
         this.updatePanel();
         this._tryReconnect();
       });
-      // Connect UART service
+      // Connect UART service (robust detection from bit-playground)
       const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
       const chars = await uartSvc.getCharacteristics();
+      const isNotifier = ch => ch && (ch.properties.notify || ch.properties.indicate);
+      const isWriter = ch => ch && (ch.properties.write || ch.properties.writeWithoutResponse);
       let notifyChar = null;
+      // Pass 1: try standard Nordic UART UUIDs
       for (const ch of chars) {
         const id = ch.uuid.toLowerCase();
-        if (id.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
-        if (id.includes('6e400003') && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
+        if (id.includes('6e400002') && isWriter(ch)) this._uartTx = ch;
+        if (id.includes('6e400003') && isNotifier(ch)) notifyChar = ch;
+      }
+      // Pass 2: fallback — first notify + first write characteristic (any UUID)
+      if (!notifyChar || !this._uartTx) {
+        for (const ch of chars) {
+          if (!notifyChar && isNotifier(ch)) notifyChar = ch;
+          if (!this._uartTx && isWriter(ch)) this._uartTx = ch;
+        }
       }
       if (!notifyChar) throw new Error('UART not found — flash the TutoCast firmware first (click ⚙ above)');
       await notifyChar.startNotifications();
@@ -13211,13 +13221,37 @@ const Sensors = {
     await new Promise(r => setTimeout(r, 2000));
     try {
       this.server = await this.device.gatt.connect();
-      // Re-acquire UART TX
+      // Re-acquire UART characteristics (robust detection)
       try {
         const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
         const chars = await uartSvc.getCharacteristics();
+        const isNotifier = ch => ch && (ch.properties.notify || ch.properties.indicate);
+        const isWriter = ch => ch && (ch.properties.write || ch.properties.writeWithoutResponse);
+        let notifyChar = null;
+        this._uartTx = null;
         for (const ch of chars) {
-          if (ch.uuid.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
+          const id = ch.uuid.toLowerCase();
+          if (id.includes('6e400002') && isWriter(ch)) this._uartTx = ch;
+          if (id.includes('6e400003') && isNotifier(ch)) notifyChar = ch;
         }
+        if (!notifyChar || !this._uartTx) {
+          for (const ch of chars) {
+            if (!notifyChar && isNotifier(ch)) notifyChar = ch;
+            if (!this._uartTx && isWriter(ch)) this._uartTx = ch;
+          }
+        }
+        if (notifyChar) {
+          await notifyChar.startNotifications();
+          this._uartBuf = '';
+          notifyChar.addEventListener('characteristicvaluechanged', (e) => {
+            const dec = new TextDecoder();
+            this._uartBuf += dec.decode(e.target.value);
+            const lines = this._uartBuf.split('\n');
+            this._uartBuf = lines.pop();
+            lines.forEach(line => this._handleUartLine(line.trim()));
+          });
+        }
+        this.sendUart('HELLO');
       } catch {}
       this._reconnectAttempts = 0;
       showToast('micro:bit reconnected!', 2000);
