@@ -107,7 +107,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
     gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
     sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
-    previewZoomReset: 'Zoom aperçu réinitialisé',
+    alignLeft: 'Aligner à gauche', alignRight: 'Aligner à droite', alignTop: 'Aligner en haut', alignBottom: 'Aligner en bas', alignCenterH: 'Centrer horizontalement', alignCenterV: 'Centrer verticalement',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
     freezeOn: '❄️ Écran gelé',
     freezeOff: '▶ Écran repris',
@@ -767,7 +767,7 @@ const LANG = {
     trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
     gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
     sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
-    previewZoomReset: 'Preview zoom reset',
+    alignLeft: 'Align left', alignRight: 'Align right', alignTop: 'Align top', alignBottom: 'Align bottom', alignCenterH: 'Center horizontally', alignCenterV: 'Center vertically',
     stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
     freezeOn: '❄️ Screen frozen',
     freezeOff: '▶ Screen live',
@@ -1424,7 +1424,7 @@ const LANG = {
     trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
     gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
     sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
-    previewZoomReset: 'إعادة تعيين تكبير المعاينة',
+    alignLeft: 'محاذاة لليسار', alignRight: 'محاذاة لليمين', alignTop: 'محاذاة للأعلى', alignBottom: 'محاذاة للأسفل', alignCenterH: 'توسيط أفقي', alignCenterV: 'توسيط عمودي',
     stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
     drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
     teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
@@ -8822,6 +8822,24 @@ const SourceToolbar = {
       const valEl = $('tcSrcRotationVal');
       if (valEl) valEl.textContent = '0\u00B0';
     });
+    // v0.7.136: source alignment buttons (center / edges)
+    const alignBtn = (id, alignFn) => {
+      $(id)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = sel(); if (!s) return;
+        alignFn(s);
+        SceneAutoSave.trigger();
+      });
+      $(id)?.addEventListener('mousedown', (e) => e.stopPropagation());
+    };
+    const cW = () => Engine.width || 1920;
+    const cH = () => Engine.height || 1080;
+    alignBtn('tcSrcAlignLeft',    s => { s.x = 0; });
+    alignBtn('tcSrcAlignRight',   s => { s.x = cW() - s.w; });
+    alignBtn('tcSrcAlignTop',     s => { s.y = 0; });
+    alignBtn('tcSrcAlignBottom',  s => { s.y = cH() - s.h; });
+    alignBtn('tcSrcAlignCenterH', s => { s.x = (cW() - s.w) / 2; });
+    alignBtn('tcSrcAlignCenterV', s => { s.y = (cH() - s.h) / 2; });
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;

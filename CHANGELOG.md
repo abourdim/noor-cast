@@ -3,25 +3,20 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.135 — 2026-04-12 (On-canvas audio waveform visualizer)
+## v0.7.136 — 2026-04-12 (Source alignment buttons)
 
-Opt-in frequency-bar visualizer drawn at the bottom edge of the canvas during
-recording. Reads frequency data from the existing `MicBoost._gateAnalyser`
-AnalyserNode (no new node, no new rAF) and draws ~32 vertical bars that bounce
-with the mic input, colored with the current accent gradient. Toggle in
-Settings (default off). Baked into the recording output.
+Six quick-align buttons in the floating source toolbar let the teacher
+snap any selected source to the canvas edges or center with a single click.
 
 ### Added
-- `AudioViz` object in `tutocast.js`: `visible`, `setup()`, `render(ctx, W, H)`,
-  `load()`, `setVisible()`. Uses `getByteFrequencyData()` from the existing gate
-  analyser to draw 32 accent-colored bars at the canvas bottom edge.
-- Settings checkbox `#tcAudioVizToggle` in `index.html`, wired in `tutocast.js`.
-  Default: off. Persisted as `tc-audio-viz`.
-- `AudioViz.render()` called from `Engine.render()` each frame (after RecIndicator,
-  before Screensaver).
-- `AudioViz.setup()` called after `MicBoost.attach()` to pre-allocate the frequency
-  buffer.
-- i18n key `audioVizLabel` in FR, EN, AR.
+- 6 alignment buttons in `index.html` source toolbar (`#tcSrcAlignLeft`,
+  `#tcSrcAlignRight`, `#tcSrcAlignTop`, `#tcSrcAlignBottom`,
+  `#tcSrcAlignCenterH`, `#tcSrcAlignCenterV`).
+- Click handlers in `SourceToolbar.setup()` (`tutocast.js`): each button
+  sets `src.x` / `src.y` relative to `Engine.width` / `Engine.height`
+  and calls `SceneAutoSave.trigger()`.
+- i18n keys `alignLeft`, `alignRight`, `alignTop`, `alignBottom`,
+  `alignCenterH`, `alignCenterV` in FR, EN, AR.
 
 ---
 
