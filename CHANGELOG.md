@@ -3,28 +3,22 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.119 — 2026-04-12 (Source crop/zoom via range sliders)
+## v0.7.120 — 2026-04-12 (Recording indicator pulse dot)
 
-Each source (screen, camera, image) now has four crop range sliders
-(Top, Bottom, Left, Right) in the floating source toolbar, each
-adjustable from 0 to 40%. The crop values clip the source rect via
-the 9-argument `drawImage` overload, letting teachers zoom into a
-region of a screen share or camera feed. Crop values persist in
-scene snapshots, source duplication, and undo/redo history.
+When recording is active, a pulsing red dot with "REC" text is drawn in
+the top-left corner of the canvas. The dot opacity oscillates between
+0.3 and 1.0 at ~1 Hz so it is clearly visible in the exported video.
+The indicator can be toggled off in Settings (default: on).
 
 ### Added
-- `cropTop`, `cropBottom`, `cropLeft`, `cropRight` defaults (0) on
-  every source at creation (screen, camera, image).
-- `Engine._drawVideoRespectingMirror()`: 9-arg `drawImage` with
-  computed source rect from crop fractions.
-- `Engine.drawSource()` image path: crop via source rect.
-- Source toolbar: 4 `<input type="range">` sliders (T/B/L/R)
-  wired in `SourceToolbar.setup()` with live sync in
-  `updatePosition()`.
-- Crop props persisted in custom scene snapshots, scene restore,
-  source duplication, and `LayoutHistory` undo/redo.
-- i18n keys `cropTop`, `cropBottom`, `cropLeft`, `cropRight` in
-  FR, EN, AR.
+- `RecIndicator` object with `load()`, `setEnabled()`, and `render()`
+  methods. Draws a red circle (r=8) at (20, 20) with white "REC" text
+  when `Recorder.state === 'recording'`.
+- `RecIndicator.render()` called from `Engine.render()` after
+  `CountdownTimer` and before `Screensaver`.
+- Settings toggle checkbox (`tcRecIndicatorToggle`) with `tc-rec-indicator`
+  localStorage persistence (default: enabled).
+- i18n key `recIndicatorLabel` in FR, EN, AR.
 
 ---
 

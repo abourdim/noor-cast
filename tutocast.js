@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.119 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.120 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.119';
+const APP_VERSION = '0.7.120';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 21:00';
@@ -190,6 +190,7 @@ const LANG = {
     timeGoalStop: '⏳ Objectif atteint — arrêt auto',
     clockLabel: '🕐 Afficher l\'heure dans un coin',
     clockDateLabel: '+ date',
+    recIndicatorLabel: '🔴 Pastille REC pendant l\'enregistrement',
     badgeBtn: 'Carte badge',
     badgeHeadline: 'Tuto enregistré !',
     badgeStatDuration: 'Durée',
@@ -823,6 +824,7 @@ const LANG = {
     timeGoalStop: '⏳ Goal reached — auto-stop',
     clockLabel: '🕐 Show clock in a corner',
     clockDateLabel: '+ date',
+    recIndicatorLabel: '🔴 REC dot while recording',
     badgeBtn: 'Badge card',
     badgeHeadline: 'Tutorial recorded!',
     badgeStatDuration: 'Duration',
@@ -1448,6 +1450,7 @@ const LANG = {
     timeGoalStop: '⏳ تم بلوغ الهدف — إيقاف تلقائي',
     clockLabel: '🕐 إظهار الساعة في زاوية',
     clockDateLabel: '+ التاريخ',
+    recIndicatorLabel: '🔴 نقطة REC أثناء التسجيل',
     badgeBtn: 'بطاقة شارة',
     badgeHeadline: 'تم تسجيل الدرس!',
     badgeStatDuration: 'المدة',
@@ -2689,6 +2692,9 @@ const Engine = {
 
     // v0.7.113: canvas countdown timer overlay (top-center pill)
     CountdownTimer.render(ctx, width, height);
+
+    // v0.7.120: pulsing REC dot indicator (top-left corner)
+    RecIndicator.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -9351,6 +9357,48 @@ const ClockOverlay = {
   },
 };
 
+/* ─────────── RecIndicator — v0.7.120 pulsing red REC dot while recording
+
+   Draws a pulsing red circle (r=8) with "REC" text in the top-left corner
+   of the canvas when Recorder.state === 'recording'. The dot opacity
+   oscillates between 0.3 and 1.0 at ~1 Hz via Math.sin so it's clearly
+   visible in the exported video. Toggle in Settings, default ON. */
+const RecIndicator = {
+  enabled: true,
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-rec-indicator');
+      if (v !== null) this.enabled = v === '1';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-rec-indicator', v ? '1' : '0'); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    if (Recorder.state !== 'recording') return;
+    ctx.save();
+    // Pulse alpha between 0.3 and 1.0 at ~1 Hz
+    const alpha = 0.65 + 0.35 * Math.sin(Date.now() / 500);
+    ctx.globalAlpha = alpha;
+    // Red dot (r=8) at (20, 20)
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(20, 20, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // "REC" text at (35, 25)
+    ctx.font = '700 14px ui-monospace, monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('REC', 35, 20);
+    ctx.restore();
+  },
+};
+
 /* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
 
    Teacher sets a duration (1-60 min, default 5 min) in Settings and
@@ -12220,6 +12268,13 @@ function wireEvents() {
     clkDateEl.addEventListener('change', (e) => ClockOverlay.setShowDate(e.target.checked));
   }
 
+  // v0.7.120: REC indicator pulsing dot toggle
+  const recIndEl = $('tcRecIndicatorToggle');
+  if (recIndEl) {
+    recIndEl.checked = RecIndicator.enabled;
+    recIndEl.addEventListener('change', (e) => RecIndicator.setEnabled(e.target.checked));
+  }
+
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');
   if (ioEl) {
@@ -12394,6 +12449,7 @@ async function init() {
   Timelapse.load();  // v0.7.95
   TimeGoal.load();
   ClockOverlay.load();  // v0.7.90
+  RecIndicator.load();  // v0.7.120
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();
