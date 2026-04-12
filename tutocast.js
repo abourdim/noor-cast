@@ -10040,10 +10040,10 @@ const SourceToolbar = {
     if (opEl && !userEditing) opEl.value = Math.round((s.opacity ?? 1) * 100);
     // v0.7.151: sync filter
     const fiEl = $('tcSrcFilter');
-    if (fiEl) fiEl.value = s.filter || 'none';
+    if (fiEl && !userEditing) fiEl.value = s.filter || 'none';
     // v0.7.117: sync border color + width inputs
     const bcEl = $('tcSrcBorderColor');
-    if (bcEl && bcEl.value !== (s.borderColor || '#ffffff')) {
+    if (bcEl && !userEditing && bcEl.value !== (s.borderColor || '#ffffff')) {
       bcEl.value = s.borderColor || '#ffffff';
     }
     const bwEl = $('tcSrcBorderWidth');
@@ -10052,7 +10052,7 @@ const SourceToolbar = {
     }
     // v0.7.128: sync shadow controls
     const scEl = $('tcSrcShadowColor');
-    if (scEl && scEl.value !== (s.shadowColor || '#000000')) {
+    if (scEl && !userEditing && scEl.value !== (s.shadowColor || '#000000')) {
       scEl.value = s.shadowColor || '#000000';
     }
     const sbEl = $('tcSrcShadowBlur');
@@ -10078,7 +10078,7 @@ const SourceToolbar = {
       btEl.value = s.badgeText || '';
     }
     const bcBadgeEl = $('tcSrcBadgeColor');
-    if (bcBadgeEl && bcBadgeEl.value !== (s.badgeColor || '#e74c3c')) {
+    if (bcBadgeEl && !userEditing && bcBadgeEl.value !== (s.badgeColor || '#e74c3c')) {
       bcBadgeEl.value = s.badgeColor || '#e74c3c';
     }
     // v0.7.119: sync crop sliders
