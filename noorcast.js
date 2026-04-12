@@ -5856,6 +5856,7 @@ const Recorder = {
       SensorTimeline.start();
       SilenceWatch.start();
       TimeGoal.start();
+      LiveCaptions._srtEntries = []; LiveCaptions._srtStart = performance.now();
       LiveCaptions.start();
       SceneTimer.start();
       this.updateUI();
@@ -6179,6 +6180,36 @@ const Recorder = {
       const wrap = $('tcSensorChartWrap');
       if (wrap) wrap.style.display = 'none';
     }
+
+    // v0.7.174: SRT caption export
+    const srtBlob = LiveCaptions.exportSrt();
+    if (srtBlob) {
+      const srtUrl = URL.createObjectURL(srtBlob);
+      this._prevUrls.push(srtUrl);
+      const dlSrt = $('tcDownloadSrt');
+      if (dlSrt) {
+        dlSrt.href = srtUrl; dlSrt.download = `${fname}.srt`;
+        dlSrt.style.display = '';
+      }
+      log(`💬 SRT captions: ${LiveCaptions._srtEntries.length} entries`, 'info');
+    }
+    // v0.7.174: thumbnail (first frame as PNG)
+    try {
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = Engine.width; thumbCanvas.height = Engine.height;
+      const tctx = thumbCanvas.getContext('2d');
+      tctx.drawImage(Engine.canvas, 0, 0);
+      thumbCanvas.toBlob((thumbBlob) => {
+        if (!thumbBlob) return;
+        const thumbUrl = URL.createObjectURL(thumbBlob);
+        this._prevUrls.push(thumbUrl);
+        const dlThumb = $('tcDownloadThumb');
+        if (dlThumb) {
+          dlThumb.href = thumbUrl; dlThumb.download = `${fname}-thumbnail.png`;
+          dlThumb.style.display = '';
+        }
+      }, 'image/png');
+    } catch {}
 
     // v0.5.0: if silence-trim has something to offer, expose the button
     const silenceBtn = $('tcSilenceTrimBtn');
@@ -12290,6 +12321,8 @@ const LiveCaptions = {
   recognition: null,
   current: '',       // interim transcript currently displayed
   _lastFinalAt: 0,
+  _srtEntries: [],   // v0.7.174: accumulated {start, end, text} for SRT export
+  _srtStart: 0,      // recording start time
 
   load() {
     try { this.enabled = localStorage.getItem('tc-captions') === '1'; } catch {}
@@ -12323,6 +12356,11 @@ const LiveCaptions = {
       if (finalT) {
         this.current = finalT.trim();
         this._lastFinalAt = performance.now();
+        // v0.7.174: accumulate for SRT export
+        if (this.current && this._srtStart > 0) {
+          const now = (performance.now() - this._srtStart) / 1000;
+          this._srtEntries.push({ start: Math.max(0, now - 3), end: now, text: this.current });
+        }
       } else if (interim) {
         this.current = interim.trim();
       }
@@ -12352,6 +12390,21 @@ const LiveCaptions = {
     try { this.recognition && this.recognition.stop(); } catch {}
     this.recognition = null;
     this.current = '';
+  },
+
+  // v0.7.174: export accumulated captions as SRT subtitle file
+  exportSrt() {
+    if (!this._srtEntries.length) return null;
+    const pad = (n, d = 2) => String(Math.floor(n)).padStart(d, '0');
+    const fmt = (sec) => {
+      const h = sec / 3600, m = (sec % 3600) / 60, s = sec % 60, ms = (sec * 1000) % 1000;
+      return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms, 3)}`;
+    };
+    let srt = '';
+    this._srtEntries.forEach((e, i) => {
+      srt += `${i + 1}\n${fmt(e.start)} --> ${fmt(e.end)}\n${e.text}\n\n`;
+    });
+    return new Blob([srt], { type: 'text/srt' });
   },
 
   // Called from Engine.render() each frame to draw the current caption
