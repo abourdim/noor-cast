@@ -1,7 +1,7 @@
 /* TutoCast Service Worker v0.7.158
    Cache-first for app shell, network-first for fonts. */
 
-const CACHE_NAME = 'tutocast-v159';
+const CACHE_NAME = 'tutocast-v167';
 const APP_SHELL = [
   './',
   './index.html',

@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.166';
+const APP_VERSION = '0.7.167';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -2910,7 +2910,7 @@ const Engine = {
       ctx.putImageData(this.frozenFrame, 0, 0);
     } else {
       // draw visible sources (filter non-video, respect manual hide)
-      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden && s.video && s.video.readyState >= 2);
+      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden && (s.type === 'shape' || s.type === 'image' || (s.video && s.video.readyState >= 2)));
       visible.forEach(src => this.drawSource(src));
     }
 
@@ -3122,6 +3122,42 @@ const Engine = {
     // path — shape clip + drawImage — bypassing the video filter/mirror/
     // blur/title chain, since they're static bitmaps that don't need any
     // of that logic.
+    // v0.7.167: colored shape source — simple filled rectangle/circle/etc.
+    if (src.type === 'shape') {
+      const { x, y, w, h } = src;
+      const cx = x + w / 2, cy = y + h / 2;
+      const r = Math.min(w, h) / 2;
+      const rot = src.rotation || 0;
+      ctx.save();
+      if (rot !== 0) { ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy); }
+      if (src.flipH || src.flipV) { ctx.translate(cx, cy); ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1); ctx.translate(-cx, -cy); }
+      // Shadow
+      if (src.shadowBlur > 0) {
+        ctx.save();
+        ctx.shadowColor = src.shadowColor || '#000';
+        ctx.shadowBlur = src.shadowBlur;
+        ctx.shadowOffsetX = src.shadowOffsetX || 0;
+        ctx.shadowOffsetY = src.shadowOffsetY || 0;
+        ctx.fillStyle = src.shapeColor || '#a3e635';
+        this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+        ctx.fill();
+        ctx.restore();
+      }
+      // Main fill
+      ctx.fillStyle = src.shapeColor || '#a3e635';
+      ctx.globalAlpha = src.opacity ?? 1;
+      this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+      if (src.cornerRadius > 0) this._applyCornerRadius(ctx, src, x, y, w, h);
+      ctx.fill();
+      // Border
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      ctx.restore();
+      ctx.restore(); // globalAlpha
+      return;
+    }
+
     if (src.type === 'image' && src.img) {
       const { x, y, w, h } = src;
       const cx = x + w / 2, cy = y + h / 2;
@@ -3825,6 +3861,38 @@ const Engine = {
       };
       img.src = url;
     });
+  },
+
+  // v0.7.167: add a colored shape source (rectangle, circle, etc.)
+  addShape(shapeType, color, w, h) {
+    const src = {
+      id: this.nextId++,
+      type: 'shape',
+      label: shapeType || 'rect',
+      shapeColor: color || '#a3e635',
+      x: (this.width - (w || 200)) / 2,
+      y: (this.height - (h || 200)) / 2,
+      w: w || 200,
+      h: h || 200,
+      shape: shapeType || 'rect',
+      visible: true,
+      hidden: false,
+      opacity: 1, filter: 'none',
+      flipH: false, flipV: false,
+      cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+      borderColor: '', borderWidth: 0,
+      shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
+      locked: false, aspectLock: false,
+      rotation: 0,
+      cornerRadius: 0,
+      badgeText: '',
+      badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
+    };
+    this.sources.push(src);
+    this.onSourcesChanged();
+    showToast(`🟩 ${shapeType}`, 1200);
+    if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
+    return src;
   },
 
   async setMic(deviceId) {
@@ -9867,6 +9935,14 @@ const SourceToolbar = {
       if (e.target.closest('#tcSrcStyleBtn') || e.target.closest('#tcSrcStylePopup')) return;
       pop.style.display = 'none';
     });
+    // v0.7.167: shape color picker
+    $('tcSrcShapeColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shapeColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShapeColor')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.164: privacy mode buttons
     $('tcSrcAvatarBtn')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -9940,6 +10016,11 @@ const SourceToolbar = {
     // v0.7.142: sync aspect lock button icon
     const aspectBtn = $('tcSrcToolbarAspect');
     if (aspectBtn) aspectBtn.textContent = s.aspectLock ? '🔗' : '↔';
+    // v0.7.167: show/hide shape color section
+    const shapeColorSec = $('tcSspShapeColor');
+    if (shapeColorSec) shapeColorSec.style.display = s.type === 'shape' ? '' : 'none';
+    const shapeColorEl = $('tcSrcShapeColor');
+    if (shapeColorEl && s.type === 'shape') shapeColorEl.value = s.shapeColor || '#a3e635';
     // v0.7.114: sync opacity
     const opEl = $('tcSrcOpacity');
     if (opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);

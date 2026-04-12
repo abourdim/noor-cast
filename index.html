@@ -262,6 +262,16 @@
             <div class="tc-side-title" style="margin-top:14px">🎭 <span data-i18n="activeSources">Sources actives</span></div>
             <ul class="tc-src-list" id="tcSrcList"></ul>
 
+            <!-- v0.7.167: add colored shapes to canvas -->
+            <div class="tc-side-title" style="margin-top:14px">🟩 Shapes</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
+              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('rect','#a3e635',200,150)">⬛</button>
+              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('circle','#38bdf8',200,200)">⚪</button>
+              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('rounded','#fb923c',200,150)">🔲</button>
+              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('star','#fbbf24',200,200)">⭐</button>
+              <button class="tc-src-btn" style="flex:1;min-width:0;padding:5px;font-size:.75rem" onclick="Engine.addShape('heart','#ef4444',200,200)">❤️</button>
+            </div>
+
             <div class="tc-side-title" style="margin-top:14px">🤖 <span data-i18n="sensors">Capteurs</span></div>
             <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
             <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
@@ -347,6 +357,10 @@ basic.forever(() => {
               </div>
               <!-- v0.7.160: Style popup — all source properties in a compact panel -->
               <div class="tc-src-style-popup" id="tcSrcStylePopup" style="display:none">
+                <div class="tc-ssp-section" id="tcSspShapeColor" style="display:none">
+                  <div class="tc-ssp-title">🟩 Shape Color</div>
+                  <label class="tc-ssp-row"><input type="color" id="tcSrcShapeColor" value="#a3e635" /></label>
+                </div>
                 <div class="tc-ssp-section">
                   <div class="tc-ssp-title">🎨 Look</div>
                   <label class="tc-ssp-row">Opacity <input type="range" id="tcSrcOpacity" min="0" max="100" value="100" /></label>
