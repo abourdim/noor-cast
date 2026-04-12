@@ -424,6 +424,7 @@ const LANG = {
     shadowOffsetX: 'Décalage X ombre',
     shadowOffsetY: 'Décalage Y ombre',
     cornerRadius: 'Coins arrondis',
+    sourceBadge: 'Badge',
     cropTop: 'Rogner haut',
     cropBottom: 'Rogner bas',
     cropLeft: 'Rogner gauche',
@@ -1111,6 +1112,7 @@ const LANG = {
     shadowOffsetX: 'Shadow offset X',
     shadowOffsetY: 'Shadow offset Y',
     cornerRadius: 'Corner radius',
+    sourceBadge: 'Badge',
     cropTop: 'Crop top',
     cropBottom: 'Crop bottom',
     cropLeft: 'Crop left',
@@ -1790,6 +1792,7 @@ const LANG = {
     shadowOffsetX: 'إزاحة X للظل',
     shadowOffsetY: 'إزاحة Y للظل',
     cornerRadius: 'نصف قطر الزوايا',
+    sourceBadge: 'شارة',
     cropTop: 'قص أعلى',
     cropBottom: 'قص أسفل',
     cropLeft: 'قص يسار',
@@ -3078,6 +3081,8 @@ const Engine = {
         ctx.lineWidth = src.borderWidth;
         ctx.strokeRect(x, y, w, h);
       }
+      // v0.7.155: on-canvas source badge/label stamp (image path)
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
       ctx.restore();
       ctx.restore(); // v0.7.114: close globalAlpha wrapper
       return;
@@ -3245,11 +3250,47 @@ const Engine = {
       ctx.restore();
     }
 
+    // v0.7.155: on-canvas source badge/label stamp (video path)
+    if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+
     // v0.7.118: close flip wrapper
     if (src.flipH || src.flipV) ctx.restore();
     // Close the rotation wrapper opened earlier
     if (rot !== 0) ctx.restore();
     ctx.restore(); // v0.7.114: close globalAlpha wrapper
+  },
+
+  /* v0.7.155: draw a small colored pill badge at the top-right corner of a
+     source. Called from drawSource() for both image and video paths when
+     src.badgeText is non-empty. */
+  _drawSourceBadge(ctx, src, x, y, w) {
+    const text = src.badgeText;
+    const color = src.badgeColor || '#e74c3c';
+    ctx.save();
+    ctx.font = 'bold 14px sans-serif';
+    const tm = ctx.measureText(text);
+    const padH = 8, padV = 4;
+    const bw = tm.width + padH * 2;
+    const bh = 20 + padV;
+    const bx = x + w - bw - 6;
+    const by = y + 6;
+    const br = bh / 2;
+    // pill shape
+    ctx.beginPath();
+    ctx.moveTo(bx + br, by);
+    ctx.lineTo(bx + bw - br, by);
+    ctx.arc(bx + bw - br, by + br, br, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(bx + br, by + bh);
+    ctx.arc(bx + br, by + br, br, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    // white text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + bw / 2, by + bh / 2);
+    ctx.restore();
   },
 
   /* v0.7.13: draw a clean Canva-style selection outline around the
@@ -3491,6 +3532,8 @@ const Engine = {
         locked: false,
         rotation: 0,
         cornerRadius: 0,
+        badgeText: '',
+        badgeColor: '#e74c3c',
       };
       this.sources.push(src);
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
@@ -3543,6 +3586,8 @@ const Engine = {
         locked: false,
         rotation: 0,
         cornerRadius: 0,
+        badgeText: '',
+        badgeColor: '#e74c3c',
       };
       this.sources.push(src);
       this.onSourcesChanged();
@@ -3590,6 +3635,8 @@ const Engine = {
           locked: false,
           rotation: 0,
           cornerRadius: 0,
+          badgeText: '',
+          badgeColor: '#e74c3c',
         };
         this.sources.push(src);
         this.onSourcesChanged();
@@ -4161,6 +4208,8 @@ const Scenes = {
         locked: !!s.locked,
         rotation: s.rotation || 0,
         cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
       }));
     if (snapshot.length === 0) {
       showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
@@ -4217,6 +4266,8 @@ const Scenes = {
       target.aspectLock = !!snap.aspectLock;
       target.rotation = snap.rotation || 0;
       target.cornerRadius = snap.cornerRadius || 0;
+      target.badgeText = snap.badgeText || '';
+      target.badgeColor = snap.badgeColor || '#e74c3c';
       target.custom = true;
     });
   },
@@ -4258,6 +4309,8 @@ const Scenes = {
         locked: !!s.locked,
         aspectLock: !!s.aspectLock,
         cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
       }));
     } else {
       snapshot = (src.preview || []).map(p => ({
@@ -4349,6 +4402,8 @@ const Scenes = {
         locked: !!s.locked,
         aspectLock: !!s.aspectLock,
         cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
       }));
     if (snapshot.length === 0) return false;
     scene.snapshot = snapshot;
@@ -9476,6 +9531,21 @@ const SourceToolbar = {
       SceneAutoSave.trigger();
     });
     $('tcSrcCornerRadius')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.155: on-canvas source badge text + color
+    $('tcSrcBadgeText')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.badgeText = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBadgeText')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcBadgeColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.badgeColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBadgeColor')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.119: source crop range sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
       const elId = 'tcSrcCrop' + dir;
@@ -9604,6 +9674,15 @@ const SourceToolbar = {
     if (crEl && crEl.value !== String(s.cornerRadius || 0)) {
       crEl.value = s.cornerRadius || 0;
     }
+    // v0.7.155: sync badge text + color
+    const btEl = $('tcSrcBadgeText');
+    if (btEl && btEl.value !== (s.badgeText || '')) {
+      btEl.value = s.badgeText || '';
+    }
+    const bcBadgeEl = $('tcSrcBadgeColor');
+    if (bcBadgeEl && bcBadgeEl.value !== (s.badgeColor || '#e74c3c')) {
+      bcBadgeEl.value = s.badgeColor || '#e74c3c';
+    }
     // v0.7.119: sync crop sliders
     ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
       const el = $('tcSrcCrop' + dir);
@@ -9702,6 +9781,8 @@ const SourceContextMenu = {
         aspectLock: !!s.aspectLock,
         rotation: s.rotation || 0,
         cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
       };
       Engine.sources.push(copy);
       Engine.onSourcesChanged();
@@ -9805,6 +9886,8 @@ const SourceContextMenu = {
         aspectLock: !!s.aspectLock,
         rotation: s.rotation || 0,
         cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
         flipH: !s.flipH,
       };
       Engine.sources.push(copy);
@@ -10365,6 +10448,8 @@ const LayoutHistory = {
       cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
       cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
       rotation: s.rotation || 0,
+      badgeText: s.badgeText || '',
+      badgeColor: s.badgeColor || '#e74c3c',
     }));
   },
 
@@ -10420,6 +10505,8 @@ const LayoutHistory = {
       s.cropLeft = entry.cropLeft || 0;
       s.cropRight = entry.cropRight || 0;
       s.rotation = entry.rotation || 0;
+      s.badgeText = entry.badgeText || '';
+      s.badgeColor = entry.badgeColor || '#e74c3c';
     });
     Engine.onSourcesChanged();
     this._suppress = false;

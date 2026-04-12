@@ -3,24 +3,23 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.153 — 2026-04-12 (Scene transition wipe effect)
+## v0.7.155 — 2026-04-12 (On-canvas source badge/label stamp)
 
-Adds a horizontal wipe transition mode alongside the existing fade. A vertical
-black bar sweeps left-to-right over ~300 ms when switching scenes. The Settings
-checkbox is replaced by a dropdown selector (None / Fade / Wipe) that persists
-the choice to localStorage.
+Each source can now display a small colored pill badge at its top-right corner
+(e.g. "LIVE", "REPLAY", "DEMO", or any custom text up to 12 characters). The
+badge is drawn on the canvas and is visible in recordings.
 
 ### Added
-- `SceneTransition.mode` property (`'fade'` | `'wipe'`), `setMode()`, `_renderWipe()`.
-- `WIPE_DURATION` constant (300 ms) for the wipe sweep timing.
-- Settings dropdown `<select id="tcSceneTransitionSelect">` replacing the old checkbox.
-- i18n keys `transitionNone`, `transitionFade`, `transitionWipe` (fr / en / ar).
-
-### Changed
-- `SceneTransition.load()` reads `tc-scene-transition-mode` with legacy fallback.
-- `SceneTransition.run()` uses mode-specific duration.
-- `SceneTransition.render()` dispatches to `_renderFade` or `_renderWipe`.
-- `sceneTransitionLabel` i18n updated to generic "Scene transition" wording.
+- `badgeText` (string, default `''`) and `badgeColor` (hex, default `#e74c3c`)
+  fields on every source object (screen, camera, image).
+- `Engine._drawSourceBadge(ctx, src, x, y, w)` helper — draws a pill-shaped
+  background with white centered text at the source's top-right corner.
+- Called from both the image and video draw paths in `Engine.drawSource()`.
+- Source toolbar: text input `#tcSrcBadgeText` + color picker `#tcSrcBadgeColor`
+  with live sync in `SourceToolbar.updatePosition()`.
+- Badge fields persisted in scene snapshots, `SceneAutoSave`, `duplicateScene`,
+  source context-menu duplicate, mirror duplicate, and `LayoutHistory`.
+- i18n key `sourceBadge` in fr / en / ar.
 
 ## v0.7.148 — 2026-04-12 (Keyboard piano overlay for music teachers)
 
