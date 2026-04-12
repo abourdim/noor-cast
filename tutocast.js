@@ -10026,9 +10026,9 @@ const SourceToolbar = {
     if (shapeColorSec) shapeColorSec.style.display = s.type === 'shape' ? '' : 'none';
     const shapeColorEl = $('tcSrcShapeColor');
     if (shapeColorEl && s.type === 'shape') shapeColorEl.value = s.shapeColor || '#a3e635';
-    // v0.7.114: sync opacity
+    // v0.7.114: sync opacity (skip if user is actively dragging the slider)
     const opEl = $('tcSrcOpacity');
-    if (opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);
+    if (opEl && document.activeElement !== opEl) opEl.value = Math.round((s.opacity ?? 1) * 100);
     // v0.7.151: sync filter
     const fiEl = $('tcSrcFilter');
     if (fiEl) fiEl.value = s.filter || 'none';
@@ -10047,20 +10047,20 @@ const SourceToolbar = {
       scEl.value = s.shadowColor || '#000000';
     }
     const sbEl = $('tcSrcShadowBlur');
-    if (sbEl && sbEl.value !== String(s.shadowBlur || 0)) {
+    if (sbEl && document.activeElement !== sbEl && sbEl.value !== String(s.shadowBlur || 0)) {
       sbEl.value = s.shadowBlur || 0;
     }
     const sxEl = $('tcSrcShadowOffsetX');
-    if (sxEl && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
+    if (sxEl && document.activeElement !== sxEl && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
       sxEl.value = s.shadowOffsetX ?? 5;
     }
     const syEl = $('tcSrcShadowOffsetY');
-    if (syEl && syEl.value !== String(s.shadowOffsetY ?? 5)) {
+    if (syEl && document.activeElement !== syEl && syEl.value !== String(s.shadowOffsetY ?? 5)) {
       syEl.value = s.shadowOffsetY ?? 5;
     }
     // v0.7.144: sync corner radius slider
     const crEl = $('tcSrcCornerRadius');
-    if (crEl && crEl.value !== String(s.cornerRadius || 0)) {
+    if (crEl && document.activeElement !== crEl && crEl.value !== String(s.cornerRadius || 0)) {
       crEl.value = s.cornerRadius || 0;
     }
     // v0.7.155: sync badge text + color
