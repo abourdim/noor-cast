@@ -2048,23 +2048,23 @@ body.log-open .app {
   flex-wrap: wrap;
 }
 .tc-rec-btn {
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 8px;
   background: linear-gradient(180deg, #ef4444, #991b1b);
   color: #fff;
-  border: 3px solid #7f1d1d;
-  border-radius: 20px;
-  padding: 18px 36px;
+  border: 2px solid #7f1d1d;
+  border-radius: 14px;
+  padding: 10px 22px;
   font-family: var(--font-h);
-  font-size: 1.3rem;
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 8px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.2);
+  box-shadow: 0 4px 0 rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2);
   transition: transform .1s, box-shadow .1s;
   text-transform: uppercase;
   letter-spacing: .05em;
 }
 .tc-rec-btn .tc-rec-icon {
-  font-size: 1.8rem;
+  font-size: 1.1rem;
   animation: recBtnPulse 1.8s ease-in-out infinite;
 }
 @keyframes recBtnPulse {
