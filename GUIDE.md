@@ -97,6 +97,20 @@ This is Apple's **Continuity Camera** — zero setup.
 
 There is **no limit** on the number of cameras. Add as many as your computer can handle — each is an independent source you can place in any scene. Typical setups use 2-4 cameras + 1 screen share.
 
+### Ways to add cameras
+
+| Source | How to add | Cost |
+|--------|-----------|------|
+| Built-in laptop webcam | Already in the dropdown → + Add | Free |
+| USB webcam | Plug in USB, select in dropdown → + Add | ~10-15 EUR |
+| Second USB webcam | Plug in another, shows as separate entry → + Add | ~10-15 EUR |
+| iPhone (Mac only) | Same Wi-Fi + Apple ID → appears automatically | Free |
+| Phone via DroidCam | Install app + driver → "DroidCam Source" in dropdown | Free |
+| Phone via Iriun | Install app + driver → "Iriun Webcam" in dropdown | Free |
+| Phone via Camo | Install app + driver → "Camo" in dropdown | Free / paid |
+
+You can **mix and match** — e.g. laptop webcam + 1 USB cam + 2 phones via DroidCam = 4 cameras. Each click on **+ Camera** adds a new independent source.
+
 ### Using the Robot Tuto template
 
 1. On first launch, pick **🤖 Robot Tuto**
