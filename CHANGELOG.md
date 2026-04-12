@@ -3,22 +3,21 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.140 — 2026-04-12 (FPS counter overlay)
+## v0.7.141 — 2026-04-12 (Large recording elapsed timer on canvas)
 
-Opt-in frames-per-second counter drawn on a dedicated overlay canvas so it
-is teacher-only and never appears in recordings. Shows a colour-coded pill
-(green/yellow/red) at the top-right corner of the stage. FPS is recomputed
-every 500 ms from the existing `Engine.render()` loop. Toggle in Settings;
-persisted in `localStorage` as `tc-fps-counter`.
+Opt-in elapsed time counter (HH:MM:SS) drawn at the bottom-center of the
+canvas in a semi-transparent dark pill while recording. Visible in the
+exported video. Toggle in Settings, default off. Persisted as `tc-rec-elapsed`.
 
 ### Added
-- `FpsCounter` object in `tutocast.js`: `init()`, `tick()` (called each
-  frame, recomputes every 500 ms), `render()` (draws pill on overlay
-  canvas), `toggle()`, `load()`, `_save()`, `_clear()`.
-- `<canvas id="tcFpsCanvas">` overlay in `index.html` — outside the
-  captureStream pipeline so the counter never enters recordings.
-- Settings checkbox `tcFpsCounterToggle` with `data-i18n="fpsCounter"`.
-- i18n keys `fpsCounter`, `fpsCounterOn`, `fpsCounterOff` in FR, EN, AR.
+- `RecElapsed` object in `tutocast.js`: `visible`, `_startTime`, `load()`,
+  `setVisible()`, `setup()`, `render(ctx, W, H)` — computes elapsed seconds
+  from `Recorder.startTime`, formats as HH:MM:SS, draws a rounded dark pill
+  at bottom-center.
+- Render call in `Engine.render()` after `AudioViz`.
+- Settings toggle `tcRecElapsedToggle` in `index.html`.
+- Settings wiring and `RecElapsed.load()` at startup in `tutocast.js`.
+- i18n key `recElapsedLabel` in FR, EN, AR.
 
 ---
 

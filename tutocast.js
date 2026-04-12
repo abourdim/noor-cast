@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.139 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.141 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -202,6 +202,7 @@ const LANG = {
     clockDateLabel: '+ date',
     recIndicatorLabel: '🔴 Pastille REC pendant l\'enregistrement',
     audioVizLabel: '🎵 Visualiseur audio sur le canvas',
+    recElapsedLabel: '⏱ Chrono écoulé pendant l\'enregistrement',
     badgeBtn: 'Carte badge',
     badgeHeadline: 'Tuto enregistré !',
     badgeStatDuration: 'Durée',
@@ -871,6 +872,7 @@ const LANG = {
     clockDateLabel: '+ date',
     recIndicatorLabel: '🔴 REC dot while recording',
     audioVizLabel: '🎵 Audio waveform on canvas',
+    recElapsedLabel: '⏱ Elapsed timer while recording',
     badgeBtn: 'Badge card',
     badgeHeadline: 'Tutorial recorded!',
     badgeStatDuration: 'Duration',
@@ -1532,6 +1534,7 @@ const LANG = {
     clockDateLabel: '+ التاريخ',
     recIndicatorLabel: '🔴 نقطة REC أثناء التسجيل',
     audioVizLabel: '🎵 مؤثر صوتي على الكانفا',
+    recElapsedLabel: '⏱ مؤقت الوقت المنقضي أثناء التسجيل',
     badgeBtn: 'بطاقة شارة',
     badgeHeadline: 'تم تسجيل الدرس!',
     badgeStatDuration: 'المدة',
@@ -2852,6 +2855,9 @@ const Engine = {
 
     // v0.7.135: on-canvas audio waveform visualizer (bottom edge bars)
     AudioViz.render(ctx, width, height);
+
+    // v0.7.141: large recording elapsed timer (bottom-center pill)
+    RecElapsed.render(ctx, width, height);
 
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
@@ -10307,6 +10313,77 @@ const AudioViz = {
   },
 };
 
+/* ─────────── RecElapsed — v0.7.141 large recording elapsed timer on canvas
+
+   Displays an elapsed time counter (HH:MM:SS) at the bottom-center of the
+   canvas in a semi-transparent dark pill while recording.  Visible in the
+   exported video.  Opt-in via Settings toggle, persisted as `tc-rec-elapsed`
+   (default OFF). Uses Recorder.startTime to compute elapsed seconds. */
+const RecElapsed = {
+  visible: false,
+  _startTime: 0,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-rec-elapsed') === '1';
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-rec-elapsed', v ? '1' : '0'); } catch {}
+  },
+
+  setup() {
+    // _startTime is set when recording begins; see Recorder.start()
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    if (Recorder.state !== 'recording') return;
+
+    // Compute elapsed from Recorder.startTime, accounting for paused time
+    const now = Date.now();
+    const elapsed = Math.max(0, Math.floor((now - Recorder.startTime - (Recorder.pausedDuration || 0)) / 1000));
+    const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    const text = `${hh}:${mm}:${ss}`;
+
+    ctx.save();
+
+    // Measure text for pill sizing
+    ctx.font = '700 28px ui-monospace, monospace';
+    const m = ctx.measureText(text);
+    const padX = 18, padY = 10;
+    const pillW = m.width + padX * 2;
+    const pillH = 36 + padY;
+    const x = (W - pillW) / 2;
+    const y = H - pillH - 16;
+
+    // Semi-transparent dark pill
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    const r = pillH / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + pillW - r, y);
+    ctx.arcTo(x + pillW, y, x + pillW, y + r, r);
+    ctx.arcTo(x + pillW, y + pillH, x + pillW - r, y + pillH, r);
+    ctx.lineTo(x + r, y + pillH);
+    ctx.arcTo(x, y + pillH, x, y + pillH - r, r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+    ctx.fill();
+
+    // HH:MM:SS text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, W / 2, y + pillH / 2);
+
+    ctx.restore();
+  },
+};
+
 /* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
 
    Teacher sets a duration (1-60 min, default 5 min) in Settings and
@@ -13656,6 +13733,13 @@ function wireEvents() {
     avEl.addEventListener('change', (e) => AudioViz.setVisible(e.target.checked));
   }
 
+  // v0.7.141: recording elapsed timer toggle
+  const reEl = $('tcRecElapsedToggle');
+  if (reEl) {
+    reEl.checked = RecElapsed.visible;
+    reEl.addEventListener('change', (e) => RecElapsed.setVisible(e.target.checked));
+  }
+
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');
   if (ioEl) {
@@ -13861,6 +13945,7 @@ async function init() {
   ClockOverlay.load();  // v0.7.90
   RecIndicator.load();  // v0.7.120
   AudioViz.load();  // v0.7.135
+  RecElapsed.load();  // v0.7.141
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();
