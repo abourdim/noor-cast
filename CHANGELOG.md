@@ -3,23 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.152 — 2026-04-12 (Cinematic letterbox bars)
+## v0.7.153 — 2026-04-12 (Scene transition wipe effect)
 
-Toggle-able cinematic black bars (letterbox) drawn at top and bottom of the
-canvas. Adjustable height (5-20% of canvas). Visible in recordings. Gives a
-movie-like feel.
+Adds a horizontal wipe transition mode alongside the existing fade. A vertical
+black bar sweeps left-to-right over ~300 ms when switching scenes. The Settings
+checkbox is replaced by a dropdown selector (None / Fade / Wipe) that persists
+the choice to localStorage.
 
 ### Added
-- `Letterbox` object with `visible`, `height` (default 10%), `toggle()`,
-  `setVisible(v)`, `setHeight(h)`, `render(ctx, W, H)`.
-- Two solid black rectangles: top `(0, 0, W, H*height)` and bottom
-  `(0, H-H*height, W, H*height)`.
-- Settings panel: toggle checkbox (`tcLetterboxToggle`) + height slider
-  (`tcLetterboxHeight`, 5-20%).
-- Persists via `localStorage` key `tc-letterbox`.
-- Tools bar button `🎬 Bars` (`tcLetterboxBtn`).
-- `Engine.render()` calls `Letterbox.render()` after PianoOverlay.
-- i18n keys: `letterboxBars`, `letterboxLabel`, `letterboxHeight` (fr/en/ar).
+- `SceneTransition.mode` property (`'fade'` | `'wipe'`), `setMode()`, `_renderWipe()`.
+- `WIPE_DURATION` constant (300 ms) for the wipe sweep timing.
+- Settings dropdown `<select id="tcSceneTransitionSelect">` replacing the old checkbox.
+- i18n keys `transitionNone`, `transitionFade`, `transitionWipe` (fr / en / ar).
+
+### Changed
+- `SceneTransition.load()` reads `tc-scene-transition-mode` with legacy fallback.
+- `SceneTransition.run()` uses mode-specific duration.
+- `SceneTransition.render()` dispatches to `_renderFade` or `_renderWipe`.
+- `sceneTransitionLabel` i18n updated to generic "Scene transition" wording.
 
 ## v0.7.148 — 2026-04-12 (Keyboard piano overlay for music teachers)
 

@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.150';
+const APP_VERSION = '0.7.153';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -323,7 +323,10 @@ const LANG = {
     sceneAutoSave: '💾 Sauvegarde auto de la scène quand les sources changent',
     sceneAutoSaved: '💾 Scène sauvegardée auto',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
-    sceneTransitionLabel: '🎞 Transition fondu entre scènes',
+    sceneTransitionLabel: '🎞 Transition entre scènes',
+    transitionNone: 'Aucune',
+    transitionFade: 'Fondu',
+    transitionWipe: 'Balayage',
     duckLabel: "🔉 Baisser l'audio des sources quand tu parles",
     screensaverLabel: "💤 Screensaver après 90s d'inactivité",
     screensaverHint: 'Touche une touche pour réveiller',
@@ -1007,7 +1010,10 @@ const LANG = {
     sceneAutoSave: '💾 Auto-save scene on source changes',
     sceneAutoSaved: '💾 Scene auto-saved',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
-    sceneTransitionLabel: '🎞 Scene transition fade',
+    sceneTransitionLabel: '🎞 Scene transition',
+    transitionNone: 'None',
+    transitionFade: 'Fade',
+    transitionWipe: 'Wipe',
     duckLabel: '🔉 Duck source audio when you speak',
     screensaverLabel: '💤 Screensaver after 90s idle',
     screensaverHint: 'Press any key to wake up',
@@ -1683,7 +1689,10 @@ const LANG = {
     sceneAutoSave: '💾 حفظ تلقائي للمشهد عند تغيير المصادر',
     sceneAutoSaved: '💾 تم حفظ المشهد تلقائيًا',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
-    sceneTransitionLabel: '🎞 انتقال مع تلاشي بين المشاهد',
+    sceneTransitionLabel: '🎞 انتقال بين المشاهد',
+    transitionNone: 'بدون',
+    transitionFade: 'تلاشي',
+    transitionWipe: 'مسح',
     duckLabel: '🔉 خفض صوت المصادر عند التحدث',
     screensaverLabel: '💤 شاشة توقف بعد 90 ثانية',
     screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
@@ -4460,17 +4469,40 @@ const SceneAutoSave = {
    localStorage as tc-scene-transition. */
 const SceneTransition = {
   enabled: false,
+  mode: 'fade',    // 'fade' | 'wipe'
   DURATION: 400,   // ms total (200 fade out + 200 fade in)
+  WIPE_DURATION: 300, // ms for wipe sweep
   _activeUntil: 0,
   _midpointAt: 0,
   _pendingApply: null,
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-scene-transition') === '1'; } catch {}
+    try {
+      const stored = localStorage.getItem('tc-scene-transition-mode');
+      if (stored === 'fade' || stored === 'wipe') {
+        this.mode = stored;
+        this.enabled = true;
+      } else if (stored === 'none' || stored === null) {
+        // migrate from old boolean key
+        const legacy = localStorage.getItem('tc-scene-transition');
+        if (legacy === '1') { this.enabled = true; this.mode = 'fade'; }
+        else { this.enabled = false; }
+      }
+    } catch {}
   },
+  setMode(v) {
+    if (v === 'none') {
+      this.enabled = false;
+      this.mode = 'fade';
+    } else {
+      this.enabled = true;
+      this.mode = v;
+    }
+    try { localStorage.setItem('tc-scene-transition-mode', v); } catch {}
+  },
+  // Keep legacy setter for compat
   setEnabled(v) {
-    this.enabled = !!v;
-    try { localStorage.setItem('tc-scene-transition', v ? '1' : '0'); } catch {}
+    this.setMode(v ? 'fade' : 'none');
   },
 
   // Called INSTEAD of applying the scene directly, if enabled.
@@ -4478,24 +4510,31 @@ const SceneTransition = {
   run(scene, engine) {
     if (!this.enabled) return false;
     const now = performance.now();
-    this._activeUntil = now + this.DURATION;
-    this._midpointAt = now + this.DURATION / 2;
+    const dur = this.mode === 'wipe' ? this.WIPE_DURATION : this.DURATION;
+    this._activeUntil = now + dur;
+    this._midpointAt = now + dur / 2;
     this._pendingApply = () => scene.apply(engine);
-    // Wait 200ms (midpoint), apply the scene, let the render loop
-    // finish the fade-in during the second half
     setTimeout(() => {
       if (this._pendingApply) {
         this._pendingApply();
         this._pendingApply = null;
       }
-    }, this.DURATION / 2);
+    }, dur / 2);
     return true;
   },
 
-  // Called from Engine.render() each frame — draws the fade overlay
+  // Called from Engine.render() each frame — draws the transition overlay
   render(ctx, W, H) {
     const now = performance.now();
     if (now >= this._activeUntil) return;
+    if (this.mode === 'wipe') {
+      this._renderWipe(ctx, W, H, now);
+    } else {
+      this._renderFade(ctx, W, H, now);
+    }
+  },
+
+  _renderFade(ctx, W, H, now) {
     const elapsed = this.DURATION - (this._activeUntil - now);
     const half = this.DURATION / 2;
     // Fade out 0..1 over first half, then fade in 1..0 over second half
@@ -4505,6 +4544,34 @@ const SceneTransition = {
     ctx.save();
     ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, Math.min(1, alpha))})`;
     ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.153: horizontal wipe — a vertical black bar sweeps left-to-right
+  _renderWipe(ctx, W, H, now) {
+    const dur = this.WIPE_DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const progress = Math.max(0, Math.min(1, elapsed / dur));
+    const barW = Math.max(40, W * 0.12); // wipe bar width ~12% of canvas
+    ctx.save();
+    // Everything left of the leading edge is black in the first half,
+    // everything right of the trailing edge is black in the second half
+    const half = 0.5;
+    if (progress <= half) {
+      // Sweep in: bar travels from left edge to right, covering content
+      const t = progress / half; // 0..1
+      const leadX = t * (W + barW);
+      // Fill everything from left edge to the leading edge
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, leadX, H);
+    } else {
+      // Sweep out: bar continues rightward, revealing new content behind it
+      const t = (progress - half) / half; // 0..1
+      const trailX = t * (W + barW);
+      // Fill from trailing edge to right edge
+      ctx.fillStyle = '#000';
+      ctx.fillRect(trailX, 0, W - trailX, H);
+    }
     ctx.restore();
   },
 };
@@ -14515,11 +14582,11 @@ function wireEvents() {
     siEl.checked = SceneIntroText.enabled;
     siEl.addEventListener('change', (e) => SceneIntroText.setEnabled(e.target.checked));
   }
-  // v0.7.64: opt-in scene transition fade effect
-  const stEl = $('tcSceneTransitionToggle');
+  // v0.7.64 / v0.7.153: scene transition mode selector (none/fade/wipe)
+  const stEl = $('tcSceneTransitionSelect');
   if (stEl) {
-    stEl.checked = SceneTransition.enabled;
-    stEl.addEventListener('change', (e) => SceneTransition.setEnabled(e.target.checked));
+    stEl.value = SceneTransition.enabled ? SceneTransition.mode : 'none';
+    stEl.addEventListener('change', (e) => SceneTransition.setMode(e.target.value));
   }
   // v0.7.127: auto-save scene on source changes
   const asEl = $('tcSceneAutoSaveToggle');
