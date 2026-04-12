@@ -3,23 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.142 — 2026-04-12 (Source aspect ratio lock during resize)
+## v0.7.138 — 2026-04-12 (Multi-source selection)
 
-Per-source aspect ratio lock toggle. When enabled, the source's width/height
-ratio is always maintained during resize — even if Shift is held. A chain-link
-button in the source toolbar toggles the lock per source. Property persists
-across scenes and source duplication.
+Shift+click to select multiple sources on the canvas. When multiple sources
+are selected, dragging moves them all together. A "Select All" button in the
+tools bar selects all visible sources. Escape clears the selection.
 
 ### Added
-- `aspectLock` boolean property on sources (default `false`).
-- Resize handler: when `aspectLock === true`, Shift no longer unlocks free
-  stretch — dimensions are always constrained to the original ratio.
-- Toolbar button (`tcSrcToolbarAspect`) toggles aspect lock per source.
-- i18n keys `aspectLockOn` / `aspectLockOff` in FR, EN, AR.
-- `aspectLock` persisted in scene save, scene apply, scene duplicate, and
-  source duplicate (context menu).
-
----
+- `MultiSelect` object in `tutocast.js`: `sources[]`, `add(src)`, `remove(src)`,
+  `clear()`, `has(src)`, `moveAll(dx, dy)`, `selectAll()`.
+- Shift+click on a source toggles it in/out of the multi-selection set.
+  Normal click replaces the selection as before.
+- Multi-drag: dragging any source in a multi-selection moves all selected
+  sources by the same delta, clamped to canvas bounds.
+- Dashed sky-blue outline drawn on all multi-selected sources (distinct from
+  the primary accent-green chrome on the single-selected source).
+- "Select All" button (`#tcSelectAllBtn`) in the tools bar (`index.html`).
+- Escape clears the multi-selection and shows a toast.
+- i18n keys `selectAll`, `multiSelected`, `multiDeselected` in fr/en/ar.
 
 ## v0.7.134 — 2026-04-12 (Dynamic hotkey reference panel)
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.141 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.138 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.142';
+const APP_VERSION = '0.7.138';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -693,6 +693,8 @@ const LANG = {
     v100Continue: 'Continuer',
     // v0.7.134: hotkey reference panel
     hotkeyRefTab: 'Raccourcis', hotkeyRefSearch: 'Filtrer les raccourcis...', hotkeyRefNoMatch: 'Aucun raccourci trouvé',
+    // v0.7.138: multi-source selection
+    selectAll: 'Tout', multiSelected: 'sources sélectionnées', multiDeselected: 'Sélection vidée',
   },
   en: {
     title: 'TutoCast', slogan: '🎬 Lights, camera, ROBOT!',
@@ -1365,6 +1367,8 @@ const LANG = {
     v100Continue: 'Continue',
     // v0.7.134: hotkey reference panel
     hotkeyRefTab: 'Hotkeys', hotkeyRefSearch: 'Filter shortcuts...', hotkeyRefNoMatch: 'No shortcuts found',
+    // v0.7.138: multi-source selection
+    selectAll: 'All', multiSelected: 'sources selected', multiDeselected: 'Selection cleared',
   },
   ar: {
     title: 'TutoCast', slogan: '🎬 أضواء، كاميرا، روبوت!',
@@ -2023,6 +2027,8 @@ const LANG = {
     v100Continue: 'متابعة',
     // v0.7.134: hotkey reference panel
     hotkeyRefTab: 'اختصارات', hotkeyRefSearch: 'تصفية الاختصارات...', hotkeyRefNoMatch: 'لم يتم العثور على اختصارات',
+    // v0.7.138: multi-source selection
+    selectAll: 'الكل', multiSelected: 'مصادر محددة', multiDeselected: 'تم مسح التحديد',
   }
 };
 
@@ -3183,6 +3189,20 @@ const Engine = {
     const selId = Drag.selectedSourceId;
     if (selId == null) {
       this.sources.forEach(s => { s._chromeDel = null; s._chromeHide = null; });
+      // v0.7.138: even without a primary selection, draw multi-select chrome
+      if (MultiSelect.sources.length > 0) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        for (const ms of MultiSelect.sources) {
+          if (ms.type === 'mic' || !ms.visible || ms.hidden) continue;
+          ctx.strokeRect(ms.x - 3, ms.y - 3, ms.w + 6, ms.h + 6);
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
       return;
     }
     const s = this.sources.find(x => x.id === selId);
@@ -3226,6 +3246,23 @@ const Engine = {
       ctx.strokeRect(cx - hs / 2, cy - hs / 2, hs, hs);
     });
     ctx.restore();
+
+    // v0.7.138: draw selection chrome on all multi-selected sources (except
+    // the primary which already has the full chrome drawn above).
+    if (MultiSelect.sources.length > 1) {
+      ctx.save();
+      const msAccent = '#38bdf8';  // sky-blue to distinguish from primary accent
+      ctx.strokeStyle = msAccent;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 8]);
+      for (const ms of MultiSelect.sources) {
+        if (ms.id === selId) continue;  // primary already drawn
+        if (ms.type === 'mic' || !ms.visible || ms.hidden) continue;
+        ctx.strokeRect(ms.x - 3, ms.y - 3, ms.w + 6, ms.h + 6);
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
   },
 
   /* Build a canvas path for the given shape. Centralized so glow + clip
@@ -6377,6 +6414,55 @@ const SnapGrid = {
   },
 };
 
+/* v0.7.138: multi-source selection — Shift+click to add/remove sources,
+   drag moves all selected sources together. "Select All" in tools bar,
+   Escape clears. */
+const MultiSelect = {
+  sources: [],   // array of source refs currently in the multi-selection
+
+  add(src) {
+    if (!this.sources.includes(src)) this.sources.push(src);
+  },
+
+  remove(src) {
+    const i = this.sources.indexOf(src);
+    if (i >= 0) this.sources.splice(i, 1);
+  },
+
+  clear() {
+    this.sources.length = 0;
+  },
+
+  has(src) {
+    return this.sources.includes(src);
+  },
+
+  /** Move every selected source by the same delta, clamped to canvas. */
+  moveAll(dx, dy) {
+    const W = Engine.width, H = Engine.height;
+    for (const s of this.sources) {
+      let nx = s.x + dx;
+      let ny = s.y + dy;
+      nx = Math.max(0, Math.min(W - s.w, nx));
+      ny = Math.max(0, Math.min(H - s.h, ny));
+      s.x = nx;
+      s.y = ny;
+      s.custom = true;
+    }
+    if (this.sources.length) Engine.onSourcesChanged();
+  },
+
+  /** Select all visible, non-mic sources. */
+  selectAll() {
+    this.clear();
+    for (const s of Engine.sources) {
+      if (s.type !== 'mic' && s.visible !== false && !s.hidden && s.video) {
+        this.add(s);
+      }
+    }
+  },
+};
+
 const Drag = {
   state: null,  // { kind, ref, mode: 'move'|'resize', corner, offsetX, offsetY, startW, startH, startX, startY, aspect }
   selectedSourceId: null,   // v0.7.2: track the last-clicked source for Delete-key removal
@@ -6620,15 +6706,43 @@ const Drag = {
     if (!hit) {
       // Clicking empty canvas deselects any selected text overlay
       if (TextOverlays.selectedId != null) TextOverlays.selectedId = null;
+      // v0.7.138: clear multi-select on empty canvas click
+      MultiSelect.clear();
       return;
     }
     const { kind, ref } = hit;
     // Mark text selection for the visible selection rectangle
     if (kind === 'text') TextOverlays.selectedId = ref.id;
     else TextOverlays.selectedId = null;
-    // Mark source selection so Delete/Backspace can remove it
-    if (kind === 'source') this.selectedSourceId = ref.id;
-    else this.selectedSourceId = null;
+
+    // v0.7.138: Shift+click on a source toggles it in/out of multi-select.
+    // Normal click replaces the selection entirely.
+    if (kind === 'source') {
+      if (e.shiftKey) {
+        if (MultiSelect.has(ref)) {
+          MultiSelect.remove(ref);
+        } else {
+          // If nothing was multi-selected yet, add the previously-selected
+          // single source first so both end up in the set.
+          if (MultiSelect.sources.length === 0 && this.selectedSourceId != null) {
+            const prev = Engine.sources.find(s => s.id === this.selectedSourceId);
+            if (prev && prev !== ref) MultiSelect.add(prev);
+          }
+          MultiSelect.add(ref);
+        }
+        this.selectedSourceId = ref.id;
+        e.preventDefault();
+        // Don't start a drag on a shift-click — it's purely selection toggling.
+        return;
+      } else {
+        // Normal click: clear multi-select if clicking a source not in the set
+        if (!MultiSelect.has(ref)) MultiSelect.clear();
+        this.selectedSourceId = ref.id;
+      }
+    } else {
+      this.selectedSourceId = null;
+      MultiSelect.clear();
+    }
 
     // v0.7.122: locked sources can be selected (toolbar visible) but not
     // dragged or resized. Show a brief toast so the teacher knows why.
@@ -6641,6 +6755,8 @@ const Drag = {
     // Corner-near → resize, otherwise move
     const corner = this._nearCorner(ref, mx, my);
     if (corner >= 0) {
+      // v0.7.138: resize always acts on a single source, clear multi-select
+      MultiSelect.clear();
       this.state = {
         kind, ref, mode: 'resize', corner,
         startX: ref.x, startY: ref.y, startW: ref.w, startH: ref.h,
@@ -6664,6 +6780,9 @@ const Drag = {
         pending: true,
         downX: mx,
         downY: my,
+        // v0.7.138: remember the last canvas position for multi-drag delta
+        lastMx: mx,
+        lastMy: my,
       };
       // Pin text overlays on first interaction so they don't auto-fade
       if (kind === 'text') TextOverlays.pin(ref.id);
@@ -6686,6 +6805,9 @@ const Drag = {
         const d2 = (mx - s.downX) ** 2 + (my - s.downY) ** 2;
         if (d2 < this.THRESHOLD_PX * this.THRESHOLD_PX) return;
         s.pending = false;  // drag engaged — fall through to the move logic
+        // v0.7.138: sync lastMx/lastMy so the first multi-drag delta is correct
+        s.lastMx = mx;
+        s.lastMy = my;
       }
       let nx = mx - s.offsetX;
       let ny = my - s.offsetY;
@@ -6769,8 +6891,17 @@ const Drag = {
       // Keep inside canvas
       nx = Math.max(0, Math.min(Engine.width  - ref.w, nx));
       ny = Math.max(0, Math.min(Engine.height - ref.h, ny));
-      ref.x = nx; ref.y = ny;
-      if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
+      // v0.7.138: multi-source drag — move all selected sources by the same delta
+      if (s.kind === 'source' && MultiSelect.sources.length > 1 && MultiSelect.has(ref)) {
+        const dx = mx - s.lastMx;
+        const dy = my - s.lastMy;
+        s.lastMx = mx;
+        s.lastMy = my;
+        MultiSelect.moveAll(dx, dy);
+      } else {
+        ref.x = nx; ref.y = ny;
+        if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
+      }
     } else {
       // resize
       // corner: 0=TL, 1=TR, 2=BL, 3=BR
@@ -13099,6 +13230,13 @@ function setupHotkeys() {
       }
     }
     if (k === 'escape') {
+      // v0.7.138: clear multi-source selection on Escape
+      if (MultiSelect.sources.length > 0) {
+        MultiSelect.clear();
+        Drag.selectedSourceId = null;
+        showToast(t('multiDeselected'), 1000);
+        return;
+      }
       // v0.7.121: cancel color picker if active
       if (ColorPicker.active) { ColorPicker.deactivate(); return; }
       // v0.7.24: cheat sheet gets closed first if open
@@ -13391,6 +13529,14 @@ function wireEvents() {
   // v0.7.131: undo/redo toolbar buttons
   $('tcUndoBtn')?.addEventListener('click', () => LayoutHistory.undo());
   $('tcRedoBtn')?.addEventListener('click', () => LayoutHistory.redo());
+  // v0.7.138: select all visible sources
+  $('tcSelectAllBtn')?.addEventListener('click', () => {
+    MultiSelect.selectAll();
+    if (MultiSelect.sources.length) {
+      Drag.selectedSourceId = MultiSelect.sources[0].id;
+      showToast(`${MultiSelect.sources.length} ${t('multiSelected')}`, 1200);
+    }
+  });
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
