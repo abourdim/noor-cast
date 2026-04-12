@@ -26,14 +26,14 @@
 <!-- v0.7.158: skip-to-content link for accessibility -->
 <a href="#tcToolsBar" class="tc-skip-link">Skip to main content</a>
   <!-- ═══════════════════ SPLASH SCREEN ═══════════════════ -->
-  <div class="splash" id="splash" onclick="dismissSplash()">
+  <div class="splash" id="splash">
     <div class="splash-inner">
       <div class="splash-logo" id="splashLogo">
         <img src="logo.svg" alt="TutoCast" width="140" height="140" />
       </div>
       <div class="splash-title">TutoCast</div>
       <div class="splash-sub" data-i18n="slogan">🎬 Lumière, caméra, ROBOT !</div>
-      <a class="splash-credit" href="https://workshop-diy.org" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+      <a class="splash-credit" href="https://workshop-diy.org" target="_blank" rel="noopener" id="tcSplashCredit">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
         </svg>
@@ -194,7 +194,7 @@
                 <button class="tc-sfx-trigger" data-sfx="ding">🔔 <span data-i18n="sbDing">Ding</span></button><button class="tc-sfx-trigger" data-sfx="buzz">❌ <span data-i18n="sbBuzz">Buzz</span></button><button class="tc-sfx-trigger" data-sfx="clap">👏 <span data-i18n="sbClap">Clap</span></button><button class="tc-sfx-trigger" data-sfx="roll">🥁 <span data-i18n="sbRoll">Roll</span></button><button class="tc-sfx-trigger" data-sfx="whistle">🎵 <span data-i18n="sbWhistle">Whistle</span></button><button class="tc-sfx-trigger" data-sfx="whoosh">💨 <span data-i18n="sbWhoosh">Whoosh</span></button>
               </div>
               <button class="tc-tool-btn" id="tcFocusBtn" title="Focus (Shift+F)"><span class="tc-tool-icon">🔳</span><span class="tc-tool-label" data-i18n="focusMode">Focus</span><kbd>⇧F</kbd></button>
-              <button class="tc-tool-btn" id="tcRandomSceneBtn" title="Random (?)" onclick="Scenes.random()"><span class="tc-tool-icon">🎲</span><span class="tc-tool-label" data-i18n="randomScene">Random</span><kbd>?</kbd></button>
+              <button class="tc-tool-btn" id="tcRandomSceneBtn" title="Random (?)"><span class="tc-tool-icon">🎲</span><span class="tc-tool-label" data-i18n="randomScene">Random</span><kbd>?</kbd></button>
               <button class="tc-tool-btn" id="tcColorPickerBtn" title="Color picker"><span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="colorPicker">Pick</span></button>
             </div>
           </div>
@@ -1190,7 +1190,7 @@
           <p data-i18n="cam_camo_body">Free tier is limited, paid plan adds advanced controls. Best image quality.</p>
         </div>
         <div style="margin-top:16px;text-align:center">
-          <button class="tc-btn" id="tcCamSetupBtn" data-i18n="cam_setup_btn" onclick="CameraWizard.start()">📷 Set up cameras</button>
+          <button class="tc-btn" id="tcCamSetupBtn" data-i18n="cam_setup_btn">📷 Set up cameras</button>
         </div>
       </div>
       <div class="help-content" id="helpHotkeys"></div>

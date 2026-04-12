@@ -2208,7 +2208,9 @@ function dismissSplash() {
   el.classList.add('hidden');
   setTimeout(() => el.remove(), 600);
 }
-window.dismissSplash = dismissSplash;
+// v0.7.159: wire splash click + credit stopPropagation (removed inline onclick)
+$('splash')?.addEventListener('click', dismissSplash);
+$('tcSplashCredit')?.addEventListener('click', (e) => e.stopPropagation());
 
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
@@ -5658,14 +5660,39 @@ const Recorder = {
       this.retryRegions = [];
       this._chunkCount = 0;
       this._totalBytes = 0;
+      this._fileWriter = null; // v0.7.159: File System Access API writer
+
+      // v0.7.159: try to open a writable file handle for streaming long recordings
+      // to disk instead of accumulating all chunks in RAM.
+      if (typeof showSaveFilePicker === 'function') {
+        try {
+          const ext = this.recorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
+          const handle = await showSaveFilePicker({
+            suggestedName: `tutocast-${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.${ext}`,
+            types: [{ description: 'Video', accept: { [`video/${ext}`]: [`.${ext}`] } }],
+          });
+          this._fileWriter = await handle.createWritable();
+          log('💾 Streaming to disk via File System Access API', 'info');
+        } catch {
+          // User cancelled or API unavailable — fall back to RAM chunks
+          this._fileWriter = null;
+        }
+      }
+
       this.recorder.ondataavailable = e => {
         this._chunkCount++;
         const sz = e.data ? e.data.size : 0;
         this._totalBytes += sz;
-        if (sz > 0) this.chunks.push(e.data);
-        // Log every chunk during the first few, then occasionally
+        if (sz > 0) {
+          if (this._fileWriter) {
+            // Stream directly to disk
+            this._fileWriter.write(e.data).catch(() => {});
+          } else {
+            this.chunks.push(e.data);
+          }
+        }
         if (this._chunkCount <= 3 || this._chunkCount % 20 === 0) {
-          log(`📦 chunk #${this._chunkCount}: ${sz} B (total ${this._totalBytes} B)`, sz > 0 ? 'info' : 'error');
+          log(`📦 chunk #${this._chunkCount}: ${sz} B (total ${this._totalBytes} B)${this._fileWriter ? ' [disk]' : ''}`, sz > 0 ? 'info' : 'error');
         }
       };
       this.recorder.onerror = (e) => {
@@ -5881,6 +5908,15 @@ const Recorder = {
   },
 
   finish() {
+    // v0.7.159: if streaming to disk, close the writer — file is already saved
+    if (this._fileWriter) {
+      this._fileWriter.close().then(() => {
+        log('💾 Recording saved to disk via File System Access API', 'info');
+        showToast('💾 Recording saved to disk!', 3000);
+      }).catch(() => {});
+      this._fileWriter = null;
+      // Still run the rest of finish() for chapters/history but with an empty blob
+    }
     log(`🏁 finish: ${this.chunks.length} chunks, ${this._totalBytes || 0} B total`, 'info');
     const mimeType = this.chunks[0]?.type || 'video/webm';
     const blob = new Blob(this.chunks, { type: mimeType });
@@ -14520,6 +14556,9 @@ function wireEvents() {
   $('tcPianoBtn')?.addEventListener('click', () => PianoOverlay.toggle());
   $('tcLetterboxBtn')?.addEventListener('click', () => Letterbox.toggle());
   $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
+  // v0.7.159: moved from inline onclick to JS
+  $('tcRandomSceneBtn')?.addEventListener('click', () => Scenes.random());
+  $('tcCamSetupBtn')?.addEventListener('click', () => CameraWizard.start());
   $('tcTextStampBtn')?.addEventListener('click', () => TextStamps.togglePopup());
   $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
   $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
