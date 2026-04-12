@@ -418,39 +418,38 @@
             <button class="tc-btn-full tc-reset-layout" id="tcResetLayoutBtn" data-i18n="resetLayout">🔓 Réinitialiser la disposition</button>
             <button class="tc-btn-full" id="tcSaveSceneBtn">💾 <span data-i18n="saveScene">Sauvegarder la disposition</span></button>
 
+            <!-- v0.7.161: compact text section — single button with popup -->
             <div class="tc-side-title" style="margin-top:14px">✏️ <span data-i18n="texts">Textes</span></div>
-            <div class="tc-text-presets" id="tcTextPresets"></div>
-            <button class="tc-btn-full" id="tcAddTextBtn">+ <span data-i18n="addText">Texte libre</span></button>
-            <button class="tc-btn-full" id="tcEmojiBtn">😀 <span data-i18n="emojiBtn">Emoji</span></button>
-            <div class="tc-emoji-palette" id="tcEmojiPalette" style="display:none">
-              <div class="tc-emoji-row">
-                <button>🎉</button><button>🏆</button><button>⭐</button><button>✨</button><button>🔥</button><button>💯</button><button>💪</button><button>🚀</button>
+            <button class="tc-btn-full" id="tcAddTextDropdown">✏️ <span data-i18n="addTextBtn">Ajouter un texte</span> ▾</button>
+            <!-- Text picker popup -->
+            <div class="tc-text-picker" id="tcTextPicker" style="display:none">
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Quick stickers</div>
+                <div class="tc-text-presets" id="tcTextPresets"></div>
               </div>
-              <div class="tc-emoji-row">
-                <button>❤️</button><button>💖</button><button>👍</button><button>👏</button><button>🙌</button><button>✌️</button><button>🤝</button><button>🫶</button>
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Custom</div>
+                <button class="tc-btn-full" id="tcAddTextBtn" style="margin:4px 0">+ <span data-i18n="addText">Texte libre</span></button>
+                <button class="tc-btn-full" id="tcEmojiBtn" style="margin:4px 0">😀 <span data-i18n="emojiBtn">Emoji</span></button>
+                <div class="tc-emoji-palette" id="tcEmojiPalette" style="display:none">
+                  <div class="tc-emoji-row"><button>🎉</button><button>🏆</button><button>⭐</button><button>✨</button><button>🔥</button><button>💯</button><button>💪</button><button>🚀</button></div>
+                  <div class="tc-emoji-row"><button>❤️</button><button>💖</button><button>👍</button><button>👏</button><button>🙌</button><button>✌️</button><button>🤝</button><button>🫶</button></div>
+                  <div class="tc-emoji-row"><button>🤖</button><button>⚙️</button><button>🔧</button><button>💡</button><button>📌</button><button>🎯</button><button>⚡</button><button>🌈</button></div>
+                  <div class="tc-emoji-row"><button>😀</button><button>😂</button><button>🤔</button><button>😎</button><button>🙂</button><button>😮</button><button>🤩</button><button>🥳</button></div>
+                </div>
               </div>
-              <div class="tc-emoji-row">
-                <button>🤖</button><button>⚙️</button><button>🔧</button><button>💡</button><button>📌</button><button>🎯</button><button>⚡</button><button>🌈</button>
-              </div>
-              <div class="tc-emoji-row">
-                <button>😀</button><button>😂</button><button>🤔</button><button>😎</button><button>🙂</button><button>😮</button><button>🤩</button><button>🥳</button>
-              </div>
+              <details class="tc-tp-advanced">
+                <summary>⚙ Font & style</summary>
+                <label class="sidebar-label" style="font-size:.7rem;opacity:.75" data-i18n="textFont">Aa Police</label>
+                <select id="tcTextFontSelect" class="sidebar-select" style="font-size:.78rem;padding:6px 8px">
+                  <option value="0">Bangers</option><option value="1">Righteous</option>
+                  <option value="2">Orbitron</option><option value="3">Amiri</option>
+                  <option value="4">Tajawal</option><option value="5">Arial</option>
+                </select>
+                <label class="sidebar-label" style="margin-top:6px;font-size:.7rem;opacity:.75" data-i18n="textStroke">✒ Contour</label>
+                <input type="range" id="tcTextStrokeSlider" min="0" max="14" step="1" value="6" class="tc-brand-range" />
+              </details>
             </div>
-            <!-- v0.7.20: Text default font picker — applies to NEW text overlays
-                 (existing ones can be cycled via the floating Aa toolbar button). -->
-            <label class="sidebar-label" style="margin-top:10px;font-size:.7rem;opacity:.75" data-i18n="textFont">Aa Police par défaut</label>
-            <select id="tcTextFontSelect" class="sidebar-select" style="font-size:.78rem;padding:6px 8px">
-              <option value="0">Bangers (BD)</option>
-              <option value="1">Righteous</option>
-              <option value="2">Orbitron</option>
-              <option value="3">Amiri</option>
-              <option value="4">Tajawal</option>
-              <option value="5">Arial</option>
-            </select>
-            <!-- v0.7.76: outline thickness slider for text overlays.
-                 0 = no outline, up to 14 px. Persisted in tc-text-stroke. -->
-            <label class="sidebar-label" style="margin-top:10px;font-size:.7rem;opacity:.75" data-i18n="textStroke">✒ Contour du texte</label>
-            <input type="range" id="tcTextStrokeSlider" min="0" max="14" step="1" value="6" class="tc-brand-range" />
 
             <!-- v0.7.20: Tools moved to floating horizontal bar above the stage -->
 

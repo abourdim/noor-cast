@@ -14414,6 +14414,11 @@ function wireEvents() {
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
 
+  // v0.7.161: text picker dropdown toggle
+  $('tcAddTextDropdown')?.addEventListener('click', () => {
+    const pick = $('tcTextPicker');
+    if (pick) pick.style.display = pick.style.display === 'none' ? '' : 'none';
+  });
   // Text free
   $('tcAddTextBtn').addEventListener('click', () => {
     const text = prompt(t('promptFreeText'), '');
