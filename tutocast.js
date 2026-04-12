@@ -13006,13 +13006,17 @@ const Sensors = {
         ],
       });
       this.server = await this.device.gatt.connect();
-      // v0.7.158: handle BLE disconnect — reset values and notify teacher
+      // v0.7.170: handle BLE disconnect with auto-reconnect (from bit-playground)
+      this._reconnectAttempts = 0;
       this.device.addEventListener('gattserverdisconnected', () => {
-        log('warn', 'micro:bit disconnected');
-        showToast('⚠ micro:bit disconnected', 3000);
+        log('micro:bit disconnected', 'warn');
+        showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
         this.server = null;
+        this._uartTx = null;
+        this._ledMatrix = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
         this.updatePanel();
+        this._tryReconnect();
       });
       // Try accelerometer
       try {
@@ -13328,15 +13332,62 @@ const Sensors = {
   _tiltToPan: false,
   _uartTx: null,
   _ledMatrix: null,
+  _reconnectAttempts: 0,
+
+  // v0.7.170: auto-reconnect (inspired by bit-playground)
+  async _tryReconnect() {
+    if (!this.device || this._reconnectAttempts >= 3) {
+      if (this._reconnectAttempts >= 3) showToast('micro:bit reconnect failed after 3 attempts', 3000);
+      this._reconnectAttempts = 0;
+      return;
+    }
+    this._reconnectAttempts++;
+    log(`BLE reconnect attempt ${this._reconnectAttempts}/3`, 'info');
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      this.server = await this.device.gatt.connect();
+      // Re-acquire UART TX
+      try {
+        const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+        const chars = await uartSvc.getCharacteristics();
+        for (const ch of chars) {
+          if (ch.uuid.includes('6e400002') && (ch.properties.write || ch.properties.writeWithoutResponse)) this._uartTx = ch;
+        }
+      } catch {}
+      // Re-acquire LED matrix
+      try {
+        const ledSvc = await this.server.getPrimaryService('e95dd91d-251d-470a-a062-fa1922dfa9a8');
+        this._ledMatrix = await ledSvc.getCharacteristic('e95d7b77-251d-470a-a062-fa1922dfa9a8');
+      } catch {}
+      this._reconnectAttempts = 0;
+      showToast('micro:bit reconnected!', 2000);
+      log('BLE reconnected', 'success');
+    } catch (e) {
+      log('BLE reconnect failed: ' + e.message, 'error');
+      this._tryReconnect();
+    }
+  },
   _panAngle: 90,
   _tiltAngle: 90,
 
-  // v0.7.170: send UART command to micro:bit
+  // v0.7.170: send UART command to micro:bit (with MTU chunking from bit-playground)
   async sendUart(str) {
     if (!this._uartTx) { showToast('UART not connected', 1500); return; }
     try {
       const enc = new TextEncoder();
-      await this._uartTx.writeValue(enc.encode(str + '\n'));
+      const data = enc.encode(str + '\n');
+      const MTU = 20; // BLE ATT payload limit
+      if (data.byteLength <= MTU) {
+        await this._uartTx.writeValue(data);
+      } else {
+        // Chunk into MTU-sized pieces (from bit-playground)
+        let offset = 0;
+        while (offset < data.byteLength) {
+          const end = Math.min(offset + MTU, data.byteLength);
+          await this._uartTx.writeValue(data.slice(offset, end));
+          offset = end;
+        }
+      }
     } catch (e) { log('UART send error: ' + e.message, 'error'); }
   },
 
