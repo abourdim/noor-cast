@@ -3,42 +3,33 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.107 — 2026-04-11 (Auto-suggest take title from first chapter marker)
+## v0.7.108 — 2026-04-11 (Source pulse highlight on sidebar click)
 
-When a recording finishes, if the user dropped any chapter markers
-during the take, the take title input (`#tcTakeTitleInput`, added in
-v0.7.102) is now auto-filled with a sanitized version of the *first*
-chapter's label instead of the generic `tutocast-YYYY-MM-DD-HH-MM`
-default. The same value is pushed straight into every download link's
-`download` attribute via the v0.7.102 live-rewire listener, so the
-`.webm`, `.vtt`, `.md` and `-sensors.csv` files all land on disk with a
-meaningful name out of the box.
+Clicking a source's name in the sidebar now pulses a glowing yellow outline
+around that source on the output canvas for about one second (three animated
+pulses). Makes it unmistakable which camera or image the teacher just picked
+— especially helpful when many sources overlap or sit behind each other on a
+busy stage. The pulse is baked into the final recording since it's drawn by
+`Engine.render()` on the same canvas as the sources.
 
 ### Added
-- In `Recorder.finish()`, right after `History.add(...)`: if
-  `Chapters.items.length > 0`, grab `items[0].label`, run it through a
-  small inline `sanitizeSeg()` helper (strips `\ / : * ? " < > |`,
-  collapses whitespace to `-`, trims leading/trailing dots + dashes,
-  caps at 40 chars), and assign it to `tcTakeTitleInput.value`.
-- After the assignment, a synthetic `new Event('input', {bubbles:true})`
-  is dispatched on the input so the v0.7.102 wired listener re-writes
-  every download link's `download` attribute immediately — no extra
-  keystroke required from the user.
+- `SourcePulse` object in `tutocast.js` with `_target`, `_start`, `DURATION`
+  (1000 ms), `pulse(src)`, and `render(ctx)`. Draws a 3-pulse yellow glow
+  (`rgba(255,220,60,…)`) over `{x, y, w, h}` of the source's bbox, with a
+  sin-easing lineWidth (4–8 px) and a soft 16 px shadow for readability.
+- `Engine.render()` calls `SourcePulse.render(ctx)` right after
+  `_drawSelectedSourceChrome()` so the highlight sits above sources and the
+  selection chrome but below text overlays and pointer visuals.
+- `Engine.onSourcesChanged()` wires a click listener on the editable source
+  name `<span>` (`.tc-src-name`) that calls `SourcePulse.pulse(s)` for
+  non-mic sources. Coexists with the contentEditable rename flow.
 
-### Preserved
-- If no chapter markers were dropped, the v0.7.102 default behavior is
-  untouched (the input stays primed with the timestamp-based `fname`).
-- The user can still edit the suggested title afterwards; the existing
-  v0.7.102 live-rewire keeps all download links in sync.
-- The title is only overwritten when the input still holds the primed
-  default, so nothing the user has typed mid-take (via some future
-  flow) would be clobbered.
-
-### Files
-- `tutocast.js` — `Recorder.finish()`: ~30 lines added after
-  `History.add(...)`, no other code paths touched.
-- `index.html` / `tutocast.js` — version bump to 0.7.107,
-  `BUILD_DATE` refreshed.
+### Notes
+- Single-source model: only the most recently clicked source is pulsing.
+  Clicking another name immediately retargets the pulse to that source.
+- Mic sources are skipped — they have no bbox on the canvas.
+- Action-button clicks (✕ / 👁 / 📌 / 🌫) already `stopPropagation()`, so
+  they never accidentally trigger a pulse.
 
 ## v0.7.23 — 2026-04-11 (Click ripples on the output canvas)
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.107 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.108 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.107';
+const APP_VERSION = '0.7.108';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-11 12:00';
@@ -2397,6 +2397,11 @@ const Engine = {
     // everything, hit-testable via cached rects on Drag._srcChromeHit.
     this._drawSelectedSourceChrome();
 
+    // v0.7.108: source pulse highlight — when the teacher clicks a source
+    // name in the sidebar, flash a glowing yellow outline for ~1s so the
+    // selected source is unmistakable even when stacked with others.
+    SourcePulse.render(ctx);
+
     // draw text overlays (unscaled so they stay readable)
     TextOverlays.drawAll(ctx);
 
@@ -3162,6 +3167,13 @@ const Engine = {
         });
         // Prevent clicks inside the name from triggering row-level actions
         nameEl.addEventListener('mousedown', (e) => e.stopPropagation());
+        // v0.7.108: clicking the source name pulses the source on the canvas
+        // so the teacher instantly sees which camera/image they just picked
+        // — especially useful when many sources overlap. Fires on every
+        // click; the brief 1s highlight coexists with contentEditable rename.
+        nameEl.addEventListener('click', () => {
+          if (s.type !== 'mic') SourcePulse.pulse(s);
+        });
         topRow.append(iconEl, nameEl);
 
         if (s.type !== 'mic') {
@@ -5337,6 +5349,42 @@ const Ripples = {
       this.ctx.stroke();
       this.ctx.restore();
     }
+  }
+};
+
+/* v0.7.108: SourcePulse — when the teacher clicks a source's name in the
+   sidebar, pulse a glowing yellow outline around its bbox on the canvas
+   for ~1 second (3 pulses). Helps identify which source was selected
+   when many cameras/images are stacked or hidden behind each other.
+   Rendered directly on the main output canvas by Engine.render() after
+   all sources are drawn, so it's baked into the recording too. */
+const SourcePulse = {
+  _target: null,  // source ref
+  _start: 0,
+  DURATION: 1000, // ms
+
+  pulse(src) {
+    if (!src) return;
+    this._target = src;
+    this._start = performance.now();
+  },
+
+  render(ctx) {
+    if (!this._target) return;
+    const t = performance.now() - this._start;
+    if (t > this.DURATION) { this._target = null; return; }
+    const progress = t / this.DURATION;
+    const pulseCount = 3;
+    const phase = (progress * pulseCount) % 1;
+    const alpha = Math.max(0, 1 - phase) * (1 - progress * 0.5);
+    const s = this._target;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,220,60,${alpha})`;
+    ctx.lineWidth = 4 + Math.sin(phase * Math.PI) * 4;
+    ctx.shadowColor = `rgba(255,220,60,${alpha})`;
+    ctx.shadowBlur = 16;
+    ctx.strokeRect(s.x, s.y, s.w, s.h);
+    ctx.restore();
   }
 };
 
