@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.165';
+const APP_VERSION = '0.7.166';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -13919,10 +13919,56 @@ function renderTicker() {
 
 /* ─────────── 8. Onboarding + wiring ─────────── */
 
+// v0.7.166: Simple/Pro mode system
+function applyMode(mode) {
+  document.body.classList.toggle('tc-simple', mode === 'simple');
+  try { localStorage.setItem('tc-mode', mode); } catch {}
+  // Update switch button text
+  const btn = $('tcModeSwitchBtn');
+  if (btn) btn.textContent = mode === 'simple' ? '🚀 Switch to Pro mode' : '🎓 Switch to Simple mode';
+}
+
 function setupOnboarding() {
+  // Load saved mode (default: simple for new users)
+  const savedMode = localStorage.getItem('tc-mode');
+  const modeChosen = savedMode !== null;
+
+  if (modeChosen) {
+    applyMode(savedMode);
+  } else {
+    // First launch: show mode picker
+    applyMode('simple'); // default while choosing
+    const picker = $('tcModePicker');
+    if (picker) picker.style.display = '';
+  }
+
+  // Mode picker buttons
+  $('tcModeSimpleBtn')?.addEventListener('click', () => {
+    applyMode('simple');
+    $('tcModePicker').style.display = 'none';
+    // Then show template picker
+    const seen = localStorage.getItem('tc-onboarded');
+    if (!seen) Templates.showPicker();
+  });
+  $('tcModeProBtn')?.addEventListener('click', () => {
+    applyMode('pro');
+    $('tcModePicker').style.display = 'none';
+    const seen = localStorage.getItem('tc-onboarded');
+    if (!seen) Templates.showPicker();
+  });
+
+  // Mode switch button in settings
+  $('tcModeSwitchBtn')?.addEventListener('click', () => {
+    const current = localStorage.getItem('tc-mode') || 'simple';
+    const next = current === 'simple' ? 'pro' : 'simple';
+    applyMode(next);
+    showToast(next === 'simple' ? '🎓 Simple mode' : '🚀 Pro mode', 1400);
+  });
+
+  // Template picker (show if mode already chosen but not onboarded)
   const seen = localStorage.getItem('tc-onboarded');
-  // First launch: show the template picker instead of the legacy steps card
-  if (!seen) Templates.showPicker();
+  if (!seen && modeChosen) Templates.showPicker();
+
   const close = $('tcTemplatesClose');
   if (close) close.addEventListener('click', () => {
     Templates.hidePicker();
@@ -13936,7 +13982,6 @@ function setupOnboarding() {
       if (key) {
         Templates.apply(key);
       } else {
-        // Blank: clear any active template so user starts fresh
         Templates.clear();
         Templates.hidePicker();
       }

@@ -2715,6 +2715,38 @@ body.log-open .app {
 .tc-tp-advanced > label,
 .tc-tp-advanced > select,
 .tc-tp-advanced > input { margin: 4px 8px; display: block; }
+/* ═══════════════════════════════════════════════════════════════════
+   v0.7.166: Simple mode — hide advanced features via body.tc-simple
+   ═══════════════════════════════════════════════════════════════════ */
+/* Tools bar: hide More menu, keep only Laser/Freeze/Draw/Snapshot/Fullscreen */
+body.tc-simple #tcMoreToolsBtn,
+body.tc-simple #tcMoreToolsPopup { display: none !important; }
+/* Source toolbar: hide Style popup button */
+body.tc-simple #tcSrcStyleBtn,
+body.tc-simple #tcSrcStylePopup { display: none !important; }
+/* Settings: hide Recording/Logo/Slogan/Ticker sections */
+body.tc-simple .tc-set-section:nth-of-type(n+2) { display: none !important; }
+/* Right sidebar: hide save/reset buttons, text section */
+body.tc-simple #tcResetLayoutBtn,
+body.tc-simple #tcSaveSceneBtn,
+body.tc-simple #tcAddTextDropdown,
+body.tc-simple #tcTextPicker { display: none !important; }
+/* Left sidebar: hide sensors + micro:bit */
+body.tc-simple .tc-microbit-fw,
+body.tc-simple #btConnectBtn,
+body.tc-simple #tcBtValues { display: none !important; }
+/* Rec bar: hide Pause and Marker */
+body.tc-simple #tcPauseBtn,
+body.tc-simple #tcMarkBtn { display: none !important; }
+/* Help panel: hide advanced tabs */
+body.tc-simple [data-tab="wiki"],
+body.tc-simple [data-tab="news"],
+body.tc-simple [data-tab="cameras"],
+body.tc-simple [data-tab="hotkeys"] { display: none !important; }
+/* Hide badges/stats/dashboard sections */
+body.tc-simple .tc-badges-section,
+body.tc-simple .tc-dashboard-section { display: none !important; }
+
 /* v0.7.132: PiP active indicator badge in the tools bar */
 .tc-pip-badge {
   display: inline-block;
