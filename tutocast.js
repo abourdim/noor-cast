@@ -13331,6 +13331,10 @@ const Sensors = {
       }
       return;
     }
+    // COMPASS:n — heading (0-360)
+    if (line.startsWith('COMPASS:')) {
+      this.values.compass = parseInt(line.substring(8), 10); return;
+    }
     // OK — test response
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
     // INFO: / SERVO: / EVENT: — bit-playground ack (ignore silently)

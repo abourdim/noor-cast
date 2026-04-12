@@ -1749,50 +1749,73 @@
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
       </div>
       <pre class="tc-fw-code" id="tcMicrobitCode">/**
- * TutoCast — micro:bit BLE Firmware V2
+ * TutoCast — micro:bit BLE Firmware V3
  *
  * UART over Bluetooth LE
- * Compatible with both TutoCast and bit-playground
+ * Compatible with TutoCast + bit-playground
  *
  * TELEMETRY (micro:bit → browser):
- *   A:x,y,z       accelerometer (milli-g)
- *   BA:1 / BB:1    button pressed
- *   TP:n           temperature (°C)
- *   L:n            light (0-255)
- *   S:n            sound (0-255, V2)
- *   LEDS:r0,r1,r2,r3,r4  LED state (sync)
+ *   A:x,y,z        accelerometer (milli-g)
+ *   BA:1 / BB:1     button pressed
+ *   TP:n            temperature (°C)
+ *   L:n             light (0-255)
+ *   S:n             sound (0-255, V2)
+ *   COMPASS:n       heading (0-360)
+ *   LEDS:r0,r1,r2,r3,r4  LED sync
  *
  * COMMANDS (browser → micro:bit):
- *   P:angle        pan servo P1 (0-180)
- *   TI:angle       tilt servo P2 (0-180)
- *   LED:hex        5x5 matrix (5 hex bytes)
- *   CMD:HEART/SMILE/SAD/CLEAR/UP/DOWN/LEFT/RIGHT
- *   TEST           checkmark + reply "OK"
- *   HELLO          heart on connect
+ *   P:angle         pan servo P1 (0-180)
+ *   TI:angle        tilt servo P2 (0-180)
+ *   P:OFF / TI:OFF  release servo PWM
+ *   LED:hex         5x5 matrix (5 hex bytes)
+ *   CMD:HEART/SMILE/SAD/CLEAR/UP/DOWN/LEFT/RIGHT/FIRE
+ *   TEXT:string     scroll text on LEDs
+ *   BUZZ:freq,ms    play tone (V2 speaker + P0)
+ *   BUZZ:OFF        stop sound
+ *   TEST            checkmark + reply "OK"
+ *   HELLO           heart on connect
  */
 bluetooth.startUartService()
 let pan = 90, tilt = 90, ledsDirty = false
+let s1Active = false, s2Active = false
 
 bluetooth.onBluetoothConnected(() => {
     basic.showIcon(IconNames.Yes)
+    bluetooth.uartWriteLine("INFO:CONNECTED")
+})
+bluetooth.onBluetoothDisconnected(() => {
+    basic.showIcon(IconNames.No)
 })
 
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     let cmd = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
+    // Servos
+    if (cmd == "P:OFF") {
+        pins.analogWritePin(AnalogPin.P1, 0); s1Active = false; return
+    }
+    if (cmd == "TI:OFF") {
+        pins.analogWritePin(AnalogPin.P2, 0); s2Active = false; return
+    }
     if (cmd.indexOf("P:") == 0) {
-        pan = parseInt(cmd.substr(2))
-        pins.servoWritePin(AnalogPin.P1, pan)
-    } else if (cmd.indexOf("TI:") == 0) {
-        tilt = parseInt(cmd.substr(3))
-        pins.servoWritePin(AnalogPin.P2, tilt)
-    } else if (cmd == "TEST") {
+        pan = Math.min(180, Math.max(0, parseInt(cmd.substr(2))))
+        pins.servoWritePin(AnalogPin.P1, pan); s1Active = true; return
+    }
+    if (cmd.indexOf("TI:") == 0) {
+        tilt = Math.min(180, Math.max(0, parseInt(cmd.substr(3))))
+        pins.servoWritePin(AnalogPin.P2, tilt); s2Active = true; return
+    }
+    // Test / Hello
+    if (cmd == "TEST") {
         basic.showIcon(IconNames.Yes)
         basic.pause(500); basic.clearScreen()
-        bluetooth.uartWriteLine("OK")
-    } else if (cmd == "HELLO") {
+        bluetooth.uartWriteLine("OK"); return
+    }
+    if (cmd == "HELLO") {
         basic.showIcon(IconNames.Heart)
-        basic.pause(300); basic.clearScreen()
-    } else if (cmd.indexOf("LED:") == 0) {
+        basic.pause(300); basic.clearScreen(); return
+    }
+    // LED matrix (hex)
+    if (cmd.indexOf("LED:") == 0) {
         let hex = cmd.substr(4)
         for (let r = 0; r < 5; r++) {
             let b = parseInt(hex.substr(r * 2, 2), 16)
@@ -1801,8 +1824,10 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
                 else led.unplot(c, r)
             }
         }
-        ledsDirty = true
-    } else if (cmd.indexOf("CMD:") == 0) {
+        ledsDirty = true; return
+    }
+    // CMD icons + arrows
+    if (cmd.indexOf("CMD:") == 0) {
         let c = cmd.substr(4)
         if (c == "HEART") basic.showIcon(IconNames.Heart)
         else if (c == "SMILE") basic.showIcon(IconNames.Happy)
@@ -1812,21 +1837,51 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
         else if (c == "DOWN") basic.showArrow(ArrowNames.South)
         else if (c == "LEFT") basic.showArrow(ArrowNames.West)
         else if (c == "RIGHT") basic.showArrow(ArrowNames.East)
-        ledsDirty = true
+        else if (c == "FIRE") {
+            for (let i = 0; i < 3; i++) {
+                basic.showIcon(IconNames.SmallDiamond)
+                basic.pause(100)
+                basic.showIcon(IconNames.Diamond)
+                basic.pause(100)
+            }
+            basic.clearScreen()
+        }
+        ledsDirty = true; return
+    }
+    // Scroll text
+    if (cmd.indexOf("TEXT:") == 0) {
+        basic.showString(cmd.substr(5)); return
+    }
+    // Buzzer
+    if (cmd == "BUZZ:OFF") {
+        music.stopAllSounds()
+        pins.analogWritePin(AnalogPin.P0, 0); return
+    }
+    if (cmd.indexOf("BUZZ:") == 0) {
+        let parts = cmd.substr(5).split(",")
+        if (parts.length == 2) {
+            let freq = parseInt(parts[0])
+            let dur = parseInt(parts[1])
+            if (freq >= 20 && freq <= 20000 && dur >= 1 && dur <= 5000) {
+                control.inBackground(() => music.playTone(freq, dur))
+            }
+        }
+        return
     }
 })
 
 input.onButtonPressed(Button.A, () => bluetooth.uartWriteLine("BA:1"))
 input.onButtonPressed(Button.B, () => bluetooth.uartWriteLine("BB:1"))
 
-// Telemetry + LED sync loop
+// Telemetry + LED sync
 let prevLeds = ""
 basic.forever(() => {
     bluetooth.uartWriteLine("A:" + input.acceleration(Dimension.X) + "," + input.acceleration(Dimension.Y) + "," + input.acceleration(Dimension.Z))
     bluetooth.uartWriteLine("TP:" + input.temperature())
     bluetooth.uartWriteLine("L:" + input.lightLevel())
     bluetooth.uartWriteLine("S:" + input.soundLevel())
-    // Sync LED state to browser
+    bluetooth.uartWriteLine("COMPASS:" + input.compassHeading())
+    // LED sync
     if (ledsDirty) {
         let ls = ""
         for (let r = 0; r < 5; r++) {
