@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.114 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.116 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.115';
+const APP_VERSION = '0.7.116';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 18:00';
@@ -85,6 +85,8 @@ const LANG = {
     help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Rechercher…',
     soundEffects: '🔊 Effets sonores',
+    soundBoard: 'SFX',
+    sbDing: 'Ding', sbBuzz: 'Buzz', sbClap: 'Clap', sbRoll: 'Roulement', sbWhistle: 'Sifflet', sbWhoosh: 'Whoosh',
     splashHint: 'appuyer pour passer',
     export: 'Exporter', filterAll: 'Tout',
     copied: 'Copié !', copyFail: 'Échec',
@@ -709,6 +711,8 @@ const LANG = {
     help: '❓ Help', faq: 'FAQ', howto: 'How-to', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Search…',
     soundEffects: '🔊 Sound effects',
+    soundBoard: 'SFX',
+    sbDing: 'Ding', sbBuzz: 'Buzz', sbClap: 'Clap', sbRoll: 'Roll', sbWhistle: 'Whistle', sbWhoosh: 'Whoosh',
     splashHint: 'tap to skip',
     export: 'Export', filterAll: 'All',
     copied: 'Copied!', copyFail: 'Copy failed',
@@ -1331,6 +1335,8 @@ const LANG = {
     help: '❓ مساعدة', faq: 'أسئلة', howto: 'كيف', wiki: 'ويكي',
     helpSearchPlaceholder: '🔍 ابحث…',
     soundEffects: '🔊 مؤثرات صوتية',
+    soundBoard: 'مؤثرات',
+    sbDing: 'جرس', sbBuzz: 'طنين', sbClap: 'تصفيق', sbRoll: 'طبل', sbWhistle: 'صافرة', sbWhoosh: 'هواء',
     splashHint: 'انقر للتخطي',
     export: 'تصدير', filterAll: 'الكل',
     copied: 'تم النسخ!', copyFail: 'فشل',
@@ -10515,6 +10521,129 @@ const Sfx = {
   }
 };
 
+/* v0.7.116: Quick sound-board with 6 procedurally-generated SFX.
+   Each sound is created via OscillatorNode / noise buffer / gain envelopes.
+   Routed to both Engine.audioDest (captured) and audioCtx.destination (monitor). */
+const SoundBoard = {
+  _getCtx() {
+    const ac = Engine.audioCtx;
+    if (ac) return ac;
+    return Sfx.ctx();
+  },
+  _route(node) {
+    const ac = this._getCtx();
+    if (Engine.audioDest) node.connect(Engine.audioDest);
+    node.connect(ac.destination);
+  },
+  play(name) {
+    if (!Sfx.enabled) return;
+    try { this['_' + name](); } catch {}
+  },
+  /* Ding/bell — sine at 880 Hz with gentle decay */
+  _ding() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(880, now);
+    o.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+    o.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.85);
+  },
+  /* Buzzer/wrong — low sawtooth with fast cutoff */
+  _buzz() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(150, now);
+    o.frequency.linearRampToValueAtTime(100, now + 0.4);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+    g.gain.setValueAtTime(0.2, now + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.5);
+  },
+  /* Applause-like noise burst — white noise shaped with gain envelope */
+  _clap() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 1.2;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const g = ac.createGain();
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3000; f.Q.value = 0.5;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    g.gain.setValueAtTime(0.18, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.15);
+    src.connect(f); f.connect(g); this._route(g);
+    src.start(now); src.stop(now + 1.2);
+  },
+  /* Drum roll — rapid oscillator bursts simulating snare */
+  _roll() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 1.5;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 1;
+    const g = ac.createGain();
+    // Tremolo via rapid gain modulation
+    const lfo = ac.createOscillator(); const lfoG = ac.createGain();
+    lfo.type = 'square'; lfo.frequency.setValueAtTime(14, now);
+    lfo.frequency.linearRampToValueAtTime(22, now + 1.4);
+    lfoG.gain.value = 0.12;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.14, now + 0.05);
+    g.gain.setValueAtTime(0.14, now + 1.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+    src.connect(f); f.connect(g); this._route(g);
+    lfo.start(now); lfo.stop(now + 1.5);
+    src.start(now); src.stop(now + 1.5);
+  },
+  /* Whistle — sine sweep up then down */
+  _whistle() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(600, now);
+    o.frequency.exponentialRampToValueAtTime(1800, now + 0.25);
+    o.frequency.setValueAtTime(1800, now + 0.35);
+    o.frequency.exponentialRampToValueAtTime(900, now + 0.7);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.15, now + 0.03);
+    g.gain.setValueAtTime(0.15, now + 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.8);
+  },
+  /* Whoosh — filtered noise sweep */
+  _whoosh() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 0.6;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass';
+    f.frequency.setValueAtTime(200, now);
+    f.frequency.exponentialRampToValueAtTime(4000, now + 0.2);
+    f.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+    f.Q.value = 2;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    src.connect(f); f.connect(g); this._route(g);
+    src.start(now); src.stop(now + 0.6);
+  },
+};
+
 /* Small debug HUD — FPS + JS heap, toggled with Ctrl+Shift+D */
 const DebugHud = {
   on: false,
@@ -11636,6 +11765,29 @@ function wireEvents() {
     const pal = $('tcReactPalette');
     if (!pal || pal.style.display === 'none') return;
     if (e.target.closest('#tcReactBtn') || e.target.closest('#tcReactPalette')) return;
+    pal.style.display = 'none';
+  });
+  // v0.7.116: sound-board SFX button + palette
+  const sfxBtn = $('tcSfxBtn');
+  if (sfxBtn) {
+    sfxBtn.addEventListener('click', () => {
+      const pal = $('tcSfxPalette');
+      if (!pal) return;
+      pal.style.display = pal.style.display === 'flex' ? 'none' : 'flex';
+    });
+  }
+  const sfxPal = $('tcSfxPalette');
+  if (sfxPal) {
+    sfxPal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tc-sfx-trigger');
+      if (!btn) return;
+      SoundBoard.play(btn.dataset.sfx);
+    });
+  }
+  document.addEventListener('click', (e) => {
+    const pal = $('tcSfxPalette');
+    if (!pal || pal.style.display === 'none') return;
+    if (e.target.closest('#tcSfxBtn') || e.target.closest('#tcSfxPalette')) return;
     pal.style.display = 'none';
   });
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());

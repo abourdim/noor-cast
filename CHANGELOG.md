@@ -3,25 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.115 — 2026-04-12 (Rule-of-thirds grid overlay)
+## v0.7.116 — 2026-04-12 (Quick sound-board with procedural SFX)
 
-A toggle-able rule-of-thirds grid overlay helps teachers frame their
-camera and compose scenes. Two horizontal and two vertical dashed white
-lines (30% opacity) divide the canvas into 9 equal zones. The grid is
-rendered on a dedicated HTML `<canvas>` overlay that sits above the
-stage but outside the `captureStream()` pipeline, so it is teacher-only
-and never appears in recordings.
+A small sound-board panel with 6 trigger buttons for common teaching
+sound effects. Each sound is procedurally generated via Web Audio API
+oscillators and noise buffers — no external audio files. Sounds are
+routed through both `Engine.audioDest` (captured by MediaRecorder) and
+`audioCtx.destination` (teacher monitor).
 
 ### Added
-- `GridOverlay` object in `tutocast.js`: `visible`, `init()`, `load()`,
-  `toggle()`, `render()`. Persisted in `localStorage` as
-  `tc-grid-overlay`.
-- Dedicated overlay canvas `<canvas id="tcGridCanvas">` in `index.html`
-  with class `tc-grid-overlay` (CSS: `z-index: 2; pointer-events: none`).
-- Tools bar button `#` (`#tcGridBtn`) toggling the grid.
-- Hotkey `G` via `KeyBindings.DEFAULTS.grid`.
-- i18n keys `gridOverlay`, `gridOverlayOn`, `gridOverlayOff` in FR, EN,
-  AR.
+- `SoundBoard` object in `tutocast.js` with 6 procedural sounds:
+  ding (bell), buzz (wrong answer), clap (applause noise burst),
+  roll (drum roll with tremolo), whistle (sine sweep), whoosh
+  (filtered noise sweep).
+- Tools bar button `🔊 SFX` (`#tcSfxBtn`) that opens a popup palette
+  with 6 labeled trigger buttons.
+- CSS `.tc-sfx-palette` / `.tc-sfx-trigger` in `style.css`.
+- i18n keys `soundBoard`, `sbDing`, `sbBuzz`, `sbClap`, `sbRoll`,
+  `sbWhistle`, `sbWhoosh` in FR, EN, AR.
 
 ---
 

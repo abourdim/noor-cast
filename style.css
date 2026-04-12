@@ -2505,6 +2505,36 @@ body.log-open .app {
   background: rgba(255, 255, 255, 0.12);
 }
 
+/* v0.7.116: sound-board SFX palette */
+.tc-sfx-palette {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  background: var(--card-bg, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+.tc-sfx-trigger {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.tc-sfx-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 @media (max-width: 920px) {
   .tc-tool-label { display: none; }
   .tc-tool-btn { padding: 7px 9px; }
