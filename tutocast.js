@@ -15081,12 +15081,12 @@ function wireEvents() {
   $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
   // v0.7.170: pan/tilt D-pad
   const SERVO_STEP = 10;
-  // D-pad: move servo + show arrow on micro:bit LEDs
-  $('tcPanLeft')?.addEventListener('click', () => { Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; Sensors.sendUart('CMD:LEFT'); });
-  $('tcPanRight')?.addEventListener('click', () => { Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; Sensors.sendUart('CMD:RIGHT'); });
-  $('tcTiltUp')?.addEventListener('click', () => { Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; Sensors.sendUart('CMD:UP'); });
-  $('tcTiltDown')?.addEventListener('click', () => { Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; Sensors.sendUart('CMD:DOWN'); });
-  $('tcPanCenter')?.addEventListener('click', () => { Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; Sensors.sendUart('CMD:CLEAR'); });
+  // D-pad: show arrow FIRST, then move servo (arrow shows while servo moves)
+  $('tcPanLeft')?.addEventListener('click', () => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcPanRight')?.addEventListener('click', () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcTiltUp')?.addEventListener('click', () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcTiltDown')?.addEventListener('click', () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcPanCenter')?.addEventListener('click', () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
   // v0.7.170: LED 5x5 grid editor
   // v0.7.170: LED 5x5 grid with drag-to-paint (inspired by bit-playground)
   const ledGrid = $('tcLedGrid');
