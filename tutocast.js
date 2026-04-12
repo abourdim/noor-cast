@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.124 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.125 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.124';
+const APP_VERSION = '0.7.125';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:00';
@@ -316,9 +316,7 @@ const LANG = {
     countdownTimer: '⏳ Minuteur',
     colorPicker: '🎨 Pipette',
     colorCopied: 'Copié',
-    textStamp: '✏️ Texte',
-    addText: 'Ajouter',
-    clearTexts: 'Effacer les textes',
+    sceneTime: 'Temps par scène',
     timerDuration: 'Durée minuteur (min)',
     snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
     snapAnnotTitle: 'Annote ta capture',
@@ -961,9 +959,7 @@ const LANG = {
     countdownTimer: '⏳ Timer',
     colorPicker: '🎨 Color picker',
     colorCopied: 'Copied',
-    textStamp: '✏️ Text',
-    addText: 'Add',
-    clearTexts: 'Clear texts',
+    sceneTime: 'Time per scene',
     timerDuration: 'Timer duration (min)',
     snapAnnotLabel: '✏️ Annotate snapshots before saving',
     snapAnnotTitle: 'Annotate your snapshot',
@@ -1598,9 +1594,7 @@ const LANG = {
     countdownTimer: '⏳ مؤقت',
     colorPicker: '🎨 منتقي اللون',
     colorCopied: 'تم النسخ',
-    textStamp: '✏️ نص',
-    addText: 'إضافة',
-    clearTexts: 'مسح النصوص',
+    sceneTime: 'الوقت لكل مشهد',
     timerDuration: 'مدة المؤقت (دقيقة)',
     snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
     snapAnnotTitle: 'وضّح لقطتك',
@@ -3763,6 +3757,8 @@ const Scenes = {
     }
     this.active = key;
     this.render();
+    // v0.7.125: notify per-scene time tracker of the switch
+    SceneTimer.onSceneSwitch(key);
     const labelForLog = s.custom ? s.label : t('scene_' + key);
     log(`${t('sceneChanged')} : ${s.icon} ${labelForLog}`, 'info');
     Chapters.add(labelForLog);
@@ -4893,6 +4889,7 @@ const Recorder = {
       SilenceWatch.start();
       TimeGoal.start();
       LiveCaptions.start();
+      SceneTimer.start();
       this.updateUI();
       this.startTimer();
       log(t('recStarted'), 'success');
@@ -5081,6 +5078,7 @@ const Recorder = {
     SilenceWatch.stop();
     TimeGoal.stop();
     LiveCaptions.stop();
+    SceneTimer.stop();
   },
 
   finish() {
@@ -9807,6 +9805,83 @@ const ColorPicker = {
     // One-shot: deactivate after picking
     this.deactivate();
     return true;  // signal that the click was consumed
+  },
+};
+
+/* ─────────── v0.7.125: SceneTimer — per-scene time tracker
+
+   Tracks how long each scene has been active during a recording.
+   Displays cumulative MM:SS in a badge on each scene button.
+   Resets when a new recording starts; finalizes on stop.
+   Helps teachers know how long they spent on each scene. */
+const SceneTimer = {
+  _times: {},        // key → accumulated seconds
+  _activeKey: null,  // scene key currently being timed
+  _lastSwitch: 0,    // Date.now() when the current scene started
+  _interval: null,   // setInterval id for badge updates
+
+  start() {
+    this._times = {};
+    Scenes.presets.forEach(s => { this._times[s.key] = 0; });
+    this._activeKey = Scenes.active;
+    this._lastSwitch = Date.now();
+    this._interval = setInterval(() => this._tick(), 1000);
+    this._updateBadges();
+  },
+
+  stop() {
+    this._accumulate();
+    this._activeKey = null;
+    clearInterval(this._interval);
+    this._interval = null;
+    this._updateBadges();
+  },
+
+  onSceneSwitch(newKey) {
+    if (!this._activeKey) return;
+    this._accumulate();
+    this._activeKey = newKey;
+    this._lastSwitch = Date.now();
+  },
+
+  _accumulate() {
+    if (!this._activeKey) return;
+    const elapsed = (Date.now() - this._lastSwitch) / 1000;
+    if (!this._times[this._activeKey]) this._times[this._activeKey] = 0;
+    this._times[this._activeKey] += elapsed;
+    this._lastSwitch = Date.now();
+  },
+
+  _tick() {
+    // Accumulate for the live scene, then refresh badges
+    this._accumulate();
+    this._updateBadges();
+  },
+
+  _updateBadges() {
+    document.querySelectorAll('.tc-scene-btn').forEach(btn => {
+      const key = btn.dataset.sceneKey;
+      let badge = btn.querySelector('.tc-scene-time');
+      const secs = Math.floor(this._times[key] || 0);
+      if (secs === 0 && !this._activeKey) {
+        // Not recording or no time — hide badge
+        if (badge) badge.remove();
+        return;
+      }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'tc-scene-time';
+        btn.appendChild(badge);
+      }
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      badge.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    });
+  },
+
+  /** Remove all badges (called when recording resets) */
+  clearBadges() {
+    document.querySelectorAll('.tc-scene-time').forEach(el => el.remove());
   },
 };
 

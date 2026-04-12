@@ -3,24 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.124 — 2026-04-12 (Quick canvas text stamp)
+## v0.7.125 — 2026-04-12 (Per-scene time tracker)
 
-A tools-bar button that lets the teacher type arbitrary text live during
-recording. Each stamp is drawn at the center of the canvas with configurable
-color and font size. Multiple stamps can coexist and persist until cleared.
+Track how long each scene has been active during a recording. A small
+`MM:SS` badge appears on each scene button in the sidebar, updating
+every second. Resets when a new recording starts. Helps teachers know
+how long they spent on each scene.
 
 ### Added
-- `TextStamps` object in `tutocast.js`: `stamps[]`, `add(text, color, size)`,
-  `clear()`, `render(ctx)`, `togglePopup()` with inline popup UI.
-- Each stamp: `{text, x, y, color, fontSize}` drawn via `ctx.fillText`
-  with dark outline for readability.
-- Tools bar button `#tcTextStampBtn` in `index.html`,
-  wired to `TextStamps.togglePopup()`.
-- Inline popup with text input, color picker, size dropdown (24/36/48/72),
-  Add button and Clear button. Submit via Enter, dismiss via Escape or
-  clicking outside.
-- `TextStamps.render(ctx)` called from `Engine.render()` after text overlays.
-- i18n keys `textStamp`, `addText`, `clearTexts` in FR, EN, AR.
+- `SceneTimer` object in `tutocast.js`: `_times`, `_activeKey`,
+  `_lastSwitch`, `start()`, `stop()`, `onSceneSwitch(newKey)`,
+  `_tick()`, `_updateBadges()`, `clearBadges()`.
+- Hook in `Recorder.start()` → `SceneTimer.start()`.
+- Hook in `Recorder._stopImmediate()` → `SceneTimer.stop()`.
+- Hook in `Scenes.switch()` → `SceneTimer.onSceneSwitch(key)`.
+- `.tc-scene-time` badge span appended to each scene button in
+  `renderScenes()` via `_updateBadges()`.
+- CSS for `.tc-scene-time` in `style.css`.
+- i18n key `sceneTime` in FR, EN, AR.
 
 ---
 

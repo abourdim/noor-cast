@@ -1885,6 +1885,21 @@ body.log-open .app {
 .tc-scene-btn:hover .tc-scene-dup { opacity: 1; }
 .tc-scene-dup:hover { background: #38bdf8; }
 
+/* v0.7.125: per-scene time badge */
+.tc-scene-time {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: .5rem;
+  font-family: var(--font-mono, monospace);
+  background: rgba(0, 0, 0, .6);
+  color: #a3e635;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
 /* ─── Text presets ─── */
 .tc-text-presets {
   display: flex; flex-wrap: wrap; gap: 4px;
