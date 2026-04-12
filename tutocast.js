@@ -13156,8 +13156,19 @@ const Sensors = {
             }
           });
         });
+        // v0.7.170: also get UART TX characteristic (write commands to micro:bit)
+        try {
+          this._uartTx = await uartSvc.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+          log('📤 UART TX ready (can send commands)', 'info');
+        } catch {}
         log('🔊 UART (sound level) connected', 'info');
       } catch (e) { /* UART optional — v2 only with custom firmware */ }
+      // v0.7.170: LED matrix service (5x5 display)
+      try {
+        const ledSvc = await this.server.getPrimaryService('e95dd91d-251d-470a-a062-fa1922dfa9a8');
+        this._ledMatrix = await ledSvc.getCharacteristic('e95d7b77-251d-470a-a062-fa1922dfa9a8');
+        log('💡 LED matrix connected', 'info');
+      } catch (e) { /* LED service optional */ }
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
       Badges.unlockMicrobit();
@@ -13315,6 +13326,63 @@ const Sensors = {
   _showLight: false,
   _showSound: false,
   _tiltToPan: false,
+  _uartTx: null,
+  _ledMatrix: null,
+  _panAngle: 90,
+  _tiltAngle: 90,
+
+  // v0.7.170: send UART command to micro:bit
+  async sendUart(str) {
+    if (!this._uartTx) { showToast('UART not connected', 1500); return; }
+    try {
+      const enc = new TextEncoder();
+      await this._uartTx.writeValue(enc.encode(str + '\n'));
+    } catch (e) { log('UART send error: ' + e.message, 'error'); }
+  },
+
+  // v0.7.170: test connection — flash LEDs + send TEST command
+  async test() {
+    if (!this.server || !this.server.connected) {
+      showToast('micro:bit not connected', 1500);
+      return;
+    }
+    // Try LED flash
+    if (this._ledMatrix) {
+      try {
+        // All ON
+        await this._ledMatrix.writeValue(new Uint8Array([0x1f, 0x1f, 0x1f, 0x1f, 0x1f]));
+        setTimeout(async () => {
+          try { await this._ledMatrix.writeValue(new Uint8Array([0, 0, 0, 0, 0])); } catch {}
+        }, 500);
+      } catch {}
+    }
+    // Try UART
+    await this.sendUart('TEST');
+    showToast('micro:bit test sent', 1500);
+  },
+
+  // v0.7.170: set LED 5x5 pattern (array of 5 bytes, each bit = 1 LED)
+  async setLeds(pattern) {
+    if (!this._ledMatrix) { showToast('LED service not connected', 1500); return; }
+    try {
+      await this._ledMatrix.writeValue(new Uint8Array(pattern));
+    } catch (e) { log('LED write error: ' + e.message, 'error'); }
+  },
+
+  // v0.7.170: pan/tilt servo control via UART
+  pan(delta) {
+    this._panAngle = Math.max(0, Math.min(180, this._panAngle + delta));
+    this.sendUart('P:' + this._panAngle);
+  },
+  tilt(delta) {
+    this._tiltAngle = Math.max(0, Math.min(180, this._tiltAngle + delta));
+    this.sendUart('T:' + this._tiltAngle);
+  },
+  panTiltCenter() {
+    this._panAngle = 90; this._tiltAngle = 90;
+    this.sendUart('P:90');
+    this.sendUart('T:90');
+  },
 };
 
 /* ─────────── 7. Kid polish: sfx, debug hud, badges, confetti, ticker ─────────── */
@@ -14902,6 +14970,44 @@ function wireEvents() {
     const code = $('tcMicrobitCode')?.textContent || '';
     navigator.clipboard.writeText(code).then(() => showToast('📋 Code copied!', 1400)).catch(() => {});
   });
+  // v0.7.170: test connection button
+  $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
+  // v0.7.170: pan/tilt D-pad
+  const SERVO_STEP = 10;
+  $('tcPanLeft')?.addEventListener('click', () => { Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcPanRight')?.addEventListener('click', () => { Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcTiltUp')?.addEventListener('click', () => { Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcTiltDown')?.addEventListener('click', () => { Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcPanCenter')?.addEventListener('click', () => { Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
+  // v0.7.170: LED 5x5 grid editor
+  const ledGrid = $('tcLedGrid');
+  if (ledGrid) {
+    const ledState = Array(25).fill(false);
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('button');
+      cell.style.cssText = 'width:20px;height:20px;border:1px solid rgba(255,255,255,.15);border-radius:3px;background:rgba(255,255,255,.08);cursor:pointer;padding:0';
+      cell.addEventListener('click', () => {
+        ledState[i] = !ledState[i];
+        cell.style.background = ledState[i] ? '#ef4444' : 'rgba(255,255,255,.08)';
+      });
+      ledGrid.appendChild(cell);
+    }
+    $('tcLedSend')?.addEventListener('click', () => {
+      // Convert 25 bools to 5 bytes (each byte = 1 row, 5 bits)
+      const bytes = [0, 0, 0, 0, 0];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (ledState[row * 5 + col]) bytes[row] |= (1 << (4 - col));
+        }
+      }
+      Sensors.setLeds(bytes);
+    });
+    $('tcLedClear')?.addEventListener('click', () => {
+      ledState.fill(false);
+      ledGrid.querySelectorAll('button').forEach(c => c.style.background = 'rgba(255,255,255,.08)');
+      Sensors.setLeds([0, 0, 0, 0, 0]);
+    });
+  }
 
   // v0.7.161: text picker dropdown toggle
   $('tcAddTextDropdown')?.addEventListener('click', () => {
