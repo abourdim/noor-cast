@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.171';
+const APP_VERSION = '0.7.172';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -16029,6 +16029,20 @@ async function init() {
   V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
   GuidedTour.maybeAutoStart();
   setupHelpTabs();
+  // v0.7.172: sidebar icon tabs
+  document.querySelectorAll('.tc-side-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wasActive = btn.classList.contains('active');
+      document.querySelectorAll('.tc-side-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tc-side-panel').forEach(p => p.classList.remove('active'));
+      if (!wasActive) {
+        btn.classList.add('active');
+        const name = btn.dataset.stab;
+        const id = 'tcSidebar' + name.charAt(0).toUpperCase() + name.slice(1);
+        $(id)?.classList.add('active');
+      }
+    });
+  });
   HelpSearch.setup();
   KeyBindings.load();
   HotkeyRef.setup();  // v0.7.134

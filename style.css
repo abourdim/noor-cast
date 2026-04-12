@@ -2767,6 +2767,23 @@ body.tc-simple [data-tab="hotkeys"] { display: none !important; }
 body.tc-simple .tc-badges-section,
 body.tc-simple .tc-dashboard-section { display: none !important; }
 
+/* v0.7.172: sidebar icon tabs */
+.tc-side-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.tc-side-tab {
+  flex: 1; padding: 8px 4px; border: 1px solid var(--border);
+  border-radius: 10px; background: rgba(255,255,255,.04);
+  cursor: pointer; font-size: 1.2rem; text-align: center;
+  transition: background .15s, border-color .15s;
+  color: var(--text);
+}
+.tc-side-tab:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
+.tc-side-tab.active { background: color-mix(in srgb, var(--accent) 20%, transparent); border-color: var(--accent); }
+.tc-side-panel { display: none; flex-direction: column; gap: 8px; }
+.tc-side-panel.active { display: flex; }
+/* Simple mode: hide shapes + microbit tabs */
+body.tc-simple .tc-side-tab[data-stab="shapes"],
+body.tc-simple .tc-side-tab[data-stab="microbit"] { display: none; }
+
 /* v0.7.132: PiP active indicator badge in the tools bar */
 .tc-pip-badge {
   display: inline-block;

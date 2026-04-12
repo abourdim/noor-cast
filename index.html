@@ -230,42 +230,33 @@
         <div class="tc-studio-grid">
           <!-- v0.7.94: collapse the right sidebar (focus mode) -->
           <button class="tc-rsidebar-toggle" id="tcRSidebarToggle" title="Collapse scenes sidebar">◀</button>
-          <!-- LEFT SIDEBAR: Sources -->
+          <!-- v0.7.172: LEFT SIDEBAR — icon tabs + drawers -->
           <aside class="tc-sidebar tc-sidebar-sources">
-            <!-- v0.7.34: live minimap of the current stage composition -->
             <div class="tc-minimap-wrap" id="tcMinimapWrap">
               <canvas id="tcMinimap" width="192" height="108"></canvas>
               <div class="tc-minimap-label" data-i18n="minimap">Aperçu</div>
             </div>
-            <div class="tc-side-title">📹 <span data-i18n="sources">Sources</span></div>
 
-            <div class="tc-source-row">
-              <label data-i18n="sourceScreen">Écran</label>
-              <button class="tc-src-btn" id="srcScreenBtn" data-i18n="add">+ Ajouter</button>
+            <!-- Tab strip -->
+            <div class="tc-side-tabs">
+              <button class="tc-side-tab active" data-stab="sources" title="Sources">📹</button>
+              <button class="tc-side-tab" data-stab="shapes" title="Shapes">🟩</button>
+              <button class="tc-side-tab" data-stab="microbit" title="micro:bit">🤖</button>
             </div>
 
-            <div class="tc-source-row">
-              <label data-i18n="sourceCam">Caméra</label>
-              <select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— sélectionne —</option></select>
-              <button class="tc-src-btn" id="srcCamBtn" data-i18n="add">+</button>
+            <!-- Panel 1: Sources -->
+            <div class="tc-side-panel active" id="tcSidebarSources">
+              <div class="tc-source-row"><label data-i18n="sourceScreen">Écran</label><button class="tc-src-btn" id="srcScreenBtn" data-i18n="add">+ Ajouter</button></div>
+              <div class="tc-source-row"><label data-i18n="sourceCam">Caméra</label><select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— choose —</option></select><button class="tc-src-btn" id="srcCamBtn" data-i18n="add">+</button></div>
+              <div class="tc-source-row"><label data-i18n="sourceMic">Micro</label><select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— choose —</option></select></div>
+              <div class="tc-vu"><div class="tc-vu-bar" id="tcVuBar"></div></div>
+              <div class="tc-side-title">🎭 <span data-i18n="activeSources">Sources actives</span></div>
+              <ul class="tc-src-list" id="tcSrcList"></ul>
             </div>
 
-            <div class="tc-source-row">
-              <label data-i18n="sourceMic">Micro</label>
-              <select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— sélectionne —</option></select>
-            </div>
-
-            <div class="tc-vu">
-              <div class="tc-vu-bar" id="tcVuBar"></div>
-            </div>
-
-            <div class="tc-side-title" style="margin-top:14px">🎭 <span data-i18n="activeSources">Sources actives</span></div>
-            <ul class="tc-src-list" id="tcSrcList"></ul>
-
-            <!-- v0.7.167: add colored shapes to canvas -->
-            <details style="margin-top:8px;margin-bottom:8px">
-              <summary class="tc-side-title" style="cursor:pointer;margin:0;list-style:none;display:flex;align-items:center;gap:6px">🟩 <span>Shapes</span></summary>
-              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px 0">
+            <!-- Panel 2: Shapes -->
+            <div class="tc-side-panel" id="tcSidebarShapes">
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px">
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#a3e635',200,150)" title="Rectangle">⬛</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#38bdf8',200,200)" title="Circle">⚪</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#fb923c',200,150)" title="Rounded">🔲</button>
@@ -275,55 +266,47 @@
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('diamond','#fbbf24',200,200)" title="Diamond">🔶</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('star','#fbbf24',200,200)" title="Star">⭐</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('heart','#ef4444',200,200)" title="Heart">❤️</button>
-                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full background">🖤</button>
-              </div>
-              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:0 0 6px">
+                <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full bg">🖤</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#1e293b',400,60)" title="Dark bar">➖</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rect','#ffffff',400,60)" title="White bar">▬</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#ef4444',60,60)" title="Red dot">🔴</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('circle','#22c55e',60,60)" title="Green dot">🟢</button>
                 <button class="tc-src-btn" style="padding:6px;font-size:1rem" onclick="Engine.addShape('rounded','#1e293b',500,300)" title="Dark card">🃏</button>
               </div>
-            </details>
+            </div>
 
-            <div class="tc-side-title" style="margin-top:14px">🤖 <span data-i18n="sensors">Capteurs</span></div>
-            <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
-            <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
-            <!-- v0.7.170: test + pan/tilt + LED controls -->
-            <button class="tc-btn-full" id="tcBtTestBtn" style="margin-top:6px;font-size:.75rem">🧪 Test connection</button>
-            <details style="margin-top:6px">
-              <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">🎮 Pan/Tilt servos</summary>
-              <div style="padding:6px 0;text-align:center">
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;max-width:120px;margin:0 auto">
-                  <div></div>
-                  <button class="tc-btn-full" id="tcTiltUp" style="padding:4px;font-size:14px">⬆</button>
-                  <div></div>
-                  <button class="tc-btn-full" id="tcPanLeft" style="padding:4px;font-size:14px">⬅</button>
-                  <button class="tc-btn-full" id="tcPanCenter" style="padding:4px;font-size:11px">⏺</button>
-                  <button class="tc-btn-full" id="tcPanRight" style="padding:4px;font-size:14px">➡</button>
-                  <div></div>
-                  <button class="tc-btn-full" id="tcTiltDown" style="padding:4px;font-size:14px">⬇</button>
-                  <div></div>
+            <!-- Panel 3: micro:bit -->
+            <div class="tc-side-panel" id="tcSidebarMicrobit">
+              <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
+              <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
+              <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">🎮 Pan/Tilt</summary>
+                <div style="padding:6px 0;text-align:center">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;max-width:120px;margin:0 auto">
+                    <div></div><button class="tc-btn-full" id="tcTiltUp" style="padding:4px;font-size:14px">⬆</button><div></div>
+                    <button class="tc-btn-full" id="tcPanLeft" style="padding:4px;font-size:14px">⬅</button>
+                    <button class="tc-btn-full" id="tcPanCenter" style="padding:4px;font-size:11px">⏺</button>
+                    <button class="tc-btn-full" id="tcPanRight" style="padding:4px;font-size:14px">➡</button>
+                    <div></div><button class="tc-btn-full" id="tcTiltDown" style="padding:4px;font-size:14px">⬇</button><div></div>
+                  </div>
+                  <div style="font-size:.65rem;opacity:.5;margin-top:4px">P:<span id="tcPanVal">90</span> T:<span id="tcTiltVal">90</span></div>
                 </div>
-                <div style="font-size:.65rem;opacity:.5;margin-top:4px">P:<span id="tcPanVal">90</span> T:<span id="tcTiltVal">90</span></div>
-              </div>
-            </details>
-            <details style="margin-top:6px">
-              <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">💡 LED 5x5</summary>
-              <div style="padding:6px 0;text-align:center">
-                <div id="tcLedGrid" style="display:inline-grid;grid-template-columns:repeat(5,1fr);gap:2px"></div>
-                <div style="display:flex;gap:4px;margin-top:6px;justify-content:center">
-                  <button class="tc-btn-full" id="tcLedSend" style="flex:1;font-size:.7rem;padding:4px">Send</button>
-                  <button class="tc-btn-full" id="tcLedClear" style="flex:1;font-size:.7rem;padding:4px">Clear</button>
+              </details>
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">💡 LED 5x5</summary>
+                <div style="padding:6px 0;text-align:center">
+                  <div id="tcLedGrid" style="display:inline-grid;grid-template-columns:repeat(5,1fr);gap:2px"></div>
+                  <div style="display:flex;gap:4px;margin-top:6px;justify-content:center">
+                    <button class="tc-btn-full" id="tcLedSend" style="flex:1;font-size:.7rem;padding:4px">Send</button>
+                    <button class="tc-btn-full" id="tcLedClear" style="flex:1;font-size:.7rem;padding:4px">Clear</button>
+                  </div>
                 </div>
-              </div>
-            </details>
-            <!-- v0.7.162: micro:bit firmware helper -->
-            <details class="tc-microbit-fw" style="margin-top:8px">
-              <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">⚙ micro:bit firmware</summary>
-              <div style="padding:6px 0">
-                <p style="font-size:.72rem;color:rgba(255,255,255,.5);margin:0 0 6px">Flash this to enable all features (sensors + servos + LEDs):</p>
-                <pre id="tcMicrobitCode" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 10px;font-size:.55rem;color:#a3e635;margin:0 0 8px;white-space:pre-wrap;word-break:break-all">bluetooth.startUartService()
+              </details>
+              <details class="tc-microbit-fw">
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">⚙ Firmware</summary>
+                <div style="padding:6px 0">
+                  <pre id="tcMicrobitCode" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 10px;font-size:.55rem;color:#a3e635;margin:0 0 8px;white-space:pre-wrap;word-break:break-all">bluetooth.startUartService()
 let pan = 90, tilt = 90
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     let cmd = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
@@ -351,12 +334,13 @@ basic.forever(() => {
     bluetooth.uartWriteLine("S:" + input.soundLevel())
     basic.pause(100)
 })</pre>
-                <div style="display:flex;gap:6px">
-                  <button class="tc-btn-full" id="tcCopyFwBtn" style="flex:1;font-size:.72rem;padding:5px">📋 Copy</button>
-                  <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-btn-full" style="flex:1;font-size:.72rem;padding:5px;text-align:center;text-decoration:none">🔗 Open MakeCode</a>
+                  <div style="display:flex;gap:6px">
+                    <button class="tc-btn-full" id="tcCopyFwBtn" style="flex:1;font-size:.72rem;padding:5px">📋 Copy</button>
+                    <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-btn-full" style="flex:1;font-size:.72rem;padding:5px;text-align:center;text-decoration:none">🔗 MakeCode</a>
+                  </div>
                 </div>
-              </div>
-            </details>
+              </details>
+            </div>
           </aside>
 
           <!-- CENTER: Canvas preview -->
