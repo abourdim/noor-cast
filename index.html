@@ -255,34 +255,8 @@
 
             <!-- Panel 2: micro:bit -->
             <div class="tc-side-panel" id="tcSidebarMicrobit">
-              <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
-              <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
-              <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
-              <details>
-                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">🎮 Pan/Tilt</summary>
-                <div style="padding:6px 0;text-align:center">
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;max-width:120px;margin:0 auto">
-                    <div></div><button class="tc-btn-full" id="tcTiltUp" style="padding:4px;font-size:14px">⬆</button><div></div>
-                    <button class="tc-btn-full" id="tcPanLeft" style="padding:4px;font-size:14px">⬅</button>
-                    <button class="tc-btn-full" id="tcPanCenter" style="padding:4px;font-size:11px">⏺</button>
-                    <button class="tc-btn-full" id="tcPanRight" style="padding:4px;font-size:14px">➡</button>
-                    <div></div><button class="tc-btn-full" id="tcTiltDown" style="padding:4px;font-size:14px">⬇</button><div></div>
-                  </div>
-                  <div style="font-size:.65rem;opacity:.5;margin-top:4px">P:<span id="tcPanVal">90</span> T:<span id="tcTiltVal">90</span></div>
-                </div>
-              </details>
-              <details>
-                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">💡 LED 5x5</summary>
-                <div style="padding:6px 0;text-align:center">
-                  <div id="tcLedGrid" style="display:inline-grid;grid-template-columns:repeat(5,1fr);gap:2px"></div>
-                  <div style="display:flex;gap:4px;margin-top:6px;justify-content:center">
-                    <button class="tc-btn-full" id="tcLedSend" style="flex:1;font-size:.7rem;padding:4px">Send</button>
-                    <button class="tc-btn-full" id="tcLedClear" style="flex:1;font-size:.7rem;padding:4px">Clear</button>
-                  </div>
-                </div>
-              </details>
               <details class="tc-microbit-fw">
-                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">⚙ Firmware</summary>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">⚙ Flash firmware first</summary>
                 <div style="padding:6px 0">
                   <pre id="tcMicrobitCode" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 10px;font-size:.55rem;color:#a3e635;margin:0 0 8px;white-space:pre-wrap;word-break:break-all">bluetooth.startUartService()
 let pan = 90, tilt = 90
@@ -315,6 +289,32 @@ basic.forever(() => {
                   <div style="display:flex;gap:6px">
                     <button class="tc-btn-full" id="tcCopyFwBtn" style="flex:1;font-size:.72rem;padding:5px">📋 Copy</button>
                     <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-btn-full" style="flex:1;font-size:.72rem;padding:5px;text-align:center;text-decoration:none">🔗 MakeCode</a>
+                  </div>
+                </div>
+              </details>
+              <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
+              <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
+              <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">🎮 Pan/Tilt</summary>
+                <div style="padding:6px 0;text-align:center">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;max-width:120px;margin:0 auto">
+                    <div></div><button class="tc-btn-full" id="tcTiltUp" style="padding:4px;font-size:14px">⬆</button><div></div>
+                    <button class="tc-btn-full" id="tcPanLeft" style="padding:4px;font-size:14px">⬅</button>
+                    <button class="tc-btn-full" id="tcPanCenter" style="padding:4px;font-size:11px">⏺</button>
+                    <button class="tc-btn-full" id="tcPanRight" style="padding:4px;font-size:14px">➡</button>
+                    <div></div><button class="tc-btn-full" id="tcTiltDown" style="padding:4px;font-size:14px">⬇</button><div></div>
+                  </div>
+                  <div style="font-size:.65rem;opacity:.5;margin-top:4px">P:<span id="tcPanVal">90</span> T:<span id="tcTiltVal">90</span></div>
+                </div>
+              </details>
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">💡 LED 5x5</summary>
+                <div style="padding:6px 0;text-align:center">
+                  <div id="tcLedGrid" style="display:inline-grid;grid-template-columns:repeat(5,1fr);gap:2px"></div>
+                  <div style="display:flex;gap:4px;margin-top:6px;justify-content:center">
+                    <button class="tc-btn-full" id="tcLedSend" style="flex:1;font-size:.7rem;padding:4px">Send</button>
+                    <button class="tc-btn-full" id="tcLedClear" style="flex:1;font-size:.7rem;padding:4px">Clear</button>
                   </div>
                 </div>
               </details>
