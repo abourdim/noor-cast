@@ -111,11 +111,73 @@ This is Apple's **Continuity Camera** — zero setup.
 - **"Iriun Webcam" not in TutoCast dropdown:** restart Chrome after installing the driver
 - **Black screen in TutoCast:** close any other app using the camera (Zoom, Teams), then retry
 
-### Option D: Camo (pro quality)
+### Option D: Camo (pro quality — best image controls)
 
-1. Install **Camo** on phone + computer ([reincubate.com/camo](https://reincubate.com/camo/))
-2. Free tier works; paid plan adds zoom, exposure, and focus controls
-3. Best image quality of all options
+**Why Camo:** Best image quality of all options. Manual controls for zoom, exposure, focus, white balance, and ISO. Supports **portrait and landscape**. Free tier works; paid plan ($5/month) unlocks all controls + 1080p.
+
+**On your phone (iPhone or Android):**
+1. Go to App Store or Play Store
+2. Search **"Camo"** by Reincubate — install it (free)
+3. Open the app — it shows a live camera preview with a toolbar at the bottom
+4. Grant camera permission when prompted
+
+**On your computer:**
+1. Go to [reincubate.com/camo](https://reincubate.com/camo/)
+2. Download **Camo Studio** for your OS (Windows or Mac — no Linux)
+3. Install it — adds a virtual camera driver called "Camo"
+4. Open Camo Studio — it shows a pairing screen
+
+**Connecting (USB — recommended):**
+1. Plug your phone into the computer with a USB cable
+2. **iPhone:** trust the computer when prompted
+3. **Android:** enable USB debugging, then allow connection
+4. Camo Studio shows your phone's live feed immediately
+5. USB gives the lowest latency and best quality
+
+**Connecting (Wi-Fi):**
+1. Same Wi-Fi network on both devices
+2. In Camo Studio on the computer, click the device dropdown
+3. Your phone appears — select it
+4. Connection is automatic but slightly more lag than USB
+
+**In TutoCast:**
+1. Click **+ Camera** in the left sidebar
+2. Select **"Camo"** from the dropdown
+3. Click **+ Add** — the feed appears on the canvas
+
+**Portrait (vertical) mode:**
+1. Hold your phone vertically — Camo sends the portrait feed
+2. Rotate the phone — Camo auto-switches orientation
+3. In TutoCast, resize the source to match the aspect ratio
+
+**Camo Studio controls (on your computer):**
+- **Zoom:** digital zoom slider — zoom into the robot without moving the phone
+- **Focus:** tap to auto-focus or switch to manual focus and drag the slider
+- **Exposure:** brighten/darken the image (useful for poorly lit classrooms)
+- **White balance:** fix yellow/blue color casts under fluorescent lights
+- **ISO:** increase for dark rooms (adds some grain)
+- **Rotation:** force 0° / 90° / 180° / 270° — useful for weird mounting angles
+- **Lens:** switch between front/back camera, and ultra-wide if your phone has one
+- **Filters:** built-in color filters (none needed for tutorials, but fun for kids)
+
+**Free vs Paid:**
+
+| Feature | Free | Pro ($5/month) |
+|---------|------|----------------|
+| Resolution | 720p | 1080p / 4K |
+| Zoom | ❌ | ✅ |
+| Manual focus | ❌ | ✅ |
+| Exposure/ISO | ❌ | ✅ |
+| Lens selection | Back only | All lenses |
+| Watermark | Small logo | None |
+| Portrait mode | ✅ | ✅ |
+
+**Troubleshooting Camo:**
+- **"Camo" not in TutoCast dropdown:** restart Chrome after installing Camo Studio
+- **Black screen:** make sure Camo Studio is open on the computer (unlike Iriun, Camo needs the desktop app running)
+- **Lag on Wi-Fi:** switch to USB — always more stable
+- **"No devices found":** check that Camo app is open on the phone and both are on the same network
+- **Watermark on free tier:** the small Reincubate logo appears in the corner — upgrade to Pro to remove it, or crop it out in TutoCast using the Crop sliders in Style
 
 ### Tips for phone cameras
 
