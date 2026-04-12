@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.133 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.135 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.133';
+const APP_VERSION = '0.7.135';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:30';
@@ -199,6 +199,7 @@ const LANG = {
     clockLabel: '🕐 Afficher l\'heure dans un coin',
     clockDateLabel: '+ date',
     recIndicatorLabel: '🔴 Pastille REC pendant l\'enregistrement',
+    audioVizLabel: '🎵 Visualiseur audio sur le canvas',
     badgeBtn: 'Carte badge',
     badgeHeadline: 'Tuto enregistré !',
     badgeStatDuration: 'Durée',
@@ -858,6 +859,7 @@ const LANG = {
     clockLabel: '🕐 Show clock in a corner',
     clockDateLabel: '+ date',
     recIndicatorLabel: '🔴 REC dot while recording',
+    audioVizLabel: '🎵 Audio waveform on canvas',
     badgeBtn: 'Badge card',
     badgeHeadline: 'Tutorial recorded!',
     badgeStatDuration: 'Duration',
@@ -1509,6 +1511,7 @@ const LANG = {
     clockLabel: '🕐 إظهار الساعة في زاوية',
     clockDateLabel: '+ التاريخ',
     recIndicatorLabel: '🔴 نقطة REC أثناء التسجيل',
+    audioVizLabel: '🎵 مؤثر صوتي على الكانفا',
     badgeBtn: 'بطاقة شارة',
     badgeHeadline: 'تم تسجيل الدرس!',
     badgeStatDuration: 'المدة',
@@ -2816,6 +2819,9 @@ const Engine = {
     // v0.7.120: pulsing REC dot indicator (top-left corner)
     RecIndicator.render(ctx, width, height);
 
+    // v0.7.135: on-canvas audio waveform visualizer (bottom edge bars)
+    AudioViz.render(ctx, width, height);
+
     // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
     // still before laser/ripples so they always appear above the standby art.
     Screensaver.render(ctx, width, height);
@@ -3454,6 +3460,7 @@ const Engine = {
       // it reaches audioDest. The VU analyser still taps the raw pre-gain
       // signal so the meter reflects what the user is actually saying.
       const gainedOrSrc = MicBoost.attach(node);
+      AudioViz.setup();  // v0.7.135: init frequency buffer from analyser
       gainedOrSrc.connect(this.audioDest);
       node.connect(this.analyser);
       this.onSourcesChanged();
@@ -9996,6 +10003,74 @@ const RecIndicator = {
   },
 };
 
+/* ─────────── AudioViz — v0.7.135 on-canvas audio waveform visualizer
+
+   Opt-in frequency-bar visualizer drawn at the bottom edge of the canvas
+   during recording. Reads frequency data from MicBoost._gateAnalyser (no
+   new AnalyserNode) and draws ~32 vertical bars that bounce with the mic
+   input, colored with the current accent gradient. Toggle in Settings,
+   persisted as `tc-audio-viz`. */
+const AudioViz = {
+  visible: false,
+  _freqBuf: null,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-audio-viz') === '1';
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-audio-viz', v ? '1' : '0'); } catch {}
+  },
+
+  setup() {
+    // Pre-allocate the frequency buffer once the analyser exists
+    if (MicBoost._gateAnalyser && !this._freqBuf) {
+      this._freqBuf = new Uint8Array(MicBoost._gateAnalyser.frequencyBinCount);
+    }
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    if (Recorder.state !== 'recording') return;
+    const analyser = MicBoost._gateAnalyser;
+    if (!analyser) return;
+
+    // Lazy-init frequency buffer
+    if (!this._freqBuf) {
+      this._freqBuf = new Uint8Array(analyser.frequencyBinCount);
+    }
+
+    analyser.getByteFrequencyData(this._freqBuf);
+
+    const bars = 32;
+    const barW = Math.floor(W / bars);
+    const gap = 2;
+    const maxH = Math.min(80, H * 0.12);
+    const accent = Engine._accentColor || '#a3e635';
+
+    ctx.save();
+    // Build a gradient from accent (bottom) to transparent (top)
+    const grad = ctx.createLinearGradient(0, H, 0, H - maxH);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(1, accent + '33'); // ~20% alpha
+
+    ctx.fillStyle = grad;
+
+    // Sample `bars` evenly-spaced bins from the frequency data
+    const step = Math.floor(this._freqBuf.length / bars);
+    for (let i = 0; i < bars; i++) {
+      const val = this._freqBuf[i * step] / 255; // 0..1
+      const h = val * maxH;
+      if (h < 1) continue;
+      const x = i * barW + gap / 2;
+      ctx.fillRect(x, H - h, barW - gap, h);
+    }
+    ctx.restore();
+  },
+};
+
 /* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
 
    Teacher sets a duration (1-60 min, default 5 min) in Settings and
@@ -13151,6 +13226,13 @@ function wireEvents() {
     recIndEl.addEventListener('change', (e) => RecIndicator.setEnabled(e.target.checked));
   }
 
+  // v0.7.135: on-canvas audio waveform visualizer toggle
+  const avEl = $('tcAudioVizToggle');
+  if (avEl) {
+    avEl.checked = AudioViz.visible;
+    avEl.addEventListener('change', (e) => AudioViz.setVisible(e.target.checked));
+  }
+
   // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
   const ioEl = $('tcIntroOutroToggle');
   if (ioEl) {
@@ -13349,6 +13431,7 @@ async function init() {
   TimeGoal.load();
   ClockOverlay.load();  // v0.7.90
   RecIndicator.load();  // v0.7.120
+  AudioViz.load();  // v0.7.135
   LiveCaptions.load();
   SceneIntroText.load();
   SceneTransition.load();

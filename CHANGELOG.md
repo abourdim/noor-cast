@@ -3,22 +3,25 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.133 — 2026-04-12 (Mouse wheel canvas zoom — teacher-only)
+## v0.7.135 — 2026-04-12 (On-canvas audio waveform visualizer)
 
-Ctrl+scroll wheel zooms the preview canvas for the teacher. CSS transform
-scale on the stage container. Zoom range 50%–200%, 10% steps. Double-click
-to reset. Shows current zoom % in a corner badge. Does NOT affect recording
-— CSS transform doesn't touch the captureStream pipeline.
+Opt-in frequency-bar visualizer drawn at the bottom edge of the canvas during
+recording. Reads frequency data from the existing `MicBoost._gateAnalyser`
+AnalyserNode (no new node, no new rAF) and draws ~32 vertical bars that bounce
+with the mic input, colored with the current accent gradient. Toggle in
+Settings (default off). Baked into the recording output.
 
 ### Added
-- `PreviewZoom` object in `tutocast.js`: `scale`, `setup()`, `zoom(delta)`,
-  `reset()`, `_apply()`. Applies `transform: scale(N)` on `.tc-stage`.
-- `.tc-preview-zoom-badge` CSS — small monospace pill at top-right of the
-  stage showing the current zoom percentage. Hidden at 100%.
-- `Ctrl+wheel` handler on `.tc-stage-wrap` — zooms in/out by 10% per tick.
-- Double-click on `.tc-stage` resets zoom to 100% with a toast.
-- i18n key `previewZoomReset` in FR, EN, AR.
-- `PreviewZoom.setup()` called during app init.
+- `AudioViz` object in `tutocast.js`: `visible`, `setup()`, `render(ctx, W, H)`,
+  `load()`, `setVisible()`. Uses `getByteFrequencyData()` from the existing gate
+  analyser to draw 32 accent-colored bars at the canvas bottom edge.
+- Settings checkbox `#tcAudioVizToggle` in `index.html`, wired in `tutocast.js`.
+  Default: off. Persisted as `tc-audio-viz`.
+- `AudioViz.render()` called from `Engine.render()` each frame (after RecIndicator,
+  before Screensaver).
+- `AudioViz.setup()` called after `MicBoost.attach()` to pre-allocate the frequency
+  buffer.
+- i18n key `audioVizLabel` in FR, EN, AR.
 
 ---
 
