@@ -13514,13 +13514,23 @@ const Sensors = {
   },
 
   // v0.7.170: pan/tilt servo control via UART
+  _prevPanSent: -1,
+  _prevTiltSent: -1,
   pan(delta) {
+    const prev = this._panAngle;
     this._panAngle = Math.max(0, Math.min(180, this._panAngle + delta));
-    this.sendUart('P:' + this._panAngle);
+    if (this._panAngle !== this._prevPanSent) {
+      this.sendUart('P:' + this._panAngle);
+      this._prevPanSent = this._panAngle;
+    }
   },
   tilt(delta) {
+    const prev = this._tiltAngle;
     this._tiltAngle = Math.max(0, Math.min(180, this._tiltAngle + delta));
-    this.sendUart('TI:' + this._tiltAngle);
+    if (this._tiltAngle !== this._prevTiltSent) {
+      this.sendUart('TI:' + this._tiltAngle);
+      this._prevTiltSent = this._tiltAngle;
+    }
   },
   panTiltCenter() {
     this._panAngle = 90; this._tiltAngle = 90;

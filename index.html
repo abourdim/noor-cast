@@ -1804,7 +1804,8 @@
  *   HELLO           heart on connect
  */
 bluetooth.startUartService()
-let pan = 90, tilt = 90, ledsDirty = false
+let pan = 90, tilt = 90, ledsDirty = false, lastCmdAt = 0
+let prevPan = -1, prevTilt = -1
 let s1Active = false, s2Active = false
 
 bluetooth.onBluetoothConnected(() => {
@@ -1856,6 +1857,7 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     }
     // CMD icons + arrows
     if (cmd.indexOf("CMD:") == 0) {
+        lastCmdAt = input.runningTime()
         let c = cmd.substr(4)
         if (c == "HEART") basic.showIcon(IconNames.Heart)
         else if (c == "SMILE") basic.showIcon(IconNames.Happy)
@@ -1909,8 +1911,8 @@ basic.forever(() => {
     bluetooth.uartWriteLine("L:" + input.lightLevel())
     bluetooth.uartWriteLine("S:" + input.soundLevel())
     bluetooth.uartWriteLine("COMPASS:" + input.compassHeading())
-    // Always show servo positions on LEDs when active
-    if (s1Active || s2Active) {
+    // Show servo positions on LEDs only when no recent CMD icon (2s cooldown)
+    if ((s1Active || s2Active) && (input.runningTime() - lastCmdAt > 2000)) {
         // Row 0-1: servo 1 bar, Row 3-4: servo 2 bar, Row 2: separator
         for (let c = 0; c < 5; c++) {
             let s1on = s1Active && c < Math.round(pan / 180 * 5)
