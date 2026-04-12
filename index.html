@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.131</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.132</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -217,6 +217,8 @@
             <span class="tc-tool-icon">⏳</span><span class="tc-tool-label" data-i18n="countdownTimer">Timer</span>
           </button>
           <span class="tc-tools-sep"></span>
+          <!-- v0.7.132: PiP active indicator badge -->
+          <span id="tcPipBadge" class="tc-pip-badge" style="display:none" data-i18n="pipActive">PiP</span>
           <!-- v0.7.115: always-visible mic level meter (fed by MicBoost._startGateLoop) -->
           <canvas id="tcMicMeter" class="tc-mic-meter" width="80" height="12" title="Mic level"></canvas>
         </div>

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.131 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.132 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.131';
+const APP_VERSION = '0.7.132';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-13 00:00';
@@ -165,6 +165,7 @@ const LANG = {
     pipOnlyCam: '❌ Caméras uniquement',
     pipOn: 'PiP activé',
     pipError: '❌ PiP indisponible',
+    pipActive: 'PiP',
     resetLayout: '🔓 Réinitialiser la disposition',
     layoutReset: '🔓 Disposition réinitialisée',
     collapseSidebar: 'Cacher la sidebar',
@@ -821,6 +822,7 @@ const LANG = {
     pipOnlyCam: '❌ Cameras only',
     pipOn: 'PiP on',
     pipError: '❌ PiP unavailable',
+    pipActive: 'PiP',
     resetLayout: '🔓 Reset layout',
     layoutReset: '🔓 Layout reset',
     collapseSidebar: 'Collapse sidebar',
@@ -1469,6 +1471,7 @@ const LANG = {
     pipOnlyCam: '❌ الكاميرات فقط',
     pipOn: 'PiP مُفعَّل',
     pipError: '❌ PiP غير متوفر',
+    pipActive: 'PiP',
     resetLayout: '🔓 إعادة ضبط التخطيط',
     layoutReset: '🔓 تمت إعادة ضبط التخطيط',
     collapseSidebar: 'إخفاء الشريط الجانبي',
@@ -2227,6 +2230,8 @@ const PipPopout = {
       await v.play();
       await v.requestPictureInPicture();
       this.activeVideo = v;
+      this._setupMediaSession();
+      this._showBadge(true);
       v.addEventListener('leavepictureinpicture', () => {
         this.close();
       }, { once: true });
@@ -2248,7 +2253,38 @@ const PipPopout = {
       try { this.activeVideo.pause(); } catch {}
       try { this.activeVideo.remove(); } catch {}
       this.activeVideo = null;
+      this._clearMediaSession();
+      this._showBadge(false);
     }
+  },
+
+  /* v0.7.132: media session action handlers for PiP play/pause controls */
+  _setupMediaSession() {
+    if (!navigator.mediaSession) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'TutoCast' });
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (Recorder.state === 'idle') Recorder.start();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (Recorder.state !== 'idle') Recorder.stop();
+      });
+    } catch (e) { log('MediaSession setup error: ' + e.message, 'warn'); }
+  },
+
+  _clearMediaSession() {
+    if (!navigator.mediaSession) return;
+    try {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+    } catch {}
+  },
+
+  /* v0.7.132: PiP Active badge in the tools bar */
+  _showBadge(visible) {
+    const badge = $('tcPipBadge');
+    if (badge) badge.style.display = visible ? 'inline-block' : 'none';
   },
 };
 

@@ -3,18 +3,24 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.131 — 2026-04-12 (Undo/redo for source layout changes)
+## v0.7.132 — 2026-04-13 (Enhanced Picture-in-Picture controls)
 
-Toolbar buttons and keyboard shortcuts for undoing and redoing source
-layout changes (position, size, shape, visibility, borders, crop, rotation).
+When Picture-in-Picture is active, the browser's media session now shows
+play/pause controls that map to Recorder start/stop. A small pulsing
+"PiP" badge in the tools bar indicates PiP status.
 
 ### Added
-- `↩ Undo` and `↪ Redo` buttons in the tools bar (`index.html`), wired to
-  `LayoutHistory.undo()` / `LayoutHistory.redo()` in `tutocast.js`.
-- `Ctrl+Y` / `Cmd+Y` keyboard shortcut as an alternative redo binding
-  (complements existing `Ctrl+Shift+Z`).
-- i18n keys `undo`, `redo` in FR (`Annuler`, `Rétablir`), EN (`Undo`,
-  `Redo`), AR (`تراجع`, `إعادة`).
+- `PipPopout._setupMediaSession()` in `tutocast.js`: sets
+  `navigator.mediaSession.metadata` with title "TutoCast" and registers
+  `play` (Recorder.start) / `pause` (Recorder.stop) action handlers.
+- `PipPopout._clearMediaSession()` in `tutocast.js`: clears metadata and
+  action handlers when PiP deactivates.
+- `PipPopout._showBadge(visible)` in `tutocast.js`: toggles the
+  `#tcPipBadge` indicator in the tools bar.
+- `#tcPipBadge` element in `index.html` inside `#tcToolsBar`, hidden by
+  default, shown when PiP is active.
+- `.tc-pip-badge` CSS in `style.css`: indigo pill with pulsing animation.
+- i18n key `pipActive` in FR, EN, AR.
 
 ---
 

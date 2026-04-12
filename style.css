@@ -2487,6 +2487,25 @@ body.log-open .app {
   background: rgba(255, 255, 255, .12);
   margin: 0 4px;
 }
+/* v0.7.132: PiP active indicator badge in the tools bar */
+.tc-pip-badge {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: #6366f1;
+  padding: 1px 6px;
+  border-radius: 8px;
+  line-height: 16px;
+  letter-spacing: .5px;
+  animation: tc-pip-pulse 2s ease-in-out infinite;
+}
+@keyframes tc-pip-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+
 /* v0.7.111: always-visible mic level meter embedded in the tools bar */
 .tc-mic-meter {
   display: inline-block;
