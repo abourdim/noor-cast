@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TutoCast v0.7.129 — kids-friendly multi-cam screen recorder
+   TutoCast v0.7.131 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.129';
+const APP_VERSION = '0.7.131';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:30';
+const BUILD_DATE = '2026-04-13 00:00';
 const $ = (id) => document.getElementById(id);
 
 /* ─────────── 1. i18n ─────────── */
@@ -295,6 +295,8 @@ const LANG = {
     pasteImageError: '❌ Image invalide',
     instantRec: '⚡ Démarrage instantané',
     softRewindToast: '↶ Retry — 30 dernières secondes marquées',
+    undo: 'Annuler',
+    redo: 'Rétablir',
     undoDone: '↩ Annulé',
     redoDone: '↪ Rétabli',
     undoEmpty: '↩ Rien à annuler',
@@ -949,6 +951,8 @@ const LANG = {
     pasteImageError: '❌ Invalid image',
     instantRec: '⚡ Instant start',
     softRewindToast: '↶ Retry — last 30s flagged',
+    undo: 'Undo',
+    redo: 'Redo',
     undoDone: '↩ Undone',
     redoDone: '↪ Redone',
     undoEmpty: '↩ Nothing to undo',
@@ -1595,6 +1599,8 @@ const LANG = {
     pasteImageError: '❌ صورة غير صالحة',
     instantRec: '⚡ بدء فوري',
     softRewindToast: '↶ إعادة — آخر 30 ثانية مُعلّمة',
+    undo: 'تراجع',
+    redo: 'إعادة',
     undoDone: '↩ تم التراجع',
     redoDone: '↪ تمت الإعادة',
     undoEmpty: '↩ لا شيء للتراجع',
@@ -12131,6 +12137,12 @@ function setupHotkeys() {
       e.preventDefault();
       return;
     }
+    // v0.7.131: Ctrl/Cmd+Y = redo layout change (alternative to Ctrl+Shift+Z)
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'y') {
+      LayoutHistory.redo();
+      e.preventDefault();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'z') {
       if (Recorder.state === 'recording' || Recorder.state === 'paused') {
         Recorder.softRewind();
@@ -12573,6 +12585,9 @@ function wireEvents() {
   }
 
   // Tools
+  // v0.7.131: undo/redo toolbar buttons
+  $('tcUndoBtn')?.addEventListener('click', () => LayoutHistory.undo());
+  $('tcRedoBtn')?.addEventListener('click', () => LayoutHistory.redo());
   $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
   $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
   $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());

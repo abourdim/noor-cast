@@ -3,21 +3,20 @@
 All notable changes to **TutoCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## v0.7.129 — 2026-04-12 (Take notes / post-recording journal)
+## v0.7.131 — 2026-04-12 (Undo/redo for source layout changes)
 
-After a recording finishes the teacher can jot down free-text notes in the
-take panel. Notes are persisted in `History.entries[0].notes` via
-localStorage and included in the `.md` chapter export.
+Toolbar buttons and keyboard shortcuts for undoing and redoing source
+layout changes (position, size, shape, visibility, borders, crop, rotation).
 
 ### Added
-- `<textarea id="tcTakeNotes">` in `index.html`: 3-row notes field below
-  the title input in the take panel.
-- `input` handler in `tutocast.js` (`Recorder.finish`): saves notes to the
-  latest History entry and regenerates the `.md` download blob.
-- `Chapters.toMarkdown()` now accepts an optional `notes` parameter and
-  appends a `## Notes` section when notes are present.
-- `applyI18n()` now translates `data-i18n-placeholder` attributes.
-- i18n keys `takeNotes` / `takeNotesPlaceholder` in FR, EN, AR.
+- `↩ Undo` and `↪ Redo` buttons in the tools bar (`index.html`), wired to
+  `LayoutHistory.undo()` / `LayoutHistory.redo()` in `tutocast.js`.
+- `Ctrl+Y` / `Cmd+Y` keyboard shortcut as an alternative redo binding
+  (complements existing `Ctrl+Shift+Z`).
+- i18n keys `undo`, `redo` in FR (`Annuler`, `Rétablir`), EN (`Undo`,
+  `Redo`), AR (`تراجع`, `إعادة`).
+
+---
 
 ## v0.7.127 — 2026-04-12 (Auto-save scene on source changes)
 

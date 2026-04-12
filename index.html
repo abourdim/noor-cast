@@ -118,7 +118,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">🎬</span> <span data-i18n="mainSection">Studio</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.129</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Compose ta scène et enregistre</span> <span class="version-tag">v0.7.131</span></div>
           </div>
           <!-- v0.7.20: moved the rec indicator to the REC bar next to the button -->
           <button class="btn-icon-only tc-max-btn" id="tcMaxBtn" aria-label="Maximize" title="Plein écran (F)">⛶</button>
@@ -128,6 +128,14 @@
              above the studio grid. Frees the right sidebar from 7 stacked
              buttons and puts the live tools one click away from the stage. -->
         <div class="tc-tools-bar" id="tcToolsBar">
+          <!-- v0.7.131: undo/redo layout buttons -->
+          <button class="tc-tool-btn" id="tcUndoBtn" title="Undo (Ctrl+Z)">
+            <span class="tc-tool-icon">↩</span><span class="tc-tool-label" data-i18n="undo">Annuler</span>
+          </button>
+          <button class="tc-tool-btn" id="tcRedoBtn" title="Redo (Ctrl+Y)">
+            <span class="tc-tool-icon">↪</span><span class="tc-tool-label" data-i18n="redo">Rétablir</span>
+          </button>
+          <span class="tc-tools-sep"></span>
           <button class="tc-tool-btn" id="tcLaserBtn" title="Laser (L)" data-tip-key="tip_laser" data-tip-kbd="L" data-tip-title="Laser pointer">
             <span class="tc-tool-icon">🔴</span><span class="tc-tool-label" data-i18n="laser">Laser</span><kbd>L</kbd>
           </button>
