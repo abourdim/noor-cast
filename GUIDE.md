@@ -84,14 +84,17 @@ This is Apple's **Continuity Camera** — zero setup.
 
 ## 🤖 Robot Tutorial Setup
 
-### Recommended camera layout
+### Recommended camera layout (up to 3 cameras + 1 screen)
 
 | Camera | What it films | Scene |
 |--------|--------------|-------|
 | Laptop webcam | Your face | "You" |
 | Phone 1 (DroidCam) | The robot moving | "Robot" |
 | Phone 2 (DroidCam) | Sensors / breadboard | "Sensors" |
+| Phone 3 / USB cam | Whiteboard / wide shot | "Studio" |
 | Screen share | Code editor (MakeCode, Arduino IDE) | "Code" |
+
+You can use **any combination** — 1 webcam + 2 phones, 3 phones + no laptop cam, etc. Each camera is an independent source you can place in any scene.
 
 ### Using the Robot Tuto template
 
