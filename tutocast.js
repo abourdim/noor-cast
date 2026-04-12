@@ -13923,9 +13923,10 @@ function renderTicker() {
 function applyMode(mode) {
   document.body.classList.toggle('tc-simple', mode === 'simple');
   try { localStorage.setItem('tc-mode', mode); } catch {}
-  // Update switch button text
   const btn = $('tcModeSwitchBtn');
   if (btn) btn.textContent = mode === 'simple' ? '🚀 Switch to Pro mode' : '🎓 Switch to Simple mode';
+  const badge = $('tcModeBadge');
+  if (badge) badge.textContent = mode === 'simple' ? '🎓 Simple' : '🚀 Pro';
 }
 
 function setupOnboarding() {
@@ -13957,13 +13958,15 @@ function setupOnboarding() {
     if (!seen) Templates.showPicker();
   });
 
-  // Mode switch button in settings
-  $('tcModeSwitchBtn')?.addEventListener('click', () => {
+  // Mode switch — settings button + header badge
+  const toggleMode = () => {
     const current = localStorage.getItem('tc-mode') || 'simple';
     const next = current === 'simple' ? 'pro' : 'simple';
     applyMode(next);
     showToast(next === 'simple' ? '🎓 Simple mode' : '🚀 Pro mode', 1400);
-  });
+  };
+  $('tcModeSwitchBtn')?.addEventListener('click', toggleMode);
+  $('tcModeBadge')?.addEventListener('click', toggleMode);
 
   // Template picker (show if mode already chosen but not onboarded)
   const seen = localStorage.getItem('tc-onboarded');

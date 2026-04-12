@@ -2715,6 +2715,23 @@ body.log-open .app {
 .tc-tp-advanced > label,
 .tc-tp-advanced > select,
 .tc-tp-advanced > input { margin: 4px 8px; display: block; }
+/* v0.7.166: mode badge in header */
+.tc-mode-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity .15s;
+  vertical-align: middle;
+}
+.tc-mode-badge:hover { opacity: 0.8; }
+body.tc-simple .tc-mode-badge { background: rgba(163,230,53,.15); color: #a3e635; }
+body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #fb923c; }
+
 /* ═══════════════════════════════════════════════════════════════════
    v0.7.166: Simple mode — hide advanced features via body.tc-simple
    ═══════════════════════════════════════════════════════════════════ */
