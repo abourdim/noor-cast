@@ -5,7 +5,7 @@
 > a robot. Zero install, zero account, zero cloud.
 
 TutoCast is a single-page web app that lets you record tutorial videos with up
-to **3 cameras + 1 screen + 1 microphone simultaneously**, compose them into
+to **unlimited cameras + screens + microphone simultaneously**, compose them into
 live-switchable scenes, annotate with on-screen text, freeze the screen mid-
 explanation, draw on it, and even **read your micro:bit sensors live via Web
 Bluetooth** — all from the browser, without installing anything. The final
