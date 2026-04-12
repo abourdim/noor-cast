@@ -15031,20 +15031,58 @@ function wireEvents() {
   $('tcTiltDown')?.addEventListener('click', () => { Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
   $('tcPanCenter')?.addEventListener('click', () => { Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
   // v0.7.170: LED 5x5 grid editor
+  // v0.7.170: LED 5x5 grid with drag-to-paint (inspired by bit-playground)
   const ledGrid = $('tcLedGrid');
   if (ledGrid) {
     const ledState = Array(25).fill(false);
+    let isDrawing = false;
+    let drawMode = true; // true = paint ON, false = erase
+    const cells = [];
+    const setLed = (i, on) => {
+      ledState[i] = on;
+      cells[i].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+    };
     for (let i = 0; i < 25; i++) {
-      const cell = document.createElement('button');
-      cell.style.cssText = 'width:20px;height:20px;border:1px solid rgba(255,255,255,.15);border-radius:3px;background:rgba(255,255,255,.08);cursor:pointer;padding:0';
-      cell.addEventListener('click', () => {
-        ledState[i] = !ledState[i];
-        cell.style.background = ledState[i] ? '#ef4444' : 'rgba(255,255,255,.08)';
+      const cell = document.createElement('div');
+      cell.style.cssText = 'width:22px;height:22px;border:1px solid rgba(255,255,255,.15);border-radius:3px;background:rgba(255,255,255,.08);cursor:crosshair;user-select:none';
+      cell.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        drawMode = !ledState[i]; // toggle: first cell decides paint or erase
+        setLed(i, drawMode);
       });
+      cell.addEventListener('mouseenter', () => {
+        if (isDrawing) setLed(i, drawMode);
+      });
+      cells.push(cell);
       ledGrid.appendChild(cell);
     }
+    document.addEventListener('mouseup', () => { isDrawing = false; });
+    // Presets
+    const PRESETS = {
+      heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0],
+      smile: [0,0,0,0,0, 0,1,0,1,0, 0,0,0,0,0, 1,0,0,0,1, 0,1,1,1,0],
+      check: [0,0,0,0,0, 0,0,0,0,1, 0,0,0,1,0, 1,0,1,0,0, 0,1,0,0,0],
+      cross: [1,0,0,0,1, 0,1,0,1,0, 0,0,1,0,0, 0,1,0,1,0, 1,0,0,0,1],
+      arrow: [0,0,1,0,0, 0,1,1,1,0, 1,0,1,0,1, 0,0,1,0,0, 0,0,1,0,0],
+    };
+    // Add preset buttons
+    const presetRow = document.createElement('div');
+    presetRow.style.cssText = 'display:flex;gap:3px;margin-top:4px;justify-content:center';
+    Object.entries(PRESETS).forEach(([name, pat]) => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-btn-full';
+      btn.style.cssText = 'flex:0;padding:3px 6px;font-size:.6rem';
+      btn.textContent = name === 'heart' ? '❤' : name === 'smile' ? '😀' : name === 'check' ? '✓' : name === 'cross' ? '✕' : '↑';
+      btn.title = name;
+      btn.addEventListener('click', () => {
+        pat.forEach((v, i) => setLed(i, !!v));
+      });
+      presetRow.appendChild(btn);
+    });
+    ledGrid.parentElement.insertBefore(presetRow, ledGrid.nextSibling);
+
     $('tcLedSend')?.addEventListener('click', () => {
-      // Convert 25 bools to 5 bytes (each byte = 1 row, 5 bits)
       const bytes = [0, 0, 0, 0, 0];
       for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
@@ -15055,7 +15093,7 @@ function wireEvents() {
     });
     $('tcLedClear')?.addEventListener('click', () => {
       ledState.fill(false);
-      ledGrid.querySelectorAll('button').forEach(c => c.style.background = 'rgba(255,255,255,.08)');
+      cells.forEach(c => c.style.background = 'rgba(255,255,255,.08)');
       Sensors.setLeds([0, 0, 0, 0, 0]);
     });
   }
