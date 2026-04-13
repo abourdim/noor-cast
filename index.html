@@ -254,7 +254,10 @@
                 <button class="tc-btn-full" id="btDisconnectBtn" style="flex:1;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">✕ Disconnect</button>
               </div>
               <span id="tcBtStatus" style="font-size:.7rem;opacity:.6;display:block;text-align:center;margin-top:2px"></span>
-              <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
+              <div class="tc-bt-values" id="tcBtValues" style="display:none">
+                <canvas id="tcSensorGraph" width="200" height="80" style="width:100%;border-radius:8px;background:rgba(0,0,0,.3)"></canvas>
+                <div id="tcSensorVals" style="font-size:.6rem;opacity:.5;text-align:center;margin-top:2px;font-family:monospace"></div>
+              </div>
               <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
               <!-- v0.7.173: GamePad (inspired by bit-playground) -->
               <details open>

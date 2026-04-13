@@ -13124,10 +13124,48 @@ const Sensors = {
     }
   },
 
+  _graphData: [], // rolling buffer of {x,y,z} samples for mini graph
+  _graphMax: 100,
+
   updatePanel() {
     const el = $('tcBtValues'); if (!el || !this.values) return;
+    el.style.display = 'block';
     const v = this.values;
-    el.innerHTML = `🔘 A: ${v.a ?? '-'}   B: ${v.b ?? '-'}<br>📐 X: ${(v.x ?? 0).toFixed(2)}<br>   Y: ${(v.y ?? 0).toFixed(2)}<br>   Z: ${(v.z ?? 0).toFixed(2)}`;
+    // Accumulate samples
+    this._graphData.push({ x: v.x || 0, y: v.y || 0, z: v.z || 0 });
+    if (this._graphData.length > this._graphMax) this._graphData.shift();
+    // Draw mini graph
+    const canvas = $('tcSensorGraph');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      // Center line
+      ctx.strokeStyle = 'rgba(255,255,255,.1)';
+      ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+      // Draw X/Y/Z lines
+      const colors = ['#ef4444', '#22c55e', '#38bdf8'];
+      const keys = ['x', 'y', 'z'];
+      const data = this._graphData;
+      const range = 2; // -2g to +2g
+      keys.forEach((k, ki) => {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[ki];
+        ctx.lineWidth = 1.5;
+        data.forEach((s, i) => {
+          const px = (i / (this._graphMax - 1)) * W;
+          const py = H / 2 - (s[k] / range) * (H / 2);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      });
+    }
+    // Values text
+    const vals = $('tcSensorVals');
+    if (vals) {
+      vals.textContent = `X:${(v.x||0).toFixed(1)} Y:${(v.y||0).toFixed(1)} Z:${(v.z||0).toFixed(1)}` +
+        (v.temp != null ? ` ${v.temp}°` : '') + (v.compass != null ? ` 🧭${v.compass}°` : '');
+    }
   },
 
   // Overlay position + size (draggable + resizable)
