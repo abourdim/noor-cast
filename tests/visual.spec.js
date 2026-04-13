@@ -15,7 +15,7 @@ async function waitForApp(page) {
   await page.goto('/');
   // Wait for stage to be visible (splash dismissed or auto-hidden)
   await page.waitForSelector('#tcStage', { state: 'visible', timeout: 10_000 });
-  // Let any CSS transitions settle
+  // Let layout settle (animations disabled globally via playwright.config.js)
   await page.waitForTimeout(500);
 }
 

@@ -4189,6 +4189,9 @@ const Engine = {
           li.appendChild(bot);
         }
 
+        // v0.7.179: pop-in animation on source list items
+        li.classList.add('tc-src-pop');
+        li.addEventListener('animationend', () => li.classList.remove('tc-src-pop'), { once: true });
         list.appendChild(li);
       });
     }
@@ -4344,6 +4347,12 @@ const Scenes = {
     }
     this.active = key;
     this.render();
+    // v0.7.179: bounce the active scene card on switch
+    const activeBtn = document.querySelector(`.tc-scene-btn.active`);
+    if (activeBtn) {
+      activeBtn.classList.add('tc-scene-bounce');
+      setTimeout(() => activeBtn.classList.remove('tc-scene-bounce'), 300);
+    }
     // v0.7.125: notify per-scene time tracker of the switch
     SceneTimer.onSceneSwitch(key);
     const labelForLog = s.custom ? s.label : (s.overrideName || t('scene_' + key));
@@ -14507,6 +14516,9 @@ function applyMode(mode) {
   if (btn) btn.textContent = mode === 'simple' ? '🚀 Switch to Pro mode' : '🎓 Switch to Simple mode';
   const badge = $('tcModeBadge');
   if (badge) badge.textContent = mode === 'simple' ? '🎓 Simple' : '🚀 Pro';
+  // v0.7.179: collapse right sidebar in simple mode for a cleaner canvas
+  const grid = document.querySelector('.tc-studio-grid');
+  if (grid) grid.classList.toggle('rsidebar-collapsed', mode === 'simple');
 }
 
 function setupOnboarding() {
