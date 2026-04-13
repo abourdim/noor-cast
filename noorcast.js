@@ -5208,9 +5208,8 @@ const MicrobitOverlay = {
     fire.textContent = '🔥 FIRE';
     fire.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
     dpad.appendChild(fire);
-    el.appendChild(dpad);
 
-    // ── Joystick ──
+    // ── Joystick (inside dpad column) ──
     const joyWrap = document.createElement('div');
     joyWrap.className = 'tc-mo-joy-wrap';
     // Mode toggle
@@ -5318,7 +5317,8 @@ const MicrobitOverlay = {
     });
 
     joyWrap.appendChild(joyCanvas);
-    el.appendChild(joyWrap);
+    dpad.appendChild(joyWrap);
+    el.appendChild(dpad);
     drawJoy();
 
     // ── Servos ──
