@@ -19,5 +19,9 @@ dist/
 *.mp4
 *.vtt
 
+# Node / test tooling
+node_modules/
+test-results/
+
 # Preview / dev tools (not part of the shipped app)
 .claude/

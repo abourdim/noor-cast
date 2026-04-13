@@ -545,10 +545,10 @@ const LANG = {
     news_022_2: "Correctif : ConstantSourceNode silencieux connecté en permanence",
     news_022_3: "Vérifié par test runtime headless complet (tous les boutons, toutes les scènes, tous les outils)",
     news_022_4: "Bouton 'Vierge' efface désormais le template actif",
-    news_023: "Splash rafraîchi + nouveau slogan 🎬",
-    news_023_1: "Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)",
-    news_023_2: "Nouveau slogan : « Lumière, caméra, ROBOT ! »",
-    news_023_3: "Badge workshop-diy.org dans le splash et le footer",
+    news_023a: "Splash rafraîchi + nouveau slogan 🎬",
+    news_023a_1: "Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)",
+    news_023a_2: "Nouveau slogan : « Lumière, caméra, ROBOT ! »",
+    news_023a_3: "Badge workshop-diy.org dans le splash et le footer",
     news_024: "Zone de travail élargie (vraiment) 📺",
     news_024_1: "Largeur de l'app : 1240 → fluide jusqu'à 1760 px",
     news_024_2: "Grille studio : sidebars 240 px + minmax(0,1fr) pour le canvas",
@@ -1264,10 +1264,10 @@ const LANG = {
     news_022_2: "Fix: permanent silent ConstantSourceNode keeps the audio track alive",
     news_022_3: "Verified by full headless runtime test (every button, scene, tool)",
     news_022_4: "Blank template button now clears any active template",
-    news_023: "Splash refresh + new slogan 🎬",
-    news_023_1: "Fixed logo-overlaps-title bug (container 120×65 → 140×140)",
-    news_023_2: "New slogan: \"Lights, camera, ROBOT!\"",
-    news_023_3: "workshop-diy.org badge on splash and footer",
+    news_023a: "Splash refresh + new slogan 🎬",
+    news_023a_1: "Fixed logo-overlaps-title bug (container 120×65 → 140×140)",
+    news_023a_2: "New slogan: \"Lights, camera, ROBOT!\"",
+    news_023a_3: "workshop-diy.org badge on splash and footer",
     news_024: "Working area actually widened 📺",
     news_024_1: "App width: 1240 → fluid up to 1760 px",
     news_024_2: "Studio grid: 240 px sidebars + minmax(0,1fr) canvas column",
@@ -1966,10 +1966,10 @@ const LANG = {
     news_022_2: "الإصلاح: ConstantSourceNode صامت متصل بشكل دائم",
     news_022_3: "تم التحقق عبر اختبار تشغيل كامل بدون واجهة (كل الأزرار والمشاهد والأدوات)",
     news_022_4: "زر 'فارغ' يمسح الآن أي قالب نشط",
-    news_023: "تحديث شاشة البداية + شعار جديد 🎬",
-    news_023_1: "إصلاح تداخل الشعار مع العنوان (الحاوية 120×65 → 140×140)",
-    news_023_2: "شعار جديد: «أضواء، كاميرا، روبوت!»",
-    news_023_3: "شارة workshop-diy.org على شاشة البداية والتذييل",
+    news_023a: "تحديث شاشة البداية + شعار جديد 🎬",
+    news_023a_1: "إصلاح تداخل الشعار مع العنوان (الحاوية 120×65 → 140×140)",
+    news_023a_2: "شعار جديد: «أضواء، كاميرا، روبوت!»",
+    news_023a_3: "شارة workshop-diy.org على شاشة البداية والتذييل",
     news_024: "توسيع منطقة العمل فعليًا 📺",
     news_024_1: "عرض التطبيق: 1240 → مرن حتى 1760 بكسل",
     news_024_2: "شبكة الاستوديو: أشرطة جانبية 240 بكسل + minmax(0,1fr) لمنطقة الكانفاس",
@@ -2735,7 +2735,7 @@ const StickyNotes = {
           el.style.left = (origLeft + ev.clientX - startX) + 'px';
           el.style.top  = (origTop  + ev.clientY - startY) + 'px';
         };
-        const onUp = (ev) => {
+        const onUp = (_ev) => {
           document.removeEventListener('pointermove', onMove);
           document.removeEventListener('pointerup', onUp);
           this.update(note.id, {
@@ -6380,7 +6380,7 @@ const Chapters = {
     if (this.items.length === 0) {
       out += '_No chapters_\n';
     } else {
-      this.items.forEach((c, i) => {
+      this.items.forEach((c, _i) => {
         const mm = Math.floor(c.time / 60);
         const ss = Math.floor(c.time % 60);
         const stamp = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
@@ -8892,7 +8892,7 @@ const Teleprompter = {
     reader.readAsText(file);
   },
 
-  _extractScriptFromText(raw, filename) {
+  _extractScriptFromText(raw, _filename) {
     // If it's a WebVTT file, strip the header + timestamp lines and
     // keep just the cue text.
     if (raw.trim().startsWith('WEBVTT')) {
@@ -9224,7 +9224,6 @@ const Trim = {
     showToast(t('trimEncoding'), 1500);
     try {
       const ab = await this.srcBlob.arrayBuffer();
-      const Ctor = window.OfflineAudioContext || window.webkitOfflineAudioContext;
       // decode via a throwaway AudioContext (more forgiving than OfflineAC for decode)
       const ac = new (window.AudioContext || window.webkitAudioContext)();
       let audioBuf;
@@ -13653,7 +13652,7 @@ const Sensors = {
     this.values = this.values || {};
     // ACC:x,y,z (bit-playground format) or A:x,y,z (NoorCast format)
     if (line.startsWith('ACC:') || line.startsWith('A:')) {
-      const parts = line.substring(line.indexOf(':') + 1).split(',');
+      const parts = line.slice(line.indexOf(':') + 1).split(',');
       if (parts.length >= 3) {
         this.values.x = parseInt(parts[0], 10) / 1000;
         this.values.y = parseInt(parts[1], 10) / 1000;
@@ -13666,7 +13665,7 @@ const Sensors = {
     // BA:1 / BTN:A:1 — button A
     if (line.startsWith('BA:') || line.startsWith('BTN:A:')) {
       const prev = this.values.a || 0;
-      this.values.a = parseInt(line.substring(line.lastIndexOf(':') + 1), 10);
+      this.values.a = parseInt(line.slice(line.lastIndexOf(':') + 1), 10);
       this.updatePanel();
       if (prev === 0 && this.values.a !== 0) {
         if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') SoundBoard.play('clap');
@@ -13677,26 +13676,26 @@ const Sensors = {
     // BB:1 / BTN:B:1 — button B
     if (line.startsWith('BB:') || line.startsWith('BTN:B:')) {
       const prev = this.values.b || 0;
-      this.values.b = parseInt(line.substring(line.lastIndexOf(':') + 1), 10);
+      this.values.b = parseInt(line.slice(line.lastIndexOf(':') + 1), 10);
       this.updatePanel();
       if (prev === 0 && this.values.b !== 0) Chapters.addMarker();
       return;
     }
     // TP:23 / TEMP:23 — temperature
     if (line.startsWith('TP:') || line.startsWith('TEMP:')) {
-      this.values.temp = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+      this.values.temp = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
     }
     // L:128 / LIGHT:128 — light level
     if (line.startsWith('L:') || line.startsWith('LIGHT:')) {
-      this.values.light = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+      this.values.light = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
     }
     // S:200 / SOUND:200 — sound level (v2)
     if (line.startsWith('S:') || line.startsWith('SOUND:')) {
-      this.values.sound = parseInt(line.substring(line.indexOf(':') + 1), 10); return;
+      this.values.sound = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
     }
     // LEDS:r0,r1,r2,r3,r4 — sync LED grid from micro:bit (bit-playground format)
     if (line.startsWith('LEDS:')) {
-      const parts = line.substring(5).split(',');
+      const parts = line.slice(5).split(',');
       if (parts.length >= 5) {
         this._syncLedGrid(parts.map(p => parseInt(p, 10)));
       }
@@ -13704,7 +13703,7 @@ const Sensors = {
     }
     // COMPASS:n — heading (0-360)
     if (line.startsWith('COMPASS:')) {
-      this.values.compass = parseInt(line.substring(8), 10); return;
+      this.values.compass = parseInt(line.slice(8), 10); return;
     }
     // OK — test response
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
@@ -13839,7 +13838,6 @@ const Sensors = {
   _prevPanSent: -1,
   _prevTiltSent: -1,
   pan(delta) {
-    const prev = this._panAngle;
     this._panAngle = Math.max(0, Math.min(180, this._panAngle + delta));
     if (this._panAngle !== this._prevPanSent) {
       this.sendUart('P:' + this._panAngle);
@@ -13847,7 +13845,6 @@ const Sensors = {
     }
   },
   tilt(delta) {
-    const prev = this._tiltAngle;
     this._tiltAngle = Math.max(0, Math.min(180, this._tiltAngle + delta));
     if (this._tiltAngle !== this._prevTiltSent) {
       this.sendUart('TI:' + this._tiltAngle);
@@ -14509,7 +14506,7 @@ const Reactions = {
       });
     }
   },
-  render(ctx, width, height) {
+  render(ctx, _width, _height) {
     if (!this._particles.length) return;
     ctx.save();
     ctx.textAlign = 'center';
@@ -15781,13 +15778,11 @@ function wireEvents() {
   (() => {
     const btn = $('tcRecBtn');
     if (!btn) return;
-    let pressStart = 0;
     let longPressFired = false;
     let longPressTimer = null;
     const LONG_PRESS_MS = 600;
     btn.addEventListener('pointerdown', (e) => {
       if (e.button && e.button !== 0) return;
-      pressStart = performance.now();
       longPressFired = false;
       longPressTimer = setTimeout(() => {
         longPressFired = true;
@@ -15800,7 +15795,6 @@ function wireEvents() {
       btn.classList.remove('long-pressing');
     };
     btn.addEventListener('pointerup', () => {
-      const held = performance.now() - pressStart;
       clearTimeout(longPressTimer);
       btn.classList.remove('long-pressing');
       if (longPressFired) return;  // already triggered during hold
@@ -15992,7 +15986,6 @@ function wireEvents() {
     panel.style.top = Math.max(10, by) + 'px';
   };
   // Intercept brand clicks from Drag._onDown
-  const origOnDown = Drag._onDown.bind(Drag);
   const stageEl = $('tcStage');
   // v0.7.171: double-click logo/slogan to open edit panel (single click = drag)
   if (stageEl) {
@@ -16091,7 +16084,7 @@ function wireEvents() {
           Brand.logo.img = new Image();
           Brand.logo.img.src = item.url;
           Brand.logo.imgUrl = item.url;
-          localStorage.setItem('tc-brand-logo', item.url);
+          try { localStorage.setItem('tc-brand-logo', item.url); } catch {}
           Brand.save();
           showToast('Logo: ' + item.name, 1200);
         });
@@ -16123,7 +16116,7 @@ function wireEvents() {
       Brand.logo.img = new Image();
       Brand.logo.img.src = reader.result;
       Brand.logo.imgUrl = reader.result;
-      localStorage.setItem('tc-brand-logo', reader.result);
+      try { localStorage.setItem('tc-brand-logo', reader.result); } catch {}
       Brand.save();
     };
     reader.readAsDataURL(file);

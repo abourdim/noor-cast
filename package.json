@@ -1,0 +1,19 @@
+{
+  "name": "noor-cast",
+  "version": "0.7.177",
+  "private": true,
+  "type": "module",
+  "description": "Kids-friendly multi-cam screen recorder",
+  "scripts": {
+    "lint": "eslint noorcast.js",
+    "lint:fix": "eslint noorcast.js --fix",
+    "test": "npx playwright test",
+    "test:update": "npx playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.48.0",
+    "eslint": "^9.0.0",
+    "serve": "^14.2.6"
+  }
+}

@@ -1953,6 +1953,21 @@ basic.forever(() => {
 
   <script src="noorcast.js"></script>
   <!-- v0.7.158: PWA service worker registration -->
-  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});</script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // v0.7.178: detect SW updates and notify user
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+            if (typeof showToast === 'function') showToast('🔄 Nouvelle version disponible — recharge la page', 5000);
+          }
+        });
+      });
+    }).catch(() => {});
+  }
+  </script>
 </body>
 </html>
