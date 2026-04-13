@@ -13073,6 +13073,8 @@ const Sensors = {
         log('micro:bit disconnected', 'warn');
         showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
         const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Disconnected'; s.style.color = '#ef4444'; }
+        const cb2 = $('btConnectBtn'); if (cb2) cb2.style.display = '';
+        const db2 = $('btDisconnectBtn'); if (db2) db2.style.display = 'none';
         this.server = null;
         this._uartTx = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
@@ -13114,6 +13116,8 @@ const Sensors = {
       showToast(t('btConnected'), 2500);
       const statusEl = $('tcBtStatus');
       if (statusEl) { statusEl.textContent = '✅ Connected'; statusEl.style.color = '#a3e635'; }
+      const cb = $('btConnectBtn'); if (cb) cb.style.display = 'none';
+      const db = $('btDisconnectBtn'); if (db) db.style.display = '';
       Badges.unlockMicrobit();
       this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
       $('tcBtValues').style.display = 'block';
@@ -13357,6 +13361,8 @@ const Sensors = {
       if (this._reconnectAttempts >= 3) {
         showToast('micro:bit reconnect failed after 3 attempts', 3000);
         const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Reconnect failed'; s.style.color = '#ef4444'; }
+        const cb3 = $('btConnectBtn'); if (cb3) cb3.style.display = '';
+        const db3 = $('btDisconnectBtn'); if (db3) db3.style.display = 'none';
       }
       this._reconnectAttempts = 0;
       this._reconnecting = false;
@@ -13406,6 +13412,8 @@ const Sensors = {
       this._reconnecting = false;
       showToast('micro:bit reconnected!', 2000);
       const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅ Reconnected'; s2.style.color = '#a3e635'; }
+      const cb4 = $('btConnectBtn'); if (cb4) cb4.style.display = 'none';
+      const db4 = $('btDisconnectBtn'); if (db4) db4.style.display = '';
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
