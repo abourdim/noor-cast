@@ -1848,7 +1848,7 @@ body.log-open .app {
 .tc-scenes::-webkit-scrollbar { width: 4px; }
 .tc-scenes::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 .tc-scene-btn {
-  background: rgba(0,0,0,.3);
+  background: rgba(0,0,0,.35);
   border: 2px solid var(--border);
   border-radius: 8px;
   padding: 4px 3px 6px;
@@ -1857,25 +1857,49 @@ body.log-open .app {
   font-family: var(--font-h);
   font-size: .68rem;
   text-align: center;
-  transition: all .15s;
+  transition: all .18s cubic-bezier(.4,0,.2,1);
   display: flex; flex-direction: column; gap: 2px; align-items: center;
   position: relative;
 }
-/* v0.7.29: scene preview thumbnail */
+/* v0.7.178: scene preview thumbnail — geeky CRT scanline overlay */
 .tc-scene-btn .tc-scene-thumb {
   width: 100%;
-  max-width: 72px;
+  max-width: 90px;
   height: auto;
   display: block;
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
   margin-bottom: 2px;
+  position: relative;
 }
+/* CRT scanline effect over SVG thumbnail */
+.tc-scene-btn::before {
+  content: '';
+  position: absolute;
+  top: 4px; left: 3px; right: 3px;
+  height: calc(100% - 28px);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.08) 2px,
+    rgba(0,0,0,.08) 4px
+  );
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .6;
+  transition: opacity .15s;
+}
+.tc-scene-btn:hover::before { opacity: .3; }
 .tc-scene-btn .tc-scene-icon { font-size: 1.15rem; line-height: 1; }
 .tc-scene-btn .tc-scene-label {
-  font-size: .68rem;
+  font-size: .65rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
   line-height: 1.1;
   cursor: default;
+  letter-spacing: .02em;
+  opacity: .85;
 }
 /* v0.7.139: inline rename editing state */
 .tc-scene-btn .tc-scene-label.editing {
@@ -1886,15 +1910,19 @@ body.log-open .app {
   cursor: text;
   min-width: 2ch;
 }
+/* v0.7.178: terminal-style keyboard badge */
 .tc-scene-btn .tc-scene-kbd {
   position: absolute;
   top: 4px;
   right: 6px;
-  font-size: .6rem;
-  opacity: .45;
-  background: rgba(0, 0, 0, .4);
+  font-size: .55rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  opacity: .5;
+  background: rgba(0, 0, 0, .5);
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: 2px;
+  border: 1px dashed rgba(163,230,53,.25);
+  color: rgba(163,230,53,.7);
 }
 /* v0.7.32: drag-to-reorder scenes */
 .tc-scene-btn[draggable="true"] { cursor: grab; }
@@ -1922,12 +1950,22 @@ body.log-open .app {
 .tc-scene-btn.drop-after {
   box-shadow: 0 3px 0 0 var(--accent, #a3e635);
 }
-.tc-scene-btn:hover { background: var(--glow); border-color: var(--accent); transform: translateY(-1px); }
+/* v0.7.178: geeky hover — neon glow + playful tilt */
+.tc-scene-btn:hover {
+  background: var(--glow);
+  border-color: var(--accent);
+  transform: scale(1.04) rotate(-0.5deg);
+  box-shadow: 0 0 10px rgba(163,230,53,.25), inset 0 0 8px rgba(163,230,53,.06);
+}
+.tc-scene-btn:hover .tc-scene-kbd { opacity: 1; border-color: rgba(163,230,53,.5); }
 .tc-scene-btn.active {
   background: var(--accent); color: var(--bg); border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(163,230,53,.3);
+  box-shadow: 0 0 0 3px rgba(163,230,53,.3), 0 0 14px rgba(163,230,53,.2);
 }
-.tc-scene-btn.active .tc-scene-kbd { background: rgba(0, 0, 0, .25); color: var(--bg); }
+.tc-scene-btn.active .tc-scene-kbd {
+  background: rgba(0, 0, 0, .3); color: var(--bg);
+  border-color: rgba(0,0,0,.2);
+}
 
 /* v0.7.48: custom-scene delete button (shown on hover) */
 .tc-scene-del {
@@ -1971,25 +2009,7 @@ body.log-open .app {
 .tc-scene-btn:hover .tc-scene-dup { opacity: 1; }
 .tc-scene-dup:hover { background: #38bdf8; }
 
-/* v0.7.147: scene preview tooltip on hover */
-.tc-scene-preview {
-  position: fixed;
-  z-index: 12950;
-  padding: 6px;
-  background: rgba(12, 31, 10, .97);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(163, 230, 53, .4);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .15s, transform .15s;
-  pointer-events: none;
-}
-.tc-scene-preview.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+
 
 /* v0.7.125: per-scene time badge */
 .tc-scene-time {
