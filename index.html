@@ -1799,13 +1799,15 @@
 bluetooth.startUartService()
 let pan = 90, tilt = 90, ledsDirty = false, lastCmdAt = 0
 let prevPan = -1, prevTilt = -1
-let s1Active = false, s2Active = false
+let s1Active = false, s2Active = false, btConnected = false
 
 bluetooth.onBluetoothConnected(() => {
+    btConnected = true
     basic.showIcon(IconNames.Yes)
     bluetooth.uartWriteLine("INFO:CONNECTED")
 })
 bluetooth.onBluetoothDisconnected(() => {
+    btConnected = false
     basic.showIcon(IconNames.No)
 })
 
@@ -1893,12 +1895,13 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     }
 })
 
-input.onButtonPressed(Button.A, () => bluetooth.uartWriteLine("BA:1"))
-input.onButtonPressed(Button.B, () => bluetooth.uartWriteLine("BB:1"))
+input.onButtonPressed(Button.A, () => { if (btConnected) bluetooth.uartWriteLine("BA:1") })
+input.onButtonPressed(Button.B, () => { if (btConnected) bluetooth.uartWriteLine("BB:1") })
 
 // Telemetry + LED sync
 let prevLeds = ""
 basic.forever(() => {
+    if (!btConnected) { basic.pause(500); return }
     bluetooth.uartWriteLine("A:" + input.acceleration(Dimension.X) + "," + input.acceleration(Dimension.Y) + "," + input.acceleration(Dimension.Z))
     bluetooth.uartWriteLine("TP:" + input.temperature())
     bluetooth.uartWriteLine("L:" + input.lightLevel())
