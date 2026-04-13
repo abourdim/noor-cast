@@ -5240,13 +5240,13 @@ const MicrobitOverlay = {
 
     const drawJoy = () => {
       jCtx.clearRect(0, 0, joySize, joySize);
-      // Base circle
+      // Base circle — visible dark well
       jCtx.beginPath();
       jCtx.arc(jR, jR, jR - 2, 0, Math.PI * 2);
-      jCtx.fillStyle = 'rgba(255,255,255,.05)';
+      jCtx.fillStyle = 'rgba(0,0,0,.4)';
       jCtx.fill();
-      jCtx.strokeStyle = 'rgba(255,255,255,.15)';
-      jCtx.lineWidth = 1.5;
+      jCtx.strokeStyle = 'rgba(255,255,255,.25)';
+      jCtx.lineWidth = 2;
       jCtx.stroke();
       // Knob
       const color = joyMode === 'cmd' ? '#3b82f6' : '#65a30d';
@@ -5355,8 +5355,8 @@ const MicrobitOverlay = {
       if (s.prop === '_panAngle') { self._panSlider = slider; self._panVal = val; }
       else { self._tiltSlider = slider; self._tiltVal = val; }
     });
-    servos.appendChild(joyWrap);
     row.appendChild(servos);
+    row.appendChild(joyWrap);
 
     // ── LED 5×5 grid ──
     const ledWrap = document.createElement('div');
