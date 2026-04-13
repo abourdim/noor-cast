@@ -15172,6 +15172,14 @@ function wireEvents() {
   });
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
+  $('btDisconnectBtn')?.addEventListener('click', () => {
+    if (Sensors.device && Sensors.device.gatt && Sensors.device.gatt.connected) {
+      Sensors.device.gatt.disconnect();
+      showToast('micro:bit disconnected', 1500);
+    } else {
+      showToast('Not connected', 1200);
+    }
+  });
   // v0.7.162: copy micro:bit firmware code to clipboard
   // v0.7.172: firmware modal (inspired by bit-playground)
   $('tcFwModalBtn')?.addEventListener('click', () => {

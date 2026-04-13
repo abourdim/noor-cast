@@ -249,7 +249,10 @@
             <!-- Panel 2: micro:bit -->
             <div class="tc-side-panel" id="tcSidebarMicrobit">
               <button class="tc-btn-full" id="tcFwModalBtn" style="font-size:.75rem;opacity:.7">⚙ Flash firmware first</button>
-              <button class="tc-btn-full" id="btConnectBtn">📡 <span data-i18n="btConnect">Connecter micro:bit</span></button>
+              <div style="display:flex;gap:4px">
+                <button class="tc-btn-full" id="btConnectBtn" style="flex:1;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)">📡 Connect</button>
+                <button class="tc-btn-full" id="btDisconnectBtn" style="flex:1;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">✕ Disconnect</button>
+              </div>
               <span id="tcBtStatus" style="font-size:.7rem;opacity:.6;display:block;text-align:center;margin-top:2px"></span>
               <div class="tc-bt-values" id="tcBtValues" style="display:none"></div>
               <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
