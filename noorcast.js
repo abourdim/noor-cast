@@ -8275,11 +8275,11 @@ const ServoGauge = {
   },
 
   render(ctx, W, H) {
-    if (!Sensors.server?.connected) return;
     const pan = Sensors._panAngle;
     const tilt = Sensors._tiltAngle;
-    // Only show when servos have been used (not both at default 90 with no activity)
+    // Only show when servos have been moved from default
     if (pan === undefined && tilt === undefined) return;
+    if (pan === 90 && tilt === 90 && !Sensors.server?.connected) return;
 
     ctx.save();
     ctx.globalAlpha = this._opacity;
