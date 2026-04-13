@@ -1901,7 +1901,12 @@ input.onButtonPressed(Button.B, () => { if (btConnected) bluetooth.uartWriteLine
 // Telemetry + LED sync
 let prevLeds = ""
 basic.forever(() => {
-    if (!btConnected) { basic.pause(500); return }
+    if (!btConnected) {
+        // Pulsing dot = "waiting for connection"
+        led.plot(2, 2); basic.pause(300)
+        led.unplot(2, 2); basic.pause(300)
+        return
+    }
     bluetooth.uartWriteLine("A:" + input.acceleration(Dimension.X) + "," + input.acceleration(Dimension.Y) + "," + input.acceleration(Dimension.Z))
     bluetooth.uartWriteLine("TP:" + input.temperature())
     bluetooth.uartWriteLine("L:" + input.lightLevel())
