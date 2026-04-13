@@ -5353,8 +5353,8 @@ const MicrobitOverlay = {
       if (s.prop === '_panAngle') { self._panSlider = slider; self._panVal = val; }
       else { self._tiltSlider = slider; self._tiltVal = val; }
     });
+    servos.appendChild(joyWrap);
     el.appendChild(servos);
-    el.appendChild(joyWrap);
 
     // ── LED 5×5 grid ──
     const ledWrap = document.createElement('div');
