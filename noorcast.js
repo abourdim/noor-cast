@@ -5159,6 +5159,8 @@ const MicrobitOverlay = {
       const onUp = () => {
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
+        // Persist position
+        try { localStorage.setItem('tc-mo-pos', JSON.stringify({ x: el.offsetLeft, y: el.offsetTop })); } catch {}
       };
       document.addEventListener('pointermove', onMove);
       document.addEventListener('pointerup', onUp);
@@ -5172,6 +5174,7 @@ const MicrobitOverlay = {
       ['←', '●', '→'],
       ['',  '↓', ''],
     ];
+    const self = this;
     const syncUI = () => {
       const pv = $('tcPanVal'); if (pv) pv.textContent = Sensors._panAngle;
       const tv = $('tcTiltVal'); if (tv) tv.textContent = Sensors._tiltAngle;
@@ -5179,11 +5182,14 @@ const MicrobitOverlay = {
       const s1v = $('tcServo1Val'); if (s1v) s1v.textContent = Sensors._panAngle + '°';
       const s2 = $('tcServo2Slider'); if (s2) s2.value = Sensors._tiltAngle;
       const s2v = $('tcServo2Val'); if (s2v) s2v.textContent = Sensors._tiltAngle + '°';
+      // Sync overlay sliders too
+      if (self._panSlider) { self._panSlider.value = Sensors._panAngle; self._panVal.textContent = Sensors._panAngle + '°'; }
+      if (self._tiltSlider) { self._tiltSlider.value = Sensors._tiltAngle; self._tiltVal.textContent = Sensors._tiltAngle + '°'; }
     };
     const actions = [
-      [null, () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-10); syncUI(); }, null],
-      [() => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-10); syncUI(); }, () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); syncUI(); }, () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(10); syncUI(); }],
-      [null, () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(10); syncUI(); }, null],
+      [null, () => Sensors.sendUart('CMD:UP'), null],
+      [() => Sensors.sendUart('CMD:LEFT'), () => Sensors.sendUart('CMD:CLEAR'), () => Sensors.sendUart('CMD:RIGHT')],
+      [null, () => Sensors.sendUart('CMD:DOWN'), null],
     ];
     dirs.forEach((row, r) => {
       row.forEach((label, c) => {
@@ -5233,6 +5239,9 @@ const MicrobitOverlay = {
       row.appendChild(slider);
       row.appendChild(val);
       servos.appendChild(row);
+      // Store refs for syncUI
+      if (s.prop === '_panAngle') { self._panSlider = slider; self._panVal = val; }
+      else { self._tiltSlider = slider; self._tiltVal = val; }
     });
     el.appendChild(servos);
 
@@ -5281,6 +5290,17 @@ const MicrobitOverlay = {
     ledWrap.appendChild(ledBtns);
     el.appendChild(ledWrap);
 
+    // Restore saved position
+    try {
+      const pos = JSON.parse(localStorage.getItem('tc-mo-pos'));
+      if (pos && typeof pos.x === 'number') {
+        el.style.left = pos.x + 'px';
+        el.style.top = pos.y + 'px';
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+      }
+    } catch {}
+
     stage.appendChild(el);
     this._el = el;
   },
@@ -5290,6 +5310,8 @@ const MicrobitOverlay = {
     this._el.remove();
     this._el = null;
     this._ledCells = [];
+    this._panSlider = null; this._panVal = null;
+    this._tiltSlider = null; this._tiltVal = null;
   },
 
   // v0.7.179: mirror incoming LEDS: UART data to overlay grid
