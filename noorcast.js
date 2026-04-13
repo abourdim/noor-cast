@@ -13188,55 +13188,70 @@ const Sensors = {
     if (this._overlayX === null) { this._overlayX = 10; this._overlayY = H - 50; }
     ctx.save();
     ctx.globalAlpha = this._overlayOpacity;
-    // Compact 2-line strip at bottom-left with all data + LED mirror
-    const line1 = `🤖 A:${v.a??'-'} B:${v.b??'-'}  X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`;
+    // Sparkline graph + compact values + LED mirror
+    const graphW = 120, graphH = 30;
+    const ledSize = 4, ledGap = 1, ledBlock = this._lastLedState ? 5 * (ledSize + ledGap) + 6 : 0;
+    const px = 8, fs = 11;
+    // Build value string
     const extras = [];
-    if (v.temp != null) extras.push(`${v.temp}°C`);
-    if (v.light != null) extras.push(`💡${v.light}`);
-    if (v.sound != null) extras.push(`🔊${v.sound}`);
+    if (v.temp != null) extras.push(`${v.temp}°`);
     if (v.compass != null) extras.push(`🧭${v.compass}°`);
-    const line2 = extras.join('  ');
-    const fs = 14;
     ctx.font = `600 ${fs}px ui-monospace, monospace`;
-    const tw = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
-    const px = 8;
-    const ledSize = 4, ledGap = 1, ledBlock = 5 * (ledSize + ledGap) + 4;
-    const bw = tw + px * 2 + (this._lastLedState ? ledBlock + 8 : 0);
-    const bh = line2 ? fs * 2 + 14 : fs + 10;
+    const valText = extras.join(' ');
+    const valW = ctx.measureText(valText).width;
+    const bw = graphW + px * 2 + valW + (valW ? 8 : 0) + ledBlock;
+    const bh = graphH + 6;
     const sc = this._overlayScale;
     const bx = this._overlayX, by = this._overlayY;
-    // Apply scale
-    ctx.translate(bx, by);
-    ctx.scale(sc, sc);
-    ctx.translate(-bx, -by);
-    // Store bbox for hit-test
+    ctx.translate(bx, by); ctx.scale(sc, sc); ctx.translate(-bx, -by);
     this._overlayW = bw * sc; this._overlayH = bh * sc;
-    // Clamp to canvas
     if (bx + this._overlayW > W) this._overlayX = W - this._overlayW;
     if (by + this._overlayH > H) this._overlayY = H - this._overlayH;
     if (this._overlayX < 0) this._overlayX = 0;
     if (this._overlayY < 0) this._overlayY = 0;
     // Background
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
     ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
-    // Text
-    ctx.fillStyle = '#a3e635';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(line1, bx + px, by + 4);
-    if (line2) {
-      ctx.fillStyle = 'rgba(163,230,53,.6)';
-      ctx.fillText(line2, bx + px, by + fs + 8);
+    // Sparkline graph
+    const data = this._graphData;
+    if (data && data.length > 1) {
+      const gx = bx + px, gy = by + 3, gw = graphW, gh = graphH;
+      // Center line
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(gx, gy + gh / 2); ctx.lineTo(gx + gw, gy + gh / 2); ctx.stroke();
+      // X/Y/Z lines
+      const colors = ['#ef4444', '#22c55e', '#38bdf8'];
+      const keys = ['x', 'y', 'z'];
+      const range = 2;
+      keys.forEach((k, ki) => {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[ki];
+        ctx.lineWidth = 1.2;
+        data.forEach((s, i) => {
+          const px2 = gx + (i / (this._graphMax - 1)) * gw;
+          const py2 = gy + gh / 2 - (s[k] / range) * (gh / 2);
+          i === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
+        });
+        ctx.stroke();
+      });
     }
-    // LED 5x5 mirror
+    // Values text (right of graph)
+    if (valText) {
+      ctx.fillStyle = 'rgba(163,230,53,.7)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(valText, bx + px + graphW + 8, by + bh / 2);
+    }
+    // LED 5x5 mirror (far right)
     if (this._lastLedState) {
-      const lx = bx + bw - ledBlock - 4;
+      const lx = bx + bw - ledBlock + 2;
       const ly = by + (bh - 5 * (ledSize + ledGap)) / 2;
       for (let r = 0; r < 5; r++) {
         const row = this._lastLedState[r] || 0;
         for (let c = 0; c < 5; c++) {
           const on = (row >> c) & 1;
-          ctx.fillStyle = on ? '#ef4444' : 'rgba(255,255,255,.1)';
+          ctx.fillStyle = on ? '#ef4444' : 'rgba(255,255,255,.08)';
           ctx.fillRect(lx + c * (ledSize + ledGap), ly + r * (ledSize + ledGap), ledSize, ledSize);
         }
       }
