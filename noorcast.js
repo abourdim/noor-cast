@@ -5134,6 +5134,36 @@ const MicrobitOverlay = {
     const el = document.createElement('div');
     el.className = 'tc-microbit-overlay';
 
+    // ── Drag handle ──
+    const handle = document.createElement('div');
+    handle.className = 'tc-mo-handle';
+    handle.textContent = '🎮 micro:bit';
+    el.appendChild(handle);
+    // Drag logic (pointer events, constrained to stage)
+    let dragX = 0, dragY = 0;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dragX = e.clientX - el.offsetLeft;
+      dragY = e.clientY - el.offsetTop;
+      const onMove = (ev) => {
+        const stageRect = stage.getBoundingClientRect();
+        let nx = ev.clientX - dragX;
+        let ny = ev.clientY - dragY;
+        nx = Math.max(0, Math.min(stageRect.width - el.offsetWidth, nx));
+        ny = Math.max(0, Math.min(stageRect.height - el.offsetHeight, ny));
+        el.style.left = nx + 'px';
+        el.style.top = ny + 'px';
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+      };
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+      };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+
     // ── D-pad ──
     const dpad = document.createElement('div');
     dpad.className = 'tc-mo-dpad';
@@ -5249,6 +5279,19 @@ const MicrobitOverlay = {
     this._el.remove();
     this._el = null;
     this._ledCells = [];
+  },
+
+  // v0.7.179: mirror incoming LEDS: UART data to overlay grid
+  syncLeds(rows) {
+    if (!this._ledCells.length) return;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const on = (rows[r] >> c) & 1;
+        const cell = this._ledCells[r * 5 + c];
+        cell.dataset.on = on ? '1' : '0';
+        cell.classList.toggle('tc-mo-led-on', !!on);
+      }
+    }
   },
 
   _sendLeds() {
@@ -13805,6 +13848,8 @@ const Sensors = {
         cells[r * 5 + c].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
       }
     }
+    // v0.7.179: mirror to Pilot overlay
+    MicrobitOverlay.syncLeds(rows);
   },
 
   // v0.7.171: process accelerometer data (extracted from old BLE handler)

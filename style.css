@@ -5073,13 +5073,26 @@ body.tc-focus .tc-stage {
   bottom: 12px; left: 12px;
   z-index: 75;
   pointer-events: auto;
-  display: flex; gap: 10px; align-items: flex-end;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start;
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
   border-radius: 14px;
   padding: 10px 12px;
   border: 1px solid rgba(255,255,255,.1);
 }
+/* Drag handle */
+.tc-mo-handle {
+  width: 100%;
+  cursor: grab;
+  font-size: .7rem;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255,255,255,.45);
+  text-align: center;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  user-select: none;
+}
+.tc-mo-handle:active { cursor: grabbing; }
 /* D-pad */
 .tc-mo-dpad {
   display: grid; grid-template-columns: repeat(3, 44px); gap: 3px;
