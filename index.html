@@ -1813,6 +1813,8 @@ bluetooth.onBluetoothConnected(() => {
 bluetooth.onBluetoothDisconnected(() => {
     btConnected = false
     basic.showIcon(IconNames.No)
+    basic.pause(2000)
+    basic.clearScreen()
 })
 
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
