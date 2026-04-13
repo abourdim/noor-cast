@@ -5067,6 +5067,71 @@ body.tc-focus .tc-stage {
 .tc-v100-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent, #a3e635) 50%, black); }
 
 /* v0.7.105: draggable sticky-note overlay */
+/* v0.7.179: micro:bit Pilot overlay — D-pad, servos, LEDs on stage */
+.tc-microbit-overlay {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  z-index: 75;
+  pointer-events: auto;
+  display: flex; gap: 10px; align-items: flex-end;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+/* D-pad */
+.tc-mo-dpad {
+  display: grid; grid-template-columns: repeat(3, 44px); gap: 3px;
+}
+.tc-mo-btn {
+  width: 44px; height: 44px;
+  border: none; border-radius: 10px;
+  background: #3b82f6;
+  color: #fff; font-size: 1.2rem; font-weight: bold;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, transform .1s;
+}
+.tc-mo-btn:hover { background: #60a5fa; transform: scale(1.08); }
+.tc-mo-btn:active { transform: scale(.95); }
+.tc-mo-empty { visibility: hidden; }
+.tc-mo-fire {
+  grid-column: 1 / -1;
+  height: 38px; border: none; border-radius: 20px;
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  color: #fff; font-size: .85rem; font-weight: bold; font-family: var(--font-h);
+  cursor: pointer;
+  transition: transform .1s;
+}
+.tc-mo-fire:hover { transform: scale(1.04); }
+.tc-mo-fire:active { transform: scale(.96); }
+/* Servos */
+.tc-mo-servos { display: flex; flex-direction: column; gap: 6px; }
+.tc-mo-servo-row { display: flex; align-items: center; gap: 6px; }
+.tc-mo-servo-label { color: rgba(255,255,255,.6); font-size: .65rem; font-family: var(--font-mono, monospace); width: 28px; }
+.tc-mo-slider { width: 80px; accent-color: #3b82f6; }
+.tc-mo-servo-val { color: #fff; font-size: .65rem; font-family: var(--font-mono, monospace); min-width: 30px; }
+/* LED grid */
+.tc-mo-led-wrap { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.tc-mo-led-title { color: rgba(255,255,255,.5); font-size: .6rem; font-family: var(--font-mono, monospace); }
+.tc-mo-led-grid { display: grid; grid-template-columns: repeat(5, 20px); gap: 2px; }
+.tc-mo-led-cell {
+  width: 20px; height: 20px;
+  border: 1px solid rgba(255,255,255,.2); border-radius: 3px;
+  background: rgba(255,255,255,.08);
+  cursor: pointer; padding: 0;
+  transition: background .1s;
+}
+.tc-mo-led-cell.tc-mo-led-on { background: #ef4444; border-color: #f87171; box-shadow: 0 0 6px rgba(239,68,68,.5); }
+.tc-mo-led-btns { display: flex; gap: 4px; }
+.tc-mo-btn-sm {
+  border: 1px solid rgba(255,255,255,.15); border-radius: 6px;
+  background: rgba(255,255,255,.08); color: #fff;
+  font-size: .75rem; padding: 3px 8px; cursor: pointer;
+}
+.tc-mo-btn-sm:hover { background: rgba(255,255,255,.18); }
+
 .tc-sticky-layer {
   position: absolute;
   inset: 0;

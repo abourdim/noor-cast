@@ -45,7 +45,7 @@ const LANG = {
     mainSection: 'Studio', mainDesc: 'Compose ta scène et enregistre',
     mirrorCam: '🪞 Miroir webcam', countdownOn: '⏱ Compte à rebours', countdownSecs: 'Secondes :',
     scene_code: '<Code/>', scene_robot: 'Mecha', scene_sensors: 'Capteurs',
-    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_you: 'Solo',
+    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_pilot: 'Pilote', scene_you: 'Solo',
     sceneRenamed: 'Scène renommée', sceneRenameTip: 'Double-clic pour renommer',
     txt_bravo: '⭐ Bravo !', txt_step1: '🎯 Étape 1', txt_step2: '🎯 Étape 2', txt_step3: '🎯 Étape 3',
     txt_watch: '👀 Regarde', txt_tip: '💡 Astuce !', txt_careful: '⚠️ Attention', txt_oops: '🙈 Oups !',
@@ -765,7 +765,7 @@ const LANG = {
     mainSection: 'Studio', mainDesc: 'Compose your scene and record',
     mirrorCam: '🪞 Mirror webcam', countdownOn: '⏱ Countdown', countdownSecs: 'Seconds:',
     scene_code: '<Code/>', scene_robot: 'Mecha', scene_sensors: 'Sensors',
-    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_you: 'Solo',
+    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_pilot: 'Pilot', scene_you: 'Solo',
     sceneRenamed: 'Scene renamed', sceneRenameTip: 'Double-click to rename',
     txt_bravo: '⭐ Well done!', txt_step1: '🎯 Step 1', txt_step2: '🎯 Step 2', txt_step3: '🎯 Step 3',
     txt_watch: '👀 Watch', txt_tip: '💡 Tip!', txt_careful: '⚠️ Careful', txt_oops: '🙈 Oops!',
@@ -1480,7 +1480,7 @@ const LANG = {
     mainSection: 'الاستوديو', mainDesc: 'اصنع مشهدك وسجّل',
     mirrorCam: '🪞 مرآة', countdownOn: '⏱ العد التنازلي', countdownSecs: 'الثواني:',
     scene_code: 'كود', scene_robot: 'روبوت', scene_sensors: 'مستشعرات',
-    scene_coderobot: 'كود + روبوت', scene_studio: 'استوديو', scene_you: 'أنت',
+    scene_coderobot: 'كود + روبوت', scene_studio: 'استوديو', scene_pilot: 'طيّار', scene_you: 'أنت',
     sceneRenamed: 'تمت إعادة التسمية', sceneRenameTip: 'انقر مرتين لإعادة التسمية',
     txt_bravo: '⭐ أحسنت!', txt_step1: '🎯 الخطوة 1', txt_step2: '🎯 الخطوة 2', txt_step3: '🎯 الخطوة 3',
     txt_watch: '👀 انظر', txt_tip: '💡 نصيحة!', txt_careful: '⚠️ انتبه', txt_oops: '🙈 أخطأت!',
@@ -4341,6 +4341,14 @@ const Scenes = {
       ]
     },
     {
+      key: 'pilot', icon: '🎮',
+      apply: (e) => { setLayout(e, { firstCam: 'full', facecam: 'br' }); MicrobitOverlay.show(); },
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
       key: 'you', icon: '👋',
       apply: (e) => setLayout(e, { facecam: 'full' }),
       preview: [
@@ -5111,7 +5119,155 @@ const SceneAutoAdvance = {
   },
 };
 
+/* v0.7.179: MicrobitOverlay — D-pad, servo sliders, and LED grid rendered as
+   an HTML overlay on the stage. Shown only in the "Pilot" scene so kids see
+   their robot controls + camera feeds together. Not baked into the recording
+   (HTML overlay, same as sticky notes / teleprompter). */
+const MicrobitOverlay = {
+  _el: null,
+  _ledCells: [],
+
+  show() {
+    if (this._el) return;
+    const stage = $('tcStage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.className = 'tc-microbit-overlay';
+
+    // ── D-pad ──
+    const dpad = document.createElement('div');
+    dpad.className = 'tc-mo-dpad';
+    const dirs = [
+      ['',  '↑', ''],
+      ['←', '●', '→'],
+      ['',  '↓', ''],
+    ];
+    const actions = [
+      [null, () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-10); }, null],
+      [() => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-10); }, () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); }, () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(10); }],
+      [null, () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(10); }, null],
+    ];
+    dirs.forEach((row, r) => {
+      row.forEach((label, c) => {
+        const btn = document.createElement('button');
+        btn.className = 'tc-mo-btn' + (label ? '' : ' tc-mo-empty');
+        btn.textContent = label;
+        btn.disabled = !label;
+        if (actions[r][c]) btn.addEventListener('click', actions[r][c]);
+        dpad.appendChild(btn);
+      });
+    });
+
+    // Fire button
+    const fire = document.createElement('button');
+    fire.className = 'tc-mo-fire';
+    fire.textContent = '🔥 FIRE';
+    fire.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
+    dpad.appendChild(fire);
+    el.appendChild(dpad);
+
+    // ── Servos ──
+    const servos = document.createElement('div');
+    servos.className = 'tc-mo-servos';
+    [
+      { label: 'Pan', cmd: 'P:', prop: '_panAngle' },
+      { label: 'Tilt', cmd: 'TI:', prop: '_tiltAngle' },
+    ].forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'tc-mo-servo-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'tc-mo-servo-label';
+      lbl.textContent = s.label;
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.min = '0'; slider.max = '180'; slider.value = String(Sensors[s.prop] || 90);
+      slider.className = 'tc-mo-slider';
+      const val = document.createElement('span');
+      val.className = 'tc-mo-servo-val';
+      val.textContent = slider.value + '°';
+      slider.addEventListener('input', () => {
+        val.textContent = slider.value + '°';
+        Sensors.sendUart(s.cmd + slider.value);
+      });
+      row.appendChild(lbl);
+      row.appendChild(slider);
+      row.appendChild(val);
+      servos.appendChild(row);
+    });
+    el.appendChild(servos);
+
+    // ── LED 5×5 grid ──
+    const ledWrap = document.createElement('div');
+    ledWrap.className = 'tc-mo-led-wrap';
+    const ledTitle = document.createElement('div');
+    ledTitle.className = 'tc-mo-led-title';
+    ledTitle.textContent = '💡 LED';
+    ledWrap.appendChild(ledTitle);
+    const grid = document.createElement('div');
+    grid.className = 'tc-mo-led-grid';
+    this._ledCells = [];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement('button');
+        cell.className = 'tc-mo-led-cell';
+        cell.dataset.on = '0';
+        cell.addEventListener('click', () => {
+          cell.dataset.on = cell.dataset.on === '1' ? '0' : '1';
+          cell.classList.toggle('tc-mo-led-on');
+        });
+        grid.appendChild(cell);
+        this._ledCells.push(cell);
+      }
+    }
+    ledWrap.appendChild(grid);
+    // Send + Clear buttons
+    const ledBtns = document.createElement('div');
+    ledBtns.className = 'tc-mo-led-btns';
+    const sendBtn = document.createElement('button');
+    sendBtn.className = 'tc-mo-btn-sm';
+    sendBtn.textContent = '📡';
+    sendBtn.title = 'Send';
+    sendBtn.addEventListener('click', () => this._sendLeds());
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'tc-mo-btn-sm';
+    clearBtn.textContent = '🗑';
+    clearBtn.title = 'Clear';
+    clearBtn.addEventListener('click', () => {
+      this._ledCells.forEach(c => { c.dataset.on = '0'; c.classList.remove('tc-mo-led-on'); });
+      this._sendLeds();
+    });
+    ledBtns.appendChild(sendBtn);
+    ledBtns.appendChild(clearBtn);
+    ledWrap.appendChild(ledBtns);
+    el.appendChild(ledWrap);
+
+    stage.appendChild(el);
+    this._el = el;
+  },
+
+  hide() {
+    if (!this._el) return;
+    this._el.remove();
+    this._el = null;
+    this._ledCells = [];
+  },
+
+  _sendLeds() {
+    // Encode 5 rows as hex: each row is 5 bits (MSB = col 0)
+    let hex = '';
+    for (let r = 0; r < 5; r++) {
+      let rowVal = 0;
+      for (let c = 0; c < 5; c++) {
+        if (this._ledCells[r * 5 + c].dataset.on === '1') rowVal |= (1 << (4 - c));
+      }
+      hex += rowVal.toString(16).padStart(2, '0');
+    }
+    Sensors.sendUart('LED:' + hex);
+  },
+};
+
 function setLayout(engine, layout) {
+  // v0.7.179: hide micro:bit overlay when switching away from Pilot scene
+  MicrobitOverlay.hide();
   // v0.4.0: sources flagged .custom (user has drag-positioned them) are
   // left alone entirely — position, size, shape, visibility, all preserved.
   // Free sources are hidden at the start and then the scene's layout rules
