@@ -15218,9 +15218,16 @@ function wireEvents() {
   });
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
-  $('btDisconnectBtn')?.addEventListener('click', () => {
+  $('btDisconnectBtn')?.addEventListener('click', async () => {
     if (Sensors.device && Sensors.device.gatt && Sensors.device.gatt.connected) {
+      // Tell firmware to stop before disconnecting
+      try { await Sensors.sendUart('BYE'); } catch {}
+      // Small delay for BYE to arrive
+      await new Promise(r => setTimeout(r, 200));
       Sensors.device.gatt.disconnect();
+      Sensors._uartTx = null;
+      Sensors._uartQueue.length = 0;
+      Sensors._uartBusy = false;
       showToast('micro:bit disconnected', 1500);
     } else {
       showToast('Not connected', 1200);

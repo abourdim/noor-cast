@@ -1842,6 +1842,11 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
         basic.showIcon(IconNames.Heart)
         basic.pause(300); basic.clearScreen(); return
     }
+    if (cmd == "BYE") {
+        btConnected = false
+        basic.showIcon(IconNames.No)
+        basic.pause(500); basic.clearScreen(); return
+    }
     // LED matrix (hex)
     if (cmd.indexOf("LED:") == 0) {
         let hex = cmd.substr(4)
