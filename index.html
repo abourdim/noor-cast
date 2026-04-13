@@ -712,47 +712,6 @@
         </div>
       </div>
 
-      <!-- ═══════════════════ BADGES SECTION ═══════════════════ -->
-      <details class="collapsible">
-        <summary><span class="icon">🏆</span> <span data-i18n="badgesTitle">Tes badges</span></summary>
-        <div class="card">
-          <div class="tc-badges" id="tcBadges"></div>
-        </div>
-      </details>
-
-      <!-- v0.7.34: My tutorials history — last 10 recorded takes, metadata only -->
-      <details class="collapsible">
-        <summary><span class="icon">📊</span> <span data-i18n="historyTitle">Mes tutos</span></summary>
-        <div class="card">
-          <!-- v0.7.97: search + min-star filter -->
-          <div class="tc-history-filter">
-            <input type="search" id="tcHistorySearch" class="tc-history-search" placeholder="🔍" data-i18n-placeholder="historySearchPlaceholder" />
-            <div class="tc-history-stars" id="tcHistoryStars">
-              <button data-stars="0" class="active" title="All">All</button>
-              <button data-stars="1" title="≥1">1+</button>
-              <button data-stars="2" title="≥2">2+</button>
-              <button data-stars="3" title="≥3">3+</button>
-              <button data-stars="4" title="≥4">4+</button>
-              <button data-stars="5" title="5">5</button>
-            </div>
-          </div>
-          <div class="tc-history" id="tcHistory">
-            <div class="tc-history-empty" data-i18n="historyEmpty">Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !</div>
-          </div>
-          <div class="tc-history-footer">
-            <span class="tc-history-stats" id="tcHistoryStats"></span>
-            <button class="tc-history-clear" id="tcHistoryClearBtn" data-i18n="historyClear">🗑 Vider l'historique</button>
-          </div>
-        </div>
-      </details>
-
-      <!-- v0.7.63: aggregate session stats dashboard -->
-      <details class="collapsible">
-        <summary><span class="icon">📈</span> <span data-i18n="dashTitle">Tes stats</span></summary>
-        <div class="card">
-          <div class="tc-dash" id="tcDashboard"></div>
-        </div>
-      </details>
 
     </div>
 
@@ -1701,6 +1660,45 @@
             rows="4"
             placeholder="💡 Mon message perso&#10;🎬 Tuto du jour&#10;⭐ Bonne humeur !"></textarea>
           <div class="tc-ticker-hint" data-i18n="tickerCustomHint">Laisse vide pour utiliser les 10 conseils par défaut.</div>
+        </div>
+      </details>
+
+      <!-- v0.7.179: dashboard sections moved from main page to settings -->
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">🏆 <span data-i18n="badgesTitle">Tes badges</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-badges" id="tcBadges"></div>
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">📊 <span data-i18n="historyTitle">Mes tutos</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-history-filter">
+            <input type="search" id="tcHistorySearch" class="tc-history-search" placeholder="🔍" data-i18n-placeholder="historySearchPlaceholder" />
+            <div class="tc-history-stars" id="tcHistoryStars">
+              <button data-stars="0" class="active" title="All">All</button>
+              <button data-stars="1" title="≥1">1+</button>
+              <button data-stars="2" title="≥2">2+</button>
+              <button data-stars="3" title="≥3">3+</button>
+              <button data-stars="4" title="≥4">4+</button>
+              <button data-stars="5" title="5">5</button>
+            </div>
+          </div>
+          <div class="tc-history" id="tcHistory">
+            <div class="tc-history-empty" data-i18n="historyEmpty">Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !</div>
+          </div>
+          <div class="tc-history-footer">
+            <span class="tc-history-stats" id="tcHistoryStats"></span>
+            <button class="tc-history-clear" id="tcHistoryClearBtn" data-i18n="historyClear">🗑 Vider l'historique</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">📈 <span data-i18n="dashTitle">Tes stats</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-dash" id="tcDashboard"></div>
         </div>
       </details>
     </div>

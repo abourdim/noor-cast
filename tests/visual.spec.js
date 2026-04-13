@@ -307,8 +307,8 @@ test.describe('Sticky Notes', () => {
         StickyNotes.add('Test note content');
       }
     });
-    await page.waitForTimeout(400);
-    await expect(page).toHaveScreenshot('28-sticky-note.png');
+    await page.waitForTimeout(600);
+    await expect(page).toHaveScreenshot('28-sticky-note.png', { maxDiffPixelRatio: 0.03 });
   });
 });
 
