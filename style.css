@@ -5081,7 +5081,7 @@ body.tc-focus .tc-stage {
   border: 1px solid rgba(255,255,255,.1);
 }
 .tc-mo-row {
-  display: flex; gap: 8px; align-items: flex-start;
+  display: flex; gap: 10px; align-items: stretch;
 }
 /* Drag handle */
 .tc-mo-handle {
@@ -5123,7 +5123,7 @@ body.tc-focus .tc-stage {
 .tc-mo-fire:hover { transform: scale(1.04); }
 .tc-mo-fire:active { transform: scale(.96); }
 /* Servos */
-.tc-mo-servos { display: flex; flex-direction: column; gap: 6px; }
+.tc-mo-servos { display: flex; flex-direction: column; gap: 6px; justify-content: space-evenly; }
 .tc-mo-servo-row { display: flex; align-items: center; gap: 6px; }
 .tc-mo-servo-label { color: rgba(255,255,255,.6); font-size: .65rem; font-family: var(--font-mono, monospace); width: 28px; }
 .tc-mo-slider { width: 80px; accent-color: #3b82f6; }
@@ -5148,7 +5148,7 @@ body.tc-focus .tc-stage {
 }
 .tc-mo-btn-sm:hover { background: rgba(255,255,255,.18); }
 /* Joystick */
-.tc-mo-joy-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; min-height: 100px; }
+.tc-mo-joy-wrap { display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; flex-shrink: 0; }
 .tc-mo-joy-mode {
   font-size: .65rem; font-family: var(--font-mono, monospace);
   background: rgba(59,130,246,.2); border: 1px solid rgba(59,130,246,.4);
