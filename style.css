@@ -1664,6 +1664,12 @@ body.log-open .app {
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
+  transition: height .2s, border-color .3s;
+}
+.tc-vu.tc-vu-checking {
+  height: 14px;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(163,230,53,.15);
 }
 .tc-vu-bar {
   height: 100%;
@@ -1671,6 +1677,24 @@ body.log-open .app {
   background: linear-gradient(90deg, #16a34a, #a3e635, #fbbf24, #ef4444);
   transition: width .08s ease-out;
 }
+/* v0.7.179: mic check status message */
+.tc-mic-check {
+  font-size: .75rem;
+  font-family: var(--font-h);
+  text-align: center;
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .3s, opacity .3s, padding .3s;
+}
+.tc-mic-check.visible {
+  max-height: 32px;
+  opacity: 1;
+  padding: 4px 0;
+}
+.tc-mic-check.tc-mic-ok { color: #4ade80; }
+.tc-mic-check.tc-mic-fail { color: #fbbf24; }
 
 .tc-bt-values {
   font-family: 'Orbitron', monospace;

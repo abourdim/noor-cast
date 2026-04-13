@@ -27,6 +27,7 @@ const LANG = {
     statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
     sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
+    micCheckListening: '🎤 Parle pour tester…', micCheckOk: '✅ Micro OK !', micCheckFail: '⚠️ Rien détecté',
     activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
     scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre', emojiBtn: 'Emoji',
     tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner', ripples: 'Ripples',
@@ -746,6 +747,7 @@ const LANG = {
     statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
     sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
+    micCheckListening: '🎤 Speak to test…', micCheckOk: '✅ Mic OK!', micCheckFail: '⚠️ Nothing detected',
     activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
     scenes: 'Scenes', texts: 'Texts', addText: 'Free text', emojiBtn: 'Emoji',
     tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw', ripples: 'Ripples',
@@ -1462,6 +1464,7 @@ const LANG = {
     statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
     sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
+    micCheckListening: '🎤 تحدث للاختبار…', micCheckOk: '✅ الميكروفون يعمل!', micCheckFail: '⚠️ لم يُكتشف شيء',
     activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
     scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر', emojiBtn: 'إيموجي',
     tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم', ripples: 'موجات',
@@ -2651,6 +2654,66 @@ const MicMeter = {
       const x = (this.W / 8) * i;
       c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.H); c.stroke();
     }
+  },
+};
+
+/* v0.7.179: MicCheck — 3-second auto-test when a mic is selected.
+   Monitors the VU analyser for sound above a threshold. Shows a status
+   message (listening → OK / fail) and enlarges the VU bar briefly. */
+const MicCheck = {
+  _timer: null,
+  _raf: null,
+  _detected: false,
+
+  start() {
+    this.stop();
+    this._detected = false;
+    const el = $('tcMicCheck');
+    const vu = document.querySelector('.tc-vu');
+    if (!el) return;
+    // Show "listening" state
+    el.className = 'tc-mic-check visible';
+    el.textContent = t('micCheckListening');
+    if (vu) vu.classList.add('tc-vu-checking');
+    // Monitor analyser for 3 seconds
+    const analyser = Engine.analyser;
+    if (analyser) {
+      const buf = new Uint8Array(analyser.fftSize);
+      const check = () => {
+        analyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / buf.length);
+        if (rms > 0.02) this._detected = true;
+        if (!this._detected) this._raf = requestAnimationFrame(check);
+      };
+      this._raf = requestAnimationFrame(check);
+    }
+    // After 3s, show result
+    this._timer = setTimeout(() => {
+      if (this._raf) cancelAnimationFrame(this._raf);
+      if (vu) vu.classList.remove('tc-vu-checking');
+      if (this._detected) {
+        el.className = 'tc-mic-check visible tc-mic-ok';
+        el.textContent = t('micCheckOk');
+      } else {
+        el.className = 'tc-mic-check visible tc-mic-fail';
+        el.textContent = t('micCheckFail');
+      }
+      // Auto-dismiss after 4s
+      setTimeout(() => {
+        el.classList.remove('visible');
+      }, 4000);
+    }, 3000);
+  },
+
+  stop() {
+    if (this._timer) { clearTimeout(this._timer); this._timer = null; }
+    if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+    const el = $('tcMicCheck');
+    if (el) el.classList.remove('visible');
+    const vu = document.querySelector('.tc-vu');
+    if (vu) vu.classList.remove('tc-vu-checking');
   },
 };
 
@@ -3929,6 +3992,8 @@ const Engine = {
       this.onSourcesChanged();
       log('+ Mic', 'success');
       this.refreshDeviceList();
+      // v0.7.179: auto mic check on selection
+      MicCheck.start();
     } catch (e) {
       log(`✗ mic: ${e.message}`, 'error');
     }
