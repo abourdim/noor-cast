@@ -13057,6 +13057,15 @@ const Sensors = {
      All data flows through a single UART service as text lines.
      Firmware sends: A:x,y,z  BA:1  BB:0  TP:23  L:128  S:200
      NoorCast sends: P:90  TI:45  LED:1f1f1f1f1f  TEST  HELLO */
+  _setConnectionUI(connected, statusText) {
+    const s = $('tcBtStatus');
+    const cb = $('btConnectBtn');
+    const db = $('btDisconnectBtn');
+    if (s) { s.textContent = statusText; s.style.color = connected ? '#a3e635' : '#ef4444'; }
+    if (cb) cb.style.display = connected ? 'none' : '';
+    if (db) db.style.display = connected ? '' : 'none';
+  },
+
   async connect() {
     if (!navigator.bluetooth) {
       showToast('❌ Web Bluetooth non supporté (Chrome/Edge requis)', 3000);
@@ -13072,9 +13081,7 @@ const Sensors = {
       this.device.addEventListener('gattserverdisconnected', () => {
         log('micro:bit disconnected', 'warn');
         showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
-        const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Disconnected'; s.style.color = '#ef4444'; }
-        const cb2 = $('btConnectBtn'); if (cb2) cb2.style.display = '';
-        const db2 = $('btDisconnectBtn'); if (db2) db2.style.display = 'none';
+        this._setConnectionUI(false, '❌ Disconnected');
         this.server = null;
         this._uartTx = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
@@ -13114,16 +13121,13 @@ const Sensors = {
       this.sendUart('HELLO');
       log(t('btConnected'), 'success');
       showToast(t('btConnected'), 2500);
-      const statusEl = $('tcBtStatus');
-      if (statusEl) { statusEl.textContent = '✅ Connected'; statusEl.style.color = '#a3e635'; }
-      const cb = $('btConnectBtn'); if (cb) cb.style.display = 'none';
-      const db = $('btDisconnectBtn'); if (db) db.style.display = '';
+      this._setConnectionUI(true, '✅ Connected');
       Badges.unlockMicrobit();
       this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
       $('tcBtValues').style.display = 'block';
     } catch (e) {
       log(`${t('btError')}: ${e.message}`, 'error');
-      const s3 = $('tcBtStatus'); if (s3) { s3.textContent = '❌ ' + e.message; s3.style.color = '#ef4444'; }
+      this._setConnectionUI(false, '❌ ' + e.message);
       showToast(t('btError'), 2500);
     }
   },
@@ -13360,9 +13364,7 @@ const Sensors = {
     if (!this.device || this._reconnectAttempts >= 3) {
       if (this._reconnectAttempts >= 3) {
         showToast('micro:bit reconnect failed after 3 attempts', 3000);
-        const s = $('tcBtStatus'); if (s) { s.textContent = '❌ Reconnect failed'; s.style.color = '#ef4444'; }
-        const cb3 = $('btConnectBtn'); if (cb3) cb3.style.display = '';
-        const db3 = $('btDisconnectBtn'); if (db3) db3.style.display = 'none';
+        this._setConnectionUI(false, '❌ Reconnect failed');
       }
       this._reconnectAttempts = 0;
       this._reconnecting = false;
@@ -13411,9 +13413,7 @@ const Sensors = {
       this._reconnectAttempts = 0;
       this._reconnecting = false;
       showToast('micro:bit reconnected!', 2000);
-      const s2 = $('tcBtStatus'); if (s2) { s2.textContent = '✅ Reconnected'; s2.style.color = '#a3e635'; }
-      const cb4 = $('btConnectBtn'); if (cb4) cb4.style.display = 'none';
-      const db4 = $('btDisconnectBtn'); if (db4) db4.style.display = '';
+      this._setConnectionUI(true, '✅ Reconnected');
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
