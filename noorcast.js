@@ -5210,6 +5210,130 @@ const MicrobitOverlay = {
     dpad.appendChild(fire);
     el.appendChild(dpad);
 
+    // ── Joystick ──
+    const joyWrap = document.createElement('div');
+    joyWrap.className = 'tc-mo-joy-wrap';
+    // Mode toggle
+    const modeBtn = document.createElement('button');
+    modeBtn.className = 'tc-mo-joy-mode';
+    let joyMode = 'cmd'; // 'cmd' or 'servo'
+    modeBtn.textContent = '🕹 CMD';
+    modeBtn.addEventListener('click', () => {
+      joyMode = joyMode === 'cmd' ? 'servo' : 'cmd';
+      modeBtn.textContent = joyMode === 'cmd' ? '🕹 CMD' : '🎯 Servo';
+      modeBtn.classList.toggle('tc-mo-joy-servo', joyMode === 'servo');
+    });
+    joyWrap.appendChild(modeBtn);
+    // Joystick canvas
+    const joySize = 100;
+    const joyCanvas = document.createElement('canvas');
+    joyCanvas.width = joySize; joyCanvas.height = joySize;
+    joyCanvas.className = 'tc-mo-joy-canvas';
+    const jCtx = joyCanvas.getContext('2d');
+    const jR = joySize / 2;       // outer radius
+    const knobR = 18;              // knob radius
+    let knobX = jR, knobY = jR;   // center
+    let joyDragging = false;
+    let _cmdThrottle = 0;
+
+    const drawJoy = () => {
+      jCtx.clearRect(0, 0, joySize, joySize);
+      // Outer ring
+      jCtx.beginPath();
+      jCtx.arc(jR, jR, jR - 4, 0, Math.PI * 2);
+      jCtx.fillStyle = 'rgba(255,255,255,.06)';
+      jCtx.fill();
+      jCtx.strokeStyle = 'rgba(255,255,255,.2)';
+      jCtx.lineWidth = 2;
+      jCtx.stroke();
+      // Crosshair
+      jCtx.strokeStyle = 'rgba(255,255,255,.08)';
+      jCtx.lineWidth = 1;
+      jCtx.beginPath(); jCtx.moveTo(jR, 8); jCtx.lineTo(jR, joySize - 8); jCtx.stroke();
+      jCtx.beginPath(); jCtx.moveTo(8, jR); jCtx.lineTo(joySize - 8, jR); jCtx.stroke();
+      // Knob
+      const grad = jCtx.createRadialGradient(knobX, knobY, 2, knobX, knobY, knobR);
+      grad.addColorStop(0, joyMode === 'cmd' ? '#60a5fa' : '#a3e635');
+      grad.addColorStop(1, joyMode === 'cmd' ? '#2563eb' : '#65a30d');
+      jCtx.beginPath();
+      jCtx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+      jCtx.fillStyle = grad;
+      jCtx.fill();
+      jCtx.strokeStyle = 'rgba(255,255,255,.4)';
+      jCtx.lineWidth = 1.5;
+      jCtx.stroke();
+      // Emoji face on knob
+      jCtx.fillStyle = '#fff';
+      jCtx.font = '12px sans-serif';
+      jCtx.textAlign = 'center';
+      jCtx.textBaseline = 'middle';
+      jCtx.fillText(joyMode === 'cmd' ? '🕹' : '🎯', knobX, knobY);
+    };
+
+    const handleJoy = (clientX, clientY) => {
+      const rect = joyCanvas.getBoundingClientRect();
+      let dx = clientX - rect.left - jR;
+      let dy = clientY - rect.top - jR;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = jR - knobR - 4;
+      if (dist > maxDist) { dx = dx / dist * maxDist; dy = dy / dist * maxDist; }
+      knobX = jR + dx;
+      knobY = jR + dy;
+      const nx = dx / maxDist;  // -1..1
+      const ny = dy / maxDist;
+
+      if (joyMode === 'cmd') {
+        // Throttled CMD dispatch based on dominant direction
+        const now = Date.now();
+        if (now - _cmdThrottle > 200) {
+          _cmdThrottle = now;
+          if (Math.abs(nx) > Math.abs(ny)) {
+            Sensors.sendUart(nx > 0 ? 'CMD:RIGHT' : 'CMD:LEFT');
+          } else if (Math.abs(ny) > 0.3) {
+            Sensors.sendUart(ny > 0 ? 'CMD:DOWN' : 'CMD:UP');
+          }
+        }
+      } else {
+        // Servo mode: map -1..1 to 0..180
+        const panAngle = Math.round(90 + nx * 90);
+        const tiltAngle = Math.round(90 + ny * 90);
+        Sensors._panAngle = Math.max(0, Math.min(180, panAngle));
+        Sensors._tiltAngle = Math.max(0, Math.min(180, tiltAngle));
+        Sensors.sendUart('P:' + Sensors._panAngle);
+        Sensors.sendUart('TI:' + Sensors._tiltAngle);
+        syncUI();
+      }
+      drawJoy();
+    };
+
+    const resetKnob = () => {
+      knobX = jR; knobY = jR;
+      drawJoy();
+      if (joyMode === 'cmd') Sensors.sendUart('CMD:CLEAR');
+    };
+
+    joyCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      joyDragging = true;
+      joyCanvas.setPointerCapture(e.pointerId);
+      handleJoy(e.clientX, e.clientY);
+    });
+    joyCanvas.addEventListener('pointermove', (e) => {
+      if (!joyDragging) return;
+      handleJoy(e.clientX, e.clientY);
+    });
+    joyCanvas.addEventListener('pointerup', () => {
+      joyDragging = false;
+      resetKnob();
+    });
+    joyCanvas.addEventListener('pointerleave', () => {
+      if (joyDragging) { joyDragging = false; resetKnob(); }
+    });
+
+    joyWrap.appendChild(joyCanvas);
+    el.appendChild(joyWrap);
+    drawJoy();
+
     // ── Servos ──
     const servos = document.createElement('div');
     servos.className = 'tc-mo-servos';
