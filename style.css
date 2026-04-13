@@ -1658,25 +1658,6 @@ body.log-open .app {
 .tc-stage.dragging canvas { cursor: grabbing !important; }
 
 /* VU meter */
-.tc-vu {
-  height: 8px;
-  background: rgba(0,0,0,.4);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  transition: height .2s, border-color .3s;
-}
-.tc-vu.tc-vu-checking {
-  height: 14px;
-  border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(163,230,53,.15);
-}
-.tc-vu-bar {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #16a34a, #a3e635, #fbbf24, #ef4444);
-  transition: width .08s ease-out;
-}
 /* v0.7.179: mic check status message */
 .tc-mic-check {
   font-size: .75rem;
@@ -2971,13 +2952,6 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
 }
 
 /* v0.7.111: always-visible mic level meter embedded in the tools bar */
-.tc-mic-meter {
-  display: inline-block;
-  vertical-align: middle;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-}
-
 /* v0.7.104: emoji reaction palette */
 .tc-react-palette {
   position: absolute;

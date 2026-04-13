@@ -2600,8 +2600,6 @@ const MicBoost = {
       const db = rms > 0 ? 20 * Math.log10(rms) : -100;
       // v0.7.83: forward the mic RMS to VolumeDuck for ducking
       try { VolumeDuck.tick(db); } catch {}
-      // v0.7.111: feed the always-visible level meter from the same RMS
-      try { MicMeter.update(rms); } catch {}
       const shouldMute = db < this.gateDb;
       if (shouldMute !== this._muted) {
         this._muted = shouldMute;
@@ -2613,49 +2611,6 @@ const MicBoost = {
   },
 };
 
-/* v0.7.111: MicMeter — tiny 80×12 LED-style audio level meter rendered
-   in the floating tools bar. Piggybacks on MicBoost._startGateLoop's
-   existing analyser/rAF loop (no new AnalyserNode, no new rAF) so it
-   costs essentially nothing when the mic is live. Draws a green →
-   yellow → red gradient so teachers can see at a glance that their
-   mic is picking up audio and whether they're in the safe zone or
-   clipping. */
-const MicMeter = {
-  _canvas: null,
-  _ctx: null,
-  W: 80, H: 12,
-  setup() {
-    this._canvas = document.getElementById('tcMicMeter');
-    if (!this._canvas) return;
-    this._canvas.width = this.W; this._canvas.height = this.H;
-    this._ctx = this._canvas.getContext('2d');
-    this._draw(0);
-  },
-  update(rms) {
-    if (!this._ctx) return;
-    // rms is linear 0..1
-    this._draw(rms);
-  },
-  _draw(level) {
-    const c = this._ctx; c.clearRect(0, 0, this.W, this.H);
-    const filled = Math.min(1, level * 1.8) * this.W;
-    // gradient: green → yellow → red
-    const g = c.createLinearGradient(0, 0, this.W, 0);
-    g.addColorStop(0, '#2ecc71');
-    g.addColorStop(0.65, '#f1c40f');
-    g.addColorStop(0.9, '#e74c3c');
-    c.fillStyle = '#222';
-    c.fillRect(0, 0, this.W, this.H);
-    c.fillStyle = g;
-    c.fillRect(0, 0, filled, this.H);
-    // tick marks
-    c.strokeStyle = 'rgba(255,255,255,0.15)';
-    for (let i = 1; i < 8; i++) {
-      const x = (this.W / 8) * i;
-      c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.H); c.stroke();
-    }
-  },
-};
 
 /* v0.7.179: MicCheck — 3-second auto-test when a mic is selected.
    Monitors the VU analyser for sound above a threshold. Shows a status
@@ -2669,7 +2624,6 @@ const MicCheck = {
     this.stop();
     this._detected = false;
     const el = $('tcMicCheck');
-    const vu = document.querySelector('.tc-vu');
     if (!el) return;
     // Resume AudioContext (Chrome suspends until user gesture)
     if (Engine.audioCtx && Engine.audioCtx.state === 'suspended') {
@@ -2678,7 +2632,6 @@ const MicCheck = {
     // Show "listening" state
     el.className = 'tc-mic-check visible';
     el.textContent = t('micCheckListening');
-    if (vu) vu.classList.add('tc-vu-checking');
     // Monitor analyser for 3 seconds
     const analyser = Engine.analyser;
     if (analyser) {
@@ -2696,7 +2649,6 @@ const MicCheck = {
     // After 3s, show result
     this._timer = setTimeout(() => {
       if (this._raf) cancelAnimationFrame(this._raf);
-      if (vu) vu.classList.remove('tc-vu-checking');
       if (this._detected) {
         el.className = 'tc-mic-check visible tc-mic-ok';
         el.textContent = t('micCheckOk');
@@ -2716,8 +2668,6 @@ const MicCheck = {
     if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
     const el = $('tcMicCheck');
     if (el) el.classList.remove('visible');
-    const vu = document.querySelector('.tc-vu');
-    if (vu) vu.classList.remove('tc-vu-checking');
   },
 };
 
@@ -4303,9 +4253,6 @@ const Engine = {
     }
     const rms = Math.sqrt(sum / data.length);
     const pct = Math.min(100, rms * 400);
-    // Sidebar VU bar (sources panel)
-    const bar = $('tcVuBar');
-    if (bar) bar.style.width = pct + '%';
     // v0.7.40: LED-style meter next to the big REC button. 10 segments,
     // color-coded green/yellow/red, threshold-lit.
     const leds = $('tcLedMeter');
@@ -16542,7 +16489,6 @@ async function init() {
   SourceLabels.init(); // v0.7.130
   FpsCounter.init();   // v0.7.140
   PreviewZoom.setup();  // v0.7.133
-  MicMeter.setup();     // v0.7.111
   FocusMode.setup();    // v0.7.109
 
   renderScenes();
