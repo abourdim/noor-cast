@@ -5159,6 +5159,9 @@ body.tc-focus .tc-stage {
   background: rgba(163,230,53,.2); border-color: rgba(163,230,53,.4); color: #a3e635;
 }
 .tc-mo-joy-canvas {
+  position: static !important;
+  inset: auto !important;
+  display: block;
   width: 80px; height: 80px;
   min-width: 80px; min-height: 80px;
   max-width: 80px; max-height: 80px;
