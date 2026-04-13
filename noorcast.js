@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.175 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.176 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.175';
+const APP_VERSION = '0.7.176';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -7265,6 +7265,10 @@ const Drag = {
       const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
       if (this._insideRect(so, mx, my)) return { kind: 'sensorOverlay', ref: so };
     }
+    // 0b. Watermark (draggable)
+    if (Watermark.text && Watermark.w > 0) {
+      if (this._insideRect(Watermark, mx, my)) return { kind: 'watermark', ref: Watermark };
+    }
     // 1. Brand slogan (top)
     if (Brand.hasSlogan()) {
       if (this._insideRect(Brand.slogan, mx, my)) return { kind: 'brandSlogan', ref: Brand.slogan };
@@ -7541,7 +7545,8 @@ const Drag = {
       } else {
         ref.x = nx; ref.y = ny;
         if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
-        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; }
+        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPos(); }
+        if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._savePos(); }
       }
     } else {
       // resize
@@ -7592,6 +7597,7 @@ const Drag = {
       } else if (s.kind === 'sensorOverlay') {
         Sensors._overlayX = newX; Sensors._overlayY = newY;
         if (s.mode === 'resize') Sensors._overlayScale = Math.max(0.5, Math.min(3, newW / s.startW));
+        Sensors._saveOverlayPos();
       }
     }
     // Save brand position after any brand drag
@@ -8000,13 +8006,15 @@ const Brand = {
   },
 };
 
-/* v0.7.98 — Stage watermark text overlay: a simple monospace text stamp
-   that's always visible in a fixed corner. Useful for lesson copyright /
-   channel branding. Different from Brand (v0.7.7) which is draggable. */
+/* v0.7.98 — Stage watermark text overlay: a monospace text stamp.
+   v0.7.176: now draggable on canvas (position persisted in localStorage).
+   Defaults to corner-based position; drag to place anywhere. */
 const Watermark = {
   text: '',
-  corner: 'br',  // tl / tr / bl / br
+  corner: 'br',  // tl / tr / bl / br (default position when not dragged)
   opacity: 0.55,
+  // Draggable position — _customPos false means use corner-based default
+  _customPos: false, x: 0, y: 0, w: 0, h: 0,
 
   load() {
     try {
@@ -8014,6 +8022,25 @@ const Watermark = {
       this.corner = localStorage.getItem('tc-watermark-corner') || 'br';
       const op = parseFloat(localStorage.getItem('tc-watermark-opacity'));
       if (!isNaN(op)) this.opacity = Math.max(0, Math.min(1, op));
+      this._loadPos();
+    } catch {}
+  },
+  _loadPos() {
+    try {
+      const raw = localStorage.getItem('tc-watermark-pos');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p.x === 'number') { this.x = p.x; this.y = p.y; this._customPos = true; }
+      }
+    } catch {}
+  },
+  _savePos() {
+    try {
+      if (this._customPos) {
+        localStorage.setItem('tc-watermark-pos', JSON.stringify({ x: this.x, y: this.y }));
+      } else {
+        localStorage.removeItem('tc-watermark-pos');
+      }
     } catch {}
   },
   setText(s) {
@@ -8023,6 +8050,9 @@ const Watermark = {
   setCorner(c) {
     if (['tl','tr','bl','br'].includes(c)) {
       this.corner = c;
+      // Reset custom position when corner changes
+      this._customPos = false;
+      this._savePos();
       try { localStorage.setItem('tc-watermark-corner', c); } catch {}
     }
   },
@@ -8041,10 +8071,15 @@ const Watermark = {
     const tw = m.width + 20;
     const th = 40;
     let bx, by;
-    if (this.corner === 'tl') { bx = pad; by = pad; }
+    if (this._customPos) {
+      // Custom dragged position
+      bx = this.x; by = this.y;
+    } else if (this.corner === 'tl') { bx = pad; by = pad; }
     else if (this.corner === 'tr') { bx = W - pad - tw; by = pad; }
     else if (this.corner === 'bl') { bx = pad; by = H - pad - th; }
     else { bx = W - pad - tw; by = H - pad - th; }
+    // Update hit-test dimensions
+    this.x = bx; this.y = by; this.w = tw; this.h = th;
     // Rounded background
     ctx.fillStyle = 'rgba(0, 0, 0, .45)';
     ctx.beginPath();
@@ -13180,6 +13215,16 @@ const Sensors = {
   _overlayOpacity: 0.85,
   _overlayScale: 1.0,
 
+  _saveOverlayPos() {
+    try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale })); } catch {}
+  },
+  _loadOverlayPos() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-sensor-overlay'));
+      if (s) { this._overlayX = s.x; this._overlayY = s.y; this._overlayOpacity = s.opacity ?? 0.85; this._overlayScale = s.scale ?? 1; }
+    } catch {}
+  },
+
   drawOverlay(ctx) {
     if (!this.values || !this.server || !this.server.connected) return;
     const v = this.values;
@@ -15230,6 +15275,7 @@ function wireEvents() {
     Engine.addCamera(deviceId, label);
   });
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
+  Sensors._loadOverlayPos();
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
   $('btDisconnectBtn')?.addEventListener('click', async () => {
     if (Sensors.device && Sensors.device.gatt && Sensors.device.gatt.connected) {
@@ -15795,6 +15841,7 @@ function wireEvents() {
           const steps = [1, 0.75, 0.5, 0.25];
           const cur = steps.indexOf(Sensors._overlayOpacity);
           Sensors._overlayOpacity = steps[(cur + 1) % steps.length];
+          Sensors._saveOverlayPos();
           showToast(`Sensor overlay: ${Math.round(Sensors._overlayOpacity * 100)}%`, 1000);
           return;
         }

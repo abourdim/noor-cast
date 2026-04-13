@@ -1,7 +1,7 @@
 /* NoorCast Service Worker v0.7.158
    Cache-first for app shell, network-first for fonts. */
 
-const CACHE_NAME = 'noorcast-v175';
+const CACHE_NAME = 'noorcast-v176';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const APP_SHELL = [
   './style.css',
   './icon.svg',
   './logo.svg',
+  './workshop-diy-logo.svg',
   './manifest.json',
   './fonts/amiri-400.woff2',
   './fonts/amiri-400-ar.woff2',
