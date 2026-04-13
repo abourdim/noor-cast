@@ -13188,19 +13188,17 @@ const Sensors = {
     if (this._overlayX === null) { this._overlayX = 10; this._overlayY = H - 50; }
     ctx.save();
     ctx.globalAlpha = this._overlayOpacity;
-    // Sparkline graph + compact values + LED mirror
-    const graphW = 120, graphH = 30;
-    const ledSize = 4, ledGap = 1, ledBlock = this._lastLedState ? 5 * (ledSize + ledGap) + 6 : 0;
+    // Graph with border + text below + LED mirror (like sidebar style)
+    const graphW = 160, graphH = 40;
+    const ledSize = 5, ledGap = 1, ledBlock = this._lastLedState ? 5 * (ledSize + ledGap) + 8 : 0;
     const px = 8, fs = 11;
     // Build value string
-    const extras = [];
-    if (v.temp != null) extras.push(`${v.temp}°`);
-    if (v.compass != null) extras.push(`🧭${v.compass}°`);
     ctx.font = `600 ${fs}px ui-monospace, monospace`;
-    const valText = extras.join(' ');
+    const valText = `X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`
+      + (v.temp != null ? `  ${v.temp}°` : '') + (v.compass != null ? `  🧭${v.compass}°` : '');
     const valW = ctx.measureText(valText).width;
-    const bw = graphW + px * 2 + valW + (valW ? 8 : 0) + ledBlock;
-    const bh = graphH + 6;
+    const bw = Math.max(graphW, valW) + px * 2 + ledBlock;
+    const bh = graphH + fs + 14; // graph + text + padding
     const sc = this._overlayScale;
     const bx = this._overlayX, by = this._overlayY;
     ctx.translate(bx, by); ctx.scale(sc, sc); ctx.translate(-bx, -by);
@@ -13210,24 +13208,27 @@ const Sensors = {
     if (this._overlayX < 0) this._overlayX = 0;
     if (this._overlayY < 0) this._overlayY = 0;
     // Background
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
-    // Sparkline graph
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill();
+    // Graph area with border
+    const gx = bx + px, gy = by + 4, gw = graphW, gh = graphH;
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, gw, gh);
+    // Center line
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(gx, gy + gh / 2); ctx.lineTo(gx + gw, gy + gh / 2); ctx.stroke();
+    // X/Y/Z sparklines
     const data = this._graphData;
     if (data && data.length > 1) {
-      const gx = bx + px, gy = by + 3, gw = graphW, gh = graphH;
-      // Center line
-      ctx.strokeStyle = 'rgba(255,255,255,.08)';
-      ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(gx, gy + gh / 2); ctx.lineTo(gx + gw, gy + gh / 2); ctx.stroke();
-      // X/Y/Z lines
       const colors = ['#ef4444', '#22c55e', '#38bdf8'];
       const keys = ['x', 'y', 'z'];
       const range = 2;
       keys.forEach((k, ki) => {
         ctx.beginPath();
         ctx.strokeStyle = colors[ki];
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.5;
         data.forEach((s, i) => {
           const px2 = gx + (i / (this._graphMax - 1)) * gw;
           const py2 = gy + gh / 2 - (s[k] / range) * (gh / 2);
@@ -13236,14 +13237,12 @@ const Sensors = {
         ctx.stroke();
       });
     }
-    // Values text (right of graph)
-    if (valText) {
-      ctx.fillStyle = 'rgba(163,230,53,.7)';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(valText, bx + px + graphW + 8, by + bh / 2);
-    }
-    // LED 5x5 mirror (far right)
+    // Values text below graph
+    ctx.fillStyle = 'rgba(163,230,53,.7)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(valText, gx, gy + gh + 4);
+    // LED 5x5 mirror (right of graph, vertically centered)
     if (this._lastLedState) {
       const lx = bx + bw - ledBlock + 2;
       const ly = by + (bh - 5 * (ledSize + ledGap)) / 2;
