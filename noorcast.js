@@ -2671,6 +2671,10 @@ const MicCheck = {
     const el = $('tcMicCheck');
     const vu = document.querySelector('.tc-vu');
     if (!el) return;
+    // Resume AudioContext (Chrome suspends until user gesture)
+    if (Engine.audioCtx && Engine.audioCtx.state === 'suspended') {
+      try { Engine.audioCtx.resume(); } catch {}
+    }
     // Show "listening" state
     el.className = 'tc-mic-check visible';
     el.textContent = t('micCheckListening');
