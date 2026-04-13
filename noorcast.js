@@ -5172,10 +5172,18 @@ const MicrobitOverlay = {
       ['←', '●', '→'],
       ['',  '↓', ''],
     ];
+    const syncUI = () => {
+      const pv = $('tcPanVal'); if (pv) pv.textContent = Sensors._panAngle;
+      const tv = $('tcTiltVal'); if (tv) tv.textContent = Sensors._tiltAngle;
+      const s1 = $('tcServo1Slider'); if (s1) s1.value = Sensors._panAngle;
+      const s1v = $('tcServo1Val'); if (s1v) s1v.textContent = Sensors._panAngle + '°';
+      const s2 = $('tcServo2Slider'); if (s2) s2.value = Sensors._tiltAngle;
+      const s2v = $('tcServo2Val'); if (s2v) s2v.textContent = Sensors._tiltAngle + '°';
+    };
     const actions = [
-      [null, () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-10); }, null],
-      [() => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-10); }, () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); }, () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(10); }],
-      [null, () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(10); }, null],
+      [null, () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-10); syncUI(); }, null],
+      [() => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-10); syncUI(); }, () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); syncUI(); }, () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(10); syncUI(); }],
+      [null, () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(10); syncUI(); }, null],
     ];
     dirs.forEach((row, r) => {
       row.forEach((label, c) => {
@@ -5215,8 +5223,11 @@ const MicrobitOverlay = {
       val.className = 'tc-mo-servo-val';
       val.textContent = slider.value + '°';
       slider.addEventListener('input', () => {
-        val.textContent = slider.value + '°';
-        Sensors.sendUart(s.cmd + slider.value);
+        const angle = parseInt(slider.value);
+        val.textContent = angle + '°';
+        Sensors[s.prop] = angle;
+        Sensors.sendUart(s.cmd + angle);
+        syncUI();
       });
       row.appendChild(lbl);
       row.appendChild(slider);
