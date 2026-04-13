@@ -5208,7 +5208,9 @@ const MicrobitOverlay = {
     fire.textContent = '🔥 FIRE';
     fire.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
     dpad.appendChild(fire);
-    el.appendChild(dpad);
+    const row = document.createElement('div');
+    row.className = 'tc-mo-row';
+    row.appendChild(dpad);
 
     // ── Joystick (below servos) ──
     const joyWrap = document.createElement('div');
@@ -5354,7 +5356,7 @@ const MicrobitOverlay = {
       else { self._tiltSlider = slider; self._tiltVal = val; }
     });
     servos.appendChild(joyWrap);
-    el.appendChild(servos);
+    row.appendChild(servos);
 
     // ── LED 5×5 grid ──
     const ledWrap = document.createElement('div');
@@ -5399,7 +5401,8 @@ const MicrobitOverlay = {
     ledBtns.appendChild(sendBtn);
     ledBtns.appendChild(clearBtn);
     ledWrap.appendChild(ledBtns);
-    el.appendChild(ledWrap);
+    row.appendChild(ledWrap);
+    el.appendChild(row);
 
     // Restore saved position
     try {
