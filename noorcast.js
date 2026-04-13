@@ -5225,7 +5225,7 @@ const MicrobitOverlay = {
     });
     joyWrap.appendChild(modeBtn);
     // Joystick canvas
-    const joySize = 100;
+    const joySize = 80;
     const joyCanvas = document.createElement('canvas');
     joyCanvas.width = joySize; joyCanvas.height = joySize;
     joyCanvas.className = 'tc-mo-joy-canvas';
