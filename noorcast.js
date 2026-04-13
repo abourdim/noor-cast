@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.176 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.177 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.176';
+const APP_VERSION = '0.7.177';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-12 23:59';
@@ -2936,6 +2936,9 @@ const Engine = {
 
     // draw sensor overlay if active (unscaled)
     Sensors.drawOverlay(ctx);
+
+    // v0.7.177: servo gauge overlay (pan + tilt semicircular gauges)
+    ServoGauge.render(ctx, width, height);
 
     // Whiteboard strokes (persist across frames)
     ctx.drawImage(this.overlayCanvas, 0, 0);
@@ -7265,7 +7268,11 @@ const Drag = {
       const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
       if (this._insideRect(so, mx, my)) return { kind: 'sensorOverlay', ref: so };
     }
-    // 0b. Watermark (draggable)
+    // 0b. Servo gauge (draggable)
+    if (ServoGauge.visible && ServoGauge.w > 0 && Sensors.server?.connected) {
+      if (this._insideRect(ServoGauge, mx, my)) return { kind: 'servoGauge', ref: ServoGauge };
+    }
+    // 0c. Watermark (draggable)
     if (Watermark.text && Watermark.w > 0) {
       if (this._insideRect(Watermark, mx, my)) return { kind: 'watermark', ref: Watermark };
     }
@@ -7547,6 +7554,7 @@ const Drag = {
         if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
         if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPos(); }
         if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._savePos(); }
+        if (s.kind === 'servoGauge') { ServoGauge.x = nx; ServoGauge.y = ny; ServoGauge._customPos = true; ServoGauge._savePos(); }
       }
     } else {
       // resize
@@ -7598,6 +7606,10 @@ const Drag = {
         Sensors._overlayX = newX; Sensors._overlayY = newY;
         if (s.mode === 'resize') Sensors._overlayScale = Math.max(0.5, Math.min(3, newW / s.startW));
         Sensors._saveOverlayPos();
+      } else if (s.kind === 'servoGauge') {
+        ServoGauge.x = newX; ServoGauge.y = newY;
+        ServoGauge._scale = Math.max(0.5, Math.min(3, newW / s.startW));
+        ServoGauge._customPos = true; ServoGauge._savePos();
       }
     }
     // Save brand position after any brand drag
@@ -8096,6 +8108,154 @@ const Watermark = {
     ctx.textBaseline = 'middle';
     ctx.fillText(this.text, bx + 10, by + th / 2);
     ctx.restore();
+  },
+};
+
+/* v0.7.177 — Servo gauge overlay: two semicircular gauges (Pan + Tilt)
+   rendered on the recording canvas. Draggable, resizable, position
+   persisted in localStorage. Only visible when micro:bit connected
+   and at least one servo is active. */
+const ServoGauge = {
+  visible: true,
+  _customPos: false, x: 0, y: 0, w: 0, h: 0,
+  _scale: 1.0,
+  _opacity: 0.85,
+
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-servo-gauge');
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (typeof s.x === 'number') { this.x = s.x; this.y = s.y; this._customPos = true; }
+        if (typeof s.opacity === 'number') this._opacity = s.opacity;
+        if (typeof s.scale === 'number') this._scale = s.scale;
+      }
+    } catch {}
+  },
+  _savePos() {
+    try {
+      localStorage.setItem('tc-servo-gauge', JSON.stringify({
+        x: this.x, y: this.y, opacity: this._opacity, scale: this._scale
+      }));
+    } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!Sensors.server?.connected) return;
+    const pan = Sensors._panAngle;
+    const tilt = Sensors._tiltAngle;
+    // Only show when servos have been used (not both at default 90 with no activity)
+    if (pan === undefined && tilt === undefined) return;
+
+    ctx.save();
+    ctx.globalAlpha = this._opacity;
+
+    const sc = this._scale;
+    const R = 50 * sc;          // gauge radius
+    const gap = 30 * sc;        // space between gauges
+    const padX = 20 * sc;
+    const padTop = 16 * sc;
+    const padBot = 30 * sc;
+    const bw = padX * 2 + R * 2 + gap + R * 2;
+    const bh = padTop + R + padBot;
+
+    // Default position: bottom-right, above watermark
+    let bx, by;
+    if (this._customPos) {
+      bx = this.x; by = this.y;
+    } else {
+      bx = W - bw - 30;
+      by = H - bh - 80;
+    }
+    // Clamp to canvas
+    bx = Math.max(0, Math.min(W - bw, bx));
+    by = Math.max(0, Math.min(H - bh, by));
+
+    // Update hit-test rect
+    this.x = bx; this.y = by; this.w = bw; this.h = bh;
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 10 * sc);
+    ctx.fill();
+
+    // Draw two gauges
+    const cx1 = bx + padX + R;
+    const cx2 = bx + padX + R * 2 + gap + R;
+    const cy = by + padTop + R;
+
+    this._drawGauge(ctx, cx1, cy, R, pan, 'Pan', sc);
+    this._drawGauge(ctx, cx2, cy, R, tilt, 'Tilt', sc);
+
+    ctx.restore();
+  },
+
+  _drawGauge(ctx, cx, cy, R, angle, label, sc) {
+    // Arc track (dark)
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, Math.PI, 0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 8 * sc;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Arc fill (gradient: cyan → green → lime)
+    const frac = angle / 180;
+    const endAngle = Math.PI - frac * Math.PI;
+    if (frac > 0) {
+      const grad = ctx.createLinearGradient(cx - R, cy, cx + R, cy);
+      grad.addColorStop(0, '#00bcd4');
+      grad.addColorStop(0.5, '#4caf50');
+      grad.addColorStop(1, '#8bc34a');
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, Math.PI, endAngle, true);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 8 * sc;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Tick labels: 0°, 90°, 180°
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = `${9 * sc}px ui-monospace, monospace`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'center';
+    ctx.fillText('0', cx - R, cy + 4 * sc);
+    ctx.fillText('180', cx + R, cy + 4 * sc);
+    ctx.fillText('90', cx, cy - R - 12 * sc);
+
+    // Needle
+    const needleAngle = Math.PI - (angle / 180) * Math.PI;
+    const nx = cx + (R - 6 * sc) * Math.cos(needleAngle);
+    const ny = cy - (R - 6 * sc) * Math.sin(needleAngle);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5 * sc;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5 * sc, 0, Math.PI * 2);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3 * sc, 0, Math.PI * 2);
+    ctx.fillStyle = '#0a1628';
+    ctx.fill();
+
+    // Value + label below
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${16 * sc}px ui-monospace, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(angle + '\u00B0', cx, cy + 6 * sc);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `${10 * sc}px ui-monospace, monospace`;
+    ctx.fillText(label, cx, cy + 22 * sc);
   },
 };
 
@@ -13174,7 +13334,7 @@ const Sensors = {
     el.style.display = 'block';
     const v = this.values;
     // Accumulate samples
-    this._graphData.push({ x: v.x || 0, y: v.y || 0, z: v.z || 0 });
+    this._graphData.push({ x: v.x || 0, y: v.y || 0, z: v.z || 0, s: (v.sound ?? 0) / 255 });
     if (this._graphData.length > this._graphMax) this._graphData.shift();
     // Draw mini graph
     const canvas = $('tcSensorGraph');
@@ -13185,18 +13345,19 @@ const Sensors = {
       // Center line
       ctx.strokeStyle = 'rgba(255,255,255,.1)';
       ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
-      // Draw X/Y/Z lines
-      const colors = ['#ef4444', '#22c55e', '#38bdf8'];
-      const keys = ['x', 'y', 'z'];
+      // Draw X/Y/Z + Sound lines
+      const colors = ['#ef4444', '#22c55e', '#38bdf8', '#fbbf24'];
+      const keys = ['x', 'y', 'z', 's'];
       const data = this._graphData;
       const range = 2; // -2g to +2g
       keys.forEach((k, ki) => {
         ctx.beginPath();
         ctx.strokeStyle = colors[ki];
-        ctx.lineWidth = 1.5;
-        data.forEach((s, i) => {
+        ctx.lineWidth = k === 's' ? 2 : 1.5;
+        data.forEach((sample, i) => {
           const px = (i / (this._graphMax - 1)) * W;
-          const py = H / 2 - (s[k] / range) * (H / 2);
+          const val = k === 's' ? sample[k] * range - range / 2 : sample[k];
+          const py = H / 2 - (val / range) * (H / 2);
           i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
         });
         ctx.stroke();
@@ -13206,7 +13367,8 @@ const Sensors = {
     const vals = $('tcSensorVals');
     if (vals) {
       vals.textContent = `X:${(v.x||0).toFixed(1)} Y:${(v.y||0).toFixed(1)} Z:${(v.z||0).toFixed(1)}` +
-        (v.temp != null ? ` ${v.temp}°` : '') + (v.compass != null ? ` 🧭${v.compass}°` : '');
+        (v.temp != null ? ` ${v.temp}°` : '') + (v.compass != null ? ` 🧭${v.compass}°` : '') +
+        (v.sound != null ? ` 🔊${v.sound}` : '');
     }
   },
 
@@ -13240,7 +13402,8 @@ const Sensors = {
     // Build value string
     ctx.font = `600 ${fs}px ui-monospace, monospace`;
     const valText = `X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`
-      + (v.temp != null ? `  ${v.temp}°` : '') + (v.compass != null ? `  🧭${v.compass}°` : '');
+      + (v.temp != null ? `  ${v.temp}°` : '') + (v.compass != null ? `  🧭${v.compass}°` : '')
+      + (v.sound != null ? `  🔊${v.sound}` : '');
     const valW = ctx.measureText(valText).width;
     const bw = Math.max(graphW, valW) + px * 2 + ledBlock;
     const bh = graphH + fs + 14; // graph + text + padding
@@ -13267,16 +13430,18 @@ const Sensors = {
     // X/Y/Z sparklines
     const data = this._graphData;
     if (data && data.length > 1) {
-      const colors = ['#ef4444', '#22c55e', '#38bdf8'];
-      const keys = ['x', 'y', 'z'];
+      const colors = ['#ef4444', '#22c55e', '#38bdf8', '#fbbf24'];
+      const keys = ['x', 'y', 'z', 's'];
       const range = 2;
       keys.forEach((k, ki) => {
         ctx.beginPath();
         ctx.strokeStyle = colors[ki];
-        ctx.lineWidth = 1.5;
-        data.forEach((s, i) => {
+        ctx.lineWidth = k === 's' ? 2 : 1.5;
+        data.forEach((sample, i) => {
           const px2 = gx + (i / (this._graphMax - 1)) * gw;
-          const py2 = gy + gh / 2 - (s[k] / range) * (gh / 2);
+          // Sound is 0-1, accel is -2..2 — map sound to same visual range
+          const val = k === 's' ? sample[k] * range - range / 2 : sample[k];
+          const py2 = gy + gh / 2 - (val / range) * (gh / 2);
           i === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
         });
         ctx.stroke();
@@ -16367,6 +16532,7 @@ async function init() {
   Scenes.loadOrder();  // v0.7.32: restore persisted scene order before first render
   Brand.load();
   Watermark.load();  // v0.7.98
+  ServoGauge.load(); // v0.7.177
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
   Badges.load();
 
