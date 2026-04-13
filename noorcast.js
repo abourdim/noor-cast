@@ -13413,7 +13413,7 @@ const Sensors = {
       this._reconnectAttempts = 0;
       this._reconnecting = false;
       showToast('micro:bit reconnected!', 2000);
-      this._setConnectionUI(true, '✅ Reconnected');
+      this._setConnectionUI(true, '✅ Connected');
       log('BLE reconnected', 'success');
     } catch (e) {
       log('BLE reconnect failed: ' + e.message, 'error');
