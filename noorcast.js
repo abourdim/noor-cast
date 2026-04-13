@@ -7795,7 +7795,7 @@ const Brand = {
       if (this.logo.tint) localStorage.setItem('tc-brand-logo-tint', this.logo.tint);
       else                localStorage.removeItem('tc-brand-logo-tint');
       localStorage.setItem('tc-brand-logo-pos',    JSON.stringify({ x: this.logo.x, y: this.logo.y, w: this.logo.w, h: this.logo.h, rotation: this.logo.rotation }));
-      localStorage.setItem('tc-brand-slogan-pos',  JSON.stringify({ x: this.slogan.x, y: this.slogan.y, w: this.slogan.w, h: this.slogan.h, size: this.slogan.size, font: this.slogan.font, rotation: this.slogan.rotation }));
+      localStorage.setItem('tc-brand-slogan-pos',  JSON.stringify({ x: this.slogan.x, y: this.slogan.y, w: this.slogan.w, h: this.slogan.h, size: this.slogan.size, font: this.slogan.font, rotation: this.slogan.rotation, opacity: this.slogan.opacity }));
     } catch {}
   },
 
