@@ -5238,36 +5238,23 @@ const MicrobitOverlay = {
 
     const drawJoy = () => {
       jCtx.clearRect(0, 0, joySize, joySize);
-      // Outer ring
+      // Base circle
       jCtx.beginPath();
-      jCtx.arc(jR, jR, jR - 4, 0, Math.PI * 2);
-      jCtx.fillStyle = 'rgba(255,255,255,.06)';
+      jCtx.arc(jR, jR, jR - 2, 0, Math.PI * 2);
+      jCtx.fillStyle = 'rgba(255,255,255,.05)';
       jCtx.fill();
-      jCtx.strokeStyle = 'rgba(255,255,255,.2)';
-      jCtx.lineWidth = 2;
-      jCtx.stroke();
-      // Crosshair
-      jCtx.strokeStyle = 'rgba(255,255,255,.08)';
-      jCtx.lineWidth = 1;
-      jCtx.beginPath(); jCtx.moveTo(jR, 8); jCtx.lineTo(jR, joySize - 8); jCtx.stroke();
-      jCtx.beginPath(); jCtx.moveTo(8, jR); jCtx.lineTo(joySize - 8, jR); jCtx.stroke();
-      // Knob
-      const grad = jCtx.createRadialGradient(knobX, knobY, 2, knobX, knobY, knobR);
-      grad.addColorStop(0, joyMode === 'cmd' ? '#60a5fa' : '#a3e635');
-      grad.addColorStop(1, joyMode === 'cmd' ? '#2563eb' : '#65a30d');
-      jCtx.beginPath();
-      jCtx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
-      jCtx.fillStyle = grad;
-      jCtx.fill();
-      jCtx.strokeStyle = 'rgba(255,255,255,.4)';
+      jCtx.strokeStyle = 'rgba(255,255,255,.15)';
       jCtx.lineWidth = 1.5;
       jCtx.stroke();
-      // Emoji face on knob
-      jCtx.fillStyle = '#fff';
-      jCtx.font = '12px sans-serif';
-      jCtx.textAlign = 'center';
-      jCtx.textBaseline = 'middle';
-      jCtx.fillText(joyMode === 'cmd' ? '🕹' : '🎯', knobX, knobY);
+      // Knob
+      const color = joyMode === 'cmd' ? '#3b82f6' : '#65a30d';
+      jCtx.beginPath();
+      jCtx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+      jCtx.fillStyle = color;
+      jCtx.fill();
+      jCtx.strokeStyle = 'rgba(255,255,255,.5)';
+      jCtx.lineWidth = 2;
+      jCtx.stroke();
     };
 
     const handleJoy = (clientX, clientY) => {
