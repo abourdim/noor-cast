@@ -3,6 +3,21 @@
 All notable changes to **NoorCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.7.176 — 2026-04-13 (Draggable watermark + Workshop DIY branding + BLE filter fix)
+
+### Added
+- **Draggable watermark** — the watermark text overlay on the canvas is now
+  draggable. Drag to reposition; position persisted in localStorage.
+- **Workshop DIY logo** in footer and splash screen, replacing the wrench SVG icon.
+
+### Fixed
+- **BLE filter** now accepts both `"BBC micro:bit"` and `"uBit"` name prefixes
+  when scanning for micro:bit devices. Some micro:bits advertise as "uBit"
+  instead of "BBC micro:bit".
+
+### Changed
+- Version bumped to v0.7.176, SW cache v176.
+
 ## v0.7.156 — 2026-04-12 (Remote cameras guide + Robot template + Camera wizard)
 
 ### Added

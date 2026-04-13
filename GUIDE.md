@@ -547,7 +547,7 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 - Save up to 3 brand presets
 
 ### Slogan & Effect
-- Add scrolling text, badge card URL, watermark
+- Add scrolling text, badge card URL, watermark (draggable on canvas, position saved)
 
 ### Ticker
 - Custom scrolling messages at the bottom of the screen
@@ -588,6 +588,7 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 - Make sure Bluetooth is enabled on your computer
 - Flash the MakeCode BLE program (see micro:bit section above)
 - Try clicking **📡 Connect micro:bit** again
+- NoorCast scans for both "BBC micro:bit" and "uBit" name prefixes — both are supported
 
 ### Video is choppy
 - Close other browser tabs to free up CPU
@@ -621,4 +622,4 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*NoorCast v0.7.174 — A professional tool for teachers who code with robots*
+*NoorCast v0.7.176 — A professional tool for teachers who code with robots*
