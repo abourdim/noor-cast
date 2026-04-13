@@ -13080,13 +13080,12 @@ const Sensors = {
       this._reconnectAttempts = 0;
       this.device.addEventListener('gattserverdisconnected', () => {
         log('micro:bit disconnected', 'warn');
-        showToast('⚠ micro:bit disconnected — reconnecting...', 3000);
+        showToast('⚠ micro:bit disconnected', 3000);
         this._setConnectionUI(false, '❌ Disconnected');
         this.server = null;
         this._uartTx = null;
         if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
         this.updatePanel();
-        this._tryReconnect();
       });
       // Connect UART service (robust detection from bit-playground)
       const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
