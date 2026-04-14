@@ -68,12 +68,13 @@ export default [
         showSaveFilePicker: "readonly",
         MediaMetadata: "readonly",
         getComputedStyle: "readonly",
+        ClipboardItem: "readonly",
       },
     },
     rules: {
       // Relax rules for this single-file app pattern
       "no-unused-vars": ["warn", {
-        varsIgnorePattern: "^(APP_VERSION|BUILD_DATE|LANG|Engine|Recorder|Scenes|Templates|Laser|Freeze|Whiteboard|Teleprompter|Snapshot|Sensors|SoundBoard|Badges|Confetti|Ticker|Chapters|History|LayoutHistory|Zoom|Drag|Grid|SourceLabels|FpsCounter|Brand|Watermark|ServoGauge|SensorOverlay|Spotlight|CursorTrail|FocusMode|Tour|Clock|RecIndicator|AudioViz|RecElapsed|Letterbox|Vignette|SceneTimer|Timelapse|TimeGoal|Captions|MicMeter|MicCheck|MicrobitOverlay|SourceSkins|BgPatterns|InstantReplay|VoiceCommands|DailyChallenges|AutoThumbnail|VoiceFx|SpeedLines|XpBar|AchievementPopup|SoundPad|BgMusic|StickyNotes|Duck|SceneSaver|ScreenSaver|SceneIntro|AutoAdvance|Jingle|IntroOutro|Sfx|DebugHud|DailyTip|OnboardWizard|KeyBinds|LogoGallery|BrandPresets|SnapGrid|SettingsBundle|TextOverlay|SourceStylePopup|$|t|applyI18n|showToast|log|SensorGraph)",
+        varsIgnorePattern: "^(APP_VERSION|BUILD_DATE|LANG|Engine|Recorder|Scenes|Templates|Laser|Freeze|Whiteboard|Teleprompter|Snapshot|Sensors|SoundBoard|Badges|Confetti|Ticker|Chapters|History|LayoutHistory|Zoom|Drag|Grid|SourceLabels|FpsCounter|Brand|Watermark|ServoGauge|SensorOverlay|Spotlight|CursorTrail|FocusMode|Tour|Clock|RecIndicator|AudioViz|RecElapsed|Letterbox|Vignette|SceneTimer|Timelapse|TimeGoal|Captions|MicMeter|MicCheck|MicrobitOverlay|SourceSkins|BgPatterns|InstantReplay|VoiceCommands|DailyChallenges|AutoThumbnail|LessonGuide|RobotChoreo|MultiTakeDirector|QRShare|VoiceFx|SpeedLines|XpBar|AchievementPopup|SoundPad|BgMusic|StickyNotes|Duck|SceneSaver|ScreenSaver|SceneIntro|AutoAdvance|Jingle|IntroOutro|Sfx|DebugHud|DailyTip|OnboardWizard|KeyBinds|LogoGallery|BrandPresets|SnapGrid|SettingsBundle|TextOverlay|SourceStylePopup|$|t|applyI18n|showToast|log|SensorGraph)",
         argsIgnorePattern: "^(_|W$|H$|ctx$|ev$)",
       }],
       "no-redeclare": "error",

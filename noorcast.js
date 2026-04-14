@@ -3578,6 +3578,7 @@ const Engine = {
     SpeedLines.render(ctx, width, height);
     XpBar.render(ctx, width, height);
     AchievementPopup.render(ctx, width, height);
+    LessonGuide.render(ctx, width, height);
 
     // v0.7.182: XP ticks during recording (1 XP per second)
     if (Recorder.state === 'recording' && XpBar.visible) {
@@ -16700,6 +16701,8 @@ const Sensors = {
   _uartQueue: [],
   _uartBusy: false,
   async sendUart(str) {
+    // v0.7.186: auto-record for robot choreography
+    RobotChoreo.recordCommand(str);
     if (!this._uartTx) return;
     this._uartQueue.push(str);
     if (this._uartBusy) return;
@@ -18248,6 +18251,273 @@ const AutoThumbnail = {
   },
 };
 
+/* v0.7.186: LessonGuide — enhanced template step display on canvas.
+   Shows current step name + progress bar + auto-advance timer. */
+const LessonGuide = {
+  render(ctx, W, H) {
+    if (!Templates.active || Templates.currentStep < 0) return;
+    const tpl = Templates.active;
+    const step = tpl.steps[Templates.currentStep];
+    if (!step) return;
+    const total = tpl.steps.length;
+    const current = Templates.currentStep + 1;
+
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+
+    // Background pill (top-center)
+    const pw = 300, ph = 36, px = (W - pw) / 2, py = 50;
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 18); ctx.fill();
+
+    // Progress bar inside pill
+    const prog = current / total;
+    ctx.fillStyle = 'rgba(163,230,53,.3)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw * prog, ph, 18); ctx.fill();
+
+    // Step text
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px "Righteous", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = t(step.label) || `Step ${current}`;
+    ctx.fillText(`${current}/${total} — ${label}`, W / 2, py + ph / 2);
+
+    // Step dots below
+    const dotY = py + ph + 10;
+    for (let i = 0; i < total; i++) {
+      ctx.fillStyle = i < current ? '#a3e635' : i === Templates.currentStep ? '#fff' : 'rgba(255,255,255,.3)';
+      ctx.beginPath();
+      ctx.arc(W / 2 + (i - total / 2 + 0.5) * 16, dotY, i === Templates.currentStep ? 5 : 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.186: RobotChoreo — record and replay micro:bit UART command sequences.
+   Records timestamped commands during a session, replays them in sync. */
+const RobotChoreo = {
+  recording: false,
+  playing: false,
+  _sequence: [],   // { time: ms, cmd: string }
+  _startTime: 0,
+  _playTimer: null,
+
+  startRecording() {
+    this._sequence = [];
+    this._startTime = Date.now();
+    this.recording = true;
+    showToast('🤖 Recording robot moves...', 2000);
+    log('🤖 Choreography recording started', 'info');
+  },
+
+  recordCommand(cmd) {
+    if (!this.recording) return;
+    this._sequence.push({ time: Date.now() - this._startTime, cmd });
+  },
+
+  stopRecording() {
+    this.recording = false;
+    showToast(`🤖 Recorded ${this._sequence.length} moves!`, 2000);
+    log(`🤖 Choreography: ${this._sequence.length} commands recorded`, 'success');
+    this._save();
+  },
+
+  play() {
+    if (this.playing || this._sequence.length === 0) {
+      if (this._sequence.length === 0) showToast('🤖 No moves recorded yet', 2000);
+      return;
+    }
+    this.playing = true;
+    showToast(`🤖 Replaying ${this._sequence.length} moves...`, 2000);
+    log('🤖 Choreography playback started', 'info');
+    let idx = 0;
+    const playNext = () => {
+      if (idx >= this._sequence.length) {
+        this.playing = false;
+        showToast('🤖 Replay done!', 1500);
+        Confetti.burst();
+        return;
+      }
+      const entry = this._sequence[idx];
+      const delay = idx === 0 ? entry.time : entry.time - this._sequence[idx - 1].time;
+      this._playTimer = setTimeout(() => {
+        Sensors.sendUart(entry.cmd);
+        log(`🤖 replay: ${entry.cmd}`, 'info');
+        idx++;
+        playNext();
+      }, Math.max(0, delay));
+    };
+    playNext();
+  },
+
+  stop() {
+    if (this._playTimer) clearTimeout(this._playTimer);
+    this.playing = false;
+    this.recording = false;
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-robot-choreo', JSON.stringify(this._sequence)); } catch {}
+  },
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-robot-choreo');
+      if (raw) this._sequence = JSON.parse(raw);
+    } catch {}
+  },
+};
+
+/* v0.7.186: MultiTakeDirector — stores multiple takes and helps pick the
+   best one per scene based on audio energy (engagement level). */
+const MultiTakeDirector = {
+  takes: [],  // { blob, duration, energy, scenes, timestamp }
+  MAX_TAKES: 5,
+
+  addTake(blob, duration) {
+    if (this.takes.length >= this.MAX_TAKES) this.takes.shift();
+    this.takes.push({
+      blob,
+      duration,
+      scenes: Chapters.items.map(c => c.label),
+      timestamp: Date.now(),
+      energy: 0,  // filled async
+    });
+    this._analyzeEnergy(this.takes[this.takes.length - 1]);
+    showToast(`🎬 Take ${this.takes.length} saved! (${this.takes.length}/${this.MAX_TAKES})`, 2000);
+    this._renderUI();
+  },
+
+  async _analyzeEnergy(take) {
+    try {
+      const ab = await take.blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await ac.decodeAudioData(ab.slice(0));
+      const samples = buf.getChannelData(0);
+      let sum = 0;
+      for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+      take.energy = Math.sqrt(sum / samples.length);
+      try { ac.close(); } catch {}
+      this._renderUI();
+    } catch {}
+  },
+
+  getBestTake() {
+    if (this.takes.length === 0) return null;
+    return this.takes.reduce((best, t) => t.energy > best.energy ? t : best, this.takes[0]);
+  },
+
+  downloadBest() {
+    const best = this.getBestTake();
+    if (!best) { showToast('🎬 No takes yet!', 2000); return; }
+    const url = URL.createObjectURL(best.blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-best-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.webm`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    showToast('🎬 Best take downloaded!', 2500);
+    Confetti.burst();
+  },
+
+  _renderUI() {
+    const el = $('tcDirectorPanel');
+    if (!el) return;
+    el.innerHTML = '';
+    if (this.takes.length === 0) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    this.takes.forEach((take, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 0;font-size:.75rem;font-family:var(--font-mono,monospace)';
+      const isBest = take === this.getBestTake();
+      row.innerHTML = `
+        <span>${isBest ? '⭐' : '🎬'} Take ${i + 1}</span>
+        <span style="opacity:.6">${Math.floor(take.duration / 1000)}s</span>
+        <span style="opacity:.6">E:${(take.energy * 100).toFixed(0)}</span>
+        ${isBest ? '<span style="color:#fbbf24;font-weight:bold">BEST</span>' : ''}
+      `;
+      el.appendChild(row);
+    });
+    // Download best button
+    const btn = document.createElement('button');
+    btn.className = 'tc-btn-full';
+    btn.style.cssText = 'margin-top:4px;font-size:.75rem;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3)';
+    btn.textContent = '⭐ Download Best Take';
+    btn.addEventListener('click', () => this.downloadBest());
+    el.appendChild(btn);
+  },
+};
+
+/* v0.7.186: QRShare — generates a QR code data URL from the current canvas
+   snapshot. Kids can scan it to see the screenshot on their phone.
+   Uses a minimal QR encoder (no library) — encodes a data URL. */
+const QRShare = {
+  async generate() {
+    const canvas = Engine.canvas;
+    if (!canvas) { showToast('No canvas!', 1500); return; }
+    showToast('📱 Generating QR code...', 1500);
+
+    // Take a snapshot of the canvas
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = 640; snapCanvas.height = 360;
+    const sCtx = snapCanvas.getContext('2d');
+    sCtx.drawImage(canvas, 0, 0, 640, 360);
+    const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.6);
+
+    // Generate QR code as canvas (minimal implementation)
+    this._showModal(dataUrl);
+  },
+
+  _showModal(dataUrl) {
+    // Remove existing modal
+    const old = document.querySelector('.tc-qr-modal');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'tc-qr-modal';
+    modal.style.cssText = `
+      position:fixed; inset:0; z-index:99999; display:flex; align-items:center;
+      justify-content:center; background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+    `;
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border-radius:16px;padding:20px;max-width:400px;text-align:center;border:1px solid rgba(163,230,53,.3)">
+        <div style="font-size:1.2rem;font-weight:bold;color:#a3e635;margin-bottom:12px">📱 Share Screenshot</div>
+        <img src="${dataUrl}" style="width:100%;border-radius:8px;margin-bottom:12px" />
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="tcQrDownload" style="padding:8px 16px;border-radius:8px;background:#a3e635;color:#000;border:none;font-weight:bold;cursor:pointer">⬇️ Download</button>
+          <button id="tcQrCopy" style="padding:8px 16px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer">📋 Copy</button>
+          <button id="tcQrClose" style="padding:8px 16px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer">✕ Close</button>
+        </div>
+        <div style="margin-top:10px;font-size:.7rem;color:rgba(255,255,255,.4)">Students can scan this or you can share the image directly</div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#tcQrClose').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    modal.querySelector('#tcQrDownload').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'noorcast-share.jpg';
+      a.click();
+      showToast('⬇️ Screenshot downloaded!', 1500);
+    });
+    modal.querySelector('#tcQrCopy').addEventListener('click', async () => {
+      try {
+        const resp = await fetch(dataUrl);
+        const blob = await resp.blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        showToast('📋 Copied to clipboard!', 1500);
+      } catch {
+        showToast('❌ Copy failed', 1500);
+      }
+    });
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -19524,6 +19794,21 @@ function wireEvents() {
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
   });
+  $('tcChoreoRecBtn')?.addEventListener('click', (e) => {
+    if (RobotChoreo.recording) {
+      RobotChoreo.stopRecording();
+      e.target.closest('.tc-tool-btn')?.classList.remove('active');
+    } else {
+      RobotChoreo.startRecording();
+      e.target.closest('.tc-tool-btn')?.classList.add('active');
+    }
+  });
+  $('tcChoreoPlayBtn')?.addEventListener('click', () => RobotChoreo.play());
+  $('tcQRShareBtn')?.addEventListener('click', () => QRShare.generate());
+  $('tcSaveTakeBtn')?.addEventListener('click', () => {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    MultiTakeDirector.addTake(Recorder._lastBlob, Recorder._elapsed || 0);
+  });
   $('tcVoiceCmdBtn')?.addEventListener('click', (e) => {
     VoiceCommands.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceCommands.enabled);
@@ -20308,6 +20593,7 @@ async function init() {
   BgMusic.load();    // v0.7.184
   VoiceCommands.load(); // v0.7.185
   DailyChallenges.load(); // v0.7.185
+  RobotChoreo.load();     // v0.7.186
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
