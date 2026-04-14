@@ -18150,6 +18150,30 @@ function setupHotkeys() {
       }
     }
   });
+
+  // v0.7.182: drag & drop image files onto the stage
+  const stage = $('tcStage');
+  if (stage) {
+    stage.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      stage.classList.add('tc-drop-active');
+    });
+    stage.addEventListener('dragleave', () => {
+      stage.classList.remove('tc-drop-active');
+    });
+    stage.addEventListener('drop', (e) => {
+      e.preventDefault();
+      stage.classList.remove('tc-drop-active');
+      const files = e.dataTransfer.files;
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          Engine.addImage(file, file.name.replace(/\.[^.]+$/, ''));
+          showToast(`📸 ${file.name}`, 1500);
+        }
+      }
+    });
+  }
 }
 
 function wireEvents() {
