@@ -19113,9 +19113,63 @@ const AICohost = {
   load() {
     try {
       const raw = localStorage.getItem('tc-cohost');
-      if (raw === '1') { this.visible = true; } // legacy
-      else if (raw) { const d = JSON.parse(raw); this.visible = !!d.v; this.character = d.c || 'emoji'; }
+      if (raw === '1') { this.visible = true; }
+      else if (raw) { const d = JSON.parse(raw); this.visible = !!d.v; this.character = d.c || 'coder'; }
     } catch {}
+  },
+
+  // SVG character cache — pre-rendered as Image objects
+  _svgCache: {},
+  _getSvgImg(key) {
+    if (this._svgCache[key]) return this._svgCache[key];
+    const svg = this._svgs[key];
+    if (!svg) return null;
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    this._svgCache[key] = img;
+    return img;
+  },
+
+  _svgs: {
+    maker: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="30" fill="#c9a040"/><circle cx="40" cy="42" r="28" fill="#d4a840"/><ellipse cx="30" cy="38" rx="5" ry="6" fill="#fff"/><ellipse cx="50" cy="38" rx="5" ry="6" fill="#fff"/><circle cx="31" cy="39" r="2.5" fill="#333"/><circle cx="51" cy="39" r="2.5" fill="#333"/><path d="M33 52 Q40 58 47 52" stroke="#333" fill="none" stroke-width="2" stroke-linecap="round"/><rect x="18" y="22" width="12" height="8" rx="3" fill="none" stroke="#555" stroke-width="2"/><rect x="50" y="22" width="12" height="8" rx="3" fill="none" stroke="#555" stroke-width="2"/><line x1="30" y1="26" x2="50" y2="26" stroke="#555" stroke-width="2"/><rect x="14" y="60" width="52" height="12" rx="3" fill="#8b6914" stroke="#6b4c10" stroke-width="1"/><text x="40" y="69" text-anchor="middle" font-size="7" fill="#fff" font-family="monospace">MAKER</text></svg>`,
+
+    engineer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#e8c090"/><path d="M12 28 Q40 10 68 28 L68 32 Q40 22 12 32Z" fill="#f59e0b"/><rect x="12" y="30" width="56" height="4" fill="#d4a020" rx="1"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 54 Q40 58 46 54" stroke="#333" fill="none" stroke-width="2" stroke-linecap="round"/><rect x="36" y="12" width="8" height="6" rx="2" fill="#d4a020"/></svg>`,
+
+    coder: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#4a5568"/><circle cx="40" cy="42" r="26" fill="#2d3748"/><rect x="22" y="34" width="14" height="10" rx="4" fill="none" stroke="#a0aec0" stroke-width="2"/><rect x="44" y="34" width="14" height="10" rx="4" fill="none" stroke="#a0aec0" stroke-width="2"/><line x1="36" y1="39" x2="44" y2="39" stroke="#a0aec0" stroke-width="2"/><circle cx="29" cy="39" r="2" fill="#4ade80"/><circle cx="51" cy="39" r="2" fill="#4ade80"/><path d="M34 52 Q40 56 46 52" stroke="#a0aec0" fill="none" stroke-width="1.5"/><path d="M10 28 Q14 14 26 18" stroke="#333" fill="none" stroke-width="4" stroke-linecap="round"/><path d="M70 28 Q66 14 54 18" stroke="#333" fill="none" stroke-width="4" stroke-linecap="round"/><rect x="6" y="26" width="10" height="18" rx="4" fill="#222"/><rect x="64" y="26" width="10" height="18" rx="4" fill="#222"/><text x="40" y="68" text-anchor="middle" font-size="8" fill="#4ade80" font-family="monospace">&lt;/&gt;</text></svg>`,
+
+    scientist: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#e8e0d0"/><circle cx="40" cy="42" r="26" fill="#f0e8d8"/><circle cx="28" cy="24" r="9" fill="none" stroke="#94a3b8" stroke-width="2.5"/><circle cx="52" cy="24" r="9" fill="none" stroke="#94a3b8" stroke-width="2.5"/><line x1="37" y1="24" x2="43" y2="24" stroke="#94a3b8" stroke-width="2.5"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 54 Q40 58 46 54" stroke="#333" fill="none" stroke-width="2"/><path d="M24 58 L20 70 L40 70Z" fill="#fff" stroke="#ddd" stroke-width="1"/><path d="M56 58 L60 70 L40 70Z" fill="#fff" stroke="#ddd" stroke-width="1"/></svg>`,
+
+    architect: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#b0bec5"/><circle cx="40" cy="42" r="26" fill="#cfd8dc"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 52 Q40 55 46 52" stroke="#333" fill="none" stroke-width="1.5"/><line x1="62" y1="10" x2="70" y2="70" stroke="#78909c" stroke-width="2"/><g stroke="#78909c" stroke-width="0.8"><line x1="63" y1="18" x2="66" y2="18"/><line x1="64" y1="28" x2="67" y2="28"/><line x1="65" y1="38" x2="68" y2="38"/><line x1="66" y1="48" x2="69" y2="48"/></g><text x="40" y="68" text-anchor="middle" font-size="7" fill="#546e7a" font-family="monospace">📐</text></svg>`,
+
+    teacher: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#8d6e63"/><circle cx="40" cy="44" r="26" fill="#a1887f"/><polygon points="18,24 40,10 62,24 40,30" fill="#1a1a1a"/><rect x="38" y="6" width="4" height="6" fill="#1a1a1a"/><circle cx="40" cy="6" r="3" fill="#fbbf24"/><line x1="40" y1="6" x2="56" y2="12" stroke="#fbbf24" stroke-width="1.5"/><ellipse cx="30" cy="42" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="42" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="43" r="2" fill="#333"/><circle cx="51" cy="43" r="2" fill="#333"/><path d="M34 54 Q40 58 46 54" stroke="#333" fill="none" stroke-width="2"/></svg>`,
+
+    scholar: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#d4a03c"/><circle cx="40" cy="44" r="26" fill="#e8b84c"/><path d="M16 30 Q40 16 64 30 L62 34 Q40 24 18 34Z" fill="#f5f0e0" stroke="#d4a840" stroke-width="1"/><rect x="16" y="32" width="48" height="4" fill="#f5f0e0"/><ellipse cx="30" cy="42" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="42" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="43" r="2" fill="#333"/><circle cx="51" cy="43" r="2" fill="#333"/><path d="M34 54 Q40 56 46 54" stroke="#333" fill="none" stroke-width="1.5"/><path d="M30 60 Q40 72 50 60" fill="#8b6914" opacity=".4"/></svg>`,
+
+    mathematician: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#37474f"/><circle cx="40" cy="42" r="26" fill="#455a64"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 52 Q40 55 46 52" stroke="#ccc" fill="none" stroke-width="1.5"/><text x="12" y="18" font-size="9" fill="#a3e635" opacity=".5" font-family="serif">∑</text><text x="60" y="16" font-size="9" fill="#a3e635" opacity=".5" font-family="serif">π²</text><text x="8" y="70" font-size="8" fill="#a3e635" opacity=".4" font-family="serif">∫dx</text><text x="58" y="72" font-size="8" fill="#a3e635" opacity=".4" font-family="serif">√n</text></svg>`,
+
+    anonymous: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="30" fill="#111"/><circle cx="40" cy="42" r="28" fill="#1a1a1a"/><path d="M24 36 Q28 30 32 36" stroke="#555" fill="none" stroke-width="2"/><path d="M48 36 Q52 30 56 36" stroke="#555" fill="none" stroke-width="2"/><ellipse cx="28" cy="40" rx="6" ry="4" fill="none" stroke="#444" stroke-width="1.5"/><ellipse cx="52" cy="40" rx="6" ry="4" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="28" cy="40" r="2" fill="#4ade80"/><circle cx="52" cy="40" r="2" fill="#4ade80"/><path d="M32 52 Q36 50 40 52 Q44 50 48 52" stroke="#444" fill="none" stroke-width="1.5"/><path d="M40 56 L40 62" stroke="#444" stroke-width="1.5"/></svg>`,
+
+    agent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#d4a880"/><circle cx="40" cy="42" r="26" fill="#e0b890"/><rect x="20" y="34" width="16" height="10" rx="3" fill="#111"/><rect x="44" y="34" width="16" height="10" rx="3" fill="#111"/><line x1="36" y1="39" x2="44" y2="39" stroke="#333" stroke-width="2"/><path d="M34 54 Q40 56 46 54" stroke="#333" fill="none" stroke-width="1.5"/><circle cx="66" cy="38" r="3" fill="#444"/><line x1="66" y1="41" x2="62" y2="52" stroke="#444" stroke-width="1.5"/><rect x="24" y="18" width="32" height="6" rx="2" fill="#1a1a1a"/></svg>`,
+
+    shadow: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="30" fill="#050505"/><circle cx="40" cy="42" r="28" fill="#0a0a0a" stroke="#222" stroke-width="1"/><ellipse cx="32" cy="40" rx="4" ry="2" fill="#333"/><ellipse cx="48" cy="40" rx="4" ry="2" fill="#333"/></svg>`,
+
+    android: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="14" y="18" width="52" height="50" rx="8" fill="#78909c" stroke="#546e7a" stroke-width="1.5"/><rect x="18" y="22" width="44" height="42" rx="5" fill="#90a4ae"/><line x1="40" y1="8" x2="40" y2="18" stroke="#90a4ae" stroke-width="2.5"/><circle cx="40" cy="6" r="4" fill="#38bdf8"/><circle cx="30" cy="38" r="5" fill="#38bdf8"/><circle cx="50" cy="38" r="5" fill="#38bdf8"/><circle cx="30" cy="38" r="2" fill="#0c4a6e"/><circle cx="50" cy="38" r="2" fill="#0c4a6e"/><rect x="32" y="50" width="16" height="3" rx="1.5" fill="#546e7a"/></svg>`,
+
+    astronaut: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><ellipse cx="40" cy="42" rx="32" ry="34" fill="#ccc" stroke="#999" stroke-width="2"/><ellipse cx="40" cy="42" rx="26" ry="28" fill="#ddd"/><ellipse cx="40" cy="40" rx="22" ry="24" fill="rgba(20,20,50,.15)" stroke="#aaa" stroke-width="1"/><path d="M24 32 Q30 24 36 30" stroke="rgba(255,255,255,.4)" fill="none" stroke-width="2.5"/><ellipse cx="34" cy="40" rx="3" ry="4" fill="#333" opacity=".3"/><ellipse cx="46" cy="40" rx="3" ry="4" fill="#333" opacity=".3"/><rect x="4" y="56" width="20" height="8" rx="3" fill="#0050b4" opacity=".6"/><text x="14" y="62" text-anchor="middle" font-size="5" fill="#fff">NOOR</text></svg>`,
+
+    xenomorph: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90"><ellipse cx="40" cy="45" rx="22" ry="38" fill="#1a2a1a" stroke="#2a3a2a" stroke-width="1"/><ellipse cx="40" cy="30" rx="18" ry="10" fill="#1a2a1a"/><ellipse cx="33" cy="48" rx="4" ry="6" fill="#2a4a2a"/><ellipse cx="47" cy="48" rx="4" ry="6" fill="#2a4a2a"/><circle cx="33" cy="48" r="2" fill="#4ade80"/><circle cx="47" cy="48" r="2" fill="#4ade80"/><path d="M36 62 Q40 66 44 62" stroke="#2a4a2a" fill="none" stroke-width="1.5"/></svg>`,
+
+    pilot: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#8b6914"/><circle cx="40" cy="42" r="26" fill="#a07828"/><ellipse cx="28" cy="34" rx="12" ry="9" fill="#d4a020" stroke="#a07828" stroke-width="1.5"/><ellipse cx="52" cy="34" rx="12" ry="9" fill="#d4a020" stroke="#a07828" stroke-width="1.5"/><ellipse cx="28" cy="34" rx="9" ry="6" fill="rgba(56,189,248,.3)"/><ellipse cx="52" cy="34" rx="9" ry="6" fill="rgba(56,189,248,.3)"/><line x1="40" y1="34" x2="40" y2="34" stroke="#a07828" stroke-width="3"/><path d="M34 54 Q40 58 46 54" stroke="#333" fill="none" stroke-width="2"/><path d="M26 62 Q34 58 40 64 Q46 58 54 62 L56 74 L34 72Z" fill="#ef4444"/></svg>`,
+
+    director: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#5d4037"/><circle cx="40" cy="44" r="26" fill="#6d4c41"/><ellipse cx="40" cy="20" rx="22" ry="8" fill="#1a1a1a"/><path d="M20 20 Q40 6 60 20" fill="#1a1a1a"/><ellipse cx="30" cy="42" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="42" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="43" r="2" fill="#333"/><circle cx="51" cy="43" r="2" fill="#333"/><path d="M34 56 Q40 60 46 56" stroke="#333" fill="none" stroke-width="2"/><text x="66" y="50" font-size="14">📣</text></svg>`,
+
+    artist: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#ce93d8"/><circle cx="40" cy="44" r="26" fill="#e1bee7"/><ellipse cx="42" cy="18" rx="20" ry="8" fill="#9c27b0"/><path d="M24 18 Q42 4 62 18" fill="#ab47bc"/><ellipse cx="30" cy="42" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="42" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="43" r="2" fill="#333"/><circle cx="51" cy="43" r="2" fill="#333"/><path d="M34 56 Q40 60 46 56" stroke="#333" fill="none" stroke-width="2"/><circle cx="12" cy="62" r="4" fill="#ef4444"/><circle cx="68" cy="58" r="3" fill="#3b82f6"/><circle cx="16" cy="30" r="3" fill="#fbbf24"/></svg>`,
+
+    dj: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#1e1e2e"/><circle cx="40" cy="42" r="26" fill="#2a2a3e"/><path d="M8 28 Q12 10 28 16" stroke="#333" fill="none" stroke-width="5" stroke-linecap="round"/><path d="M72 28 Q68 10 52 16" stroke="#333" fill="none" stroke-width="5" stroke-linecap="round"/><rect x="4" y="26" width="12" height="22" rx="5" fill="#222" stroke="#444" stroke-width="1"/><rect x="64" y="26" width="12" height="22" rx="5" fill="#222" stroke="#444" stroke-width="1"/><circle cx="10" cy="37" r="3" fill="#38bdf8" opacity=".5"/><circle cx="70" cy="37" r="3" fill="#38bdf8" opacity=".5"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 52 Q40 56 46 52" stroke="#888" fill="none" stroke-width="1.5"/><text x="40" y="68" text-anchor="middle" font-size="9" fill="#38bdf8" opacity=".5" font-family="monospace">♪♫♪</text></svg>`,
+
+    imam: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="44" r="28" fill="#d4a03c"/><circle cx="40" cy="44" r="26" fill="#e8b84c"/><path d="M14 30 Q40 12 66 30 L64 36 Q40 22 16 36Z" fill="#f5f0e0" stroke="#d4a840" stroke-width="1"/><rect x="14" y="34" width="52" height="4" fill="#f5f0e0" rx="1"/><ellipse cx="30" cy="42" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="42" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="43" r="2" fill="#333"/><circle cx="51" cy="43" r="2" fill="#333"/><path d="M34 54 Q40 56 46 54" stroke="#333" fill="none" stroke-width="1.5"/><path d="M28 60 Q40 76 52 60" fill="#8b6914" opacity=".35"/></svg>`,
+
+    calligrapher: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="42" r="28" fill="#d4a03c"/><circle cx="40" cy="42" r="26" fill="#e8c060"/><ellipse cx="30" cy="40" rx="4" ry="5" fill="#fff"/><ellipse cx="50" cy="40" rx="4" ry="5" fill="#fff"/><circle cx="31" cy="41" r="2" fill="#333"/><circle cx="51" cy="41" r="2" fill="#333"/><path d="M34 52 Q40 56 46 52" stroke="#333" fill="none" stroke-width="1.5"/><line x1="60" y1="14" x2="68" y2="4" stroke="#333" stroke-width="2.5" stroke-linecap="round"/><circle cx="68" cy="4" r="2" fill="#111"/><g stroke="rgba(212,160,60,.3)" stroke-width="1" fill="none"><path d="M10 70 Q20 60 30 70"/><path d="M50 70 Q60 60 70 70"/><circle cx="40" cy="72" r="6"/></g></svg>`,
   },
 
   render(ctx, W, H) {
@@ -19145,242 +19199,23 @@ const AICohost = {
     ctx.save();
     ctx.translate(cx, cy + bobY);
 
-    // Body — character-specific
-    const ch = this.character;
-    const charColors = {
-      maker: '#8b6914', engineer: '#f59e0b', coder: '#1e293b', scientist: '#e2e8f0',
-      architect: '#94a3b8', teacher: '#4a5568', scholar: '#d4a03c', mathematician: '#2d3748',
-      anonymous: '#1a1a1a', agent: '#1e293b', shadow: '#111', android: '#64748b',
-      astronaut: '#e2e8f0', xenomorph: '#1a2a1a', pilot: '#6b4226',
-      director: '#2d2d2d', artist: '#e879f9', dj: '#1e1e2e',
-      imam: '#f5f0e0', calligrapher: '#d4a03c',
-    };
-    ctx.fillStyle = charColors[ch] || '#555';
-    ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
-
-    // Character-specific head features
-    if (ch === 'maker' || ch === 'scientist') {
-      // Goggles on forehead
-      ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(-10, -24, 7, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(10, -24, 7, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-3, -24); ctx.lineTo(3, -24); ctx.stroke();
-      if (ch === 'scientist') {
-        // Lab coat collar
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.moveTo(-20, 20); ctx.lineTo(-10, 10); ctx.lineTo(0, 20); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(10, 10); ctx.lineTo(0, 20); ctx.fill();
-      }
-    } else if (ch === 'engineer') {
-      // Hard hat
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath(); ctx.arc(0, -20, 26, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#d4a020'; ctx.fillRect(-26, -20, 52, 4);
-    } else if (ch === 'coder') {
-      // Headphones
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(0, -16, 28, Math.PI + 0.3, -0.3); ctx.stroke();
-      ctx.fillStyle = '#222';
-      ctx.beginPath(); ctx.roundRect(-30, -10, 8, 16, 3); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(22, -10, 8, 16, 3); ctx.fill();
-      // Terminal green text glow
-      ctx.fillStyle = 'rgba(74,222,128,.3)'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
-      ctx.fillText('</>', 0, 24);
-    } else if (ch === 'architect') {
-      // Ruler
-      ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(20, -30); ctx.lineTo(30, 20); ctx.stroke();
-      for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(21 + i * 2, -28 + i * 10); ctx.lineTo(25 + i * 2, -28 + i * 10); ctx.stroke(); }
-    } else if (ch === 'teacher') {
-      // Graduation cap
-      ctx.fillStyle = '#1a1a1a';
-      ctx.beginPath(); ctx.moveTo(-22, -26); ctx.lineTo(0, -36); ctx.lineTo(22, -26); ctx.lineTo(0, -20); ctx.closePath(); ctx.fill();
-      ctx.fillRect(-2, -36, 4, -6);
-      ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(0, -42, 3, 0, Math.PI * 2); ctx.fill();
-      // Tassel
-      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(18, -34); ctx.stroke();
-    } else if (ch === 'scholar' || ch === 'imam') {
-      // Turban/head covering
-      ctx.fillStyle = ch === 'imam' ? '#f5f0e0' : '#d4a03c';
-      ctx.beginPath(); ctx.arc(0, -18, 24, Math.PI, 0); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(-24, -20, 48, 8, 2); ctx.fill();
-      // Wise beard
-      ctx.fillStyle = 'rgba(100,80,60,.3)';
-      ctx.beginPath(); ctx.moveTo(-12, 14); ctx.quadraticCurveTo(0, 30, 12, 14); ctx.fill();
-    } else if (ch === 'mathematician') {
-      // Floating equations
-      ctx.fillStyle = 'rgba(163,230,53,.4)'; ctx.font = '7px monospace'; ctx.textAlign = 'center';
-      ctx.fillText('∑∞', -18, -28); ctx.fillText('π²', 18, -26);
-      ctx.fillText('∫dx', -20, 28); ctx.fillText('√n', 20, 26);
-    } else if (ch === 'anonymous') {
-      // Dark mask — just eyes visible
-      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#333';
-      ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
-    } else if (ch === 'agent') {
-      // Sunglasses
-      ctx.fillStyle = '#111';
-      ctx.beginPath(); ctx.roundRect(-18, -14, 14, 9, 2); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(4, -14, 14, 9, 2); ctx.fill();
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(-4, -10); ctx.lineTo(4, -10); ctx.stroke();
-      // Earpiece
-      ctx.fillStyle = '#444'; ctx.beginPath(); ctx.arc(28, -4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(28, -1); ctx.lineTo(24, 10); ctx.stroke();
-    } else if (ch === 'shadow') {
-      // Dark silhouette only — mysterious
-      ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
-    } else if (ch === 'android') {
-      // Chrome face, LED eyes handled below
-      ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.roundRect(-24, -24, 48, 48, 6); ctx.fill();
-      ctx.strokeStyle = '#546e7a'; ctx.lineWidth = 1; ctx.strokeRect(-24, -24, 48, 48);
-      // Antenna
-      ctx.strokeStyle = '#90a4ae'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, -38); ctx.stroke();
-      ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
-    } else if (ch === 'astronaut') {
-      // Helmet
-      ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(20,20,40,.2)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
-      // Visor glare
-      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(-8, -8, 12, 0.5, 1.8); ctx.stroke();
-    } else if (ch === 'xenomorph') {
-      // Elongated dark head
-      ctx.fillStyle = '#1a2a1a';
-      ctx.beginPath(); ctx.ellipse(0, -4, 22, 34, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#2a3a2a'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.ellipse(0, -4, 22, 34, 0, 0, Math.PI * 2); ctx.stroke();
-    } else if (ch === 'pilot') {
-      // Aviator goggles
-      ctx.fillStyle = '#6b4226'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath(); ctx.ellipse(-10, -10, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(10, -10, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(56,189,248,.3)';
-      ctx.beginPath(); ctx.ellipse(-10, -10, 8, 6, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(10, -10, 8, 6, 0, 0, Math.PI * 2); ctx.fill();
-      // Scarf
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath(); ctx.moveTo(-10, 26); ctx.quadraticCurveTo(0, 22, 10, 26); ctx.lineTo(15, 38); ctx.lineTo(-5, 34); ctx.fill();
-    } else if (ch === 'director') {
-      // Beret
-      ctx.fillStyle = '#1a1a1a';
-      ctx.beginPath(); ctx.ellipse(0, -26, 22, 8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(0, -28, 18, Math.PI, 0); ctx.fill();
-      // Megaphone hint
-      ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('📣', 26, 4);
-    } else if (ch === 'artist') {
-      // Beret + paint
-      ctx.fillStyle = '#c084fc';
-      ctx.beginPath(); ctx.ellipse(0, -26, 22, 8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(2, -28, 16, Math.PI, 0); ctx.fill();
-      // Paint splatter
-      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(-20, 18, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(22, 14, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(-16, -6, 3, 0, Math.PI * 2); ctx.fill();
-    } else if (ch === 'dj') {
-      // Big headphones
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.arc(0, -14, 30, Math.PI + 0.2, -0.2); ctx.stroke();
-      ctx.fillStyle = '#222';
-      ctx.beginPath(); ctx.roundRect(-34, -12, 10, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(24, -12, 10, 20, 4); ctx.fill();
-      // Mixer vibes
-      ctx.fillStyle = 'rgba(56,189,248,.3)'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
-      ctx.fillText('♪♫♪', 0, 26);
-    } else if (ch === 'calligrapher') {
-      // Ink pen
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(22, -20); ctx.lineTo(30, -34); ctx.stroke();
-      ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(30, -34, 2, 0, Math.PI * 2); ctx.fill();
-      // Geometric pattern hint
-      ctx.strokeStyle = 'rgba(212,160,60,.3)'; ctx.lineWidth = 0.8;
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        ctx.beginPath(); ctx.arc(Math.cos(a) * 20, Math.sin(a) * 20, 6, a, a + 1.5); ctx.stroke();
-      }
-    }
-
-    // Eyes
-    const eyeY = -8;
-    if (this._blinking) {
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-10, eyeY); ctx.lineTo(-6, eyeY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(6, eyeY); ctx.lineTo(10, eyeY); ctx.stroke();
+    // Draw SVG character image
+    const charImg = this._getSvgImg(this.character);
+    if (charImg && charImg.complete && charImg.naturalWidth) {
+      ctx.drawImage(charImg, -40, -40, 80, 80);
     } else {
-      ctx.fillStyle = '#333';
-      const eyeSize = this._mood === 'excited' ? 5 : 4;
-      ctx.beginPath(); ctx.arc(-8, eyeY, eyeSize, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(8, eyeY, eyeSize, 0, Math.PI * 2); ctx.fill();
-      // Pupils
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(-7, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(9, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fill();
-      // Excited sparkle eyes
-      if (this._mood === 'excited') {
-        ctx.fillStyle = '#fff';
-        ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('✨', -8, eyeY - 10);
-        ctx.fillText('✨', 8, eyeY - 10);
-      }
+      // Fallback circle
+      ctx.fillStyle = '#555';
+      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Mouth
-    const mouthY = 6;
-    if (this._mood === 'excited') {
-      // Big happy mouth
+    // Animated mouth overlay (opens with speech — on top of SVG)
+    if (this._mood === 'speaking' || this._mood === 'excited') {
       ctx.fillStyle = '#333';
       ctx.beginPath();
-      ctx.arc(0, mouthY, 10 + this._mouthOpen * 5, 0, Math.PI);
+      ctx.ellipse(0, 6, 5, 2 + this._mouthOpen * 5, 0, 0, Math.PI * 2);
       ctx.fill();
-    } else if (this._mood === 'speaking') {
-      // Open mouth (talking)
-      ctx.fillStyle = '#333';
-      ctx.beginPath();
-      ctx.ellipse(0, mouthY + 2, 6, 3 + this._mouthOpen * 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this._mood === 'thinking') {
-      // Small O mouth
-      ctx.fillStyle = '#333';
-      ctx.beginPath(); ctx.arc(0, mouthY + 2, 3, 0, Math.PI * 2); ctx.fill();
-      // Thought bubble
-      ctx.fillStyle = 'rgba(255,255,255,.3)';
-      ctx.beginPath(); ctx.arc(22, -20, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(30, -30, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.15)';
-      ctx.beginPath(); ctx.arc(40, -42, 10, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('🤔', 40, -38);
-    } else {
-      // Idle smile
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(0, mouthY, 8, 0.1, Math.PI - 0.1); ctx.stroke();
     }
-
-    // Cheeks (blush when excited)
-    if (this._mood === 'excited' || this._mood === 'speaking') {
-      ctx.fillStyle = 'rgba(251,146,60,.25)';
-      ctx.beginPath(); ctx.ellipse(-18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
-    }
-
-    // Antenna (only for characters that don't have their own headgear)
-    if (!this.characters.includes(this.character)) {
-      ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
-      const antAngle = Math.sin(t * 3) * 0.2;
-      ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath(); ctx.arc(Math.sin(antAngle) * 10, -48, 4, 0, Math.PI * 2); ctx.fill();
-    }
-
     // v0.7.189: Applause — clap when speech→silence transition
     const now = Date.now();
     if (this._mood === 'speaking' || this._mood === 'excited') {
