@@ -15568,8 +15568,11 @@ const LiveCaptions = {
       if (this.current.length > 80) this.current = '…' + this.current.slice(-80);
     };
     this.recognition.onerror = (e) => {
-      log('caption error: ' + e.error, 'error');
-      this.running = false;
+      log('💬 caption error: ' + e.error, 'error');
+      if (e.error === 'not-allowed') showToast('💬 Mic permission needed — add a mic source first', 3000);
+      else if (e.error === 'no-speech') { /* normal, ignore */ }
+      else showToast('💬 Caption error: ' + e.error, 2000);
+      if (e.error !== 'no-speech') this.running = false;
     };
     this.recognition.onend = () => {
       // Chrome auto-stops after ~50s of silence. Restart if still enabled.
@@ -15580,6 +15583,7 @@ const LiveCaptions = {
     try {
       this.recognition.start();
       this.running = true;
+      log('💬 Captions started (' + this.recognition.lang + ')', 'success');
     } catch (e) {
       log('caption start failed: ' + e.message, 'error');
     }
@@ -21782,8 +21786,20 @@ function wireEvents() {
   // Trim wiring
   $('tcCaptionsBtn')?.addEventListener('click', (e) => {
     LiveCaptions.setEnabled(!LiveCaptions.enabled);
+    // Start/stop recognition immediately (not just on record)
+    if (LiveCaptions.enabled) {
+      if (!LiveCaptions.supported()) {
+        showToast('💬 Captions not supported (use Chrome/Edge)', 3000);
+        LiveCaptions.setEnabled(false);
+      } else {
+        LiveCaptions.start();
+        showToast('💬 Captions ON — speak to see subtitles', 2000);
+      }
+    } else {
+      LiveCaptions.stop();
+      showToast('💬 Captions OFF', 1200);
+    }
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', LiveCaptions.enabled);
-    showToast(LiveCaptions.enabled ? '💬 Captions ON' : '💬 Captions OFF', 1200);
     // Sync the settings checkbox if it exists
     const capEl = $('tcCaptionsToggle');
     if (capEl) capEl.checked = LiveCaptions.enabled;
