@@ -18930,6 +18930,21 @@ const AICohost = {
   _mouthOpen: 0,
   _blinkTimer: 0,
   _blinking: false,
+  // v0.7.189: reaction bubbles
+  _bubble: '',
+  _bubbleUntil: 0,
+  _lastBubbleAt: 0,
+  // v0.7.189: scene prompter
+  _sceneStartTime: 0,
+  _lastScene: '',
+  _scenePrompted: false,
+  // v0.7.189: applause tracker
+  _wasSpeaking: false,
+  _silenceStart: 0,
+  _clapping: false,
+  _clapUntil: 0,
+  // v0.7.189: timer buddy
+  _lastTimeCard: 0,
 
   toggle() {
     this.visible = !this.visible;
@@ -19039,6 +19054,92 @@ const AICohost = {
     ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
     ctx.fillStyle = '#ef4444';
     ctx.beginPath(); ctx.arc(Math.sin(antAngle) * 10, -48, 4, 0, Math.PI * 2); ctx.fill();
+
+    // v0.7.189: Applause — clap when speech→silence transition
+    const now = Date.now();
+    if (this._mood === 'speaking' || this._mood === 'excited') {
+      this._wasSpeaking = true;
+      this._silenceStart = 0;
+    } else if (this._wasSpeaking && this._mood === 'idle') {
+      if (!this._silenceStart) this._silenceStart = now;
+      if (now - this._silenceStart > 800 && !this._clapping) {
+        this._clapping = true;
+        this._clapUntil = now + 1200;
+        this._wasSpeaking = false;
+      }
+    }
+    if (this._clapping && now < this._clapUntil) {
+      const clapPhase = Math.sin((now - (this._clapUntil - 1200)) * 0.02) > 0;
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(clapPhase ? '👏' : '  ', 28, -20);
+    } else {
+      this._clapping = false;
+    }
+
+    // v0.7.189: Scene prompter — nudge if same scene >2 min
+    if (Recorder.state === 'recording') {
+      if (Scenes.active !== this._lastScene) {
+        this._lastScene = Scenes.active;
+        this._sceneStartTime = now;
+        this._scenePrompted = false;
+      }
+      if (!this._scenePrompted && now - this._sceneStartTime > 120000) {
+        this._scenePrompted = true;
+        this._bubble = '🎭 Scene change?';
+        this._bubbleUntil = now + 4000;
+      }
+    }
+
+    // v0.7.189: Timer buddy — show time cards at milestones
+    if (Recorder.state === 'recording') {
+      const elapsed = Recorder.elapsed ? Recorder.elapsed() / 1000 : 0;
+      const milestones = [60, 120, 300, 600]; // 1min, 2min, 5min, 10min
+      for (const m of milestones) {
+        if (elapsed >= m && elapsed < m + 2 && this._lastTimeCard !== m) {
+          this._lastTimeCard = m;
+          const mins = Math.floor(m / 60);
+          this._bubble = `⏱ ${mins} min`;
+          this._bubbleUntil = now + 3000;
+        }
+      }
+    } else {
+      this._lastTimeCard = 0;
+    }
+
+    // v0.7.189: Reaction bubbles — contextual feedback
+    if (now - this._lastBubbleAt > 8000 && !this._bubble) {
+      if (this._mood === 'excited' && Recorder.state === 'recording') {
+        this._bubble = '💡 Great point!';
+        this._bubbleUntil = now + 3000;
+        this._lastBubbleAt = now;
+      } else if (this._mood === 'idle' && Recorder.state === 'recording' && rms < 0.003) {
+        const silentFor = this._silenceStart ? now - this._silenceStart : 0;
+        if (silentFor > 5000) {
+          this._bubble = '📢 Keep going!';
+          this._bubbleUntil = now + 3000;
+          this._lastBubbleAt = now;
+        }
+      }
+    }
+
+    // Draw speech bubble
+    if (this._bubble && now < this._bubbleUntil) {
+      const bubbleAlpha = Math.min(1, (this._bubbleUntil - now) / 500);
+      ctx.globalAlpha = bubbleAlpha;
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.font = 'bold 11px "Righteous", sans-serif';
+      const bw = ctx.measureText(this._bubble).width + 16;
+      ctx.beginPath(); ctx.roundRect(-bw / 2, -60, bw, 20, 8); ctx.fill();
+      // Tail
+      ctx.beginPath(); ctx.moveTo(-4, -40); ctx.lineTo(4, -40); ctx.lineTo(0, -34); ctx.closePath(); ctx.fill();
+      // Text
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'center';
+      ctx.fillText(this._bubble, 0, -45);
+      ctx.globalAlpha = 1;
+    } else {
+      this._bubble = '';
+    }
 
     ctx.restore();
   },
