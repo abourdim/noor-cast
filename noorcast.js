@@ -13582,6 +13582,23 @@ const FocusMode = {
     document.body.classList.toggle('tc-focus', this.on);
     const btn = $('tcFocusBtn');
     if (btn) btn.classList.toggle('active', this.on);
+    // v0.7.189: show/hide floating exit button
+    let exitBtn = document.getElementById('tcFocusExitBtn');
+    if (this.on) {
+      if (!exitBtn) {
+        exitBtn = document.createElement('button');
+        exitBtn.id = 'tcFocusExitBtn';
+        exitBtn.textContent = '✕ Exit Focus';
+        exitBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99999;padding:8px 16px;border-radius:10px;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-size:.8rem;backdrop-filter:blur(4px);opacity:.5;transition:opacity .2s';
+        exitBtn.addEventListener('mouseenter', () => { exitBtn.style.opacity = '1'; });
+        exitBtn.addEventListener('mouseleave', () => { exitBtn.style.opacity = '.5'; });
+        exitBtn.addEventListener('click', () => FocusMode.toggle());
+        document.body.appendChild(exitBtn);
+      }
+      exitBtn.style.display = '';
+    } else {
+      if (exitBtn) exitBtn.style.display = 'none';
+    }
   },
 };
 
