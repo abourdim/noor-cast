@@ -236,7 +236,7 @@
 <aside class="sidebar">
   <div class="logo">
     <span>NoorCast Guide</span>
-    <small>v0.7.202 &bull; 24 Chapters</small>
+    <small>v0.7.202 &bull; 26 Chapters</small>
   </div>
 
   <div class="nav-group">
@@ -286,6 +286,8 @@
     <a class="nav-link" href="#ch22"><span class="icon">❓</span> FAQ</a>
     <a class="nav-link" href="#ch23"><span class="icon">📄</span> Flyers & Brand</a>
     <a class="nav-link" href="#ch24"><span class="icon">🔧</span> Advanced Ref</a>
+    <a class="nav-link" href="#ch25"><span class="icon">📚</span> Templates</a>
+    <a class="nav-link" href="#ch26"><span class="icon">♿</span> Access & Perf</a>
   </div>
 </aside>
 
@@ -858,11 +860,29 @@
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch8"><span class="ch-num">8</span> Recording</h2>
 
-<h3>8.1 Starting</h3>
+<h3>8.1 Starting a Recording</h3>
+<h4>Standard Start (with countdown)</h4>
+<p>Click the 🔴 REC button or press <kbd>R</kbd>. A cinematic countdown plays:</p>
+<div class="steps">
+  <div class="step">Numbers appear large on canvas (12rem) with scale pulse animation</div>
+  <div class="step">Rising pitch beep tones: 440 Hz (3) → 660 Hz (2) → 880 Hz (1)</div>
+  <div class="step">"GO!" flashes with 1100 Hz tone + speed lines burst</div>
+  <div class="step">Recording begins — timer starts, LED meter activates</div>
+</div>
+<p>Countdown duration customizable (1-10 seconds) in <a class="xref" href="#ch20">Settings</a>.</p>
+
+<h4>Instant Start (skip countdown)</h4>
 <ul>
-  <li><strong>Standard</strong>: Click 🔴 REC or <kbd>R</kbd>. 3-2-1 countdown with rising beep tones + "GO!" flash + speed lines.</li>
-  <li><strong>Instant</strong>: Long-press REC (600ms) or <kbd>Shift+R</kbd>. Skips countdown.</li>
-  <li><strong>Countdown duration</strong>: customizable 1-10s in <a class="xref" href="#ch20">Settings</a>.</li>
+  <li><strong>Long-press</strong> the REC button for 600ms — button shows a "long-pressing" visual state</li>
+  <li><strong><kbd>Shift+R</kbd></strong> — keyboard shortcut for instant start</li>
+</ul>
+
+<h4>Disk Streaming</h4>
+<p>On Chrome/Edge, NoorCast can stream directly to a file via the File System Access API. Click "Save to disk" when prompted. Benefits:</p>
+<ul>
+  <li>No memory limits for long recordings</li>
+  <li>Chunks written in real-time (no data loss on crash)</li>
+  <li>File available immediately after stopping</li>
 </ul>
 
 <h3>8.2 During Recording</h3>
@@ -901,6 +921,27 @@
   <tr><td>🏆 Badge Card</td><td>Shareable achievement card</td><td>1200×630 .png</td></tr>
 </table>
 
+<h3>9.2 How Instant Replay Works</h3>
+<div class="steps">
+  <div class="step">Decodes audio from your recording using OfflineAudioContext</div>
+  <div class="step">Computes RMS energy in 1-second windows across entire duration</div>
+  <div class="step">Finds the <strong>top 7 loudest moments</strong> (non-overlapping, 4s clips)</div>
+  <div class="step">Sorts clips chronologically</div>
+  <div class="step">Re-encodes via canvas + MediaRecorder with flash transitions + clip counter badge</div>
+  <div class="step">Downloads ~28s highlight reel as .webm + confetti burst</div>
+</div>
+
+<h3>9.3 How Quality Score Works</h3>
+<p>Analyzes 5 dimensions:</p>
+<table>
+  <tr><td>🎤 Audio (clarity)</td><td>Average RMS level — higher = clearer voice</td></tr>
+  <tr><td>📈 Pacing (variation)</td><td>RMS variance — varied = engaging, flat = monotone</td></tr>
+  <tr><td>🎭 Scenes (variety)</td><td>Number of chapter markers = more scene switching</td></tr>
+  <tr><td>⏱ Duration (sweet spot)</td><td>2-5 minutes scores highest. Too short/long penalized.</td></tr>
+  <tr><td>🔥 Engagement (peaks)</td><td>% of windows above 2× average energy</td></tr>
+</table>
+<p>Each dimension: A+ to D grade with colored progress bar. Overall = average. Score ≥80 triggers confetti.</p>
+
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch10"><span class="ch-num">10</span> micro:bit Integration</h2>
 
@@ -930,14 +971,35 @@
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch11"><span class="ch-num">11</span> Pilot Scene & Overlay</h2>
 
-<p>Scene <kbd>6</kbd> 🎮 Pilot: camera full + face PIP + draggable micro:bit overlay at bottom-left containing:</p>
+<p>Scene <kbd>6</kbd> 🎮 Pilot creates a combined robotics view optimized for controlling robots during recording.</p>
+
+<h3>11.1 Layout</h3>
 <ul>
-  <li><strong>D-pad</strong> — arrow buttons + center + fire</li>
-  <li><strong>Servo sliders</strong> — Pan + Tilt with value display</li>
-  <li><strong>Joystick</strong> — two modes: CMD (blue, direction commands) / Servo (green, angle control). Toggle via button.</li>
-  <li><strong>LED 5×5 grid</strong> — mirrors micro:bit LEDs. 📡 Send / 🗑 Clear.</li>
+  <li><strong>Camera</strong> — fills the entire canvas (robot/workspace view)</li>
+  <li><strong>Face camera</strong> — small circle in bottom-right (PIP)</li>
+  <li><strong>micro:bit overlay</strong> — draggable panel at bottom-left</li>
 </ul>
-<p>Overlay is draggable (grab "🎮 micro:bit" header). Position persisted. Auto-hides on scene switch. All controls synced with sidebar.</p>
+
+<h3>11.2 Overlay Controls</h3>
+<table>
+  <tr><th>Control</th><th>What it does</th></tr>
+  <tr><td>D-pad (↑↓←→)</td><td>Send CMD:UP/DOWN/LEFT/RIGHT movement commands</td></tr>
+  <tr><td>Center button (●)</td><td>CMD:CLEAR — stop movement</td></tr>
+  <tr><td>🔥 FIRE</td><td>CMD:FIRE + toast notification</td></tr>
+  <tr><td>Pan slider (0-180°)</td><td>Servo 1 angle — synced with sidebar + gauges</td></tr>
+  <tr><td>Tilt slider (0-180°)</td><td>Servo 2 angle — synced with sidebar + gauges</td></tr>
+  <tr><td>Joystick (CMD mode)</td><td>Blue knob — drag direction sends CMD commands (200ms throttle)</td></tr>
+  <tr><td>Joystick (Servo mode)</td><td>Green knob — drag position maps to pan/tilt 0-180°</td></tr>
+  <tr><td>LED 5×5 grid</td><td>Toggle cells + Send button. Mirrors incoming micro:bit LED data.</td></tr>
+</table>
+
+<h3>11.3 Overlay Behavior</h3>
+<ul>
+  <li><strong>Draggable</strong> — grab the "🎮 micro:bit" header to reposition</li>
+  <li><strong>Position persisted</strong> — saved in localStorage (<code>tc-mo-pos</code>)</li>
+  <li><strong>Auto-hide</strong> — switching to any other scene hides the overlay via <code>setLayout()</code></li>
+  <li><strong>All synced</strong> — overlay sliders ↔ sidebar sliders ↔ servo gauge canvas overlay</li>
+</ul>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch12"><span class="ch-num">12</span> Overlays</h2>
@@ -1043,20 +1105,60 @@
 <p>More → Fun → 🧠 Smart. Auto-switches scenes on keywords: "code"→Code, "robot"→Robot, "camera"→Solo, "pilot"→Pilot. 3s cooldown.</p>
 
 <h3>15.3 Live Captions</h3>
-<p>💬 button in toolbar or <kbd>C</kbd>. Real-time subtitles on canvas:</p>
+<p>Toggle via 💬 button in toolbar or <kbd>C</kbd>. Uses browser SpeechRecognition API.</p>
+
+<h4>How to Enable</h4>
+<div class="steps">
+  <div class="step">Click 💬 Captions in toolbar (or press <kbd>C</kbd>)</div>
+  <div class="step">Check Activity Log: should show "💬 Captions started (fr-FR)"</div>
+  <div class="step">Speak clearly — subtitles appear at bottom of canvas</div>
+  <div class="step">Optional: click 💾 Save .srt to download subtitle file</div>
+</div>
+
+<h4>Visual Style</h4>
 <ul>
-  <li>Karaoke-style: last word highlighted green</li>
-  <li>Word-wrap, gradient background, pulsing 🎤 icon</li>
-  <li>Fades 4s after last speech</li>
-  <li>💾 Save .srt button appears when active</li>
+  <li><strong>Karaoke-style</strong>: last word highlighted in accent green</li>
+  <li><strong>Word-wrap</strong> for long sentences (multi-line, max canvas width - 100px)</li>
+  <li><strong>Gradient background</strong> pill with accent border, rounded corners</li>
+  <li><strong>Pulsing 🎤 icon</strong> to the left of the caption box</li>
+  <li><strong>Fades out</strong> 4 seconds after last speech detected</li>
+  <li><strong>60px bold Righteous font</strong> with 5px black outline stroke</li>
 </ul>
+
+<h4>Export Options</h4>
+<ul>
+  <li><strong>💾 Save .srt</strong> — toolbar button (appears when captions active). Downloads standard SRT subtitle file with timestamps.</li>
+  <li><strong>📝 Transcript</strong> — take panel button. Downloads full text as .txt file.</li>
+  <li><strong>Post-recording transcription</strong> — if captions weren't active during recording, NoorCast can play the recording through SpeechRecognition to generate a transcript after the fact.</li>
+</ul>
+
+<h4>Language</h4>
+<p>Follows app language setting: French → fr-FR, English → en-US, Arabic → ar-SA.</p>
 <div class="warn">Chrome SpeechRecognition requires internet (sends audio to Google). Edge may work offline on Windows 10/11. See <a class="xref" href="#ch22">FAQ</a> for troubleshooting.</div>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch16"><span class="ch-num">16</span> Gamification</h2>
 
 <h3>16.1 XP System</h3>
-<p>More → Fun → ⭐ XP Bar. Progress bar at top-right of canvas. 1 XP/sec recording. Level up every 300 XP (confetti + floating text). Persisted.</p>
+<p>Toggle via More → Fun → ⭐ XP Bar. Renders at top-right of canvas showing level, XP count, and progress bar.</p>
+
+<h4>Earning XP</h4>
+<table>
+  <tr><th>Source</th><th>Amount</th></tr>
+  <tr><td>Recording</td><td>1 XP per second of recording time</td></tr>
+  <tr><td>Daily Challenge</td><td>+25 XP on completion</td></tr>
+  <tr><td>Combo (3+ features)</td><td>feature count × 5 XP</td></tr>
+</table>
+
+<h4>Leveling Up</h4>
+<p>Level up every 300 XP × current level. Level-up triggers:</p>
+<ul>
+  <li>Confetti burst</li>
+  <li>Large floating "⭐ LEVEL N!" text on canvas (2 seconds)</li>
+  <li>Toast notification</li>
+  <li><a class="xref" href="#ch16">Unlock Gallery</a> check — new skins/backgrounds may unlock</li>
+</ul>
+<p>XP, level, and visibility all persisted in localStorage across sessions.</p>
 
 <h3>16.2 Daily Challenges</h3>
 <p>New challenge daily (20 pool). Toast on app load. +25 XP + confetti on completion. Checked every 3s. Examples: "Record 2+ min", "Use 3 scenes", "Apply a skin".</p>
@@ -1445,6 +1547,89 @@
   <tr><td>Drag and drop images</td><td>Drag files from desktop onto canvas. Green border on dragover. PNG/JPG/GIF/SVG/WebP.</td></tr>
 </table>
 
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch25"><span class="ch-num">25</span> Templates & Lesson Planning</h2>
+
+<h3>25.1 Guided Templates</h3>
+<p>Click "Pick a template" in the recording bar. 4 presets:</p>
+<table>
+  <tr><th>Template</th><th>Icon</th><th>Steps</th></tr>
+  <tr><td>Full Lesson</td><td>📚</td><td>Intro (Solo) → Code → Code+Robot → Code+Robot → Outro (Solo)</td></tr>
+  <tr><td>Robot Demo</td><td>🤖</td><td>Intro (Solo) → Code → Robot → Sensors → Studio</td></tr>
+  <tr><td>Fix-it</td><td>🔧</td><td>Code → Solo → Code → Code+Robot → Solo</td></tr>
+  <tr><td>Robot Tuto</td><td>🤖</td><td>Intro → Code → Robot → Sensors → Solo</td></tr>
+</table>
+<p>Each template sets an initial scene, drops a welcome text overlay, and shows a 5-step chip strip under the studio. Clicking a step switches the scene AND adds a chapter marker.</p>
+
+<h3>25.2 Using Templates in Class</h3>
+<div class="steps">
+  <div class="step">Open NoorCast → click "Pick a template" in the recording bar</div>
+  <div class="step">Choose 📚 Full Lesson (or another template)</div>
+  <div class="step">The intro text appears on canvas ("Welcome to...")</div>
+  <div class="step">Step chips appear below the studio: 1→2→3→4→5</div>
+  <div class="step">Click each step to advance — scene switches automatically + chapter marker added</div>
+  <div class="step">Press REC and follow the guided flow</div>
+</div>
+<div class="tip">Templates work great with the <a class="xref" href="#ch15">Smart Scene Switcher</a> — say "code" to auto-switch to Code scene even during a template.</div>
+
+<h3>25.3 Classroom Setup Tips</h3>
+<ul>
+  <li><strong>One Chromebook per student</strong> — each runs NoorCast independently (no network needed)</li>
+  <li><strong>Shared robot station</strong> — one micro:bit connected to the teacher's NoorCast via Bluetooth</li>
+  <li><strong>Screen sharing</strong> — use the <a class="xref" href="#ch14">📱 Share</a> button to capture and share screenshots with students</li>
+  <li><strong>Simple Mode for students</strong> — hides advanced tools, prevents overwhelm</li>
+  <li><strong>Pro Mode for teacher</strong> — full access to all features during demonstrations</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch26"><span class="ch-num">26</span> Accessibility, RTL & Performance</h2>
+
+<h3>26.1 RTL Support (Arabic)</h3>
+<p>Switch to Arabic in <a class="xref" href="#ch20">Settings</a> → Language → AR. The entire UI flips:</p>
+<ul>
+  <li>All panels, sidebars, and toolbars switch to right-to-left layout</li>
+  <li><code>dir="rtl"</code> set on the HTML element</li>
+  <li>Arabic fonts (Amiri, Tajawal) used for all text</li>
+  <li>350+ i18n keys fully translated</li>
+</ul>
+
+<h3>26.2 Accessibility Features</h3>
+<ul>
+  <li><strong>ARIA labels</strong> on all buttons and panels</li>
+  <li><strong>Keyboard navigation</strong> — all features accessible via shortcuts</li>
+  <li><strong>High contrast</strong> — all themes designed for readability</li>
+  <li><strong>No auto-playing audio</strong> — all sounds require user action</li>
+  <li><strong>Focus indicators</strong> — visible focus rings on interactive elements</li>
+</ul>
+
+<h3>26.3 Performance Tips</h3>
+<table>
+  <tr><td>Reduce canvas pets</td><td>Each pet adds a draw call per frame. Remove unused pets via 🐾 → ❌ Clear all.</td></tr>
+  <tr><td>Simplify background</td><td>Matrix/Radar backgrounds are heavier than Space/Pixel. Or set to "None".</td></tr>
+  <tr><td>Fewer active effects</td><td>Disable neon border, heartbeat, film strip if not needed.</td></tr>
+  <tr><td>Close other tabs</td><td>Screen capture + recording uses significant CPU. Close Zoom/Teams.</td></tr>
+  <tr><td>Lower camera count</td><td>Each camera adds decode overhead. Use 2-3 cameras max for smooth 30fps.</td></tr>
+  <tr><td>Check FPS</td><td><kbd>Ctrl+Shift+D</kbd> shows debug HUD with live FPS + memory usage.</td></tr>
+</table>
+
+<h3>26.4 Updating NoorCast</h3>
+<p>NoorCast is a PWA with a service worker (cache-first strategy). When a new version is deployed:</p>
+<ul>
+  <li>The service worker detects the update on next visit</li>
+  <li>A toast notification appears: "🔄 New version available — reload the page"</li>
+  <li>Refresh the page to get the latest version</li>
+  <li>All localStorage settings are preserved across updates</li>
+</ul>
+
+<h3>26.5 Offline Usage</h3>
+<p>After the first load, NoorCast works 100% offline:</p>
+<ul>
+  <li>All files cached by the service worker (HTML, JS, CSS, fonts, icons)</li>
+  <li>PWA installable — add to desktop/home screen via browser menu</li>
+  <li>Only exception: <a class="xref" href="#ch15">Live Captions</a> require internet on Chrome (browser sends audio to Google for speech recognition)</li>
+</ul>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
