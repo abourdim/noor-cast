@@ -20289,6 +20289,60 @@ function wireEvents() {
     if (e.target.closest('#tcMoreToolsBtn') || e.target.closest('#tcMoreToolsPopup')) return;
     pop.style.display = 'none';
   });
+  // v0.7.189: Fun popup — dedicated button
+  $('tcFunMenuBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const pop = $('tcFunPopup');
+    if (!pop) return;
+    const showing = pop.style.display !== 'none';
+    if (showing) { pop.style.display = 'none'; return; }
+    const btn = $('tcFunMenuBtn');
+    const r = btn.getBoundingClientRect();
+    pop.style.display = '';
+    pop.style.bottom = 'auto'; pop.style.top = 'auto';
+    const pw = pop.offsetWidth;
+    let left = r.right - pw;
+    if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    pop.style.left = left + 'px';
+    if (r.top - pop.offsetHeight - 8 > 0) {
+      pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+    } else {
+      pop.style.top = (r.bottom + 8) + 'px';
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const pop = $('tcFunPopup');
+    if (!pop || pop.style.display === 'none') return;
+    if (e.target.closest('#tcFunMenuBtn') || e.target.closest('#tcFunPopup')) return;
+    pop.style.display = 'none';
+  });
+  // Fun popup button handlers
+  const funToggle = (btnId, obj, prop, label) => {
+    $(btnId)?.addEventListener('click', (e) => {
+      if (typeof obj.toggle === 'function') obj.toggle();
+      else obj[prop] = !obj[prop];
+      const val = obj[prop];
+      e.target.closest('.tc-tool-btn')?.classList.toggle('active', val);
+      showToast(`${label} ${val ? 'ON' : 'OFF'}`, 1200);
+    });
+  };
+  funToggle('tcFunVoiceFx', VoiceFx, 'enabled', '🗣 Voice FX');
+  funToggle('tcFunXpBar', XpBar, 'visible', '⭐ XP Bar');
+  funToggle('tcFunSoundPad', SoundPad, 'visible', '🎵 Sound Pad');
+  funToggle('tcFunMusic', BgMusic, 'playing', '🎵 Music');
+  funToggle('tcFunCohost', AICohost, 'visible', '😊 Co-host');
+  funToggle('tcFunVoiceCmd', VoiceCommands, 'enabled', '🎙 Voice');
+  funToggle('tcFunSmartScene', SmartSceneSwitcher, 'enabled', '🧠 Smart');
+  funToggle('tcFunSensors', Sensors, '_overlayVisible', '📊 Sensors');
+  funToggle('tcFunGauges', ServoGauge, 'visible', '🎛 Gauges');
+  $('tcFunSpeedLines')?.addEventListener('click', () => SpeedLines.fire(800));
+  $('tcFunShare')?.addEventListener('click', () => QRShare.generate());
+  $('tcFunChoreoRec')?.addEventListener('click', (e) => {
+    if (RobotChoreo.recording) { RobotChoreo.stopRecording(); e.target.closest('.tc-tool-btn')?.classList.remove('active'); }
+    else { RobotChoreo.startRecording(); e.target.closest('.tc-tool-btn')?.classList.add('active'); }
+  });
+  $('tcFunChoreoPlay')?.addEventListener('click', () => RobotChoreo.play());
   $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
   $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
   $('tcPianoBtn')?.addEventListener('click', () => PianoOverlay.toggle());
