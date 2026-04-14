@@ -16346,9 +16346,24 @@ const Sensors = {
       btn.id = 'tcStageConnectBtn';
       btn.style.cssText = 'position:absolute;bottom:14px;right:14px;z-index:80;padding:10px 18px;border-radius:12px;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.4);color:#4ade80;font:bold .85rem "Righteous",sans-serif;cursor:pointer;backdrop-filter:blur(4px);transition:transform .15s,background .15s;display:flex;align-items:center;gap:6px';
       btn.innerHTML = '📡 Connect micro:bit';
-      btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.05)'; btn.style.background = 'rgba(34,197,94,.25)'; });
-      btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; btn.style.background = 'rgba(34,197,94,.15)'; });
-      btn.addEventListener('click', () => Sensors.connect());
+      btn.addEventListener('click', () => { if (!btn._dragged) Sensors.connect(); btn._dragged = false; });
+      // Draggable
+      let dx = 0, dy = 0;
+      btn.addEventListener('pointerdown', (e) => {
+        if (e.target !== btn && !btn.contains(e.target)) return;
+        e.preventDefault(); btn._dragged = false;
+        dx = e.clientX - btn.offsetLeft; dy = e.clientY - btn.offsetTop;
+        const stageRect = stage.getBoundingClientRect();
+        const onMove = (ev) => {
+          btn._dragged = true;
+          btn.style.left = Math.max(0, Math.min(stageRect.width - btn.offsetWidth, ev.clientX - dx)) + 'px';
+          btn.style.top = Math.max(0, Math.min(stageRect.height - btn.offsetHeight, ev.clientY - dy)) + 'px';
+          btn.style.bottom = 'auto'; btn.style.right = 'auto';
+        };
+        const onUp = () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
       stage.appendChild(btn);
     }
     btn.style.display = '';
@@ -19002,8 +19017,11 @@ const TutorialScore = {
    mic RMS. Pure canvas drawing, no images. */
 const AICohost = {
   visible: false,
+  character: 'emoji', // emoji, robot, cat, alien, penguin
+  characters: ['emoji', 'robot', 'cat', 'alien', 'penguin'],
+  charLabels: { emoji: '😊 Emoji', robot: '🤖 Robot', cat: '🐱 Cat', alien: '👾 Alien', penguin: '🐧 Penguin' },
   _x: 0, _y: 0,
-  _mood: 'idle', // idle, speaking, excited, thinking
+  _mood: 'idle',
   _mouthOpen: 0,
   _blinkTimer: 0,
   _blinking: false,
@@ -19025,9 +19043,22 @@ const AICohost = {
 
   toggle() {
     this.visible = !this.visible;
-    try { localStorage.setItem('tc-cohost', this.visible ? '1' : '0'); } catch {}
+    this._save();
   },
-  load() { try { this.visible = localStorage.getItem('tc-cohost') === '1'; } catch {} },
+  nextCharacter() {
+    const idx = this.characters.indexOf(this.character);
+    this.character = this.characters[(idx + 1) % this.characters.length];
+    this._save();
+    showToast(`${this.charLabels[this.character]} co-host`, 1200);
+  },
+  _save() { try { localStorage.setItem('tc-cohost', JSON.stringify({ v: this.visible, c: this.character })); } catch {} },
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-cohost');
+      if (raw === '1') { this.visible = true; } // legacy
+      else if (raw) { const d = JSON.parse(raw); this.visible = !!d.v; this.character = d.c || 'emoji'; }
+    } catch {}
+  },
 
   render(ctx, W, H) {
     if (!this.visible) return;
@@ -19056,11 +19087,53 @@ const AICohost = {
     ctx.save();
     ctx.translate(cx, cy + bobY);
 
-    // Body circle
-    ctx.fillStyle = '#fbbf24';
+    // Body — character-specific color
+    const colors = { emoji: '#fbbf24', robot: '#94a3b8', cat: '#fb923c', alien: '#4ade80', penguin: '#1e293b' };
+    const strokes = { emoji: '#d4a020', robot: '#64748b', cat: '#ea580c', alien: '#16a34a', penguin: '#0f172a' };
+    ctx.fillStyle = colors[this.character] || '#fbbf24';
     ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
+    ctx.strokeStyle = strokes[this.character] || '#d4a020'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
+    // Character-specific features
+    if (this.character === 'robot') {
+      // Square body hint
+      ctx.fillStyle = '#64748b'; ctx.fillRect(-22, -22, 44, 44);
+      ctx.strokeStyle = '#475569'; ctx.strokeRect(-22, -22, 44, 44);
+      // Antenna
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(0, -36); ctx.stroke();
+      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0, -36, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (this.character === 'cat') {
+      // Ears
+      ctx.fillStyle = '#fb923c';
+      ctx.beginPath(); ctx.moveTo(-20, -26); ctx.lineTo(-12, -40); ctx.lineTo(-4, -26); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(4, -26); ctx.lineTo(12, -40); ctx.lineTo(20, -26); ctx.fill();
+      // Inner ears
+      ctx.fillStyle = '#fda4af';
+      ctx.beginPath(); ctx.moveTo(-16, -27); ctx.lineTo(-12, -35); ctx.lineTo(-8, -27); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(8, -27); ctx.lineTo(12, -35); ctx.lineTo(16, -27); ctx.fill();
+      // Whiskers
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-30, 2); ctx.lineTo(-14, 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-28, 8); ctx.lineTo(-14, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(14, 4); ctx.lineTo(30, 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(14, 7); ctx.lineTo(28, 8); ctx.stroke();
+    } else if (this.character === 'alien') {
+      // Antennae
+      ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-8, -30); ctx.lineTo(-14, -44); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(8, -30); ctx.lineTo(14, -44); ctx.stroke();
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath(); ctx.arc(-14, -44, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(14, -44, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (this.character === 'penguin') {
+      // White belly
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath(); ctx.ellipse(0, 6, 16, 20, 0, 0, Math.PI * 2); ctx.fill();
+      // Beak
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.moveTo(-5, 2); ctx.lineTo(0, 8); ctx.lineTo(5, 2); ctx.fill();
+    }
 
     // Eyes
     const eyeY = -8;
@@ -19125,12 +19198,14 @@ const AICohost = {
       ctx.beginPath(); ctx.ellipse(18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Antenna
-    ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
-    const antAngle = Math.sin(t * 3) * 0.2;
-    ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath(); ctx.arc(Math.sin(antAngle) * 10, -48, 4, 0, Math.PI * 2); ctx.fill();
+    // Antenna (emoji only — others have their own)
+    if (this.character === 'emoji') {
+      ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
+      const antAngle = Math.sin(t * 3) * 0.2;
+      ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.arc(Math.sin(antAngle) * 10, -48, 4, 0, Math.PI * 2); ctx.fill();
+    }
 
     // v0.7.189: Applause — clap when speech→silence transition
     const now = Date.now();
@@ -19664,6 +19739,65 @@ const GhostReplay = {
     ctx.textAlign = 'left';
     ctx.fillText('👻 GHOST', 10, 20);
     ctx.restore();
+  },
+};
+
+/* v0.7.193: SceneThemes — one-click canvas presets that set background,
+   source skins, flair options, and overall mood. */
+const SceneThemes = {
+  presets: [
+    {
+      key: 'cinema', label: '🎬 Cinema', bg: '#000000', pattern: 'none',
+      skin: 'none', flair: { neon: false, heartbeat: false, film: true, corner: true },
+    },
+    {
+      key: 'retro', label: '🕹 Retro Gaming', bg: '#0a0a0a', pattern: 'pixel',
+      skin: 'arcade', flair: { neon: true, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'scifi', label: '🤖 Sci-fi Lab', bg: '#050510', pattern: 'circuit',
+      skin: 'robot', flair: { neon: true, heartbeat: true, film: false, corner: true },
+    },
+    {
+      key: 'islamic', label: '🕌 Islamic', bg: '#0a1a0a', pattern: 'zellige',
+      skin: 'andalusia', flair: { neon: false, heartbeat: false, film: false, corner: false },
+    },
+    {
+      key: 'news', label: '📺 News Studio', bg: '#0a0a2e', pattern: 'none',
+      skin: 'livestream', flair: { neon: false, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'space', label: '🚀 Space', bg: '#050510', pattern: 'space',
+      skin: 'astronaut', flair: { neon: true, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'hacker', label: '💻 Hacker', bg: '#0a0a0a', pattern: 'matrix',
+      skin: 'terminal', flair: { neon: true, heartbeat: true, film: false, corner: true },
+    },
+    {
+      key: 'clean', label: '✨ Clean', bg: '#000000', pattern: 'none',
+      skin: 'none', flair: { neon: false, heartbeat: false, film: false, corner: false },
+    },
+  ],
+
+  apply(key) {
+    const preset = this.presets.find(p => p.key === key);
+    if (!preset) return;
+    // Apply background
+    CanvasBg.set(preset.bg);
+    const cbg = $('tcCanvasBgColor'); if (cbg) cbg.value = preset.bg;
+    // Apply pattern
+    BgPatterns.setPattern(preset.pattern);
+    const bgpSel = $('tcBgPattern'); if (bgpSel) bgpSel.value = preset.pattern;
+    // Apply skin to all video sources
+    Engine.sources.forEach(s => { if (s.type !== 'mic') s.skin = preset.skin; });
+    // Apply flair
+    Object.assign(CanvasFlair, preset.flair);
+    CanvasFlair._save();
+
+    showToast(`🎨 ${preset.label}`, 2000);
+    log(`🎨 Scene theme: ${preset.label}`, 'success');
+    SpeedLines.fire(400);
   },
 };
 
@@ -21039,6 +21173,10 @@ function wireEvents() {
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
   });
+  // v0.7.193: scene theme picker
+  $('tcSceneTheme')?.addEventListener('change', (e) => { if (e.target.value) SceneThemes.apply(e.target.value); });
+  // v0.7.193: co-host character cycling (double-click the co-host button)
+  $('tcCohostBtn')?.addEventListener('dblclick', () => AICohost.nextCharacter());
   $('tcGhostBtn')?.addEventListener('click', (e) => {
     GhostReplay.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', GhostReplay.enabled);
