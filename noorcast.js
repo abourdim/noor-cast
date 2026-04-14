@@ -6173,6 +6173,7 @@ const SourceSkins = {
     'android', 'forcefield', 'terminal', 'sniper', 'neural',
     'cube', 'gallery', 'cardboard', 'crystal', 'mirror', 'book',
     'slotmachine', 'museum', 'floating', 'vortex', 'ice', 'gift',
+    'canva', 'figma', 'photoshop', 'vscode', 'scratch',
   ],
   labels: {
     none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot',
@@ -6193,6 +6194,8 @@ const SourceSkins = {
     crystal: '💎 Crystal', mirror: '🪞 Mirror', book: '📖 Book',
     slotmachine: '🎰 Slots', museum: '🏛 Museum', floating: '🔲 Float',
     vortex: '🌀 Vortex', ice: '🧊 Ice', gift: '🎁 Gift',
+    canva: '🎨 Canva', figma: '🖌 Figma', photoshop: '🖼 Photoshop',
+    vscode: '💻 VS Code', scratch: '🐱 Scratch',
   },
 
   draw(ctx, skin, x, y, w, h) {
@@ -7701,6 +7704,182 @@ const SourceSkins = {
     ctx.beginPath();
     ctx.moveTo(x + w - 10, y); ctx.lineTo(x + w + pad - 15, y - 8); ctx.lineTo(x + w + pad - 5, y);
     ctx.fill();
+    ctx.restore();
+  },
+
+  // ═══ DESIGN APPS ═══
+
+  // 🎨 Canva — white border, purple accent toolbar
+  _draw_canva(ctx, x, y, w, h) {
+    const pad = 10, toolbar = 28;
+    ctx.save();
+    // White canvas border
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, h + pad * 2 + toolbar);
+    // Toolbar (top, purple gradient)
+    const tbGrad = ctx.createLinearGradient(x, y - pad - toolbar, x + w, y - pad - toolbar);
+    tbGrad.addColorStop(0, '#7c3aed'); tbGrad.addColorStop(1, '#8b5cf6');
+    ctx.fillStyle = tbGrad;
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, toolbar);
+    // Toolbar dots (mock buttons)
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath(); ctx.roundRect(x - pad + 10 + i * 36, y - pad - toolbar + 8, 28, 12, 4); ctx.fill();
+    }
+    // Canvas logo text
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('Canva', x + w + pad - 8, y - pad - toolbar + 18);
+    // Page shadow
+    ctx.fillStyle = 'rgba(0,0,0,.08)';
+    ctx.fillRect(x - pad + 4, y + h + pad + 2, w + pad * 2, 4);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🖌 Figma — dark UI frame, rulers, layers hint
+  _draw_figma(ctx, x, y, w, h) {
+    const pad = 8, rulerW = 16, toolbar = 24;
+    ctx.save();
+    // Dark background
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - rulerW, y - pad - toolbar - rulerW, w + pad * 2 + rulerW, h + pad * 2 + toolbar + rulerW);
+    // Top toolbar
+    ctx.fillStyle = '#2c2c2c';
+    ctx.fillRect(x - pad - rulerW, y - pad - toolbar - rulerW, w + pad * 2 + rulerW, toolbar);
+    // Toolbar items
+    ctx.fillStyle = '#0d99ff';
+    ctx.beginPath(); ctx.roundRect(x - pad - rulerW + 8, y - pad - toolbar - rulerW + 6, 40, 12, 3); ctx.fill();
+    ctx.fillStyle = '#666';
+    for (let i = 1; i < 4; i++) {
+      ctx.beginPath(); ctx.roundRect(x - pad - rulerW + 56 + i * 30, y - pad - toolbar - rulerW + 6, 22, 12, 3); ctx.fill();
+    }
+    // Top ruler
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - pad, y - pad - rulerW, w + pad * 2, rulerW);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < w / 20; i++) {
+      const rx = x - pad + i * 20;
+      ctx.beginPath(); ctx.moveTo(rx, y - pad - rulerW); ctx.lineTo(rx, y - pad - (i % 5 === 0 ? 2 : 8)); ctx.stroke();
+    }
+    // Left ruler
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - pad - rulerW, y - pad, rulerW, h + pad * 2);
+    for (let i = 0; i < h / 20; i++) {
+      const ry = y - pad + i * 20;
+      ctx.beginPath(); ctx.moveTo(x - pad - rulerW, ry); ctx.lineTo(x - pad - (i % 5 === 0 ? 2 : 8), ry); ctx.stroke();
+    }
+    // Canvas border
+    ctx.strokeStyle = '#0d99ff'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.restore();
+  },
+
+  // 🖼 Photoshop — gray panels, checkered transparency border
+  _draw_photoshop(ctx, x, y, w, h) {
+    const pad = 10, toolbar = 22;
+    ctx.save();
+    // Dark background
+    ctx.fillStyle = '#535353';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, h + pad * 2 + toolbar);
+    // Menu bar
+    ctx.fillStyle = '#3c3c3c';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, toolbar);
+    ctx.fillStyle = '#ccc'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
+    ['File', 'Edit', 'Image', 'Layer'].forEach((m, i) => {
+      ctx.fillText(m, x - pad + 8 + i * 40, y - pad - toolbar + 14);
+    });
+    // Checkerboard transparency pattern (border area)
+    const cs = 6;
+    for (let cx = x - pad; cx < x + w + pad; cx += cs) {
+      for (let cy = y - pad - toolbar + toolbar; cy < y; cy += cs) {
+        ctx.fillStyle = ((Math.floor(cx / cs) + Math.floor(cy / cs)) % 2 === 0) ? '#fff' : '#ccc';
+        ctx.fillRect(cx, cy, cs, cs);
+      }
+      for (let cy = y + h; cy < y + h + pad; cy += cs) {
+        ctx.fillStyle = ((Math.floor(cx / cs) + Math.floor(cy / cs)) % 2 === 0) ? '#fff' : '#ccc';
+        ctx.fillRect(cx, cy, cs, cs);
+      }
+    }
+    // Canvas border
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.restore();
+  },
+
+  // 💻 VS Code — editor frame, line numbers, tab bar
+  _draw_vscode(ctx, x, y, w, h) {
+    const pad = 6, tabH = 22, lineW = 30;
+    ctx.save();
+    // Editor background
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, w + pad * 2 + lineW, h + pad * 2 + tabH);
+    // Tab bar
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, w + pad * 2 + lineW, tabH);
+    // Active tab
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, 80, tabH);
+    ctx.fillStyle = '#ccc'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('📄 main.js', x - pad - lineW + 6, y - pad - tabH + 14);
+    // Inactive tab
+    ctx.fillStyle = '#888';
+    ctx.fillText('📄 style.css', x - pad - lineW + 90, y - pad - tabH + 14);
+    // Line numbers gutter
+    ctx.fillStyle = '#252526';
+    ctx.fillRect(x - pad - lineW, y - pad, lineW, h + pad * 2);
+    ctx.fillStyle = '#858585'; ctx.font = '8px ui-monospace, monospace';
+    for (let i = 0; i < Math.min(20, h / 14); i++) {
+      ctx.fillText(String(i + 1).padStart(3, ' '), x - pad - lineW + 4, y - pad + 12 + i * 14);
+    }
+    // Status bar
+    ctx.fillStyle = '#007acc';
+    ctx.fillRect(x - pad - lineW, y + h + pad - 2, w + pad * 2 + lineW, 16);
+    ctx.fillStyle = '#fff'; ctx.font = '8px sans-serif';
+    ctx.fillText('Ln 1, Col 1', x - pad - lineW + 6, y + h + pad + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('JavaScript', x + w + pad - 4, y + h + pad + 10);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+  _fg_vscode(ctx, x, y) {
+    // Faint code syntax lines
+    ctx.font = '8px ui-monospace, monospace';
+    const lines = ['const app = {', '  name: "NoorCast",', '  version: "0.7"', '};'];
+    lines.forEach((l, i) => {
+      ctx.fillStyle = i === 0 ? 'rgba(86,156,214,.15)' : i === 3 ? 'rgba(86,156,214,.15)' : 'rgba(206,145,120,.12)';
+      ctx.fillText(l, x + 6, y + 14 + i * 14);
+    });
+  },
+
+  // 🐱 Scratch — orange header, green flag/stop, cat icon
+  _draw_scratch(ctx, x, y, w, h) {
+    const pad = 8, header = 28;
+    ctx.save();
+    // Stage border
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - pad, y - pad - header, w + pad * 2, h + pad * 2 + header);
+    // Header (orange)
+    ctx.fillStyle = '#ff8c1a';
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - header, w + pad * 2, header, [8, 8, 0, 0]); ctx.fill();
+    // Green flag + red stop
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath(); ctx.arc(x - pad + 20, y - pad - header + 14, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('▶', x - pad + 20, y - pad - header + 18);
+    ctx.fillStyle = '#e53935';
+    ctx.beginPath(); ctx.arc(x - pad + 42, y - pad - header + 14, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText('⬛', x - pad + 42, y - pad - header + 18);
+    // Stage label
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('Stage', x + w + pad - 8, y - pad - header + 18);
+    // Cat icon (bottom-right)
+    ctx.font = '18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🐱', x + w + pad - 16, y + h + pad - 4);
+    // Stage border
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.textAlign = 'left';
     ctx.restore();
   },
 };
