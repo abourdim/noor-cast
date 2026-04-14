@@ -5072,6 +5072,7 @@ const Scenes = {
       target.cornerRadius = snap.cornerRadius || 0;
       target.badgeText = snap.badgeText || '';
       target.badgeColor = snap.badgeColor || '#e74c3c';
+      target.skin = snap.skin || 'none';
       target.custom = true;
     });
   },
@@ -5208,6 +5209,7 @@ const Scenes = {
         cornerRadius: s.cornerRadius || 0,
         badgeText: s.badgeText || '',
         badgeColor: s.badgeColor || '#e74c3c',
+        skin: s.skin || 'none',
       }));
     if (snapshot.length === 0) return false;
     scene.snapshot = snapshot;
@@ -10685,6 +10687,8 @@ const ServoGauge = {
 
   load() {
     try {
+      const vis = localStorage.getItem('tc-servo-gauge-visible');
+      if (vis !== null) this.visible = vis === '1';
       const raw = localStorage.getItem('tc-servo-gauge');
       if (raw) {
         const s = JSON.parse(raw);
@@ -15952,12 +15956,12 @@ const Sensors = {
   _overlayVisible: true,
 
   _saveOverlayPos() {
-    try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale })); } catch {}
+    try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale, visible: this._overlayVisible })); } catch {}
   },
   _loadOverlayPos() {
     try {
       const s = JSON.parse(localStorage.getItem('tc-sensor-overlay'));
-      if (s) { this._overlayX = s.x; this._overlayY = s.y; this._overlayOpacity = s.opacity ?? 0.85; this._overlayScale = s.scale ?? 1; }
+      if (s) { this._overlayX = s.x; this._overlayY = s.y; this._overlayOpacity = s.opacity ?? 0.85; this._overlayScale = s.scale ?? 1; if (typeof s.visible === 'boolean') this._overlayVisible = s.visible; }
     } catch {}
   },
 
@@ -17185,7 +17189,8 @@ const VoiceFx = {
   _flashUntil: 0,
   _flashColor: '',
 
-  toggle() { this.enabled = !this.enabled; },
+  load() { try { this.enabled = localStorage.getItem('tc-voicefx') === '1'; } catch {} },
+  toggle() { this.enabled = !this.enabled; try { localStorage.setItem('tc-voicefx', this.enabled ? '1' : '0'); } catch {} },
 
   tick() {
     if (!this.enabled) return;
@@ -17265,11 +17270,27 @@ const SpeedLines = {
 const XpBar = {
   visible: false,
   _xp: 0,
-  _maxXp: 300,  // 5 minutes for full bar
+  _maxXp: 300,
   _level: 1,
   _levelUpUntil: 0,
 
-  toggle() { this.visible = !this.visible; },
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-xpbar') === '1';
+      const xp = parseInt(localStorage.getItem('tc-xp'));
+      if (!isNaN(xp)) this._xp = xp;
+      const lv = parseInt(localStorage.getItem('tc-xp-level'));
+      if (!isNaN(lv) && lv > 0) { this._level = lv; this._maxXp = 300 * lv; }
+    } catch {}
+  },
+  _save() {
+    try {
+      localStorage.setItem('tc-xpbar', this.visible ? '1' : '0');
+      localStorage.setItem('tc-xp', String(this._xp));
+      localStorage.setItem('tc-xp-level', String(this._level));
+    } catch {}
+  },
+  toggle() { this.visible = !this.visible; this._save(); },
 
   addXp(amount) {
     this._xp += amount;
@@ -17281,6 +17302,7 @@ const XpBar = {
       Confetti.burst();
       showToast(`⭐ Level ${this._level}!`, 2000);
     }
+    this._save();
   },
 
   render(ctx, W, H) {
@@ -17387,8 +17409,10 @@ const SoundPad = {
   _el: null,
   visible: false,
 
+  load() { try { this.visible = localStorage.getItem('tc-soundpad') === '1'; } catch {} if (this.visible) this._show(); },
   toggle() {
     this.visible = !this.visible;
+    try { localStorage.setItem('tc-soundpad', this.visible ? '1' : '0'); } catch {}
     if (this.visible) this._show();
     else this._hide();
   },
@@ -18742,11 +18766,13 @@ function wireEvents() {
   });
   $('tcSensorOverlayBtn')?.addEventListener('click', (e) => {
     Sensors._overlayVisible = !Sensors._overlayVisible;
+    Sensors._saveOverlayPos();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', Sensors._overlayVisible);
     showToast(Sensors._overlayVisible ? '📊 Sensors ON' : '📊 Sensors OFF', 1200);
   });
   $('tcServoGaugeBtn')?.addEventListener('click', (e) => {
     ServoGauge.visible = !ServoGauge.visible;
+    try { localStorage.setItem('tc-servo-gauge-visible', ServoGauge.visible ? '1' : '0'); } catch {}
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', ServoGauge.visible);
     showToast(ServoGauge.visible ? '🎛 Gauges ON' : '🎛 Gauges OFF', 1200);
   });
@@ -19506,6 +19532,9 @@ async function init() {
   Brand.load();
   Watermark.load();  // v0.7.98
   ServoGauge.load(); // v0.7.177
+  VoiceFx.load();    // v0.7.182
+  XpBar.load();      // v0.7.182
+  SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
   Badges.load();
 
