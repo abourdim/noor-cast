@@ -15540,6 +15540,35 @@ const LiveCaptions = {
     return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   },
 
+  // v0.7.193: save captions to file anytime
+  saveCaptions() {
+    if (!this._srtEntries.length && !this.current) {
+      showToast('💬 No captions to save', 2000);
+      return;
+    }
+    // Save as SRT if we have timed entries
+    const srtBlob = this.exportSrt();
+    if (srtBlob) {
+      const url = URL.createObjectURL(srtBlob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-captions-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.srt`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      showToast(`💬 Saved ${this._srtEntries.length} caption entries`, 2000);
+    } else {
+      // Save as plain text
+      const blob = new Blob([this.getTranscript()], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'noorcast-captions.txt'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      showToast('💬 Saved captions as text', 2000);
+    }
+  },
+
   start() {
     if (!this.supported() || !this.enabled || this.running) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -15549,6 +15578,8 @@ const LiveCaptions = {
     // Pick language from the current i18n setting
     const lang = (typeof currentLang === 'string' && currentLang) || 'en';
     this.recognition.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    // v0.7.193: always track SRT entries (even outside recording)
+    if (!this._srtStart) this._srtStart = performance.now();
     this.recognition.onresult = (ev) => {
       let interim = '', finalT = '';
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
@@ -21941,10 +21972,13 @@ function wireEvents() {
       showToast('💬 Captions OFF', 1200);
     }
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', LiveCaptions.enabled);
+    const saveBtn = $('tcSaveCaptionsBtn');
+    if (saveBtn) saveBtn.style.display = LiveCaptions.enabled ? '' : 'none';
     // Sync the settings checkbox if it exists
     const capEl = $('tcCaptionsToggle');
     if (capEl) capEl.checked = LiveCaptions.enabled;
   });
+  $('tcSaveCaptionsBtn')?.addEventListener('click', () => LiveCaptions.saveCaptions());
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
   $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());
