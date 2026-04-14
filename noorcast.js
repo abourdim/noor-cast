@@ -21206,8 +21206,17 @@ function wireEvents() {
   });
   // v0.7.193: scene theme picker
   $('tcSceneTheme')?.addEventListener('change', (e) => { if (e.target.value) SceneThemes.apply(e.target.value); });
-  // v0.7.193: co-host character cycling (double-click the co-host button)
-  $('tcCohostBtn')?.addEventListener('dblclick', () => AICohost.nextCharacter());
+  // v0.7.194: co-host character dropdown
+  const cohostSel = $('tcCohostCharSelect');
+  if (cohostSel) {
+    cohostSel.value = AICohost.character;
+    cohostSel.addEventListener('change', (e) => {
+      AICohost.character = e.target.value;
+      AICohost._save();
+      showToast(`${AICohost.charLabels[AICohost.character]} co-host`, 1200);
+    });
+    cohostSel.addEventListener('click', (e) => e.stopPropagation());
+  }
   $('tcGhostBtn')?.addEventListener('click', (e) => {
     GhostReplay.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', GhostReplay.enabled);
