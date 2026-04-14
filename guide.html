@@ -542,10 +542,694 @@
 
 <div class="info">NoorCast captures cameras at 1280&times;720 (720p) by default. The canvas composites everything at 1920&times;1080 (1080p) regardless of individual camera resolution.</div>
 
-<p style="text-align:center;margin-top:40px;color:var(--muted);font-size:13px">&mdash; Chapters 4-22 continue with the same level of detail &mdash;</p>
-<p style="text-align:center;color:var(--muted);font-size:13px">For the complete guide, see the <a href="#ch1">chapters above</a> or use <kbd>Ctrl+K</kbd> in the app to search for any feature.</p>
 
 <hr>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch4"><span class="ch-num">4</span> Sources — Adding Content</h2>
+
+<h3>4.1 Screen Capture</h3>
+<p>Click the blue <strong>🖥 + Add</strong> button. Chrome presents three options:</p>
+<ul>
+  <li><strong>Entire Screen</strong> — captures everything on your monitor</li>
+  <li><strong>Window</strong> — captures a specific application window</li>
+  <li><strong>Browser Tab</strong> — captures a specific Chrome tab (includes tab audio)</li>
+</ul>
+<div class="tip">Capturing a browser tab allows you to include the tab's audio (YouTube, online IDE) in your recording. The audio is automatically ducked when you speak. See <a class="xref" href="#ch17">Audio chapter</a>.</div>
+
+<h3>4.2 Camera</h3>
+<p>For detailed camera setup including phones, see <a class="xref" href="#ch3">Chapter 3</a>.</p>
+
+<h3>4.3 Microphone</h3>
+<p>Select from the "Mic" dropdown. Auto-activates immediately. Features:</p>
+<ul>
+  <li><strong>Auto mic check</strong> — 3-second test: "🎤 Speak to test..." → "✅ Mic OK!" or "⚠️ Nothing detected". See <a class="xref" href="#ch17">Section 17.5</a>.</li>
+  <li><strong>Noise gate</strong> — mutes below threshold (-50 dB default). Configurable in <a class="xref" href="#ch20">Settings</a>.</li>
+  <li><strong>Gain boost</strong> — 0-4× slider in <a class="xref" href="#ch20">Settings</a>.</li>
+  <li><strong>Volume ducking</strong> — screen audio reduced when you speak. See <a class="xref" href="#ch17">Section 17.3</a>.</li>
+</ul>
+
+<h3>4.4 Images (Paste & Drag)</h3>
+<ul>
+  <li><strong>Paste</strong>: <kbd>Ctrl+V</kbd> — paste any image from clipboard</li>
+  <li><strong>Drag & Drop</strong>: drag an image file from desktop onto the canvas. Green dashed border highlights the drop zone. Supports PNG, JPG, GIF, SVG, WebP.</li>
+</ul>
+
+<h3>4.5 Shapes</h3>
+<p>Right sidebar → 🎨 Ajouter → Shapes. 15 options: Rectangle, Circle, Rounded, Pill, Hexagon, Octagon, Diamond, Star, Heart, Full bg, Dark bar, White bar, Red dot, Green dot, Dark card.</p>
+<p>Each shape is a canvas source — resize, reposition, style with <a class="xref" href="#ch5">skins</a>, <a class="xref" href="#ch5">borders</a>, and <a class="xref" href="#ch5">shadows</a>.</p>
+
+<h3>4.6 Source Toolbar</h3>
+<p>Click a source to select it. Floating toolbar appears:</p>
+<table>
+  <tr><th>Button</th><th>Action</th><th>Details</th></tr>
+  <tr><td>👁 Hide</td><td>Toggle visibility</td><td>Hidden sources stay in layout but aren't drawn</td></tr>
+  <tr><td>📌 Pin</td><td>Pin position</td><td><a class="xref" href="#ch7">Scene</a> switches won't move pinned sources</td></tr>
+  <tr><td>🔓 Lock</td><td>Lock movement</td><td>Prevents accidental drag/resize</td></tr>
+  <tr><td>Shape dropdown</td><td>Change shape</td><td>9 shapes: rect, circle, hexagon, star, heart...</td></tr>
+  <tr><td>✂️ Crop</td><td>Visual crop</td><td>Draw a rectangle to crop. <kbd>Enter</kbd> apply, <kbd>Esc</kbd> cancel. See <a class="xref" href="#ch5">Section 5.4</a>.</td></tr>
+  <tr><td>🎨 Style</td><td>Style popup</td><td>Full style editor. See <a class="xref" href="#ch5">Section 5.3</a>.</td></tr>
+  <tr><td>✕ Delete</td><td>Remove source</td><td>Also: <kbd>Delete</kbd> key</td></tr>
+</table>
+
+<h3>4.7 Resize Handles</h3>
+<p><strong>8 circular handles</strong> when selected:</p>
+<ul>
+  <li><strong>4 corner handles</strong> (12px) — proportional resize (aspect locked by default)</li>
+  <li><strong>4 edge handles</strong> (8px) — stretch width OR height only</li>
+  <li>Hold <kbd>Shift</kbd> + corner drag = free resize (unlock aspect ratio)</li>
+</ul>
+<p>Cursor changes on hover: ↗↙ for corners, ↕ or ↔ for edges, move cursor for body.</p>
+<div class="tip">Hover any source to see a subtle bounding box outline.</div>
+
+<h3>4.8 Right-Click Context Menu</h3>
+<p>Right-click any source for: Hide, Pin, Lock, Duplicate, Shape submenu, Layer ordering (Forward/Backward/Front/Back), PiP popout, Mirror, Mirror Duplicate.</p>
+
+<h3>4.9 Source Fly-In Animation</h3>
+<p>New sources fly in from the bottom with a 400ms ease-out scale-up animation.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch5"><span class="ch-num">5</span> Canvas & Source Styling</h2>
+
+<h3>5.1 Canvas Basics</h3>
+<ul>
+  <li><strong>Resolution</strong>: 1920×1080 (16:9). Configurable aspect ratio in <a class="xref" href="#ch20">Settings</a>: 4:3, 1:1, 9:16.</li>
+  <li><strong>Background color</strong>: <a class="xref" href="#ch20">Settings</a> → color picker (default: black).</li>
+  <li><strong>Background pattern</strong>: 15 animated patterns. See <a class="xref" href="#ch18">Chapter 18</a>.</li>
+  <li><strong>Zoom</strong>: Ctrl+scroll to zoom the canvas view.</li>
+</ul>
+
+<h3>5.2 Layer Order</h3>
+<p>Sources draw bottom-to-top (last in list = on top). Change via right-click → Forward/Backward/Front/Back. Hover shows layer badge: "#2/4".</p>
+
+<h3>5.3 The Style Popup (Draggable)</h3>
+<p>Select source → 🎨 Style. Grab "⋯ drag to move ⋯" header to reposition.</p>
+
+<h4>🎨 Look</h4>
+<table>
+  <tr><td>Opacity</td><td>0-100% slider</td></tr>
+  <tr><td>Filter</td><td>None, B&W, Sepia, Invert, Bright, Contrast, Vintage, Cool, Warm</td></tr>
+  <tr><td>Corners</td><td>0-50px radius for rounded corners</td></tr>
+  <tr><td>Rotation</td><td>-180° to 180° with degree readout</td></tr>
+</table>
+
+<h4>🖼 Frame</h4>
+<table>
+  <tr><td>Skin</td><td>49 decorative frames. See <a class="xref" href="#ch6">Chapter 6</a>.</td></tr>
+  <tr><td>Border</td><td>Color + width (0-10px)</td></tr>
+  <tr><td>Shadow</td><td>Color + blur radius + X/Y offset</td></tr>
+</table>
+
+<h4>✂ Crop</h4>
+<p>Four sliders (T/B/L/R, 0-40%). Or use the <a class="xref" href="#s54">visual crop tool</a>.</p>
+
+<h4>🏷 Badge</h4>
+<p>Up to 12 chars (e.g., "LIVE") + color picker. Renders as a small pill at top-right of the source.</p>
+
+<h4>↔ Align</h4>
+<p>6 buttons: Left, Center H, Right, Top, Center V, Bottom. Plus Aspect Lock (🔗), Flip H (↔), Flip V (↕).</p>
+
+<h4>🙈 Privacy</h4>
+<ul>
+  <li>🤖 <strong>Avatar</strong> — replace face with animated robot avatar</li>
+  <li>🔲 <strong>Blur</strong> — blur the face area</li>
+</ul>
+
+<h3 id="s54">5.4 Visual Crop Tool</h3>
+<div class="steps">
+  <div class="step">Select a source → click ✂️ Crop in toolbar.</div>
+  <div class="step">Crosshair cursor appears. Draw a rectangle over the region to keep.</div>
+  <div class="step">Area outside darkens (semi-transparent overlay).</div>
+  <div class="step"><kbd>Enter</kbd> = apply crop. <kbd>Escape</kbd> = cancel.</div>
+</div>
+
+<h3>5.5 Stickers & Text Overlays</h3>
+<p>Right sidebar → 🎨 Ajouter:</p>
+<ul>
+  <li><strong>Quick stickers</strong> — preset text overlays (auto-fade 4s)</li>
+  <li><strong>Custom text</strong> — permanent text, any content</li>
+  <li><strong>Emoji palette</strong> — 32 emoji overlays</li>
+  <li><strong>🏷 Animated stickers</strong> — 20 stickers with random animation: bounce, spin, pulse, wiggle, or float. See <a class="xref" href="#ch14">Section 14.3</a>.</li>
+  <li><strong>Shapes</strong> — 15 colored shapes (see <a class="xref" href="#ch4">Section 4.5</a>)</li>
+</ul>
+<p>Text overlays support: 6 fonts, 4 transparency modes, outline stroke (0-14px), drag, resize, rotate, duplicate (<kbd>Ctrl+D</kbd>).</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch6"><span class="ch-num">6</span> Camera Skins — 49 Decorative Frames</h2>
+
+<p>Skins are decorative frames around sources, <strong>baked into the recording</strong>. They use an evenodd clip so they don't cover the video content.</p>
+
+<h3>6.1 How to Apply</h3>
+<div class="steps">
+  <div class="step">Click a source to select it.</div>
+  <div class="step">Click 🎨 Style → <strong>🖼 Frame</strong> section → <strong>Skin</strong> dropdown.</div>
+  <div class="step">Skins are organized in 11 categories with optgroups.</div>
+  <div class="step">Select one — applies immediately on canvas.</div>
+</div>
+<div class="tip">Use <a class="xref" href="#ch13">Global Search</a> (<kbd>Ctrl+K</kbd>) and type a skin name to apply it directly.</div>
+
+<h3>6.2 Complete Catalog (49 skins)</h3>
+
+<details><summary>📺 Classic (4): TV, Polaroid, Comic, Monitor</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>📺 TV</strong> — Wood grain cabinet, volume/channel knobs, speaker grille, CRT curve, blinking LED, V-antenna</div>
+  <div class="skinitem"><strong>📸 Polaroid</strong> — White border, thick bottom, drop shadow, star decoration</div>
+  <div class="skinitem"><strong>🗯 Comic</strong> — Spiky speech-bubble border, speech tail, semi-transparent fill</div>
+  <div class="skinitem"><strong>🖥 Monitor</strong> — Ultrawide bezel, stand, power LED</div>
+</div></details>
+
+<details><summary>📱 Tech (5): Phone, Laptop, Terminal, Hologram, Android</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>📱 Phone</strong> — Dynamic Island notch, triple camera bump, side buttons, home indicator</div>
+  <div class="skinitem"><strong>💻 Laptop</strong> — Bezel, keyboard hint, webcam dot</div>
+  <div class="skinitem"><strong>📟 Terminal</strong> — CRT shell, phosphor glow, rolling scan bar, blinking cursor, output lines</div>
+  <div class="skinitem"><strong>🌐 Hologram</strong> — Chromatic aberration, dense scan lines, random tears, holographic base</div>
+  <div class="skinitem"><strong>🤖 Android</strong> — Curved visor, status LEDs, animated loading bar</div>
+</div></details>
+
+<details><summary>🤖 Characters (6): Robot Visor, Robot Head, Alien, Anon, Ninja, Detective</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🤖 Robot Visor</strong> — Chamfered HUD, scan lines, corner brackets, cyan glow, "REC●"</div>
+  <div class="skinitem"><strong>🤖 Robot Head</strong> — Metal gradient, hex bolt ears, pulsing antenna, jaw grille, glowing eyes</div>
+  <div class="skinitem"><strong>👾 Alien</strong> — Oval head, green antenna tips</div>
+  <div class="skinitem"><strong>🎭 Anonymous</strong> — White border, mask eyebrow arches, mustache hint</div>
+  <div class="skinitem"><strong>🥷 Ninja</strong> — Black mask top/bottom, eye slit, shuriken corners</div>
+  <div class="skinitem"><strong>🕵️ Detective</strong> — Magnifying glass circle, handle, lens glare</div>
+</div></details>
+
+<details><summary>🎮 Gaming (5): Arcade, HP Bar, Leaderboard, Sniper, Slots</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🕹 Arcade</strong> — Cabinet with animated marquee lights, joystick, 3 buttons, coin slot</div>
+  <div class="skinitem"><strong>❤️ HP Bar</strong> — Pixel hearts + red health bar above source</div>
+  <div class="skinitem"><strong>🏆 Leaderboard</strong> — Gold border, corner circles, "#1" rank badge</div>
+  <div class="skinitem"><strong>🎯 Sniper</strong> — Thick scope ring, tube body, mil-dot ticks, red center dot, wind/distance readout</div>
+  <div class="skinitem"><strong>🎰 Slots</strong> — Red cabinet, chrome trim, reel symbols, handle, coin tray</div>
+</div></details>
+
+<details><summary>🚀 Space (4): Astronaut, UFO, Planet, Warp</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🧑‍🚀 Astronaut</strong> — Dome helmet, visor reflection, oxygen hose, "NOOR" badge</div>
+  <div class="skinitem"><strong>🛸 UFO</strong> — Saucer body, dome, tractor beam, running lights</div>
+  <div class="skinitem"><strong>🪐 Planet</strong> — Saturn-like ring wrapping around</div>
+  <div class="skinitem"><strong>💫 Warp</strong> — Streaking star lines converging to center</div>
+</div></details>
+
+<details><summary>🔬 Science (5): Lab, Microscope, DNA, Electric, Neural</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🧪 Lab</strong> — Green border, bubbles, goggles at top</div>
+  <div class="skinitem"><strong>🔬 Microscope</strong> — Circular lens, crosshair, "40x" label</div>
+  <div class="skinitem"><strong>🧬 DNA</strong> — Double helix along edges, animated</div>
+  <div class="skinitem"><strong>⚡ Electric</strong> — Yellow border, lightning bolts at corners</div>
+  <div class="skinitem"><strong>🧠 Neural</strong> — Nodes and connections pulsing</div>
+</div></details>
+
+<details><summary>⚔️ Futurist (6): Mech, HUD, Shield, Hexgrid, Portal, Float</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>⚙️ Mech</strong> — Armored plating, rivets, warning stripes</div>
+  <div class="skinitem"><strong>📊 HUD</strong> — Power/signal bars, targeting reticle</div>
+  <div class="skinitem"><strong>🛡 Force Field</strong> — Pulsing energy ring, hex cells with impact flashes</div>
+  <div class="skinitem"><strong>💠 Hexgrid</strong> — Honeycomb mesh pattern</div>
+  <div class="skinitem"><strong>🔮 Portal</strong> — Swirling vortex arcs</div>
+  <div class="skinitem"><strong>🔲 Float</strong> — Hovering panel above shadow, energy dots</div>
+</div></details>
+
+<details><summary>🎨 Style (5): Diamond, Flame, Neon, Circus, Vortex</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>💎 Diamond</strong> — Faceted frame, sparkle accents</div>
+  <div class="skinitem"><strong>🔥 Flame</strong> — Animated flickering flames on all edges</div>
+  <div class="skinitem"><strong>🌈 Neon</strong> — Animated rainbow border</div>
+  <div class="skinitem"><strong>🎪 Circus</strong> — Red/yellow dashed border, bunting flags</div>
+  <div class="skinitem"><strong>🌀 Vortex</strong> — Spiral tunnel with converging streaks</div>
+</div></details>
+
+<details><summary>📡 Broadcast (3): Clapboard, Livestream, CCTV</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🎬 Clapboard</strong> — Movie clapperboard with stripes, "SCENE 1 TAKE 1"</div>
+  <div class="skinitem"><strong>📺 Livestream</strong> — Red "LIVE" badge + viewer count</div>
+  <div class="skinitem"><strong>📡 CCTV</strong> — "CAM 01", "REC ●", live timestamp</div>
+</div></details>
+
+<details><summary>🕌 Islamic (3): Minaret, Crescent, Andalusia</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🕌 Minaret</strong> — Arch frame with dome, crescent on top</div>
+  <div class="skinitem"><strong>☪️ Crescent</strong> — Border with crescent + star corner ornaments</div>
+  <div class="skinitem"><strong>🏛 Andalusia</strong> — Horseshoe arch (Alhambra style)</div>
+</div></details>
+
+<details><summary>🧊 3D Depth (9): Cube, Gallery, Box, Crystal, Mirror, Book, Museum, Ice, Gift</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🎲 Cube</strong> — Isometric 3D box with top/right faces</div>
+  <div class="skinitem"><strong>🖼 Gallery</strong> — Gold picture frame with bevels, corner ornaments</div>
+  <div class="skinitem"><strong>📦 Box</strong> — Open cardboard box with flaps, corrugated texture</div>
+  <div class="skinitem"><strong>💎 Crystal</strong> — Faceted gem with prismatic rainbow sparkles</div>
+  <div class="skinitem"><strong>🪞 Mirror</strong> — Ornate oval with crown ornament, sparkle particles</div>
+  <div class="skinitem"><strong>📖 Book</strong> — Open book with spine, left page text, page curl</div>
+  <div class="skinitem"><strong>🏛 Museum</strong> — Glass case, marble base, spotlight, "EXHIBIT A"</div>
+  <div class="skinitem"><strong>🧊 Ice</strong> — Translucent blue, cracks, frost, cold glow</div>
+  <div class="skinitem"><strong>🎁 Gift</strong> — Open present with ribbon, bow, wrapping dots</div>
+</div></details>
+
+<details><summary>🎨 Design Apps (5): Canva, Figma, Photoshop, VS Code, Scratch</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🎨 Canva</strong> — White border, purple toolbar</div>
+  <div class="skinitem"><strong>🖌 Figma</strong> — Dark frame, rulers, blue selection border</div>
+  <div class="skinitem"><strong>🖼 Photoshop</strong> — Gray panels, menu bar, checkerboard pattern</div>
+  <div class="skinitem"><strong>💻 VS Code</strong> — Tab bar, line numbers, blue status bar</div>
+  <div class="skinitem"><strong>🐱 Scratch</strong> — Orange header, green flag/stop buttons, cat icon</div>
+</div></details>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch7"><span class="ch-num">7</span> Scenes — Layout Switching</h2>
+
+<h3>7.1 Built-in Presets (7 scenes)</h3>
+<table>
+  <tr><th>#</th><th>Key</th><th>Name</th><th>Icon</th><th>Layout</th></tr>
+  <tr><td>1</td><td><kbd>1</kbd></td><td>&lt;Code/&gt;</td><td>💻</td><td>Screen full + face circle bottom-right</td></tr>
+  <tr><td>2</td><td><kbd>2</kbd></td><td>Mecha</td><td>🤖</td><td>Camera 1 full + face circle bottom-right</td></tr>
+  <tr><td>3</td><td><kbd>3</kbd></td><td>Sensors</td><td>🎛</td><td>Camera 2 full + face circle bottom-right</td></tr>
+  <tr><td>4</td><td><kbd>4</kbd></td><td>Code+Mecha</td><td>💻🤖</td><td>Screen 60% left + camera 40% right + face</td></tr>
+  <tr><td>5</td><td><kbd>5</kbd></td><td>Matrix</td><td>🎬</td><td>2×2 grid + face</td></tr>
+  <tr><td>6</td><td><kbd>6</kbd></td><td>Pilot</td><td>🎮</td><td>Camera full + <a class="xref" href="#ch11">micro:bit overlay</a> + face</td></tr>
+  <tr><td>7</td><td><kbd>7</kbd></td><td>Solo</td><td>👋</td><td>Face camera full screen</td></tr>
+</table>
+
+<h3>7.2 Custom Scenes</h3>
+<p>Arrange sources → click <strong>💾 Save This Layout</strong>. Custom scenes save: position, size, shape, border, shadow, opacity, filter, rotation, corners, badge, <a class="xref" href="#ch6">skin</a>, lock state.</p>
+
+<h3>7.3 Scene Management</h3>
+<ul>
+  <li><strong>Switch</strong>: click card or <kbd>1</kbd>-<kbd>7</kbd>+</li>
+  <li><strong>Reorder</strong>: drag cards. Keyboard mapping follows.</li>
+  <li><strong>Rename</strong>: double-click label</li>
+  <li><strong>Duplicate</strong>: hover → 📋 button</li>
+  <li><strong>Delete</strong>: hover custom scene → ✕ button</li>
+  <li><strong>Random</strong>: <kbd>?</kbd> or 🎲 button</li>
+</ul>
+
+<h3>7.4 Scene Transitions (6 types)</h3>
+<p><a class="xref" href="#ch20">Settings</a> → Scene transition:</p>
+<table>
+  <tr><td>Fade</td><td>Black fade out/in (400ms)</td></tr>
+  <tr><td>Wipe</td><td>Horizontal sweep (300ms)</td></tr>
+  <tr><td>Slide</td><td>Content slides left/right (400ms)</td></tr>
+  <tr><td>Zoom</td><td>Zoom into center (400ms)</td></tr>
+  <tr><td>Flip</td><td>3D horizontal flip (400ms)</td></tr>
+  <tr><td>Glitch</td><td>RGB split + tears + scan line (400ms)</td></tr>
+</table>
+
+<h3>7.5 Scene Themes (8 presets)</h3>
+<p><a class="xref" href="#ch20">Settings</a> → Scene Theme. One click sets <a class="xref" href="#ch18">background</a> + pattern + <a class="xref" href="#ch6">skins</a> + <a class="xref" href="#ch19">flair</a>:</p>
+<table>
+  <tr><td>🎬 Cinema</td><td>Film strip + corners</td></tr>
+  <tr><td>🕹 Retro</td><td>Pixel grid + arcade skin + neon</td></tr>
+  <tr><td>🤖 Sci-fi</td><td>Circuit bg + robot skin + heartbeat</td></tr>
+  <tr><td>🕌 Islamic</td><td>Zellige bg + andalusia skin</td></tr>
+  <tr><td>📺 News</td><td>Livestream skin + corners</td></tr>
+  <tr><td>🚀 Space</td><td>Stars bg + astronaut + neon</td></tr>
+  <tr><td>💻 Hacker</td><td>Matrix bg + terminal + heartbeat</td></tr>
+  <tr><td>✨ Clean</td><td>All effects off</td></tr>
+</table>
+
+<h3>7.6 Scene Bounce & Lesson Guide</h3>
+<p>Scene switch triggers a bounce animation on the active card (300ms spring). When using a <strong>template</strong>, an on-canvas progress bar shows: step number, step name, dot indicators.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch8"><span class="ch-num">8</span> Recording</h2>
+
+<h3>8.1 Starting</h3>
+<ul>
+  <li><strong>Standard</strong>: Click 🔴 REC or <kbd>R</kbd>. 3-2-1 countdown with rising beep tones + "GO!" flash + speed lines.</li>
+  <li><strong>Instant</strong>: Long-press REC (600ms) or <kbd>Shift+R</kbd>. Skips countdown.</li>
+  <li><strong>Countdown duration</strong>: customizable 1-10s in <a class="xref" href="#ch20">Settings</a>.</li>
+</ul>
+
+<h3>8.2 During Recording</h3>
+<table>
+  <tr><td>⏸ Pause</td><td><kbd>P</kbd></td><td>Audio + video stop. Pause overlay shows on canvas.</td></tr>
+  <tr><td>🏷 Marker</td><td><kbd>M</kbd></td><td>Chapter marker at current timestamp. Exported as .vtt.</td></tr>
+  <tr><td>⏹ Stop</td><td><kbd>R</kbd></td><td>Opens <a class="xref" href="#ch9">take panel</a>.</td></tr>
+</table>
+<p>Scene switches auto-create chapter markers. All <a class="xref" href="#ch19">canvas flair</a>, <a class="xref" href="#ch14">pets</a>, <a class="xref" href="#ch15">co-host</a>, and <a class="xref" href="#ch18">backgrounds</a> are baked into the output.</p>
+
+<h3>8.3 Recording Formats</h3>
+<table>
+  <tr><td>.webm VP9+Opus</td><td>Chrome/Edge (default, best quality)</td></tr>
+  <tr><td>.webm VP8+Opus</td><td>Firefox</td></tr>
+  <tr><td>.mp4 H.264+AAC</td><td>Chrome/Edge fallback</td></tr>
+</table>
+<p><strong>Disk streaming</strong>: Chrome/Edge can write directly to a file via File System Access API (avoids memory limits for long recordings).</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch9"><span class="ch-num">9</span> Post-Recording Tools</h2>
+
+<table>
+  <tr><th>Button</th><th>What It Does</th><th>Output</th></tr>
+  <tr><td>💾 Tout télécharger</td><td>Download all files at once</td><td>Multiple files</td></tr>
+  <tr><td>⬇️ Download</td><td>Download video</td><td>.webm/.mp4</td></tr>
+  <tr><td>📤 Share</td><td>Native share dialog</td><td>—</td></tr>
+  <tr><td>📝 Chapters</td><td>Chapter markers</td><td>.vtt file</td></tr>
+  <tr><td>✂️ Trim</td><td>Visual trim editor (scrubber, in/out handles, <kbd>Space</kbd>/<kbd>←</kbd>/<kbd>→</kbd>/<kbd>[</kbd>/<kbd>]</kbd>/<kbd>Enter</kbd>/<kbd>Esc</kbd>)</td><td>.webm</td></tr>
+  <tr><td>🔇 Remove Silences</td><td>Auto-cut sections below -45 dBFS for ≥2s</td><td>.webm</td></tr>
+  <tr><td>⚡ Instant Replay</td><td>Top 7 loudest 4s clips → 28s highlight reel</td><td>.webm</td></tr>
+  <tr><td>📸 Auto Thumbnail</td><td>Best frame (highest contrast) + title + branding</td><td>1280×720 .png</td></tr>
+  <tr><td>📄 Export Flyer</td><td>A4 flyer: canvas screenshot + NoorCast + workshop-diy.org</td><td>794×1123 .png</td></tr>
+  <tr><td>📝 Transcript</td><td>Full text from <a class="xref" href="#ch15">captions</a></td><td>.txt</td></tr>
+  <tr><td>🎯 Quality Score</td><td>Grades: Audio, Pacing, Scenes, Duration, Engagement (A+ to D)</td><td>Modal report</td></tr>
+  <tr><td>🎬 Save as Take</td><td>Store for <a class="xref" href="#ch14">multi-take comparison</a> (up to 5)</td><td>In memory</td></tr>
+  <tr><td>🏆 Badge Card</td><td>Shareable achievement card</td><td>1200×630 .png</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch10"><span class="ch-num">10</span> micro:bit Integration</h2>
+
+<h3>10.1 Connecting</h3>
+<div class="steps">
+  <div class="step">Flash NoorCast firmware via MakeCode (click "Flash Firmware First" in sidebar).</div>
+  <div class="step">Click <strong>📡 Connect</strong> in the micro:bit sidebar tab.</div>
+  <div class="step">Select your micro:bit from the Bluetooth dialog.</div>
+  <div class="step">Status shows "✅ Connected". Sensor data streams.</div>
+</div>
+<div class="warn">Requires Chrome or Edge on desktop. Not Firefox/Safari/mobile.</div>
+
+<h3>10.2 Controls</h3>
+<div class="grid">
+  <div class="card"><h4>D-Pad</h4><p>↑↓←→ = CMD:UP/DOWN/LEFT/RIGHT. ● = CMD:CLEAR. 🔥 = CMD:FIRE. Movement commands (not servo).</p></div>
+  <div class="card"><h4>Servo Sliders</h4><p>Pan (0-180°) + Tilt (0-180°). Synced with <a class="xref" href="#ch11">Pilot overlay</a> + canvas <a class="xref" href="#ch14">gauges</a>.</p></div>
+  <div class="card"><h4>LED 5×5</h4><p>Click cells to toggle. 📡 Send transmits. Mirrors incoming LEDS: data from micro:bit.</p></div>
+  <div class="card"><h4>Sensors</h4><p>Accelerometer X/Y/Z, temp, light, sound, compass. Overlay on canvas (toggle: <a class="xref" href="#ch14">Fun → Sensors</a>).</p></div>
+</div>
+
+<h3>10.3 BLE Logging</h3>
+<p>All UART messages in Activity Log: <span style="color:#4ade80">→ CMD:LEFT</span> (sent, green), <span style="color:#fbbf24">← ACC:1,2,3</span> (received, yellow). Filter with TX/RX buttons.</p>
+
+<h3>10.4 Robot Choreography</h3>
+<p>Fun → 🤖 Choreo: record all UART commands with timestamps. ▶️ Replay plays back in sync. Persisted in localStorage.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch11"><span class="ch-num">11</span> Pilot Scene & Overlay</h2>
+
+<p>Scene <kbd>6</kbd> 🎮 Pilot: camera full + face PIP + draggable micro:bit overlay at bottom-left containing:</p>
+<ul>
+  <li><strong>D-pad</strong> — arrow buttons + center + fire</li>
+  <li><strong>Servo sliders</strong> — Pan + Tilt with value display</li>
+  <li><strong>Joystick</strong> — two modes: CMD (blue, direction commands) / Servo (green, angle control). Toggle via button.</li>
+  <li><strong>LED 5×5 grid</strong> — mirrors micro:bit LEDs. 📡 Send / 🗑 Clear.</li>
+</ul>
+<p>Overlay is draggable (grab "🎮 micro:bit" header). Position persisted. Auto-hides on scene switch. All controls synced with sidebar.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch12"><span class="ch-num">12</span> Overlays</h2>
+
+<table>
+  <tr><th>Overlay</th><th>Key</th><th>In Recording?</th><th>Details</th></tr>
+  <tr><td>🔴 Laser pointer</td><td><kbd>L</kbd></td><td>✅ Yes</td><td>Red dot follows cursor</td></tr>
+  <tr><td>❄️ Screen freeze</td><td><kbd>F</kbd></td><td>✅ Yes</td><td>Freezes screen, audio continues</td></tr>
+  <tr><td>✏️ Whiteboard</td><td><kbd>D</kbd></td><td>✅ Yes</td><td>Draw with mouse. Colors, thickness, eraser.</td></tr>
+  <tr><td>📜 Teleprompter</td><td><kbd>T</kbd></td><td>❌ No</td><td>Floating script. Auto-scroll, font/width controls. Persisted.</td></tr>
+  <tr><td>🗒️ Sticky notes</td><td>—</td><td>❌ No</td><td>Draggable yellow notes. Teacher-only.</td></tr>
+  <tr><td># Grid</td><td><kbd>G</kbd></td><td>❌ No</td><td>Rule-of-thirds</td></tr>
+  <tr><td>💡 Spotlight</td><td>—</td><td>✅ Yes</td><td>Darkens everything except cursor area</td></tr>
+  <tr><td>🎬 Letterbox</td><td>—</td><td>✅ Yes</td><td>Cinematic black bars. Adjustable height.</td></tr>
+  <tr><td>🔍 Zoom</td><td><kbd>Z</kbd></td><td>✅ Yes</td><td>1.8× zoom to cursor position</td></tr>
+  <tr><td>🎯 AutoZoom</td><td>—</td><td>✅ Yes</td><td>Click screen source → 1.5s auto-zoom</td></tr>
+  <tr><td>💧 Ripples</td><td>—</td><td>✅ Yes</td><td>Animated rings on mousedown</td></tr>
+  <tr><td>🎨 Cursor trail</td><td>—</td><td>✅ Yes</td><td>Rainbow particles follow mouse</td></tr>
+  <tr><td>⏳ Timer</td><td>—</td><td>✅ Yes</td><td>Countdown timer on canvas</td></tr>
+  <tr><td>🎹 Piano</td><td>—</td><td>✅ Yes</td><td>2-octave keyboard. Keys A-L (white), W-P (black). See <a class="xref" href="#ch17">Audio</a>.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch13"><span class="ch-num">13</span> Tools & More Tools</h2>
+
+<h3>13.1 The More Tools Popup</h3>
+<p>Click <strong>⋯ More</strong> in the toolbar. Popup is <strong>scrollable</strong> (max-height 70vh) and <strong>draggable</strong> (grab header). Organized in groups: Canvas, Overlays, Tools, Fun.</p>
+<p>For details on each Fun tool, see <a class="xref" href="#ch14">Chapter 14</a>.</p>
+
+<h3 id="s137">13.2 Global Search</h3>
+<p><kbd>Ctrl+K</kbd> or click 🔍 Search. Searches across everything:</p>
+<ul>
+  <li><a class="xref" href="#ch7">Scenes</a> (7+ presets)</li>
+  <li><a class="xref" href="#ch6">Skins</a> (49)</li>
+  <li><a class="xref" href="#ch18">Backgrounds</a> (15)</li>
+  <li><a class="xref" href="#ch7">Scene Themes</a> (8)</li>
+  <li><a class="xref" href="#ch21">Shortcuts</a> (17+)</li>
+  <li>Tools & Features (30+)</li>
+  <li><a class="xref" href="#ch20">Settings</a></li>
+  <li><a class="xref" href="#ch15">Co-host characters</a> (36)</li>
+  <li><a class="xref" href="#ch14">Canvas pets</a> (12)</li>
+</ul>
+<p>Click a result to apply directly. <kbd>Enter</kbd> = first result. <kbd>Escape</kbd> = close.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch14"><span class="ch-num">14</span> Fun Features</h2>
+
+<h3>14.1 AI Co-host</h3>
+<p>Toggle: More → Fun → 😊 Co-host. 36 SVG characters in 6 categories (pick from dropdown). Reacts to voice:</p>
+<ul>
+  <li>👏 Claps on speech→silence</li>
+  <li>💡 "Great point!" on excitement</li>
+  <li>📢 "Keep going!" on long silence</li>
+  <li>🎭 "Scene change?" after 2 min same scene</li>
+  <li>⏱ Time cards at 1/2/5/10 min</li>
+</ul>
+<p>Categories: 🔬 Science, 🚀 Space, 💡 Symbols, 💀 Hacker, ☠️ Pirate, 🎭 Cyber.</p>
+
+<h3>14.2 Canvas Pets (12 types)</h3>
+<p>🐾 Pets dropdown. Select to add, select again to remove. "❌ Clear all" removes all.</p>
+<table>
+  <tr><td>🤖 Robot</td><td>Walks, sparks</td><td>🕷 Spider</td><td>Crawls, drops on silk</td></tr>
+  <tr><td>🎭 Anon</td><td>Glitches, teleports</td><td>👁 Eye</td><td>Floats, tracks, blinks</td></tr>
+  <tr><td>💀 Skull</td><td>Rolls</td><td>🐛 Bug</td><td>Pixel corruption trail</td></tr>
+  <tr><td>🕵️ Agent</td><td>Laser scan</td><td>📝 Pencil</td><td>Draws line behind</td></tr>
+  <tr><td>🛸 UFO</td><td>Floats, tractor beam</td><td>🔧 Wrench</td><td>Rolls, rotates</td></tr>
+  <tr><td>🤖 Drone</td><td>Patrols, scan</td><td>⚡ Arc</td><td>Lightning jumps</td></tr>
+</table>
+<p>All react to audio (freeze when loud). Multiple active. Baked in. Persisted in localStorage.</p>
+
+<h3>14.3 Animated Stickers</h3>
+<p>20 stickers from Ajouter → Stickers. Each gets random animation: bounce, spin, pulse, wiggle, float. Permanent, draggable, baked in.</p>
+
+<h3>14.4 Sound Pad</h3>
+<p>More → Fun → 🎵 Sounds. 8 buttons: Clap (noise burst), Drum (100Hz), Horn (440Hz), Boom (60→20Hz), Magic (800→1600Hz), Bell (600Hz), LOL (300Hz), Launch (150→800Hz). Web Audio oscillators.</p>
+
+<h3>14.5 Background Music</h3>
+<p>More → Fun → 🎵 Music. 5 procedural 8-bit tracks: Chiptune (square), Lo-fi (triangle), Epic (sawtooth), Chill (sine), Retro (square+triangle bass). Baked into recording.</p>
+
+<h3>14.6 Other Fun Tools</h3>
+<table>
+  <tr><td>🗣 Voice FX</td><td>Shout=🔥, clap=confetti, whisper=night vision</td></tr>
+  <tr><td>💨 Speed Lines</td><td>Manga radial burst (800ms)</td></tr>
+  <tr><td>👻 Ghost Replay</td><td>Previous take as 15% opacity ghost behind live sources</td></tr>
+  <tr><td>📱 Share</td><td>Canvas screenshot modal: download + copy to clipboard</td></tr>
+  <tr><td>😀 Reactions</td><td>20-particle emoji explosion + screen shake (300ms)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch15"><span class="ch-num">15</span> AI Features</h2>
+
+<h3>15.1 Voice Commands</h3>
+<p>More → Fun → 🎙 Voice. SpeechRecognition (Chrome/Edge). FR/EN/AR. 1.5s cooldown.</p>
+<table>
+  <tr><td>"record"/"stop"</td><td>Start/stop</td><td>"zoom"</td><td>Toggle zoom</td></tr>
+  <tr><td>"pause"</td><td>Toggle pause</td><td>"laser"</td><td>Toggle laser</td></tr>
+  <tr><td>"screenshot"</td><td>Take snapshot</td><td>"fire"</td><td>CMD:FIRE + 🔥</td></tr>
+  <tr><td>"freeze"</td><td>Freeze screen</td><td>"scene 3"</td><td>Switch scene</td></tr>
+</table>
+
+<h3>15.2 Smart Scene Switcher</h3>
+<p>More → Fun → 🧠 Smart. Auto-switches scenes on keywords: "code"→Code, "robot"→Robot, "camera"→Solo, "pilot"→Pilot. 3s cooldown.</p>
+
+<h3>15.3 Live Captions</h3>
+<p>💬 button in toolbar or <kbd>C</kbd>. Real-time subtitles on canvas:</p>
+<ul>
+  <li>Karaoke-style: last word highlighted green</li>
+  <li>Word-wrap, gradient background, pulsing 🎤 icon</li>
+  <li>Fades 4s after last speech</li>
+  <li>💾 Save .srt button appears when active</li>
+</ul>
+<div class="warn">Chrome SpeechRecognition requires internet (sends audio to Google). Edge may work offline on Windows 10/11. See <a class="xref" href="#ch22">FAQ</a> for troubleshooting.</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch16"><span class="ch-num">16</span> Gamification</h2>
+
+<h3>16.1 XP System</h3>
+<p>More → Fun → ⭐ XP Bar. Progress bar at top-right of canvas. 1 XP/sec recording. Level up every 300 XP (confetti + floating text). Persisted.</p>
+
+<h3>16.2 Daily Challenges</h3>
+<p>New challenge daily (20 pool). Toast on app load. +25 XP + confetti on completion. Checked every 3s. Examples: "Record 2+ min", "Use 3 scenes", "Apply a skin".</p>
+
+<h3>16.3 Combos</h3>
+<p>3+ features active during recording = COMBO (count × 5 XP). 5+ = SUPER. 7+ = ULTRA. Golden floating text + speed lines.</p>
+
+<h3>16.4 Unlock Gallery</h3>
+<p>Skins/backgrounds locked behind XP tiers: 0 (starter pack) → 50 → 100 → 200 → 300 → 500 → 750 → 1000. Auto-unlocks on XP gain.</p>
+
+<h3>16.5 Badges</h3>
+<p>Milestones: First recording, 5+ min, Multi-camera, All scenes, 5+ markers, micro:bit, 10 recordings (Veteran), 30+ min total (Marathon), 5+ scenes (Library). Unlock triggers: confetti + trophy animation + badge card.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch17"><span class="ch-num">17</span> Audio</h2>
+
+<h3>17.1 Audio Pipeline</h3>
+<p>Mic → MicBoost (gain + noise gate) → analyser → recording destination. Screen audio → VolumeDuck → recording. Music → recording + speakers.</p>
+
+<h3>17.2 Mic Boost & Gate</h3>
+<p><a class="xref" href="#ch20">Settings</a>: Gain (0-4×), Noise gate (-60 to -20 dB). Gate mutes below threshold.</p>
+
+<h3>17.3 Volume Ducking</h3>
+<p>When you speak, screen audio reduced by 12 dB. Toggle in <a class="xref" href="#ch20">Settings</a>.</p>
+
+<h3>17.4 LED Audio Meter</h3>
+<p>10-segment meter: <span style="color:#4ade80">green</span> (1-6), <span style="color:#fbbf24">yellow</span> (7-8), <span style="color:#ef4444">red</span> (9-10 = clipping).</p>
+
+<h3>17.5 Mic Check</h3>
+<p>Auto-runs on mic selection. 3s test: "🎤 Speak..." → "✅ OK!" or "⚠️ Nothing detected". Resumes AudioContext (Chrome autoplay policy).</p>
+
+<h3>17.6 Piano</h3>
+<p>More → Overlays → 🎹 Piano. White keys: <kbd>A</kbd>-<kbd>L</kbd>. Black keys: <kbd>W</kbd>-<kbd>P</kbd>. Sine oscillators, baked into recording. AudioContext auto-resumes.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch18"><span class="ch-num">18</span> Animated Backgrounds (15)</h2>
+
+<p><a class="xref" href="#ch20">Settings</a> → Background pattern. Opacity slider (5-100%). All procedural canvas drawing.</p>
+
+<details><summary>🎮 Geeky (6)</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🌌 Space</strong> — 120 twinkling stars, varying size/brightness</div>
+  <div class="skinitem"><strong>🧱 Pixel Grid</strong> — 24px grid, highlighted every 4th cell</div>
+  <div class="skinitem"><strong>💻 Matrix</strong> — Falling green Arabic+Latin chars, varying speed</div>
+  <div class="skinitem"><strong>🎮 Arcade</strong> — Neon blue grid (Tron), brighter every 4th line</div>
+  <div class="skinitem"><strong>🤖 Circuit</strong> — Green PCB traces, solder pads, IC chips</div>
+  <div class="skinitem"><strong>🏫 Chalkboard</strong> — Dark green, chalk dust, ruled lines</div>
+</div></details>
+<details><summary>🕌 Islamic (4)</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🕌 Zellige</strong> — 8-point star tiles, blue/gold</div>
+  <div class="skinitem"><strong>✨ Arabesque</strong> — Interlocking gold curves</div>
+  <div class="skinitem"><strong>🌙 Riad</strong> — Pointed arches, terracotta, lantern glow</div>
+  <div class="skinitem"><strong>⭐ Muqarnas</strong> — Octagonal tessellation, teal</div>
+</div></details>
+<details><summary>🔬 Islamic Science (2)</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>🔭 Astrolabe</strong> — Concentric rings, degree ticks, star pointers, brass hub</div>
+  <div class="skinitem"><strong>📐 Al-Khwarizmi</strong> — 11 floating equations, triangle proof</div>
+</div></details>
+<details><summary>📡 Radar (3)</summary>
+<div class="skinlist">
+  <div class="skinitem"><strong>📡 Radar</strong> — Rotating sweep, 4 rings, 5 blips</div>
+  <div class="skinitem"><strong>🎯 Sonar</strong> — 4 pulsing rings expanding from center</div>
+  <div class="skinitem"><strong>📊 Oscilloscope</strong> — Green waveform on grid, glow effect</div>
+</div></details>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch19"><span class="ch-num">19</span> Canvas Flair (Recording Effects)</h2>
+
+<p>Visual effects during recording, baked into output. Persisted in localStorage.</p>
+<table>
+  <tr><th>Effect</th><th>Description</th><th>Default</th></tr>
+  <tr><td>Neon Border</td><td>Rainbow cycling glow (hue 60°/sec, 4px + 12px shadow)</td><td>ON</td></tr>
+  <tr><td>Heartbeat Border</td><td>Red border pulses with voice (2px quiet → 10px loud)</td><td>ON</td></tr>
+  <tr><td>Film Strip</td><td>20px black strips + sprocket holes on sides</td><td>OFF</td></tr>
+  <tr><td>Corner Brackets</td><td>White viewfinder brackets + pulsing "● ON AIR" badge</td><td>ON</td></tr>
+  <tr><td>Camera Flash</td><td>White burst (300ms) on <a class="xref" href="#ch12">snapshot</a></td><td>Always</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch20"><span class="ch-num">20</span> Settings</h2>
+
+<p>⚙️ gear icon, top-right. Sections:</p>
+
+<h3>20.1 General</h3>
+<table>
+  <tr><td>Language</td><td>French, English, Arabic (RTL)</td></tr>
+  <tr><td>Theme</td><td>8 themes: Jungle (default), Mosque Gold, Zellige, Andalus, Space, Robot Lab, Riad (light), Medina (light)</td></tr>
+  <tr><td>Aspect ratio</td><td>16:9, 4:3, 1:1, 9:16</td></tr>
+  <tr><td>Scene Theme</td><td>8 presets. See <a class="xref" href="#ch7">Section 7.5</a>.</td></tr>
+  <tr><td>Canvas bg color</td><td>Color picker</td></tr>
+  <tr><td>Background pattern</td><td>15 patterns + opacity. See <a class="xref" href="#ch18">Ch.18</a>.</td></tr>
+</table>
+
+<h3>20.2 Recording</h3>
+<table>
+  <tr><td>Countdown</td><td>Toggle + duration (1-10s)</td></tr>
+  <tr><td>Scene transition</td><td>6 types. See <a class="xref" href="#ch7">Section 7.4</a>.</td></tr>
+  <tr><td>Auto-pause</td><td>Pause when switching tabs</td></tr>
+  <tr><td>Format</td><td>WebM VP9, VP8, MP4</td></tr>
+  <tr><td>Mic boost/gate</td><td>See <a class="xref" href="#ch17">Section 17.2</a>.</td></tr>
+  <tr><td>Volume ducking</td><td>See <a class="xref" href="#ch17">Section 17.3</a>.</td></tr>
+</table>
+
+<h3>20.3 Other Sections</h3>
+<ul>
+  <li><strong>Ticker</strong> — custom scrolling messages (one per line)</li>
+  <li><strong>🏆 Badges</strong> — earned achievement badges. See <a class="xref" href="#ch16">Section 16.5</a>.</li>
+  <li><strong>📊 Tutorials</strong> — last 10 recordings (search + star filter)</li>
+  <li><strong>📈 Stats</strong> — total recordings, total time, aggregates</li>
+  <li><strong>Maintenance</strong> — reset badges, clear cache, <a class="xref" href="#ch21">keyboard shortcuts</a>, export/import settings</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch21"><span class="ch-num">21</span> Keyboard Shortcuts</h2>
+
+<p>Press <kbd>?</kbd> for the in-app cheat sheet. All rebindable in <a class="xref" href="#ch20">Settings</a> → Maintenance → ⌨.</p>
+
+<table>
+  <tr><th>Key</th><th>Action</th><th>Key</th><th>Action</th></tr>
+  <tr><td><kbd>R</kbd></td><td>Record/Stop</td><td><kbd>L</kbd></td><td><a class="xref" href="#ch12">Laser</a></td></tr>
+  <tr><td><kbd>Shift+R</kbd></td><td>Instant record</td><td><kbd>F</kbd></td><td><a class="xref" href="#ch12">Freeze</a></td></tr>
+  <tr><td><kbd>P</kbd></td><td>Pause</td><td><kbd>D</kbd></td><td><a class="xref" href="#ch12">Draw</a></td></tr>
+  <tr><td><kbd>M</kbd></td><td>Marker</td><td><kbd>T</kbd></td><td><a class="xref" href="#ch12">Teleprompter</a></td></tr>
+  <tr><td><kbd>S</kbd></td><td>Snapshot</td><td><kbd>Z</kbd></td><td><a class="xref" href="#ch12">Zoom</a></td></tr>
+  <tr><td><kbd>G</kbd></td><td><a class="xref" href="#ch12">Grid</a></td><td><kbd>C</kbd></td><td><a class="xref" href="#ch15">Captions</a></td></tr>
+  <tr><td><kbd>1-7</kbd></td><td><a class="xref" href="#ch7">Scenes</a></td><td><kbd>?</kbd></td><td>Cheat sheet</td></tr>
+  <tr><td><kbd>Shift+F</kbd></td><td>Focus mode</td><td><kbd>Esc</kbd></td><td>Exit/deselect</td></tr>
+  <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td><td><kbd>Ctrl+Y</kbd></td><td>Redo</td></tr>
+  <tr><td><kbd>Ctrl+K</kbd></td><td><a class="xref" href="#s137">Search</a></td><td><kbd>Ctrl+S</kbd></td><td>Download all</td></tr>
+  <tr><td><kbd>Ctrl+V</kbd></td><td>Paste image</td><td><kbd>Del</kbd></td><td>Remove selected</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch22"><span class="ch-num">22</span> FAQ & Troubleshooting</h2>
+
+<h3>Recording</h3>
+<table>
+  <tr><td>0-byte recording</td><td>If using disk streaming, this is normal — file is saved to disk. The take panel works correctly since v0.7.193.</td></tr>
+  <tr><td>No audio</td><td>Select a mic from dropdown. Check LED meter responds. Click page to resume AudioContext.</td></tr>
+  <tr><td>Stuttering</td><td>Reduce active effects (<a class="xref" href="#ch14">pets</a>, <a class="xref" href="#ch18">backgrounds</a>). Close other tabs.</td></tr>
+</table>
+
+<h3>Captions</h3>
+<table>
+  <tr><td>No text showing</td><td>Chrome/Edge only. Mic must be active. <strong>Internet required</strong> (Chrome sends to Google). Check Activity Log for errors. See <a class="xref" href="#ch15">Section 15.3</a>.</td></tr>
+  <tr><td>Wrong language</td><td>Follows app language setting (<a class="xref" href="#ch20">Settings</a> → Language).</td></tr>
+</table>
+
+<h3>micro:bit</h3>
+<table>
+  <tr><td>Not found in pairing</td><td>Flash firmware first. Power cycle micro:bit. Chrome/Edge only. No other app using BLE.</td></tr>
+  <tr><td>Disconnects often</td><td>Auto-reconnect (3 attempts). Stay within 10m. Check battery.</td></tr>
+</table>
+
+<h3>Camera</h3>
+<table>
+  <tr><td>Not in dropdown</td><td>Check USB. Different port. Refresh page. Close other apps using it. See <a class="xref" href="#ch3">Chapter 3</a>.</td></tr>
+  <tr><td>Black screen</td><td>Another app has the camera. Close Zoom/Teams. Refresh.</td></tr>
+  <tr><td>Phone disconnects</td><td>Keep screen on. Same Wi-Fi. App in foreground. See <a class="xref" href="#ch3">Section 3.3</a>.</td></tr>
+</table>
+
+<h3>General</h3>
+<table>
+  <tr><td>Won't load</td><td>Clear browser cache. Clear service worker.</td></tr>
+  <tr><td>Lost settings</td><td>Cleared browser data = localStorage wiped. Use Export Session to backup.</td></tr>
+  <tr><td>Focus mode stuck</td><td><kbd>Escape</kbd> or click "✕ Exit Focus" button (top-right).</td></tr>
+  <tr><td>Piano no sound</td><td>Fixed in v0.7.201. AudioContext now auto-resumes. Refresh the app.</td></tr>
+  <tr><td>Can't find Fun tools</td><td>⋯ More → scroll down to "Fun" group. Popup is scrollable.</td></tr>
+</table>
+
+<h3>Privacy</h3>
+<div class="card">
+  <p><strong>100% local.</strong> Nothing uploaded. No accounts. No analytics. No cookies. Zero network calls from JS (fonts self-hosted). Only exception: <a class="xref" href="#ch15">Live Captions</a> use browser's built-in speech service (may send audio to Google/Microsoft). All data in localStorage — clearable anytime via <a class="xref" href="#ch20">Settings</a> → Clear Cache.</p>
+</div>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
