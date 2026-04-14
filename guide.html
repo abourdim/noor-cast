@@ -236,7 +236,7 @@
 <aside class="sidebar">
   <div class="logo">
     <span>NoorCast Guide</span>
-    <small>v0.7.201 &bull; 22 Chapters</small>
+    <small>v0.7.202 &bull; 24 Chapters</small>
   </div>
 
   <div class="nav-group">
@@ -284,6 +284,8 @@
     <a class="nav-link" href="#ch20"><span class="icon">⚙️</span> Settings</a>
     <a class="nav-link" href="#ch21"><span class="icon">⌨️</span> Shortcuts</a>
     <a class="nav-link" href="#ch22"><span class="icon">❓</span> FAQ</a>
+    <a class="nav-link" href="#ch23"><span class="icon">📄</span> Flyers & Brand</a>
+    <a class="nav-link" href="#ch24"><span class="icon">🔧</span> Advanced Ref</a>
   </div>
 </aside>
 
@@ -1230,6 +1232,176 @@
 <div class="card">
   <p><strong>100% local.</strong> Nothing uploaded. No accounts. No analytics. No cookies. Zero network calls from JS (fonts self-hosted). Only exception: <a class="xref" href="#ch15">Live Captions</a> use browser's built-in speech service (may send audio to Google/Microsoft). All data in localStorage — clearable anytime via <a class="xref" href="#ch20">Settings</a> → Clear Cache.</p>
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch23"><span class="ch-num">23</span> Flyers, Branding & Sharing</h2>
+
+<h3>23.1 Export Flyer</h3>
+<p>After recording, click <strong>📄 Export Flyer</strong> in the take panel. Prompts for a custom title, then generates an <strong>A4 PNG</strong> (794×1123) with:</p>
+<ul>
+  <li>NoorCast logo + Arabic name (نُورْكَاسْت) + slogan header</li>
+  <li>Your custom title in large Righteous font</li>
+  <li>Canvas screenshot with decorative corner brackets</li>
+  <li>Date, duration, source count metadata badges</li>
+  <li>CTA: "100% FREE · Zero Install · Chrome / Edge"</li>
+  <li>URL: abourdim.github.io/noor-cast</li>
+  <li>workshop-diy.org logo (inverted for dark background)</li>
+  <li>Privacy badges footer</li>
+</ul>
+<p>Print-ready — stick on classroom walls, share in newsletters.</p>
+
+<h3>23.2 Badge Card</h3>
+<p>After recording, click <strong>🏆 Badge Card</strong>. Generates a <strong>1200×630 PNG</strong> (social-share-ready dimensions) with:</p>
+<ul>
+  <li>NoorCast branding</li>
+  <li>Recording duration, camera count, chapter count</li>
+  <li>micro:bit status, template used</li>
+  <li>Earned badges for this session</li>
+  <li>Custom badge URL (set in <a class="xref" href="#ch20">Settings</a> → Brand URL)</li>
+</ul>
+
+<h3>23.3 Brand Logo & Slogan</h3>
+<p>In <a class="xref" href="#ch20">Settings</a> → Brand section:</p>
+<ul>
+  <li><strong>Logo</strong> — upload an image (PNG/SVG) that appears on the canvas. Draggable, resizable. Supports effects: silhouette, outline. Adjustable opacity and filter.</li>
+  <li><strong>Slogan</strong> — text that appears below the logo. Custom font, color, size, rotation, opacity.</li>
+  <li><strong>3 Brand Presets</strong> — save and restore complete brand setups (logo + slogan positions)</li>
+  <li><strong>Logo Gallery</strong> — store multiple logos, click to switch quickly</li>
+  <li><strong>Brand URL</strong> — URL displayed on badge cards (e.g., your school website)</li>
+  <li><strong>Background removal</strong> — toggle to remove logo background</li>
+  <li><strong>Tint</strong> — apply a color tint to the logo</li>
+</ul>
+<p>All brand settings are draggable on canvas and baked into the recording.</p>
+
+<h3>23.4 Watermark</h3>
+<p>In <a class="xref" href="#ch20">Settings</a> → watermark controls:</p>
+<ul>
+  <li><strong>Text</strong> — up to 80 characters, displayed in a corner of the canvas</li>
+  <li><strong>Corner</strong> — top-left, top-right, bottom-left, bottom-right</li>
+  <li><strong>Opacity</strong> — adjustable transparency</li>
+  <li><strong>Custom position</strong> — drag the watermark to any position on canvas</li>
+</ul>
+<p>Watermark is baked into the recording. Persisted in localStorage.</p>
+
+<h3>23.5 Screenshot Share</h3>
+<p>More → Fun → 📱 Share. Captures a 640×360 snapshot of the canvas. Shows a modal with:</p>
+<ul>
+  <li><strong>⬇️ Download</strong> — saves as JPEG</li>
+  <li><strong>📋 Copy</strong> — copies to clipboard (for pasting into chat, email, etc.)</li>
+</ul>
+
+<h3>23.6 Bulk Download</h3>
+<p>Click <strong>💾 Tout télécharger</strong> (or <kbd>Ctrl+S</kbd>) to download all files from the current take at once: video + chapters (.vtt) + captions (.srt) + thumbnail (.png) + sensor data (.csv).</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch24"><span class="ch-num">24</span> Advanced Features Reference</h2>
+
+<h3>24.1 Timelapse Recording</h3>
+<p>In <a class="xref" href="#ch20">Settings</a> → Recording: enable Timelapse and set multiplier (2×, 4×, 6×, 8×, 10×). The recording runs at reduced frame rate (30fps ÷ multiplier), resulting in a sped-up video. Perfect for long build sessions or soldering timelapses.</p>
+
+<h3>24.2 Time Goal & Auto-Stop</h3>
+<p>In <a class="xref" href="#ch20">Settings</a> → Recording: set a target duration (minutes). A countdown chip appears on canvas. Optionally enable <strong>auto-stop</strong> — recording stops automatically when the goal is reached.</p>
+
+<h3>24.3 Screensaver</h3>
+<p>After 90 seconds of no user input (and not recording), an idle screensaver activates: a drifting emoji with a "press any key to wake up" hint. Any mouse/key/touch event dismisses it. Toggle in <a class="xref" href="#ch20">Settings</a>.</p>
+
+<h3>24.4 Intro/Outro Cards</h3>
+<p>In <a class="xref" href="#ch20">Settings</a> → Recording: enable cinematic cards. A <strong>2.5s intro card</strong> (brand title + scene name + "Action!") plays at the start, and a <strong>2s outro card</strong> (Merci! + badge summary) at the end. Both baked into the recording.</p>
+
+<h3>24.5 Onboarding Tour</h3>
+<p>On first launch, a <strong>5-step guided tour</strong> highlights key areas: Sources, Canvas, Scenes, Recording, Settings. Runs once (gated by <code>tc-tour-done</code> in localStorage). Can be re-triggered from Help panel.</p>
+
+<h3>24.6 Session Export & Import</h3>
+<ul>
+  <li><strong>📦 Export Session</strong> — <a class="xref" href="#ch20">Settings</a> → Maintenance. Downloads a JSON file with all <code>tc-*</code> localStorage keys.</li>
+  <li><strong>📥 Import Settings</strong> — upload a previously exported JSON. Replaces all settings. Page reloads.</li>
+</ul>
+<p>Use this to back up your setup, transfer settings to another computer, or share your configuration with colleagues.</p>
+
+<h3>24.7 Multi-Select Sources</h3>
+<p><kbd>Shift+click</kbd> to add/remove sources from the selection. Multi-selected sources show a sky-blue dashed outline. Move all selected sources together by dragging one. <kbd>Ctrl+A</kbd> or "Select All" button to select all visible sources.</p>
+
+<h3>24.8 Snapshot Features</h3>
+<ul>
+  <li><strong>Snapshot Gallery Strip</strong> — pressing <kbd>S</kbd> downloads a PNG AND adds an 88×50 thumbnail to a scrollable strip below the stage. Click to re-download, hover for delete ✕.</li>
+  <li><strong>Multiplier</strong> — in <a class="xref" href="#ch20">Settings</a>: capture at 1×, 2×, or 4× canvas resolution (up to 7680×4320).</li>
+  <li><strong>Annotation Mode</strong> — in <a class="xref" href="#ch20">Settings</a>: when enabled, snapshots open in an annotation modal where you can draw/add text before saving.</li>
+</ul>
+
+<h3>24.9 Scene Auto-Save</h3>
+<p>When you drag/resize a source or change its properties (skin, border, etc.), the active custom scene is automatically re-saved. Toggle in <a class="xref" href="#ch20">Settings</a>. No need to manually click "Save Layout" after every change.</p>
+
+<h3>24.10 Scene Auto-Advance</h3>
+<p>In <a class="xref" href="#ch20">Settings</a>: automatically advance to the next scene after N seconds. A countdown pill appears at top-right of the canvas. Useful for timed presentations.</p>
+
+<h3>24.11 Layout Undo/Redo History</h3>
+<p><kbd>Ctrl+Z</kbd> undoes the last layout change (source position/size/visibility). <kbd>Ctrl+Y</kbd> redoes. 10-step history. Each drag/resize end, scene switch, and source add/remove creates a history entry.</p>
+
+<h3>24.12 Retry 30s (Soft Rewind)</h3>
+<p><kbd>Ctrl+Z</kbd> <strong>during recording</strong> flags the last 30 seconds as a retry region. A chapter marker is added with an orange tint. The trim editor can later auto-cut these retry regions.</p>
+
+<h3>24.13 Source Details</h3>
+<table>
+  <tr><th>Feature</th><th>Where</th><th>Details</th></tr>
+  <tr><td>Source title edit</td><td>Sidebar source list</td><td>Click the title text to edit. Custom name appears in scene snapshots.</td></tr>
+  <tr><td>Layer badge on hover</td><td>Canvas</td><td>Hover any source → shows "#N/total" layer position badge.</td></tr>
+  <tr><td>Source info HUD</td><td>Canvas</td><td>Hover → shows source type, resolution, shape in a mini tooltip.</td></tr>
+  <tr><td>Source pulse highlight</td><td>Canvas</td><td>Click a source name in the sidebar → it flashes with a yellow glow on canvas for 1s.</td></tr>
+  <tr><td>Mirror webcam</td><td>Right-click → Mirror</td><td>Horizontally flip the video feed. Also in <a class="xref" href="#ch5">Style popup</a> → Flip H.</td></tr>
+  <tr><td>Aspect lock</td><td>Style popup → 🔗</td><td>Per-source override. When locked, Shift doesn't unlock aspect ratio.</td></tr>
+  <tr><td>Per-source opacity</td><td>Style popup → Opacity</td><td>0-100% transparency slider per source.</td></tr>
+  <tr><td>Per-source filter</td><td>Style popup → Filter</td><td>B&W, Sepia, Invert, Bright, Contrast, Vintage, Cool, Warm.</td></tr>
+  <tr><td>Per-source shadow</td><td>Style popup → Shadow</td><td>Color + blur + X/Y offset. Drop shadow behind the source.</td></tr>
+  <tr><td>Per-source rotation</td><td>Style popup → Rotation</td><td>-180° to 180° with live degree readout.</td></tr>
+  <tr><td>Corner radius</td><td>Style popup → Corners</td><td>0-50px for soft rounded corners (independent of shape).</td></tr>
+  <tr><td>Source badge</td><td>Style popup → Badge</td><td>Up to 12 chars (e.g., "LIVE", "CAM 1") with color picker. Pill at top-right.</td></tr>
+</table>
+
+<h3>24.14 Text Overlay Details</h3>
+<table>
+  <tr><td>6 fonts</td><td>Bangers, Righteous, Orbitron, Amiri, Tajawal, Arial. Picker in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>Stroke outline</td><td>0-14px outline thickness. Configurable in <a class="xref" href="#ch20">Settings</a>. Ensures text readable on any background.</td></tr>
+  <tr><td>4 transparency modes</td><td>Solid bg, semi-transparent bg, outlined (no bg), fully transparent.</td></tr>
+  <tr><td>Emoji palette</td><td>32 emoji in 4 rows. Auto-fade after 4s. See <a class="xref" href="#ch5">Section 5.5</a>.</td></tr>
+  <tr><td>Duplicate</td><td><kbd>Ctrl+D</kbd> duplicates selected text overlay.</td></tr>
+</table>
+
+<h3>24.15 Recording Overlays Detail</h3>
+<table>
+  <tr><td>🔴 REC Indicator</td><td>Pulsing red dot at top-left during recording. Toggle in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>📊 Audio Visualizer</td><td>Frequency bars at bottom edge during recording. Toggle in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>⏱ Elapsed Timer</td><td>Large recording time pill at bottom-center. Toggle in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>🕐 Clock</td><td>Real-time clock on canvas (with optional date). Toggle in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>⏸ Pause Overlay</td><td>"⏸ PAUSED" overlay during pause. Auto-shown.</td></tr>
+  <tr><td>⏱ Scene Timer</td><td>Per-scene elapsed time badge. Shows how long you've been on each scene.</td></tr>
+  <tr><td>Silence Warning</td><td>Flashing chip when mic silent > 1.8s. Teacher-only (not in recording).</td></tr>
+</table>
+
+<h3>24.16 micro:bit Advanced</h3>
+<table>
+  <tr><td>Firmware Flash Modal</td><td>Click "Flash Firmware First" → shows the MakeCode code to flash onto your micro:bit.</td></tr>
+  <tr><td>Camera Wizard</td><td>Interactive guide for setting up phone-as-webcam (DroidCam/EpocCam setup steps).</td></tr>
+  <tr><td>Sensor Graph</td><td>Mini chart of accelerometer X/Y/Z in the sidebar micro:bit panel.</td></tr>
+  <tr><td>Sensor Timeline CSV</td><td>After recording with micro:bit, a .csv file is available with timestamped sensor data: t_seconds, accel_x, accel_y, accel_z, button_a, button_b.</td></tr>
+  <tr><td>Servo Gauge overlay</td><td>Semicircular pan/tilt gauges on canvas. Shows even without connection (when sliders moved). Draggable, resizable. See <a class="xref" href="#ch14">Fun → Gauges</a>.</td></tr>
+</table>
+
+<h3>24.17 Miscellaneous Features</h3>
+<table>
+  <tr><td>Custom accent color</td><td><a class="xref" href="#ch20">Settings</a> → custom accent hex. Overrides the theme's default accent color.</td></tr>
+  <tr><td>Snap Grid</td><td><a class="xref" href="#ch20">Settings</a> → enable + size (10-100px). Sources snap to grid when dragging.</td></tr>
+  <tr><td>News Ticker customization</td><td><a class="xref" href="#ch20">Settings</a> → Ticker. One message per line. Empty = default 10 tips.</td></tr>
+  <tr><td>Minimap preview</td><td>Top of left sidebar. 192×108 live preview of canvas composition. Updates ~6 FPS.</td></tr>
+  <tr><td>Debug HUD</td><td><kbd>Ctrl+Shift+D</kbd>. Shows FPS + JS heap memory usage.</td></tr>
+  <tr><td>Confetti</td><td>Bursts on: recording finish, badge unlock, level up, daily challenge complete, quality score ≥80.</td></tr>
+  <tr><td>Jingle</td><td>Optional sound effect on recording start/stop. Toggle in <a class="xref" href="#ch20">Settings</a>.</td></tr>
+  <tr><td>PiP Popout</td><td>Right-click a source → PiP. Pops the source into a floating Picture-in-Picture window.</td></tr>
+  <tr><td>Color Picker</td><td>More → Tools → 🎨 Pick. Sample any pixel color from the canvas.</td></tr>
+  <tr><td>Chroma Key</td><td>Basic green screen keying helper. Removes a specific color from a source.</td></tr>
+  <tr><td>Auto-Pause on tab switch</td><td><a class="xref" href="#ch20">Settings</a> → Recording. Pauses when you leave the NoorCast tab.</td></tr>
+  <tr><td>Diagnostics</td><td><a class="xref" href="#ch20">Settings</a> → Maintenance. Shows browser capabilities: MediaRecorder, MP4/WebM encoding, Web Bluetooth, SpeechRecognition.</td></tr>
+</table>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
