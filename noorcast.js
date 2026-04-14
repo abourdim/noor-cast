@@ -17097,6 +17097,25 @@ function wireEvents() {
   $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());
   $('tcTeleBtn').addEventListener('click', () => Teleprompter.toggle());
   $('tcStickyNoteBtn')?.addEventListener('click', () => StickyNotes.add());
+  // v0.7.182: fun effects toggle buttons
+  $('tcVoiceFxBtn')?.addEventListener('click', (e) => {
+    VoiceFx.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceFx.enabled);
+    showToast(VoiceFx.enabled ? '🗣 Voice FX ON' : '🗣 Voice FX OFF', 1200);
+  });
+  $('tcXpBarBtn')?.addEventListener('click', (e) => {
+    XpBar.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', XpBar.visible);
+    showToast(XpBar.visible ? '⭐ XP Bar ON' : '⭐ XP Bar OFF', 1200);
+  });
+  $('tcSoundPadBtn')?.addEventListener('click', (e) => {
+    SoundPad.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', SoundPad.visible);
+    showToast(SoundPad.visible ? '🎵 Sound Pad ON' : '🎵 Sound Pad OFF', 1200);
+  });
+  $('tcSpeedLinesBtn')?.addEventListener('click', () => {
+    SpeedLines.fire(800);
+  });
   $('tcSnapBtn').addEventListener('click', () => snapshot());
 
   // Rec bar
