@@ -29,7 +29,7 @@ const LANG = {
     selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
     micCheckListening: '🎤 Parle pour tester…', micCheckOk: '✅ Micro OK !', micCheckFail: '⚠️ Rien détecté',
     activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
-    scenes: 'Scènes', texts: 'Textes', addText: 'Texte libre', emojiBtn: 'Emoji',
+    scenes: 'Scènes', texts: 'Textes', addItems: 'Ajouter', addItemsBtn: 'Texte · Forme · Sticker', addText: 'Texte libre', emojiBtn: 'Emoji',
     tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Capture photo',
     recStart: 'ENREGISTRER', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
@@ -749,7 +749,7 @@ const LANG = {
     selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
     micCheckListening: '🎤 Speak to test…', micCheckOk: '✅ Mic OK!', micCheckFail: '⚠️ Nothing detected',
     activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
-    scenes: 'Scenes', texts: 'Texts', addText: 'Free text', emojiBtn: 'Emoji',
+    scenes: 'Scenes', texts: 'Texts', addItems: 'Add', addItemsBtn: 'Text · Shape · Sticker', addText: 'Free text', emojiBtn: 'Emoji',
     tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw', ripples: 'Ripples',
     teleprompter: 'Teleprompter', snapshot: 'Photo snapshot',
     recStart: 'REC', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
@@ -1466,7 +1466,7 @@ const LANG = {
     selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
     micCheckListening: '🎤 تحدث للاختبار…', micCheckOk: '✅ الميكروفون يعمل!', micCheckFail: '⚠️ لم يُكتشف شيء',
     activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
-    scenes: 'المشاهد', texts: 'النصوص', addText: 'نص حر', emojiBtn: 'إيموجي',
+    scenes: 'المشاهد', texts: 'النصوص', addItems: 'إضافة', addItemsBtn: 'نص · شكل · ملصق', addText: 'نص حر', emojiBtn: 'إيموجي',
     tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم', ripples: 'موجات',
     teleprompter: 'تيليبرومبتر', snapshot: 'لقطة',
     recStart: 'تسجيل', recStop: 'إيقاف', pause: 'إيقاف مؤقت', mark: 'علامة', stop: 'إيقاف',
@@ -18348,6 +18348,23 @@ function wireEvents() {
     if (e.target.closest('#tcEmojiBtn') || e.target.closest('#tcEmojiPalette')) return;
     palette.style.display = 'none';
   });
+  // v0.7.182: sticker stamps — permanent large emoji overlays on canvas
+  $('tcStickerGrid')?.querySelectorAll('.tc-sticker-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sticker = btn.dataset.sticker;
+      if (!sticker) return;
+      TextOverlays.add(sticker, {
+        ttl: 0,  // permanent
+        size: 120,
+        color: '#ffffff',
+        transparency: 2,  // no bg box
+        x: Engine.width / 2 + (Math.random() - 0.5) * 200,
+        y: Engine.height / 2 + (Math.random() - 0.5) * 200,
+      });
+      showToast(`🏷 ${sticker}`, 800);
+    });
+  });
+
   // v0.7.14: text default font picker — applies to subsequent text overlays.
   // Existing overlays can still cycle their font via the floating Aa button.
   const tfs = $('tcTextFontSelect');
