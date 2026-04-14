@@ -6124,8 +6124,32 @@ function sceneThumbSvg(preview) {
    canvas. Pure canvas drawing (no images). Each skin function receives
    (ctx, x, y, w, h) where x/y/w/h are the source bounds. */
 const SourceSkins = {
-  list: ['none', 'tv', 'polaroid', 'comic', 'robot'],
-  labels: { none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot' },
+  list: [
+    'none', 'tv', 'polaroid', 'comic', 'robot',
+    'laptop', 'phone', 'monitor', 'robothead', 'alien', 'anonymous',
+    'diamond', 'flame', 'neon',
+    'astronaut', 'ufo', 'planet', 'arcade', 'healthbar', 'leaderboard',
+    'detective', 'surveillance', 'ninja', 'lab', 'microscope', 'electric',
+    'clapboard', 'livestream', 'circus', 'minaret', 'crescent', 'andalusia',
+    'hologram', 'hexgrid', 'portal', 'mech', 'hud', 'dna', 'warp',
+    'android', 'forcefield', 'terminal', 'sniper', 'neural',
+  ],
+  labels: {
+    none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot',
+    laptop: '💻 Laptop', phone: '📱 Phone', monitor: '🖥 Monitor',
+    robothead: '🤖 Robot Head', alien: '👾 Alien', anonymous: '🎭 Anon',
+    diamond: '💎 Diamond', flame: '🔥 Flame', neon: '🌈 Neon',
+    astronaut: '🧑‍🚀 Astronaut', ufo: '🛸 UFO', planet: '🪐 Planet',
+    arcade: '🕹 Arcade', healthbar: '❤️ HP Bar', leaderboard: '🏆 Rank',
+    detective: '🕵️ Detective', surveillance: '📡 CCTV', ninja: '🥷 Ninja',
+    lab: '🧪 Lab', microscope: '🔬 Microscope', electric: '⚡ Electric',
+    clapboard: '🎬 Clap', livestream: '📺 Live', circus: '🎪 Circus',
+    minaret: '🕌 Minaret', crescent: '☪️ Crescent', andalusia: '🏛 Andalusia',
+    hologram: '🌐 Hologram', hexgrid: '💠 Hexgrid', portal: '🔮 Portal',
+    mech: '⚙️ Mech', hud: '📊 HUD', dna: '🧬 DNA', warp: '💫 Warp',
+    android: '🤖 Android', forcefield: '🛡 Shield', terminal: '📟 Terminal',
+    sniper: '🎯 Scope', neural: '🧠 Neural',
+  },
 
   draw(ctx, skin, x, y, w, h) {
     if (!this['_draw_' + skin]) return;
@@ -6306,6 +6330,673 @@ const SourceSkins = {
     ctx.font = '10px ui-monospace, monospace';
     ctx.textAlign = 'right';
     ctx.fillText('REC●', x + w - 6, y + 14);
+  },
+
+  // ═══ TECH ═══
+
+  _draw_laptop(ctx, x, y, w, h) {
+    const bez = 8, base = 20;
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x - bez, y - bez, w + bez * 2, h + bez * 2, 6); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.fillRect(x - bez - 20, y + h + bez, w + bez * 2 + 40, base);
+    ctx.beginPath(); ctx.roundRect(x - bez - 20, y + h + bez, w + bez * 2 + 40, base, [0,0,4,4]); ctx.fill();
+    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(x + w / 2, y - bez + 4, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+  },
+
+  _draw_phone(ctx, x, y, w, h) {
+    const pad = 12, r = 20;
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad * 2, w + pad * 2, h + pad * 3.5, r); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 6); ctx.fill();
+    // Notch
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 30, y - pad * 2, 60, 14, [0,0,8,8]); ctx.fill();
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x + w / 2, y - pad * 2 + 7, 3, 0, Math.PI * 2); ctx.fill();
+    // Home bar
+    ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 25, y + h + pad * 0.8, 50, 4, 2); ctx.fill();
+  },
+
+  _draw_monitor(ctx, x, y, w, h) {
+    const bez = 10, standW = 60, standH = 30, baseW = 100;
+    ctx.fillStyle = '#2a2a2a'; ctx.beginPath(); ctx.roundRect(x - bez, y - bez, w + bez * 2, h + bez * 2, 4); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Stand neck
+    ctx.fillStyle = '#333'; ctx.fillRect(x + w / 2 - standW / 2, y + h + bez, standW, standH);
+    // Stand base
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - baseW / 2, y + h + bez + standH, baseW, 6, 3); ctx.fill();
+    // Power LED
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(x + w / 2, y + h + bez - 4, 2, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_robothead(ctx, x, y, w, h) {
+    const pad = 12;
+    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.fill();
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    // Antenna
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x + w / 2, y - pad); ctx.lineTo(x + w / 2, y - pad - 20); ctx.stroke();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x + w / 2, y - pad - 20, 5, 0, Math.PI * 2); ctx.fill();
+    // Bolt ears
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(x - pad - 8, y + h / 2, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w + pad + 8, y + h / 2, 6, 0, Math.PI * 2); ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+  },
+  _fg_robothead(ctx, x, y, w, h) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_alien(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    ctx.fillStyle = '#1a3a1a';
+    ctx.beginPath(); ctx.ellipse(cx, y + h / 2, w / 2 + 15, h / 2 + 20, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(cx, y + h / 2, w / 2 + 15, h / 2 + 20, 0, 0, Math.PI * 2); ctx.stroke();
+    // Antenna
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 15, y - 15); ctx.lineTo(cx - 25, y - 35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 15, y - 15); ctx.lineTo(cx + 25, y - 35); ctx.stroke();
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath(); ctx.arc(cx - 25, y - 35, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 25, y - 35, 4, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_anonymous(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 6); ctx.stroke();
+    // Mask silhouette hints
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.5;
+    const cx = x + w / 2;
+    // Eyebrow arches
+    ctx.beginPath(); ctx.arc(cx - w * 0.15, y + h * 0.3, 12, Math.PI, 0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + w * 0.15, y + h * 0.3, 12, Math.PI, 0); ctx.stroke();
+    // Mustache
+    ctx.beginPath();
+    ctx.moveTo(cx - 20, y + h * 0.65);
+    ctx.quadraticCurveTo(cx - 10, y + h * 0.6, cx, y + h * 0.65);
+    ctx.quadraticCurveTo(cx + 10, y + h * 0.6, cx + 20, y + h * 0.65);
+    ctx.stroke();
+    // Goatee
+    ctx.beginPath(); ctx.moveTo(cx, y + h * 0.68); ctx.lineTo(cx, y + h * 0.78); ctx.stroke();
+  },
+
+  // ═══ COOL/STYLISH ═══
+
+  _draw_diamond(ctx, x, y, w, h) {
+    const pad = 10, cx = x + w / 2, cy = y + h / 2;
+    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 3;
+    const pts = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const r = (i % 2 === 0 ? Math.max(w, h) / 2 + pad + 8 : Math.max(w, h) / 2 + pad);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    }
+    ctx.beginPath(); pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = 'rgba(192,132,252,.05)'; ctx.fill();
+    // Sparkle accents
+    ctx.fillStyle = '#e9d5ff';
+    [[x - 5, y - 5], [x + w + 5, y - 5], [x + w + 5, y + h + 5], [x - 5, y + h + 5]].forEach(([sx, sy]) => {
+      ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+    });
+  },
+
+  _draw_flame(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Flame tips along top
+    ctx.fillStyle = '#ef4444';
+    for (let i = 0; i < 8; i++) {
+      const fx = x + (i / 7) * w;
+      const fh = 8 + Math.sin(i * 1.5) * 6;
+      ctx.beginPath();
+      ctx.moveTo(fx - 8, y - pad);
+      ctx.quadraticCurveTo(fx, y - pad - fh, fx + 8, y - pad);
+      ctx.fill();
+    }
+    // Bottom flames
+    for (let i = 0; i < 8; i++) {
+      const fx = x + (i / 7) * w;
+      const fh = 6 + Math.cos(i * 1.2) * 4;
+      ctx.beginPath();
+      ctx.moveTo(fx - 6, y + h + pad);
+      ctx.quadraticCurveTo(fx, y + h + pad + fh, fx + 6, y + h + pad);
+      ctx.fill();
+    }
+  },
+
+  _draw_neon(ctx, x, y, w, h) {
+    const pad = 4, t = Date.now() / 1000;
+    const hue = (t * 60) % 360;
+    ctx.shadowColor = `hsl(${hue},100%,60%)`;
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = `hsl(${hue},100%,65%)`;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Inner glow line
+    ctx.strokeStyle = `hsla(${(hue + 60) % 360},100%,70%,.3)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x - 1, y - 1, w + 2, h + 2, 4); ctx.stroke();
+  },
+
+  // ═══ SPACE ═══
+
+  _draw_astronaut(ctx, x, y, w, h) {
+    const pad = 14;
+    ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 8, w + pad * 2, h + pad * 2 + 16, 20); ctx.fill();
+    ctx.fillStyle = '#bbb'; ctx.beginPath(); ctx.roundRect(x - pad + 4, y - pad - 4, w + pad * 2 - 8, h + pad * 2 + 8, 16); ctx.fill();
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+    // Visor reflection
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x + w * 0.25, y + h * 0.25, Math.min(w, h) * 0.15, 0.8, 2.2); ctx.stroke();
+    // Oxygen tube
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x + w + pad, y + h * 0.5); ctx.lineTo(x + w + pad + 15, y + h * 0.5 + 20); ctx.stroke();
+  },
+
+  _draw_ufo(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    // Saucer body
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.ellipse(cx, y - 10, w / 2 + 30, 14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#666';
+    ctx.beginPath(); ctx.ellipse(cx, y - 18, w / 3, 10, 0, 0, Math.PI * 2); ctx.fill();
+    // Dome
+    ctx.fillStyle = 'rgba(56,189,248,.2)';
+    ctx.beginPath(); ctx.arc(cx, y - 22, 16, Math.PI, 0); ctx.fill();
+    // Tractor beam
+    ctx.fillStyle = 'rgba(163,230,53,.06)';
+    ctx.beginPath(); ctx.moveTo(cx - 20, y); ctx.lineTo(cx - w / 2 - 10, y + h + 10); ctx.lineTo(cx + w / 2 + 10, y + h + 10); ctx.lineTo(cx + 20, y); ctx.fill();
+    // Lights
+    ctx.fillStyle = '#fbbf24';
+    for (let i = 0; i < 5; i++) {
+      const a = Math.PI + (i / 4) * Math.PI;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (w / 2 + 15), y - 10 + Math.sin(a) * 8, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+
+  _draw_planet(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) / 2 + 10;
+    ctx.strokeStyle = 'rgba(251,191,36,.4)'; ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r + 20, 12, -0.3, 0.3, Math.PI - 0.3);
+    ctx.stroke();
+    // Back ring (behind)
+    ctx.strokeStyle = 'rgba(251,191,36,.15)'; ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r + 20, 12, -0.3, Math.PI + 0.3, -0.3);
+    ctx.stroke();
+  },
+
+  // ═══ GAMING ═══
+
+  _draw_arcade(ctx, x, y, w, h) {
+    const pad = 14;
+    ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 25, w + pad * 2, h + pad * 2 + 45, [12,12,4,4]); ctx.fill();
+    ctx.fillStyle = '#16213e'; ctx.beginPath(); ctx.roundRect(x - pad + 3, y - pad - 22, w + pad * 2 - 6, 18, 4); ctx.fill();
+    // Marquee text
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px "Righteous", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('★ ARCADE ★', x + w / 2, y - pad - 9);
+    ctx.textAlign = 'left';
+    // Screen border
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+    // Coin slot
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 12, y + h + pad + 2, 24, 8, 3); ctx.fill();
+    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 6, y + h + pad + 4, 12, 4, 2); ctx.fill();
+  },
+
+  _draw_healthbar(ctx, x, y, w) {
+    // Pixel hearts above source
+    const heartY = y - 20;
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('❤️❤️❤️', x + 4, heartY);
+    // HP bar
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 60, heartY - 12, w - 64, 10);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 60, heartY - 12, (w - 64) * 0.75, 10);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(x + 60, heartY - 12, w - 64, 10);
+  },
+
+  _draw_leaderboard(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Gold corners
+    ctx.fillStyle = '#fbbf24';
+    [[x - pad, y - pad], [x + w + pad, y - pad], [x - pad, y + h + pad], [x + w + pad, y + h + pad]].forEach(([cx, cy]) => {
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+    });
+    // Rank badge
+    ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 18, y - pad - 14, 36, 16, 4); ctx.fill();
+    ctx.fillStyle = '#000'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('#1', x + w / 2, y - pad - 3);
+    ctx.textAlign = 'left';
+  },
+
+  // ═══ SPY/SECRET ═══
+
+  _draw_detective(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2 + 10;
+    ctx.strokeStyle = '#d4a03c'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Handle
+    ctx.strokeStyle = '#8b6914'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx + r * 0.7, cy + r * 0.7); ctx.lineTo(cx + r * 0.7 + 25, cy + r * 0.7 + 25); ctx.stroke();
+    // Lens glare
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx - r * 0.2, cy - r * 0.2, r * 0.3, 0.5, 1.5); ctx.stroke();
+  },
+
+  _draw_surveillance(ctx, x, y, w, h) {
+    const pad = 4;
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+  },
+  _fg_surveillance(ctx, x, y, w, h) {
+    // Corner stamps
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '9px ui-monospace, monospace';
+    ctx.textAlign = 'left'; ctx.fillText('CAM 01', x + 6, y + 14);
+    ctx.textAlign = 'right'; ctx.fillText('REC ●', x + w - 6, y + 14);
+    ctx.textAlign = 'left';
+    const d = new Date();
+    ctx.fillText(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`, x + 6, y + h - 8);
+  },
+
+  _draw_ninja(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.fillStyle = '#111'; ctx.fillRect(x - pad, y - pad, w + pad * 2, h * 0.3);
+    ctx.fillRect(x - pad, y + h * 0.7, w + pad * 2, h * 0.3 + pad);
+    // Eye slit
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x - pad, y + h * 0.3); ctx.lineTo(x + w + pad, y + h * 0.3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - pad, y + h * 0.7); ctx.lineTo(x + w + pad, y + h * 0.7); ctx.stroke();
+    // Shuriken corners
+    ctx.fillStyle = '#888';
+    ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('✦', x - 2, y - 2); ctx.fillText('✦', x + w + 2, y - 2);
+    ctx.fillText('✦', x - 2, y + h + 12); ctx.fillText('✦', x + w + 2, y + h + 12);
+    ctx.textAlign = 'left';
+  },
+
+  // ═══ SCIENCE ═══
+
+  _draw_lab(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(74,222,128,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 6); ctx.stroke();
+    // Bubbles
+    ctx.fillStyle = 'rgba(74,222,128,.15)';
+    [[x - 8, y + h * 0.3, 6], [x - 5, y + h * 0.5, 4], [x + w + 6, y + h * 0.4, 5],
+     [x + w + 9, y + h * 0.2, 3], [x + w * 0.2, y + h + 8, 4], [x + w * 0.7, y + h + 10, 5]].forEach(([bx, by, br]) => {
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+    });
+    // Goggles at top
+    ctx.strokeStyle = 'rgba(74,222,128,.3)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x + w / 2 - 12, y - pad - 4, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, y - pad - 4, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w / 2 - 5, y - pad - 4); ctx.lineTo(x + w / 2 + 5, y - pad - 4); ctx.stroke();
+  },
+
+  _draw_microscope(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 6, 0, Math.PI * 2); ctx.stroke();
+    // Crosshair
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + w, cy); ctx.stroke();
+  },
+  _fg_microscope(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'right';
+    ctx.fillText('40x', x + w - 6, y + h - 8);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_electric(ctx, x, y, w, h) {
+    const pad = 4;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Lightning bolts at corners
+    ctx.fillStyle = '#fbbf24';
+    const bolt = (bx, by) => {
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 5, by + 8); ctx.lineTo(bx + 2, by + 8);
+      ctx.lineTo(bx + 6, by + 16); ctx.lineTo(bx - 1, by + 6); ctx.lineTo(bx + 2, by + 6); ctx.closePath(); ctx.fill();
+    };
+    bolt(x - 10, y - 10); bolt(x + w + 4, y - 10); bolt(x - 10, y + h - 6); bolt(x + w + 4, y + h - 6);
+  },
+
+  // ═══ SOCIAL/FUN ═══
+
+  _draw_clapboard(ctx, x, y, w) {
+    const clH = 22;
+    ctx.fillStyle = '#222'; ctx.fillRect(x, y - clH - 4, w, clH);
+    ctx.fillStyle = '#111'; ctx.fillRect(x, y - clH - 4, w, 6);
+    // Stripes on top
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 6; i++) {
+      if (i % 2 === 0) ctx.fillRect(x + i * (w / 6), y - clH - 4, w / 12, 6);
+    }
+    ctx.fillStyle = '#fff'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('SCENE 1  TAKE 1', x + 6, y - 7);
+  },
+
+  _draw_livestream(ctx, x, y) {
+    // LIVE badge
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.roundRect(x + 6, y + 6, 40, 16, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('LIVE', x + 26, y + 18);
+    // Viewer count
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.roundRect(x + 50, y + 6, 40, 16, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText('👁 1.2k', x + 70, y + 18);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_circus(ctx, x, y, w, h) {
+    const pad = 8;
+    // Striped border
+    ctx.lineWidth = 8;
+    const segs = 20;
+    for (let i = 0; i < segs; i++) {
+      ctx.strokeStyle = i % 2 === 0 ? '#ef4444' : '#fbbf24';
+      const p = i / segs;
+      ctx.beginPath();
+      // Simplified — just do top edge striping
+      if (i < segs / 2) ctx.strokeRect(x - pad + p * (w + pad * 2), y - pad, (w + pad * 2) / segs, 0);
+    }
+    // Simplified colorful border
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4;
+    ctx.setLineDash([12, 12]);
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineDashOffset = 12;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    // Bunting flags
+    ctx.fillStyle = '#fbbf24'; ctx.font = '10px sans-serif';
+    for (let i = 0; i < 6; i++) ctx.fillText('▼', x + (i / 5) * w - 5, y - pad - 2);
+  },
+
+  // ═══ ISLAMIC ═══
+
+  _draw_minaret(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    // Arch frame
+    ctx.strokeStyle = 'rgba(212,160,60,.5)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y + h + 8);
+    ctx.lineTo(x - 8, y + 10);
+    ctx.quadraticCurveTo(x - 8, y - 12, cx, y - 12);
+    ctx.quadraticCurveTo(x + w + 8, y - 12, x + w + 8, y + 10);
+    ctx.lineTo(x + w + 8, y + h + 8);
+    ctx.stroke();
+    // Dome at top
+    ctx.beginPath(); ctx.arc(cx, y - 12, 8, Math.PI, 0); ctx.stroke();
+    // Crescent on top
+    ctx.fillStyle = 'rgba(212,160,60,.6)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('☪', cx, y - 18);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_crescent(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(212,160,60,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Corner ornaments — crescent + star
+    ctx.fillStyle = 'rgba(212,160,60,.4)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('☪', x - 2, y + 2); ctx.fillText('✦', x + w + 2, y + 2);
+    ctx.fillText('✦', x - 2, y + h + 6); ctx.fillText('☪', x + w + 2, y + h + 6);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_andalusia(ctx, x, y, w, h) {
+    const pad = 10, cx = x + w / 2;
+    // Horseshoe arch (Alhambra)
+    ctx.strokeStyle = 'rgba(194,112,62,.5)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - pad, y + h + pad);
+    ctx.lineTo(x - pad, y + h * 0.3);
+    ctx.arc(cx, y + h * 0.3, w / 2 + pad, Math.PI, 0);
+    ctx.lineTo(x + w + pad, y + h + pad);
+    ctx.stroke();
+    // Inner arch
+    ctx.strokeStyle = 'rgba(194,112,62,.25)'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h + 4);
+    ctx.lineTo(x, y + h * 0.35);
+    ctx.arc(cx, y + h * 0.35, w / 2, Math.PI, 0);
+    ctx.lineTo(x + w, y + h + 4);
+    ctx.stroke();
+    // Keystone
+    ctx.fillStyle = 'rgba(194,112,62,.2)';
+    ctx.beginPath(); ctx.arc(cx, y + h * 0.3 - w / 2 - pad, 6, 0, Math.PI * 2); ctx.fill();
+  },
+
+  // ═══ FUTURIST ═══
+
+  _draw_hologram(ctx, x, y, w, h) {
+    const pad = 3, t = Date.now() / 1000;
+    // Glitch offset
+    const glitch = Math.sin(t * 10) > 0.8 ? 3 : 0;
+    ctx.strokeStyle = 'rgba(56,189,248,.5)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - pad + glitch, y - pad, w + pad * 2, h + pad * 2);
+    ctx.strokeStyle = 'rgba(239,68,68,.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad - glitch, y - pad + 1, w + pad * 2, h + pad * 2);
+  },
+  _fg_hologram(ctx, x, y, w, h) {
+    // Scan lines
+    ctx.strokeStyle = 'rgba(56,189,248,.04)'; ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 3) {
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
+    }
+  },
+
+  _draw_hexgrid(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(56,189,248,.3)'; ctx.lineWidth = 0.8;
+    const sz = 16;
+    for (let gx = x - pad; gx < x + w + pad; gx += sz * 1.5) {
+      for (let gy = y - pad; gy < y + h + pad; gy += sz * 0.866) {
+        const offset = (Math.floor((gy - y) / (sz * 0.866)) % 2) * sz * 0.75;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2; const px = gx + offset + Math.cos(a) * sz / 2; const py = gy + Math.sin(a) * sz / 2;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+  },
+
+  _draw_portal(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) / 2 + 12, t = Date.now() / 1000;
+    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 3;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, r + i * 6, t + i, t + i + 4.5); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(192,132,252,.03)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_mech(ctx, x, y, w, h) {
+    const pad = 10;
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.fill();
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+    ctx.setLineDash([12, 6]); ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2); ctx.setLineDash([]);
+    // Rivets
+    ctx.fillStyle = '#666';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad - 6], [x + w + pad - 6, y + h + pad - 6]].forEach(([rx, ry]) => {
+      ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    // Warning stripes bottom
+    ctx.fillStyle = '#fbbf24';
+    for (let i = 0; i < 8; i++) {
+      if (i % 2 === 0) ctx.fillRect(x - pad + i * ((w + pad * 2) / 8), y + h + pad - 4, (w + pad * 2) / 8, 4);
+    }
+  },
+
+  _draw_hud(ctx, x, y, w, h) {
+    ctx.strokeStyle = 'rgba(74,222,128,.4)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+  },
+  _fg_hud(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(74,222,128,.5)'; ctx.font = '8px ui-monospace, monospace';
+    // Top-left bars
+    ctx.textAlign = 'left';
+    ctx.fillText('PWR ████░░', x + 6, y + 12);
+    ctx.fillText('SIG ██████', x + 6, y + 22);
+    // Top-right
+    ctx.textAlign = 'right';
+    ctx.fillText('100%', x + w - 6, y + 12);
+    // Targeting reticle center
+    ctx.strokeStyle = 'rgba(74,222,128,.2)'; ctx.lineWidth = 1;
+    const cx = x + w / 2, cy = y + h / 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 25, cy); ctx.lineTo(cx - 10, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 10, cy); ctx.lineTo(cx + 25, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 25); ctx.lineTo(cx, cy - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx, cy + 25); ctx.stroke();
+    ctx.textAlign = 'left';
+  },
+
+  _draw_dna(ctx, x, y, w, h) {
+    const t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 2;
+    // Left helix
+    for (let i = 0; i < 20; i++) {
+      const py = y + (i / 20) * h;
+      const px = x - 10 + Math.sin(i * 0.6 + t * 2) * 8;
+      const px2 = x - 10 - Math.sin(i * 0.6 + t * 2) * 8;
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px2, py); ctx.stroke();
+    }
+    // Right helix
+    for (let i = 0; i < 20; i++) {
+      const py = y + (i / 20) * h;
+      const px = x + w + 10 + Math.sin(i * 0.6 + t * 2 + 1) * 8;
+      const px2 = x + w + 10 - Math.sin(i * 0.6 + t * 2 + 1) * 8;
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px2, py); ctx.stroke();
+    }
+  },
+
+  _draw_warp(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2 + t;
+      const r1 = Math.max(w, h) * 0.4;
+      const r2 = Math.max(w, h) * 0.65;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+      ctx.stroke();
+    }
+  },
+
+  _draw_android(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 16); ctx.fill();
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 16); ctx.stroke();
+    // Status LEDs top
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(x + 10, y - pad + 5, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(x + 18, y - pad + 5, 2, 0, Math.PI * 2); ctx.fill();
+    // Loading bar bottom
+    const barW = w * 0.6, barX = x + w / 2 - barW / 2;
+    ctx.fillStyle = 'rgba(56,189,248,.2)'; ctx.beginPath(); ctx.roundRect(barX, y + h + pad - 6, barW, 3, 1.5); ctx.fill();
+    const prog = ((Date.now() / 30) % barW);
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.roundRect(barX, y + h + pad - 6, prog, 3, 1.5); ctx.fill();
+  },
+
+  _draw_forcefield(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    const r = Math.max(w, h) / 2 + 12;
+    // Hex pattern
+    ctx.strokeStyle = 'rgba(56,189,248,.15)'; ctx.lineWidth = 0.8;
+    for (let a = 0; a < Math.PI * 2; a += 0.5) {
+      for (let ri = 0.5; ri < 1.1; ri += 0.3) {
+        const hx = cx + Math.cos(a + t * 0.3) * r * ri;
+        const hy = cy + Math.sin(a + t * 0.3) * r * ri;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const ha = (i / 6) * Math.PI * 2;
+          const px = hx + Math.cos(ha) * 8; const py = hy + Math.sin(ha) * 8;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+    // Energy pulse
+    ctx.strokeStyle = `rgba(56,189,248,${0.15 + Math.sin(t * 3) * 0.1})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  },
+
+  _draw_terminal(ctx, x, y, w, h) {
+    const pad = 10;
+    ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.stroke();
+  },
+  _fg_terminal(ctx, x, y, w, h) {
+    // Scan lines
+    ctx.strokeStyle = 'rgba(74,222,128,.03)'; ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 2) { ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke(); }
+    // Prompt
+    ctx.fillStyle = 'rgba(74,222,128,.5)'; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'left';
+    const blink = Math.floor(Date.now() / 500) % 2;
+    ctx.fillText('guest@noorcast:~$ ' + (blink ? '█' : ''), x + 6, y + h - 10);
+  },
+
+  _draw_sniper(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke();
+  },
+  _fg_sniper(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + w, cy); ctx.stroke();
+    // Range ticks
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '7px ui-monospace, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('100m', cx + 4, cy - r * 0.5);
+    ctx.fillText('200m', cx + 4, cy - r * 0.8);
+    ctx.textAlign = 'right'; ctx.fillText('4x', x + w - 8, y + 14); ctx.textAlign = 'left';
+  },
+
+  _draw_neural(ctx, x, y, w, h) {
+    const t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(192,132,252,.3)'; ctx.lineWidth = 1;
+    // Nodes
+    const nodes = [];
+    for (let i = 0; i < 12; i++) {
+      const nx = x - 15 + (i % 4) * ((w + 30) / 3);
+      const ny = y - 15 + Math.floor(i / 4) * ((h + 30) / 2);
+      nodes.push([nx, ny]);
+    }
+    // Connections
+    nodes.forEach(([n1x, n1y], i) => {
+      nodes.forEach(([n2x, n2y], j) => {
+        if (j <= i) return;
+        const dist = Math.sqrt((n1x - n2x) ** 2 + (n1y - n2y) ** 2);
+        if (dist > 200) return;
+        const pulse = Math.sin(t * 3 + i + j) * 0.5 + 0.5;
+        ctx.globalAlpha = pulse * 0.2;
+        ctx.beginPath(); ctx.moveTo(n1x, n1y); ctx.lineTo(n2x, n2y); ctx.stroke();
+      });
+    });
+    ctx.globalAlpha = 1;
+    // Node dots
+    ctx.fillStyle = 'rgba(192,132,252,.4)';
+    nodes.forEach(([nx, ny]) => {
+      ctx.beginPath(); ctx.arc(nx, ny, 3, 0, Math.PI * 2); ctx.fill();
+    });
   },
 };
 

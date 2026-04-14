@@ -386,7 +386,57 @@
                 </div>
                 <div class="tc-ssp-section">
                   <div class="tc-ssp-title">🖼 Frame</div>
-                  <label class="tc-ssp-row">Skin <select id="tcSrcSkin"><option value="none">—</option><option value="tv">📺 TV</option><option value="polaroid">📸 Polaroid</option><option value="comic">🗯 Comic</option><option value="robot">🤖 Robot</option></select></label>
+                  <label class="tc-ssp-row">Skin <select id="tcSrcSkin">
+                    <option value="none">—</option>
+                    <optgroup label="Classic">
+                      <option value="tv">📺 TV</option><option value="polaroid">📸 Polaroid</option>
+                      <option value="comic">🗯 Comic</option><option value="robot">🤖 Robot</option>
+                    </optgroup>
+                    <optgroup label="Tech">
+                      <option value="laptop">💻 Laptop</option><option value="phone">📱 Phone</option>
+                      <option value="monitor">🖥 Monitor</option>
+                    </optgroup>
+                    <optgroup label="Character">
+                      <option value="robothead">🤖 Robot Head</option><option value="alien">👾 Alien</option>
+                      <option value="anonymous">🎭 Anon</option>
+                    </optgroup>
+                    <optgroup label="Style">
+                      <option value="diamond">💎 Diamond</option><option value="flame">🔥 Flame</option>
+                      <option value="neon">🌈 Neon</option>
+                    </optgroup>
+                    <optgroup label="Space">
+                      <option value="astronaut">🧑‍🚀 Astronaut</option><option value="ufo">🛸 UFO</option>
+                      <option value="planet">🪐 Planet</option>
+                    </optgroup>
+                    <optgroup label="Gaming">
+                      <option value="arcade">🕹 Arcade</option><option value="healthbar">❤️ HP Bar</option>
+                      <option value="leaderboard">🏆 Rank</option>
+                    </optgroup>
+                    <optgroup label="Spy">
+                      <option value="detective">🕵️ Detective</option><option value="surveillance">📡 CCTV</option>
+                      <option value="ninja">🥷 Ninja</option>
+                    </optgroup>
+                    <optgroup label="Science">
+                      <option value="lab">🧪 Lab</option><option value="microscope">🔬 Microscope</option>
+                      <option value="electric">⚡ Electric</option>
+                    </optgroup>
+                    <optgroup label="Social">
+                      <option value="clapboard">🎬 Clap</option><option value="livestream">📺 Live</option>
+                      <option value="circus">🎪 Circus</option>
+                    </optgroup>
+                    <optgroup label="Islamic">
+                      <option value="minaret">🕌 Minaret</option><option value="crescent">☪️ Crescent</option>
+                      <option value="andalusia">🏛 Andalusia</option>
+                    </optgroup>
+                    <optgroup label="Futurist">
+                      <option value="hologram">🌐 Hologram</option><option value="hexgrid">💠 Hexgrid</option>
+                      <option value="portal">🔮 Portal</option><option value="mech">⚙️ Mech</option>
+                      <option value="hud">📊 HUD</option><option value="dna">🧬 DNA</option>
+                      <option value="warp">💫 Warp</option><option value="android">🤖 Android</option>
+                      <option value="forcefield">🛡 Shield</option><option value="terminal">📟 Terminal</option>
+                      <option value="sniper">🎯 Scope</option><option value="neural">🧠 Neural</option>
+                    </optgroup>
+                  </select></label>
                   <label class="tc-ssp-row">Border <input type="color" id="tcSrcBorderColor" value="#ffffff" /> <input type="number" id="tcSrcBorderWidth" min="0" max="10" value="0" style="width:40px" /></label>
                   <label class="tc-ssp-row">Shadow <input type="color" id="tcSrcShadowColor" value="#000000" /> <input type="range" id="tcSrcShadowBlur" min="0" max="30" value="0" style="width:60px" /></label>
                   <label class="tc-ssp-row">Offset <input type="range" id="tcSrcShadowOffsetX" min="-20" max="20" value="5" style="width:50px" /> <input type="range" id="tcSrcShadowOffsetY" min="-20" max="20" value="5" style="width:50px" /></label>
