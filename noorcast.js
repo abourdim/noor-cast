@@ -8246,6 +8246,24 @@ const TextOverlays = {
       const mode = TEXT_TRANSPARENCY_MODES[modeIdx] || TEXT_TRANSPARENCY_MODES[1];
 
       ctx.save();
+      // v0.7.184: animated sticker transforms
+      if (item.anim) {
+        const t = Date.now() / 1000;
+        ctx.translate(cx, cy);
+        if (item.anim === 'bounce') {
+          ctx.translate(0, Math.sin(t * 4 + item.id) * 8);
+        } else if (item.anim === 'spin') {
+          ctx.rotate((t * 2 + item.id) % (Math.PI * 2));
+        } else if (item.anim === 'pulse') {
+          const s = 1 + Math.sin(t * 3 + item.id) * 0.15;
+          ctx.scale(s, s);
+        } else if (item.anim === 'wiggle') {
+          ctx.rotate(Math.sin(t * 6 + item.id) * 0.15);
+        } else if (item.anim === 'float') {
+          ctx.translate(Math.sin(t * 1.5 + item.id) * 6, Math.cos(t * 2 + item.id) * 4);
+        }
+        ctx.translate(-cx, -cy);
+      }
       // v0.7.1: rotation around the text center
       const rot = item.rotation || 0;
       if (rot !== 0) {
@@ -8546,8 +8564,42 @@ const Recorder = {
       el.classList.remove('show');
       void el.offsetWidth;
       el.classList.add('show');
+      // v0.7.184: countdown beep tone (pitch rises as count decreases)
+      try {
+        const ac = Engine.audioCtx;
+        if (ac) {
+          if (ac.state === 'suspended') ac.resume();
+          const osc = ac.createOscillator();
+          const env = ac.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = n === 1 ? 880 : n === 2 ? 660 : 440;
+          env.gain.setValueAtTime(0.15, ac.currentTime);
+          env.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+          osc.connect(env).connect(ac.destination);
+          osc.start(); osc.stop(ac.currentTime + 0.3);
+        }
+      } catch {}
       await new Promise(r => setTimeout(r, 900));
     }
+    // Final "GO" flash
+    el.textContent = 'GO!';
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    try {
+      const ac = Engine.audioCtx;
+      if (ac) {
+        const osc = ac.createOscillator();
+        const env = ac.createGain();
+        osc.type = 'sine'; osc.frequency.value = 1100;
+        env.gain.setValueAtTime(0.2, ac.currentTime);
+        env.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
+        osc.connect(env).connect(ac.destination);
+        osc.start(); osc.stop(ac.currentTime + 0.5);
+      }
+    } catch {}
+    SpeedLines.fire(500);
+    await new Promise(r => setTimeout(r, 500));
     el.classList.remove('show');
   },
 
@@ -17771,6 +17823,115 @@ const SoundPad = {
   },
 };
 
+/* v0.7.184: BgMusic — procedural 8-bit background music loops using Web Audio.
+   5 tracks generated on the fly with oscillators (no audio files). Plays
+   during recording if enabled. Routed to audioDest so it's baked in. */
+const BgMusic = {
+  playing: false,
+  _track: 'chiptune',
+  _nodes: [],
+  _gain: null,
+  _volume: 0.15,
+  tracks: ['chiptune', 'lofi', 'epic', 'chill', 'retro'],
+  labels: { chiptune: '🎮 Chiptune', lofi: '☕ Lo-fi', epic: '⚔️ Epic', chill: '🌊 Chill', retro: '📼 Retro' },
+
+  load() {
+    try {
+      const saved = localStorage.getItem('tc-bgmusic');
+      if (saved) { const d = JSON.parse(saved); this._track = d.track || 'chiptune'; this._volume = d.volume ?? 0.15; }
+    } catch {}
+  },
+  _save() { try { localStorage.setItem('tc-bgmusic', JSON.stringify({ track: this._track, volume: this._volume })); } catch {} },
+
+  setTrack(t) { this._track = t; this._save(); if (this.playing) { this.stop(); this.start(); } },
+  setVolume(v) { this._volume = Math.max(0, Math.min(0.5, v)); this._save(); if (this._gain) this._gain.gain.value = this._volume; },
+
+  start() {
+    if (this.playing) return;
+    const ac = Engine.audioCtx;
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    this._gain = ac.createGain();
+    this._gain.gain.value = this._volume;
+    this._gain.connect(ac.destination);
+    // Also route to recording
+    try { this._gain.connect(Engine.audioDest); } catch {}
+    this['_gen_' + this._track](ac, this._gain);
+    this.playing = true;
+  },
+
+  stop() {
+    this._nodes.forEach(n => { try { n.stop(); } catch {} try { n.disconnect(); } catch {} });
+    this._nodes = [];
+    if (this._gain) { try { this._gain.disconnect(); } catch {} this._gain = null; }
+    this.playing = false;
+  },
+
+  toggle() { if (this.playing) this.stop(); else this.start(); },
+
+  // ── Track generators ──
+
+  _note(ac, gain, freq, start, dur, type) {
+    const osc = ac.createOscillator();
+    const env = ac.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    env.gain.setValueAtTime(0.3, start);
+    env.gain.exponentialRampToValueAtTime(0.01, start + dur * 0.9);
+    osc.connect(env).connect(gain);
+    osc.start(start); osc.stop(start + dur);
+    this._nodes.push(osc);
+  },
+
+  _gen_chiptune(ac, gain) {
+    const notes = [262, 330, 392, 523, 392, 330, 262, 196];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.25, 0.2, 'square'));
+      this._loopTimer = setTimeout(loop, notes.length * 250);
+    };
+    loop();
+  },
+  _gen_lofi(ac, gain) {
+    const notes = [220, 262, 330, 294, 262, 220, 196, 220];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.4, 0.35, 'triangle'));
+      this._loopTimer = setTimeout(loop, notes.length * 400);
+    };
+    loop();
+  },
+  _gen_epic(ac, gain) {
+    const notes = [130, 165, 196, 262, 330, 262, 196, 165];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.3, 0.25, 'sawtooth'));
+      this._loopTimer = setTimeout(loop, notes.length * 300);
+    };
+    loop();
+  },
+  _gen_chill(ac, gain) {
+    const notes = [196, 220, 262, 294, 330, 294, 262, 220];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.5, 0.45, 'sine'));
+      this._loopTimer = setTimeout(loop, notes.length * 500);
+    };
+    loop();
+  },
+  _gen_retro(ac, gain) {
+    const notes = [330, 392, 440, 392, 330, 294, 262, 294];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.2, 0.15, 'square'));
+      // Bass line
+      [65, 82, 98, 82].forEach((f, i) => this._note(ac, gain, f, t + i * 0.4, 0.35, 'triangle'));
+      this._loopTimer = setTimeout(loop, notes.length * 200);
+    };
+    loop();
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -18861,14 +19022,16 @@ function wireEvents() {
     btn.addEventListener('click', () => {
       const sticker = btn.dataset.sticker;
       if (!sticker) return;
-      TextOverlays.add(sticker, {
-        ttl: 0,  // permanent
+      const anims = ['bounce', 'spin', 'pulse', 'wiggle', 'float'];
+      const item = TextOverlays.add(sticker, {
+        ttl: 0,
         size: 120,
         color: '#ffffff',
-        transparency: 2,  // no bg box
+        transparency: 2,
         x: Engine.width / 2 + (Math.random() - 0.5) * 200,
         y: Engine.height / 2 + (Math.random() - 0.5) * 200,
       });
+      if (item) item.anim = anims[Math.floor(Math.random() * anims.length)];
       showToast(`🏷 ${sticker}`, 800);
     });
   });
@@ -19044,6 +19207,11 @@ function wireEvents() {
   });
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
+  });
+  $('tcBgMusicBtn')?.addEventListener('click', (e) => {
+    BgMusic.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', BgMusic.playing);
+    showToast(BgMusic.playing ? '🎵 Music ON' : '🎵 Music OFF', 1200);
   });
   $('tcSensorOverlayBtn')?.addEventListener('click', (e) => {
     Sensors._overlayVisible = !Sensors._overlayVisible;
@@ -19815,6 +19983,7 @@ async function init() {
   Watermark.load();  // v0.7.98
   ServoGauge.load(); // v0.7.177
   VoiceFx.load();    // v0.7.182
+  BgMusic.load();    // v0.7.184
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
