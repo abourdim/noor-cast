@@ -3,67 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NoorCast — Complete User Guide v0.7.200</title>
+<title>NoorCast — Complete User Guide v0.7.201</title>
+<link rel="icon" href="./icon.svg">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Tajawal:wght@400;700&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Tajawal',sans-serif;background:#071407;color:#e2e8f0;line-height:1.8;font-size:15px}
-  a{color:#a3e635;text-decoration:none}a:hover{text-decoration:underline}
-  .cover{text-align:center;padding:60px 20px 40px;border-bottom:2px solid rgba(163,230,53,.3)}
-  .cover h1{font-family:'Righteous',sans-serif;font-size:56px;color:#a3e635;text-shadow:0 0 40px rgba(163,230,53,.2)}
-  .cover .arabic{font-size:28px;color:#d4a03c;margin-top:-4px}
-  .cover .sub{font-size:18px;color:#94a3b8;margin-top:12px}
-  .cover .ver{font-size:13px;color:#4a5568;margin-top:8px}
-  .cover .badges{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-  .cover .badge{padding:4px 14px;border-radius:20px;font-size:12px;font-weight:bold}
-  .bg{background:rgba(163,230,53,.1);color:#a3e635;border:1px solid rgba(163,230,53,.2)}
-  .bb{background:rgba(56,189,248,.1);color:#38bdf8;border:1px solid rgba(56,189,248,.2)}
-  .by{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
-  nav{position:sticky;top:0;z-index:100;background:rgba(7,20,7,.97);backdrop-filter:blur(8px);border-bottom:1px solid rgba(163,230,53,.12);padding:8px 16px;overflow-x:auto;white-space:nowrap}
-  nav a{display:inline-block;padding:4px 12px;margin:2px;border-radius:16px;font-size:12px;color:#7a9e5c;border:1px solid rgba(163,230,53,.1)}
-  nav a:hover{background:rgba(163,230,53,.08);color:#a3e635;text-decoration:none}
-  .toc{max-width:900px;margin:30px auto;padding:20px 30px}
-  .toc h2{font-family:'Righteous',sans-serif;font-size:22px;color:#a3e635;margin-bottom:12px}
-  .toc ul{list-style:none;columns:2;gap:20px}
-  .toc li{padding:4px 0}
-  .toc li a{font-size:14px;color:#94a3b8}
-  .toc li a:hover{color:#a3e635}
-  .c{max-width:900px;margin:0 auto;padding:0 30px 40px}
-  h2{font-family:'Righteous',sans-serif;font-size:30px;color:#a3e635;margin:50px 0 20px;padding-top:30px;border-top:2px solid rgba(163,230,53,.08)}
-  h3{font-size:20px;color:#fbbf24;margin:30px 0 12px;padding-left:8px;border-left:3px solid #fbbf24}
-  h4{font-size:16px;color:#38bdf8;margin:20px 0 8px}
-  h5{font-size:14px;color:#c084fc;margin:16px 0 6px}
-  p{margin:8px 0 12px;color:#cbd5e1}
-  .card{background:rgba(15,31,15,.5);border:1px solid rgba(163,230,53,.08);border-radius:12px;padding:16px 20px;margin:14px 0}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0}
-  @media(max-width:700px){.grid,.grid3{grid-template-columns:1fr}}
-  kbd{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 7px;font-size:12px;font-family:ui-monospace,monospace;color:#a3e635}
-  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
-  th,td{padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)}
-  th{color:#a3e635;font-size:11px;text-transform:uppercase;letter-spacing:1px;background:rgba(163,230,53,.03)}
-  tr:hover{background:rgba(163,230,53,.02)}
-  .tip{background:rgba(163,230,53,.06);border-left:3px solid #a3e635;padding:12px 18px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
-  .tip::before{content:"💡 Tip: ";font-weight:bold;color:#a3e635}
-  .warn{background:rgba(239,68,68,.06);border-left:3px solid #ef4444;padding:12px 18px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
-  .warn::before{content:"⚠️ Note: ";font-weight:bold;color:#ef4444}
-  .info{background:rgba(56,189,248,.06);border-left:3px solid #38bdf8;padding:12px 18px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
-  .info::before{content:"ℹ️ ";font-weight:bold;color:#38bdf8}
-  .steps{counter-reset:step;margin:14px 0}
-  .step{counter-increment:step;padding:10px 16px 10px 50px;position:relative;margin:8px 0;background:rgba(15,31,15,.3);border-radius:8px;border:1px solid rgba(163,230,53,.05)}
-  .step::before{content:counter(step);position:absolute;left:14px;top:10px;width:26px;height:26px;background:rgba(163,230,53,.15);color:#a3e635;border-radius:50%;text-align:center;line-height:26px;font-weight:bold;font-size:13px}
-  ol,ul{margin:8px 0 12px 24px;color:#cbd5e1}
-  li{margin:4px 0}
-  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:bold;margin-left:4px}
-  .new{background:rgba(163,230,53,.15);color:#a3e635}
-  .pro{background:rgba(251,191,36,.15);color:#fbbf24}
-  .footer{text-align:center;padding:50px 20px;margin-top:40px;border-top:2px solid rgba(163,230,53,.08);color:#4a5568;font-size:13px}
-  details{margin:10px 0}
-  summary{cursor:pointer;color:#a3e635;font-weight:bold;padding:8px 0}
-  details[open] summary{margin-bottom:8px}
-  .skinlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin:10px 0}
-  .skinitem{padding:6px 10px;background:rgba(15,31,15,.4);border:1px solid rgba(163,230,53,.06);border-radius:8px;font-size:12px}
-  hr{border:none;border-top:1px solid rgba(163,230,53,.06);margin:30px 0}
+  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Orbitron:wght@500&family=Tajawal:wght@400;500;700&display=swap');
+  :root {
+    --accent: #a3e635; --bg: #060e06; --card: rgba(12,24,12,.6);
+    --border: rgba(163,230,53,.1); --text: #cbd5e1; --muted: #64748b;
+    --blue: #38bdf8; --gold: #fbbf24; --red: #ef4444; --purple: #c084fc;
+    --font-h: 'Righteous', sans-serif; --font-b: 'Tajawal', sans-serif;
+    --font-mono: 'Orbitron', ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+  body { font-family: var(--font-b); background: var(--bg); color: var(--text); line-height: 1.8; font-size: 15px; }
+  a { color: var(--accent); text-decoration: none; transition: color .15s; }
+  a:hover { color: #d4f76e; text-decoration: underline; }
+
+  /* ── Cover ── */
+  .cover {
+    position: relative; text-align: center; padding: 70px 20px 50px;
+    background: linear-gradient(180deg, rgba(163,230,53,.04) 0%, transparent 60%);
+    border-bottom: 2px solid var(--border);
+    overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(163,230,53,.02) 2px, rgba(163,230,53,.02) 4px);
+    pointer-events: none;
+  }
+  .cover h1 { font-family: var(--font-h); font-size: 64px; color: var(--accent); text-shadow: 0 0 50px rgba(163,230,53,.15); letter-spacing: 3px; position: relative; }
+  .cover .arabic { font-size: 30px; color: #d4a03c; margin-top: -2px; position: relative; }
+  .cover .sub { font-size: 18px; color: #94a3b8; margin-top: 14px; position: relative; }
+  .cover .ver { font-size: 12px; color: var(--muted); margin-top: 8px; position: relative; }
+  .cover .pills { margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; }
+  .pill { padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .pg { background: rgba(163,230,53,.1); color: var(--accent); border: 1px solid rgba(163,230,53,.2); }
+  .pb { background: rgba(56,189,248,.1); color: var(--blue); border: 1px solid rgba(56,189,248,.2); }
+  .py { background: rgba(251,191,36,.1); color: var(--gold); border: 1px solid rgba(251,191,36,.2); }
+
+  /* ── Sidebar Nav ── */
+  .layout { display: flex; }
+  .sidebar {
+    position: sticky; top: 0; left: 0; width: 240px; height: 100vh;
+    background: rgba(6,14,6,.98); backdrop-filter: blur(8px);
+    border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0;
+    padding: 16px 0; z-index: 100;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(163,230,53,.2); border-radius: 2px; }
+  .sidebar .logo { text-align: center; padding: 10px 16px 16px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  .sidebar .logo span { font-family: var(--font-h); font-size: 18px; color: var(--accent); }
+  .sidebar .logo small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .nav-group { padding: 4px 12px; }
+  .nav-group-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); padding: 12px 8px 4px; font-weight: 700; }
+  .nav-link {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+    border-radius: 8px; font-size: 13px; color: #7a9e5c; transition: all .15s;
+    text-decoration: none; margin: 1px 0;
+  }
+  .nav-link:hover { background: rgba(163,230,53,.06); color: var(--accent); text-decoration: none; }
+  .nav-link .icon { width: 20px; text-align: center; font-size: 14px; flex-shrink: 0; }
+
+  /* ── Main Content ── */
+  .main { flex: 1; min-width: 0; padding: 30px 40px 60px; max-width: 900px; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar { position: relative; width: 100%; height: auto; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .main { padding: 20px; }
+  }
+
+  /* ── Typography ── */
+  h2 {
+    font-family: var(--font-h); font-size: 32px; color: var(--accent);
+    margin: 50px 0 20px; padding: 20px 0 12px;
+    border-bottom: 2px solid rgba(163,230,53,.08);
+    display: flex; align-items: center; gap: 12px;
+  }
+  h2 .ch-num {
+    font-family: var(--font-mono); font-size: 14px; color: var(--bg);
+    background: var(--accent); width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  h3 { font-size: 20px; color: var(--gold); margin: 30px 0 12px; padding-left: 12px; border-left: 3px solid var(--gold); }
+  h4 { font-size: 16px; color: var(--blue); margin: 22px 0 8px; }
+  h5 { font-size: 14px; color: var(--purple); margin: 16px 0 6px; }
+  p { margin: 8px 0 14px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 22px; margin: 16px 0;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: rgba(163,230,53,.2); }
+  .card h4 { margin-top: 0; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0; }
+  @media (max-width: 700px) { .grid, .grid3 { grid-template-columns: 1fr; } }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.04); }
+  th { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; background: rgba(163,230,53,.02); }
+  tr:hover { background: rgba(163,230,53,.02); }
+  td:first-child { white-space: nowrap; }
+
+  /* ── Code/kbd ── */
+  kbd {
+    background: rgba(0,0,0,.5); border: 1px solid rgba(163,230,53,.2);
+    border-radius: 5px; padding: 2px 8px; font-size: 12px;
+    font-family: var(--font-mono); color: var(--accent);
+    box-shadow: 0 1px 2px rgba(0,0,0,.3);
+  }
+  code { background: rgba(163,230,53,.06); padding: 1px 6px; border-radius: 4px; font-size: 13px; font-family: ui-monospace, monospace; color: var(--accent); }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; margin: 16px 0; }
+  .step {
+    counter-increment: step; padding: 12px 18px 12px 54px;
+    position: relative; margin: 8px 0;
+    background: rgba(12,24,12,.4); border-radius: 10px;
+    border: 1px solid rgba(163,230,53,.04);
+    transition: border-color .2s;
+  }
+  .step:hover { border-color: rgba(163,230,53,.1); }
+  .step::before {
+    content: counter(step); position: absolute; left: 14px; top: 12px;
+    width: 28px; height: 28px; background: rgba(163,230,53,.12);
+    color: var(--accent); border-radius: 50%; text-align: center;
+    line-height: 28px; font-weight: 700; font-size: 13px;
+    font-family: var(--font-mono);
+  }
+
+  /* ── Callouts ── */
+  .tip, .warn, .info {
+    padding: 14px 20px; border-radius: 0 10px 10px 0;
+    margin: 16px 0; font-size: 14px; position: relative;
+    padding-left: 44px;
+  }
+  .tip { background: rgba(163,230,53,.05); border-left: 3px solid var(--accent); }
+  .tip::before { content: '💡'; position: absolute; left: 14px; top: 14px; }
+  .warn { background: rgba(239,68,68,.05); border-left: 3px solid var(--red); }
+  .warn::before { content: '⚠️'; position: absolute; left: 14px; top: 14px; }
+  .info { background: rgba(56,189,248,.05); border-left: 3px solid var(--blue); }
+  .info::before { content: 'ℹ️'; position: absolute; left: 14px; top: 14px; }
+
+  /* ── Details/Summary ── */
+  details { margin: 12px 0; }
+  summary {
+    cursor: pointer; color: var(--accent); font-weight: 700; padding: 10px 14px;
+    background: rgba(163,230,53,.03); border-radius: 8px; border: 1px solid var(--border);
+    transition: background .15s;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '▸ '; }
+  details[open] summary::before { content: '▾ '; }
+  details[open] summary { border-radius: 8px 8px 0 0; margin-bottom: 0; }
+  summary:hover { background: rgba(163,230,53,.06); }
+
+  /* ── Skin list ── */
+  .skinlist { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 10px 0; padding: 14px; background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+  .skinitem { padding: 8px 12px; background: rgba(0,0,0,.2); border-radius: 6px; font-size: 13px; line-height: 1.5; }
+  .skinitem strong { color: var(--accent); }
+
+  /* ── Tags ── */
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .new { background: rgba(163,230,53,.15); color: var(--accent); }
+
+  /* ── Cross-ref links ── */
+  .xref { color: var(--blue); border-bottom: 1px dashed rgba(56,189,248,.3); }
+  .xref:hover { border-bottom-color: var(--blue); text-decoration: none; }
+
+  /* ── Lists ── */
+  ol, ul { margin: 8px 0 14px 24px; }
+  li { margin: 4px 0; }
+
+  /* ── HR ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+
+  /* ── Back to top ── */
+  .back-top {
+    position: fixed; bottom: 20px; right: 20px; z-index: 99;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(163,230,53,.15); border: 1px solid rgba(163,230,53,.3);
+    color: var(--accent); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .15s;
+    text-decoration: none;
+  }
+  .back-top:hover { transform: scale(1.1); text-decoration: none; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 50px 20px; margin-top: 40px;
+    border-top: 2px solid var(--border); color: var(--muted); font-size: 13px;
+    background: linear-gradient(180deg, transparent, rgba(163,230,53,.02));
+  }
+
+  /* ── Print ── */
+  @media print {
+    .sidebar, .back-top, nav { display: none; }
+    .layout { display: block; }
+    body { background: #fff; color: #333; }
+    .cover { border: none; }
+    h2, h3, .nav-link { color: #333; }
+  }
 </style>
 </head>
 <body>
@@ -71,1556 +217,351 @@
 <div class="cover">
   <h1>NoorCast</h1>
   <div class="arabic">نُورْكَاسْت</div>
-  <div class="sub">Complete User Guide — Every Feature Explained</div>
-  <div class="ver">Version 0.7.200 &bull; <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a></div>
-  <div class="badges">
-    <span class="badge bg">200+ Features</span>
-    <span class="badge bb">Zero Install</span>
-    <span class="badge by">100% Free</span>
-    <span class="badge bg">49 Skins</span>
-    <span class="badge bb">15 Backgrounds</span>
-    <span class="badge by">36 Co-hosts</span>
+  <div class="sub">Complete User Guide — Every Feature, Every Detail</div>
+  <div class="ver">Version 0.7.201 &bull; <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a> &bull; <a href="https://workshop-diy.org">workshop-diy.org</a></div>
+  <div class="pills">
+    <span class="pill pg">200+ Features</span>
+    <span class="pill pb">Zero Install</span>
+    <span class="pill py">100% Free</span>
+    <span class="pill pg">49 Skins</span>
+    <span class="pill pb">15 Backgrounds</span>
+    <span class="pill py">36 Co-hosts</span>
+    <span class="pill pg">12 Pets</span>
   </div>
 </div>
 
-<nav id="topnav">
-  <a href="#ch1">1. Getting Started</a>
-  <a href="#ch2">2. Interface</a>
-  <a href="#ch3">3. Sources</a>
-  <a href="#ch4">4. Canvas</a>
-  <a href="#ch5">5. Skins</a>
-  <a href="#ch6">6. Scenes</a>
-  <a href="#ch7">7. Recording</a>
-  <a href="#ch8">8. Post-Recording</a>
-  <a href="#ch9">9. micro:bit</a>
-  <a href="#ch10">10. Overlays</a>
-  <a href="#ch11">11. Fun</a>
-  <a href="#ch12">12. AI</a>
-  <a href="#ch13">13. Gamification</a>
-  <a href="#ch14">14. Audio</a>
-  <a href="#ch15">15. Effects</a>
-  <a href="#ch16">16. Settings</a>
-  <a href="#ch17">17. Shortcuts</a>
-  <a href="#ch18">18. Search</a>
-  <a href="#ch19">19. Privacy</a>
-  <a href="#ch20">20. FAQ</a>
-</nav>
+<div class="layout">
 
-<div class="c">
+<!-- ══════════ SIDEBAR NAV ══════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <span>NoorCast Guide</span>
+    <small>v0.7.201 &bull; 22 Chapters</small>
+  </div>
 
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch1">Chapter 1: Getting Started</h2>
+  <div class="nav-group">
+    <div class="nav-group-title">Basics</div>
+    <a class="nav-link" href="#ch1"><span class="icon">🚀</span> Getting Started</a>
+    <a class="nav-link" href="#ch2"><span class="icon">🖥</span> Interface Tour</a>
+    <a class="nav-link" href="#ch3"><span class="icon">📷</span> Camera Setup</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Sources & Canvas</div>
+    <a class="nav-link" href="#ch4"><span class="icon">📹</span> Sources</a>
+    <a class="nav-link" href="#ch5"><span class="icon">🎨</span> Canvas & Style</a>
+    <a class="nav-link" href="#ch6"><span class="icon">🖼</span> 49 Camera Skins</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Scenes & Recording</div>
+    <a class="nav-link" href="#ch7"><span class="icon">🎭</span> Scenes</a>
+    <a class="nav-link" href="#ch8"><span class="icon">🔴</span> Recording</a>
+    <a class="nav-link" href="#ch9"><span class="icon">📦</span> Post-Recording</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">micro:bit</div>
+    <a class="nav-link" href="#ch10"><span class="icon">🤖</span> micro:bit</a>
+    <a class="nav-link" href="#ch11"><span class="icon">🎮</span> Pilot Scene</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Overlays & Tools</div>
+    <a class="nav-link" href="#ch12"><span class="icon">✏️</span> Overlays</a>
+    <a class="nav-link" href="#ch13"><span class="icon">🔧</span> Tools</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Fun & AI</div>
+    <a class="nav-link" href="#ch14"><span class="icon">🎉</span> Fun Features</a>
+    <a class="nav-link" href="#ch15"><span class="icon">🧠</span> AI Features</a>
+    <a class="nav-link" href="#ch16"><span class="icon">🏆</span> Gamification</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Audio & Effects</div>
+    <a class="nav-link" href="#ch17"><span class="icon">🎵</span> Audio</a>
+    <a class="nav-link" href="#ch18"><span class="icon">🌌</span> Backgrounds</a>
+    <a class="nav-link" href="#ch19"><span class="icon">✨</span> Canvas Flair</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Reference</div>
+    <a class="nav-link" href="#ch20"><span class="icon">⚙️</span> Settings</a>
+    <a class="nav-link" href="#ch21"><span class="icon">⌨️</span> Shortcuts</a>
+    <a class="nav-link" href="#ch22"><span class="icon">❓</span> FAQ</a>
+  </div>
+</aside>
+
+<!-- ══════════ MAIN CONTENT ══════════ -->
+<div class="main">
+
+<p style="color:var(--muted);font-size:13px;margin-bottom:30px">This guide covers every feature of NoorCast in detail. Use the sidebar navigation or <kbd>Ctrl+F</kbd> to find what you need. All section references are clickable links.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch1"><span class="ch-num">1</span> Getting Started</h2>
 
 <h3>1.1 What is NoorCast?</h3>
-<p>NoorCast is a <strong>free, browser-based, multi-camera screen recorder</strong> specifically designed for teachers creating tutorial videos with robots and micro:bits. It combines screen capture, webcam feeds, microphone input, and micro:bit sensor data into a single recording — all from your browser, without installing anything.</p>
+<p>NoorCast is a <strong>free, browser-based, multi-camera screen recorder</strong> specifically designed for teachers creating tutorial videos with robots and micro:bits. It combines screen capture, webcam feeds, microphone input, and micro:bit sensor data into a single recording &mdash; all from your browser, without installing anything.</p>
 
-<p>Unlike traditional screen recorders, NoorCast was built for <strong>education</strong>. It understands that a teacher explaining robotics needs to show their screen (code), their robot (camera), their face (webcam), and their micro:bit sensor readings — all at once, switching between layouts seamlessly.</p>
+<p>Unlike traditional screen recorders, NoorCast was built for <strong>education</strong>. It understands that a teacher explaining robotics needs to show their screen (code), their robot (camera), their face (webcam), and their micro:bit sensor readings &mdash; all at once, switching between layouts seamlessly.</p>
 
 <div class="card">
   <h4>Key Facts</h4>
   <ul>
-    <li><strong>100% local</strong> — nothing leaves your computer. No cloud, no accounts, no tracking.</li>
-    <li><strong>Zero install</strong> — just open a URL in Chrome or Edge. Works offline after first load.</li>
-    <li><strong>Zero dependencies</strong> — no npm, no build step. One HTML + one JS + one CSS file.</li>
-    <li><strong>200+ features</strong> — from basic recording to AI co-hosts and instant replay.</li>
-    <li><strong>Trilingual</strong> — French (default), English, Arabic (with full RTL support).</li>
-    <li><strong>PWA installable</strong> — add to your desktop/home screen like a native app.</li>
+    <li><strong>100% local</strong> &mdash; nothing leaves your computer. No cloud, no accounts, no tracking.</li>
+    <li><strong>Zero install</strong> &mdash; just open a URL in Chrome or Edge. Works offline after first load.</li>
+    <li><strong>Zero dependencies</strong> &mdash; no npm, no build step. One HTML + one JS + one CSS file.</li>
+    <li><strong>200+ features</strong> &mdash; from basic recording to <a class="xref" href="#ch15">AI co-hosts</a> and <a class="xref" href="#ch9">instant replay</a>.</li>
+    <li><strong>Trilingual</strong> &mdash; French (default), English, Arabic (with full RTL support).</li>
+    <li><strong>PWA installable</strong> &mdash; add to your desktop/home screen like a native app.</li>
   </ul>
 </div>
 
 <h3>1.2 System Requirements</h3>
 <table>
   <tr><th>Requirement</th><th>Details</th></tr>
-  <tr><td>Browser</td><td><strong>Chrome 90+</strong> or <strong>Edge 90+</strong> (desktop). Firefox works for basic recording but lacks Web Bluetooth.</td></tr>
-  <tr><td>Operating System</td><td>Windows, macOS, Linux, ChromeOS — any desktop OS with Chrome/Edge.</td></tr>
+  <tr><td>Browser</td><td><strong>Chrome 90+</strong> or <strong>Edge 90+</strong> (desktop). Firefox works for basic recording but lacks Web Bluetooth and some features.</td></tr>
+  <tr><td>OS</td><td>Windows 10/11, macOS 10.15+, Linux, ChromeOS &mdash; any desktop OS with Chrome/Edge.</td></tr>
   <tr><td>Hardware</td><td>Webcam + microphone. Multiple USB cameras supported. No GPU requirements.</td></tr>
-  <tr><td>Internet</td><td>Required only for the first load (to cache the PWA). Works 100% offline afterward.</td></tr>
-  <tr><td>micro:bit (optional)</td><td>BBC micro:bit v1 or v2 with NoorCast firmware flashed via MakeCode.</td></tr>
+  <tr><td>Internet</td><td>Required only for first load (to cache the PWA). Works 100% offline afterward. Exception: <a class="xref" href="#ch15">Live Captions</a> require internet on Chrome (browser sends audio to Google).</td></tr>
+  <tr><td>micro:bit</td><td>Optional. BBC micro:bit v1 or v2 with NoorCast firmware. See <a class="xref" href="#ch10">Chapter 10</a>.</td></tr>
 </table>
 
-<div class="warn">Safari and Firefox do not support Web Bluetooth. micro:bit features require Chrome or Edge.</div>
+<div class="warn">Safari and Firefox do not support Web Bluetooth. <a class="xref" href="#ch10">micro:bit features</a> require Chrome or Edge.</div>
 
 <h3>1.3 Opening NoorCast</h3>
 <div class="steps">
   <div class="step">Navigate to <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a> in Chrome or Edge.</div>
   <div class="step">The splash screen appears briefly (2 seconds) with the NoorCast logo and Bismillah greeting.</div>
-  <div class="step">On first launch, a <strong>mode picker</strong> appears asking you to choose between <strong>Simple</strong> and <strong>Pro</strong> mode.</div>
-  <div class="step">After choosing a mode, a <strong>template picker</strong> may appear offering guided lesson templates.</div>
-  <div class="step">The main interface loads. You're ready to add sources and start recording.</div>
+  <div class="step">On first launch, a <strong>mode picker</strong> appears. Choose between <strong>Simple</strong> (less UI) and <strong>Pro</strong> (full features). See <a class="xref" href="#s14">Section 1.4</a>.</div>
+  <div class="step">Optionally, a <strong>template picker</strong> appears offering guided lesson templates. See <a class="xref" href="#ch7">Chapter 7</a>.</div>
+  <div class="step">The main interface loads. You're ready to add <a class="xref" href="#ch4">sources</a> and start <a class="xref" href="#ch8">recording</a>.</div>
 </div>
 
-<h3>1.4 Simple vs Pro Mode</h3>
-<p>NoorCast offers two modes to match your experience level:</p>
+<h3 id="s14">1.4 Simple vs Pro Mode</h3>
 <div class="grid">
   <div class="card">
     <h4>🎓 Simple Mode</h4>
-    <p>Designed for beginners and young students. Hides advanced tools to prevent overwhelm:</p>
+    <p>Designed for beginners and young students:</p>
     <ul>
       <li>Right sidebar (scenes) auto-collapsed</li>
-      <li>More Tools overflow menu hidden</li>
-      <li>Source style popup simplified</li>
+      <li><a class="xref" href="#ch13">More Tools</a> overflow menu hidden</li>
       <li>Pause/Marker buttons hidden</li>
-      <li>Advanced settings sections hidden</li>
-      <li>Only essential recording controls visible</li>
+      <li>Advanced <a class="xref" href="#ch20">settings</a> sections hidden</li>
     </ul>
-    <p>Perfect for: First-time users, elementary school students, quick recordings.</p>
   </div>
   <div class="card">
     <h4>🚀 Pro Mode</h4>
-    <p>Full access to every feature. All panels and tools visible:</p>
+    <p>Full access to every feature:</p>
     <ul>
-      <li>Right sidebar with scenes always visible</li>
-      <li>All toolbar buttons accessible</li>
-      <li>More Tools with 30+ additional features</li>
-      <li>Full source style popup (skins, crop, filters, shadows)</li>
-      <li>All settings sections visible</li>
-      <li>Advanced overlays and effects available</li>
+      <li>Right sidebar with <a class="xref" href="#ch7">scenes</a> visible</li>
+      <li>All <a class="xref" href="#ch13">toolbar</a> buttons accessible</li>
+      <li>Full <a class="xref" href="#ch5">source style</a> popup</li>
+      <li>All <a class="xref" href="#ch20">settings</a> sections visible</li>
     </ul>
-    <p>Perfect for: Teachers, power users, detailed tutorials.</p>
   </div>
 </div>
-<p>Switch between modes anytime: open <strong>Settings</strong> (⚙️ gear icon) → click the mode switch button at the top.</p>
+<p>Switch anytime: <a class="xref" href="#ch20">Settings</a> &rarr; mode switch button at the top.</p>
 <div class="tip">The mode is persisted in localStorage. NoorCast remembers your choice across sessions.</div>
 
-<h3>1.5 Your First Recording — Step by Step</h3>
+<h3>1.5 Your First Recording</h3>
 <div class="steps">
-  <div class="step"><strong>Add a screen source.</strong> In the left sidebar, click the blue <strong>🖥 + Add</strong> button under "Screen". Chrome will ask which screen, window, or tab to share. Pick one and click "Share".</div>
-  <div class="step"><strong>Add a camera.</strong> Select your webcam from the "Camera" dropdown, then click the green <strong>🎥 + Add</strong> button. Grant camera permission if prompted. Your face appears as a small circle in the bottom-right of the canvas.</div>
-  <div class="step"><strong>Select a microphone.</strong> Choose your mic from the "Mic" dropdown. It activates immediately — you'll see the LED meter in the recording bar respond to your voice. A mic check message confirms it's working.</div>
-  <div class="step"><strong>Choose a scene.</strong> In the right sidebar (Pro mode), click a scene preset: 💻 Code (screen + face), 🤖 Mecha (camera + face), or any other layout. The canvas rearranges your sources instantly.</div>
-  <div class="step"><strong>Press Record.</strong> Click the big red 🔴 REC button (or press <kbd>R</kbd>). A 3-2-1 countdown plays with beep tones, then "GO!" flashes with speed lines. Recording begins.</div>
-  <div class="step"><strong>Present your tutorial.</strong> Switch scenes with keys <kbd>1</kbd>-<kbd>7</kbd>. Use <kbd>L</kbd> for laser pointer, <kbd>F</kbd> to freeze the screen, <kbd>D</kbd> to draw. Press <kbd>M</kbd> to add chapter markers.</div>
-  <div class="step"><strong>Stop recording.</strong> Click ⏹ Stop or press <kbd>R</kbd> again. The take panel appears with your video preview and download options.</div>
-  <div class="step"><strong>Download.</strong> Click ⬇️ Download to save your .webm file. Or explore post-recording tools: Instant Replay, Auto Thumbnail, Quality Score, Transcript, Export Flyer.</div>
+  <div class="step"><strong>Add a screen source.</strong> In the left sidebar, click the blue <strong>🖥 + Add</strong> button. Chrome asks which screen/window/tab to share. See <a class="xref" href="#ch4">Chapter 4</a>.</div>
+  <div class="step"><strong>Add a camera.</strong> Select your webcam from the dropdown, click green <strong>🎥 + Add</strong>. For phone-as-camera setup, see <a class="xref" href="#ch3">Chapter 3</a>.</div>
+  <div class="step"><strong>Select a microphone.</strong> Choose from the "Mic" dropdown. A <a class="xref" href="#ch17">mic check</a> runs automatically.</div>
+  <div class="step"><strong>Choose a scene.</strong> Click a <a class="xref" href="#ch7">scene preset</a> in the right sidebar: 💻 Code, 🤖 Mecha, etc.</div>
+  <div class="step"><strong>Press Record.</strong> Click 🔴 REC or press <kbd>R</kbd>. A <a class="xref" href="#ch8">3-2-1 countdown</a> plays, then recording begins.</div>
+  <div class="step"><strong>Present.</strong> Switch scenes with <kbd>1</kbd>-<kbd>7</kbd>. Use <a class="xref" href="#ch12">overlays</a>: <kbd>L</kbd> laser, <kbd>F</kbd> freeze, <kbd>D</kbd> draw. Press <kbd>M</kbd> for markers.</div>
+  <div class="step"><strong>Stop.</strong> Click ⏹ Stop or press <kbd>R</kbd>. The <a class="xref" href="#ch9">take panel</a> opens.</div>
+  <div class="step"><strong>Download.</strong> Click ⬇️ Download. Or use <a class="xref" href="#ch9">post-recording tools</a>: Instant Replay, Thumbnail, Transcript, Quality Score.</div>
 </div>
 
-<div class="tip">The entire recording stays on your computer. Nothing is uploaded anywhere. The video file is created locally in your browser.</div>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch2">Chapter 2: The Interface</h2>
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch2"><span class="ch-num">2</span> Interface Tour</h2>
 
 <h3>2.1 Layout Overview</h3>
-<p>NoorCast's interface is divided into five main areas:</p>
-
-<div class="steps">
-  <div class="step"><strong>Header bar</strong> (top) — NoorCast logo, Bismillah greeting, mode badge, Help (❓) and Settings (⚙️) buttons, fullscreen toggle.</div>
-  <div class="step"><strong>Toolbar</strong> (below header) — Undo/Redo, Laser, Freeze, Draw, Snapshot, Fullscreen, Search, Captions, More Tools (⋯). These are your primary creative tools.</div>
-  <div class="step"><strong>Left sidebar</strong> — Sources panel (add screen/camera/mic), minimap preview, micro:bit tab. This is where you manage your input sources.</div>
-  <div class="step"><strong>Center stage</strong> — The main canvas (1920×1080) showing your live composition. This is what gets recorded. All overlays, skins, backgrounds, and effects are rendered here.</div>
-  <div class="step"><strong>Right sidebar</strong> — Scenes grid, Save Layout button, Ajouter (add text/shapes/stickers). This controls your scene layouts and visual elements.</div>
-</div>
+<p>NoorCast has five main areas. Each area links to its detailed chapter:</p>
+<table>
+  <tr><th>Area</th><th>Location</th><th>What's There</th><th>Details</th></tr>
+  <tr><td>Header</td><td>Top</td><td>Logo, mode badge, ❓ Help, ⚙️ Settings, fullscreen</td><td><a class="xref" href="#ch20">Ch.20</a></td></tr>
+  <tr><td>Toolbar</td><td>Below header</td><td>Undo, Redo, Laser, Freeze, Draw, Snapshot, Search, Captions, More</td><td><a class="xref" href="#ch13">Ch.13</a></td></tr>
+  <tr><td>Left sidebar</td><td>Left</td><td>Sources panel, minimap, micro:bit tab</td><td><a class="xref" href="#ch4">Ch.4</a>, <a class="xref" href="#ch10">Ch.10</a></td></tr>
+  <tr><td>Stage (canvas)</td><td>Center</td><td>1920&times;1080 live composition &mdash; this is what gets recorded</td><td><a class="xref" href="#ch5">Ch.5</a></td></tr>
+  <tr><td>Right sidebar</td><td>Right</td><td>Scenes grid, Add button (text/shapes/stickers)</td><td><a class="xref" href="#ch7">Ch.7</a></td></tr>
+</table>
 <p>Below the stage:</p>
+<table>
+  <tr><td>Recording bar</td><td>Template picker, 🔴 REC button, timer, LED meter, Pause/Marker/Stop</td><td><a class="xref" href="#ch8">Ch.8</a></td></tr>
+  <tr><td>News ticker</td><td>Scrolling tips (customizable in <a class="xref" href="#ch20">Settings</a>)</td><td>&mdash;</td></tr>
+</table>
+
+<h3>2.2 The Toolbar — Every Button Explained</h3>
+<table>
+  <tr><th>Button</th><th>Action</th><th>Key</th><th>Details</th></tr>
+  <tr><td>↩ Undo</td><td>Undo layout change</td><td><kbd>Ctrl+Z</kbd></td><td>Reverts source position/size. 10-step history.</td></tr>
+  <tr><td>↪ Redo</td><td>Redo</td><td><kbd>Ctrl+Y</kbd></td><td>Re-applies reverted change.</td></tr>
+  <tr><td>🔴 Laser</td><td>Toggle laser pointer</td><td><kbd>L</kbd></td><td>Red dot follows cursor. Baked into recording. See <a class="xref" href="#ch12">Ch.12</a>.</td></tr>
+  <tr><td>❄️ Freeze</td><td>Freeze screen</td><td><kbd>F</kbd></td><td>Pauses screen feed, audio continues. See <a class="xref" href="#ch12">Ch.12</a>.</td></tr>
+  <tr><td>✏️ Draw</td><td>Whiteboard</td><td><kbd>D</kbd></td><td>Draw on canvas. Colors, thickness, eraser. See <a class="xref" href="#ch12">Ch.12</a>.</td></tr>
+  <tr><td>📸 Snapshot</td><td>Take photo</td><td><kbd>S</kbd></td><td>Downloads PNG. Triggers <a class="xref" href="#ch19">camera flash</a> effect.</td></tr>
+  <tr><td>⛶ Fullscreen</td><td>Toggle fullscreen</td><td>&mdash;</td><td>Browser fullscreen API.</td></tr>
+  <tr><td>🔍 Search</td><td>Global search</td><td><kbd>Ctrl+K</kbd></td><td>Spotlight-style search. See <a class="xref" href="#ch13">Section 13.7</a>.</td></tr>
+  <tr><td>💬 Captions</td><td>Live subtitles</td><td><kbd>C</kbd></td><td>Real-time speech-to-text. See <a class="xref" href="#ch15">Ch.15</a>.</td></tr>
+  <tr><td>💾 Save .srt</td><td>Download captions</td><td>&mdash;</td><td>Appears when captions active. See <a class="xref" href="#ch15">Ch.15</a>.</td></tr>
+  <tr><td>⋯ More</td><td>More Tools popup</td><td>&mdash;</td><td>30+ tools. Draggable, scrollable. See <a class="xref" href="#ch13">Ch.13</a>.</td></tr>
+</table>
+
+<h3>2.3 Panels</h3>
+<p>Three slide-in panels from header buttons:</p>
+<table>
+  <tr><th>Panel</th><th>Button</th><th>Contents</th></tr>
+  <tr><td>Help</td><td>❓</td><td><a href="./guide.html">Full User Guide</a> link, how-to steps, FAQ, wiki, release notes, <a class="xref" href="#ch21">shortcuts</a></td></tr>
+  <tr><td>Settings</td><td>⚙️</td><td>All configuration. See <a class="xref" href="#ch20">Chapter 20</a>.</td></tr>
+  <tr><td>Activity Log</td><td>📜</td><td>Timestamped events. Filterable: All, Info, Success, Error, <a class="xref" href="#ch10">TX, RX</a>. Copy/export/clear.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch3"><span class="ch-num">3</span> Camera Setup — Detailed Guide</h2>
+
+<p>NoorCast supports multiple simultaneous cameras. This chapter covers every way to add a camera, from built-in webcams to using your phone.</p>
+
+<h3>3.1 Built-in Laptop Webcam</h3>
 <div class="steps">
-  <div class="step"><strong>Recording bar</strong> — Template picker, REC button, timer, LED audio meter, Pause/Marker/Stop controls.</div>
-  <div class="step"><strong>News ticker</strong> — Scrolling tips at the very bottom (customizable in Settings).</div>
+  <div class="step">In the left sidebar, find the <strong>Camera</strong> dropdown.</div>
+  <div class="step">Your built-in webcam appears as "FaceTime HD Camera" (Mac), "Integrated Camera" (Windows), or similar.</div>
+  <div class="step">Select it from the dropdown.</div>
+  <div class="step">Click the green <strong>🎥 + Add</strong> button.</div>
+  <div class="step">Grant camera permission when the browser asks.</div>
+  <div class="step">Your face appears on the canvas. By default, it's placed as a small circle in the bottom-right (PIP position).</div>
+</div>
+<div class="tip">If the camera feed is flipped (text appears mirrored), right-click the source &rarr; Mirror to fix it.</div>
+
+<h3>3.2 USB External Webcams</h3>
+<p>Plug in a USB webcam. It appears in the Camera dropdown automatically (may take 2-3 seconds).</p>
+<div class="card">
+  <h4>Using Multiple USB Cameras</h4>
+  <p>NoorCast supports <strong>unlimited simultaneous cameras</strong>. Add them one at a time:</p>
+  <ol>
+    <li>Select Camera 1 from dropdown &rarr; click Add</li>
+    <li>Select Camera 2 from dropdown &rarr; click Add</li>
+    <li>Repeat for Camera 3, 4, etc.</li>
+  </ol>
+  <p>Each camera becomes a separate source on the canvas that you can position, resize, and style independently.</p>
 </div>
 
-<h3>2.2 The Toolbar</h3>
-<p>The horizontal toolbar above the canvas provides quick access to the most-used tools:</p>
+<h4>Recommended USB Cameras</h4>
 <table>
-  <tr><th>Button</th><th>Action</th><th>Shortcut</th><th>Details</th></tr>
-  <tr><td>↩ Undo</td><td>Undo last layout change</td><td><kbd>Ctrl+Z</kbd></td><td>Reverts source position/size changes. 10-step history.</td></tr>
-  <tr><td>↪ Redo</td><td>Redo undone change</td><td><kbd>Ctrl+Y</kbd></td><td>Re-applies a reverted layout change.</td></tr>
-  <tr><td>🔴 Laser</td><td>Toggle laser pointer</td><td><kbd>L</kbd></td><td>Your cursor becomes a glowing red dot, baked into the recording.</td></tr>
-  <tr><td>❄️ Freeze</td><td>Freeze screen capture</td><td><kbd>F</kbd></td><td>Pauses the screen feed while audio keeps recording. Perfect for explaining static code.</td></tr>
-  <tr><td>✏️ Draw</td><td>Whiteboard mode</td><td><kbd>D</kbd></td><td>Draw directly on the canvas with the mouse. Multiple colors and thicknesses.</td></tr>
-  <tr><td>📸 Snapshot</td><td>Take a photo</td><td><kbd>S</kbd></td><td>Downloads a PNG of the current canvas frame. Triggers camera flash effect.</td></tr>
-  <tr><td>⛶ Fullscreen</td><td>Toggle fullscreen</td><td>—</td><td>Expands NoorCast to fill the entire screen.</td></tr>
-  <tr><td>🔍 Search</td><td>Global search</td><td><kbd>Ctrl+K</kbd></td><td>Spotlight-style search across all features, skins, shortcuts, settings.</td></tr>
-  <tr><td>💬 Captions</td><td>Live subtitles</td><td><kbd>C</kbd></td><td>Real-time speech-to-text subtitles baked into the recording.</td></tr>
-  <tr><td>💾 Save .srt</td><td>Download captions</td><td>—</td><td>Appears when captions are active. Downloads subtitle file.</td></tr>
-  <tr><td>⋯ More</td><td>More Tools popup</td><td>—</td><td>Opens the extended tools menu with 30+ additional features.</td></tr>
+  <tr><th>Camera</th><th>Best For</th><th>Price Range</th></tr>
+  <tr><td>Logitech C920/C922</td><td>Face cam (1080p, autofocus)</td><td>$60-80</td></tr>
+  <tr><td>Logitech Brio</td><td>High quality face cam (4K)</td><td>$150-200</td></tr>
+  <tr><td>Any cheap USB webcam</td><td>Robot/sensor overhead cam</td><td>$15-30</td></tr>
+  <tr><td>Document camera (USB)</td><td>Overhead view of workspace</td><td>$50-100</td></tr>
 </table>
 
-<h3>2.3 The More Tools Popup</h3>
-<p>Click <strong>⋯ More</strong> to reveal all additional tools, organized in groups:</p>
+<h3>3.3 Phone as Camera (Wireless Webcam)</h3>
+<p>Use your iPhone or Android phone as a wireless camera. Several options:</p>
 
-<h4>Canvas Group</h4>
-<table>
-  <tr><td>💧 Ripples</td><td>Click ripples — every mousedown emits an animated ring, baked into recording</td></tr>
-  <tr><td>🎨 Trail</td><td>Cursor trail — rainbow particles follow your mouse</td></tr>
-  <tr><td># Grid</td><td>Rule-of-thirds grid overlay (<kbd>G</kbd>)</td></tr>
-  <tr><td>💡 Spot</td><td>Spotlight — darkens everything except a circle around the cursor</td></tr>
-  <tr><td>🔍 Zoom</td><td>Smooth zoom to cursor position (<kbd>Z</kbd>)</td></tr>
-  <tr><td>🎯 AutoZ</td><td>Auto-zoom — click a screen source to zoom in for 1.5 seconds</td></tr>
-  <tr><td>🎬 Bars</td><td>Letterbox bars — cinematic 2.35:1 ratio black bars</td></tr>
-</table>
-
-<h4>Overlays Group</h4>
-<table>
-  <tr><td>📜 Tele</td><td>Teleprompter — floating script overlay (visible to you only, NOT in recording)</td></tr>
-  <tr><td>⏳ Timer</td><td>Countdown timer overlay on canvas</td></tr>
-  <tr><td>✏️ Text</td><td>Text stamp — quick text overlay</td></tr>
-  <tr><td>🗒️ Note</td><td>Sticky note — draggable yellow note (visible to you only)</td></tr>
-  <tr><td>😀 React</td><td>Emoji reactions — burst of floating emoji (baked into recording)</td></tr>
-  <tr><td>🎹 Piano</td><td>Piano keyboard overlay for music teachers</td></tr>
-</table>
-
-<h4>Tools Group</h4>
-<table>
-  <tr><td>☐ Tout</td><td>Select all visible sources</td></tr>
-  <tr><td>🔊 SFX</td><td>Sound board — 6 audio effects (ding, buzz, clap, roll, whistle, whoosh)</td></tr>
-  <tr><td>🔳 Focus</td><td>Focus mode — hide all UI, only canvas visible (<kbd>Shift+F</kbd>)</td></tr>
-  <tr><td>🎲 Random</td><td>Switch to a random scene</td></tr>
-  <tr><td>🎨 Pick</td><td>Color picker — sample any pixel from the canvas</td></tr>
-</table>
-
-<h4>Fun Group</h4>
-<table>
-  <tr><td>🗣 Voice FX</td><td>Voice-activated effects (shout=fire, clap=confetti, whisper=night vision)</td></tr>
-  <tr><td>⭐ XP Bar</td><td>Experience points progress bar (1 XP/sec during recording)</td></tr>
-  <tr><td>🎵 Sounds</td><td>Sound pad — 8 clickable audio buttons on canvas</td></tr>
-  <tr><td>💨 Speed</td><td>Speed lines — manga-style radial burst effect</td></tr>
-  <tr><td>🎙 Voice</td><td>Voice commands — hands-free control via speech recognition</td></tr>
-  <tr><td>🤖 Choreo</td><td>Robot choreography — record micro:bit commands for replay</td></tr>
-  <tr><td>▶️ Replay</td><td>Play back recorded robot choreography</td></tr>
-  <tr><td>📱 Share</td><td>Screenshot share — modal with download/copy</td></tr>
-  <tr><td>🧠 Smart</td><td>Smart scene switcher — auto-switches scenes based on speech keywords</td></tr>
-  <tr><td>😊 Co-host</td><td>AI co-host character on canvas (+ character dropdown)</td></tr>
-  <tr><td>🎵 Music</td><td>Background music — 5 procedural 8-bit tracks</td></tr>
-  <tr><td>📊 Sensors</td><td>Sensor overlay — accelerometer/temp/light on canvas</td></tr>
-  <tr><td>🎛 Gauges</td><td>Servo gauge overlay — pan/tilt semicircular gauges</td></tr>
-  <tr><td>👻 Ghost</td><td>Ghost replay — previous take as faint overlay</td></tr>
-  <tr><td>🐾 Pets</td><td>Canvas pets — 12 animated walking characters (+ Clear all)</td></tr>
-</table>
-
-<h3>2.4 The Left Sidebar</h3>
-<h4>Minimap</h4>
-<p>A small 192×108 preview of the canvas at the top of the sidebar. Updates a few times per second. Shows all sources color-coded with the selected source highlighted.</p>
-
-<h4>Tab Strip</h4>
-<p>Two tabs: 📹 <strong>Sources</strong> (default) and 🤖 <strong>micro:bit</strong>.</p>
-
-<h4>Sources Tab</h4>
-<p>Three source rows:</p>
-<ul>
-  <li><strong>Screen</strong> — blue chunky button "🖥 + Add". Triggers getDisplayMedia.</li>
-  <li><strong>Camera</strong> — dropdown to select device + green chunky button "🎥 + Add".</li>
-  <li><strong>Mic</strong> — dropdown to select device. Auto-activates on selection. Mic check runs automatically.</li>
-</ul>
-<p>Below the sources: <strong>Active sources list</strong> showing all added sources with layer numbers, editable titles, shape selectors, and action buttons (hide, remove, reorder).</p>
-
-<h4>micro:bit Tab</h4>
-<p>Controls for Web Bluetooth connection: Flash Firmware button, Connect/Disconnect, D-pad arrows, Fire button, servo sliders, LED 5×5 grid, sensor readings.</p>
-
-<h3>2.5 The Right Sidebar</h3>
-<p>Contains two sections:</p>
-<ul>
-  <li><strong>🎭 Scenes</strong> — grid of scene preset buttons (2 columns). Click to switch. Drag to reorder. Double-click label to rename.</li>
-  <li><strong>🎨 Ajouter</strong> — button that opens a picker with quick stickers, custom text, emoji, animated stickers (20 with bounce/spin/pulse/wiggle/float), and shapes (15 options).</li>
-</ul>
-
-<h3>2.6 The Recording Bar</h3>
-<p>At the bottom of the stage:</p>
-<ul>
-  <li><strong>Template picker</strong> — "Pick a template" button (📚 Full lesson, 🤖 Robot demo, etc.)</li>
-  <li><strong>🔴 REC button</strong> — big red button. Click to start with countdown. Long-press (600ms) for instant start.</li>
-  <li><strong>Timer</strong> — shows elapsed recording time (MM:SS:ms format)</li>
-  <li><strong>LED meter</strong> — 10-segment audio level indicator (green→yellow→red)</li>
-  <li><strong>⏸ Pause</strong> — pause/resume the recording (audio + video stop)</li>
-  <li><strong>🏷 Marker</strong> — add a chapter marker at the current timestamp</li>
-  <li><strong>⏹ Stop</strong> — stop recording and open the take panel</li>
-</ul>
-
-<h3>2.7 Panels</h3>
-<p>Three slide-in panels accessible from the header:</p>
-<ul>
-  <li><strong>❓ Help</strong> — user guide link, how-to steps, FAQ, wiki, keyboard shortcuts, release notes</li>
-  <li><strong>⚙️ Settings</strong> — all configuration (language, theme, recording options, micro:bit, badges, stats)</li>
-  <li><strong>📜 Activity Log</strong> — timestamped log of all events. Filterable by type (All, Info, Success, Error, TX, RX). Copy/export/clear.</li>
-</ul>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch3">Chapter 3: Sources — Adding Content to Your Canvas</h2>
-
-<h3>3.1 Screen Capture</h3>
-<p>Click the blue <strong>🖥 + Add</strong> button. Chrome presents three capture options:</p>
-<ul>
-  <li><strong>Entire Screen</strong> — captures everything visible on your monitor</li>
-  <li><strong>Window</strong> — captures a specific application window</li>
-  <li><strong>Browser Tab</strong> — captures a specific Chrome tab (includes audio)</li>
-</ul>
-<p>After selecting, the screen source appears full-size on the canvas. You can resize and reposition it.</p>
-
-<div class="tip">Capturing a browser tab allows you to include the tab's audio (e.g., a YouTube video or an online IDE) in your recording.</div>
-
-<h4>Screen Audio</h4>
-<p>When sharing a tab or screen with "Share audio" checked, the audio is automatically routed through NoorCast's volume ducking system. When you speak into your mic, the screen audio is automatically lowered so your voice is clear.</p>
-
-<h3>3.2 Camera</h3>
-<p>Select your camera from the dropdown list, then click the green <strong>🎥 + Add</strong> button. You can add multiple cameras:</p>
-<ul>
-  <li>Built-in laptop webcam</li>
-  <li>USB external webcams (multiple supported)</li>
-  <li>iPhone/Mac Continuity Camera</li>
-  <li>Virtual cameras (OBS Virtual Camera, etc.)</li>
-</ul>
-<p>Each camera appears as a source on the canvas with a default size and position determined by the active scene.</p>
-
-<h4>Mirror Webcam</h4>
-<p>By default, webcams are not mirrored. Toggle mirroring per source via right-click → Mirror, or in the style popup.</p>
-
-<h3>3.3 Microphone</h3>
-<p>Select a mic from the "Mic" dropdown. It activates immediately — no "Add" button needed. Features:</p>
-<ul>
-  <li><strong>Auto mic check</strong> — when you select a mic, NoorCast monitors audio for 3 seconds and shows a status message: "🎤 Speak to test..." → "✅ Mic OK!" or "⚠️ Nothing detected"</li>
-  <li><strong>Noise gate</strong> — configurable in Settings. Mutes the mic below a threshold (default -50 dB) to eliminate background noise</li>
-  <li><strong>Gain boost</strong> — adjustable 0-4× gain slider in Settings</li>
-  <li><strong>Volume ducking</strong> — when you speak, screen audio is automatically reduced</li>
-</ul>
-
-<h3>3.4 Images (Paste & Drop)</h3>
-<p>Two ways to add images:</p>
-<ul>
-  <li><strong>Paste</strong>: Copy an image anywhere (web, file explorer, screenshot tool), then press <kbd>Ctrl+V</kbd> in NoorCast. The image appears as a source on the canvas.</li>
-  <li><strong>Drag & Drop</strong>: Drag an image file from your desktop onto the canvas. A green dashed border highlights the drop zone. Supports PNG, JPG, GIF, SVG, WebP.</li>
-</ul>
-
-<h3>3.5 Shapes</h3>
-<p>Right sidebar → 🎨 Ajouter → Shapes section. 15 options:</p>
-<div class="grid3">
-  <div class="card">⬛ Rectangle</div><div class="card">⚪ Circle</div><div class="card">🔲 Rounded</div>
-  <div class="card">💊 Pill</div><div class="card">⬢ Hexagon</div><div class="card">🛑 Octagon</div>
-  <div class="card">🔶 Diamond</div><div class="card">⭐ Star</div><div class="card">❤️ Heart</div>
-  <div class="card">🖤 Full bg</div><div class="card">➖ Dark bar</div><div class="card">▬ White bar</div>
-  <div class="card">🔴 Red dot</div><div class="card">🟢 Green dot</div><div class="card">🃏 Dark card</div>
-</div>
-<p>Each shape can be resized, repositioned, and styled with the source style popup (color, opacity, border, shadow, skin).</p>
-
-<h3>3.6 Source Controls</h3>
-<p>Click any source on the canvas to select it. A floating toolbar appears above with:</p>
-<table>
-  <tr><th>Control</th><th>What it does</th></tr>
-  <tr><td>👁 Hide</td><td>Toggle source visibility (hidden sources are still in the layout but not drawn)</td></tr>
-  <tr><td>📌 Pin</td><td>Pin the source position so scene switches don't move it</td></tr>
-  <tr><td>🔓 Lock</td><td>Lock to prevent accidental drag/resize</td></tr>
-  <tr><td>Shape dropdown</td><td>Change the source shape (rect, circle, hexagon, star, heart, etc.)</td></tr>
-  <tr><td>✂️ Crop</td><td>Visual crop tool — draw a rectangle to crop the source</td></tr>
-  <tr><td>🎨 Style</td><td>Open the full style popup (see Chapter 4)</td></tr>
-  <tr><td>✕ Delete</td><td>Remove the source from the canvas</td></tr>
-</table>
-
-<h3>3.7 Drag, Resize, and Position</h3>
-<h4>Moving Sources</h4>
-<p>Click and drag any source to reposition it on the canvas. Sources snap to:</p>
-<ul>
-  <li><strong>7 anchor points</strong> (corners + edge centers + center) within 60px</li>
-  <li><strong>Other sources</strong> — alignment guides appear (pink dashed lines) when edges or centers align with another source (8px snap threshold)</li>
-  <li><strong>Grid</strong> — hold <kbd>Alt</kbd> while dragging for a 48px grid. Or enable the configurable snap grid in Settings.</li>
-</ul>
-
-<h4>Resizing Sources</h4>
-<p>When selected, <strong>8 circular handles</strong> appear around the source:</p>
-<ul>
-  <li><strong>4 corner handles</strong> (12px radius, white with accent border) — resize proportionally (aspect ratio locked by default)</li>
-  <li><strong>4 edge midpoint handles</strong> (8px radius) — stretch width OR height independently</li>
-  <li>Hold <kbd>Shift</kbd> while dragging a corner to <strong>free resize</strong> (unlock aspect ratio)</li>
-</ul>
-<p>The cursor changes when hovering near handles: diagonal arrows (↗↙) for corners, vertical (↕) or horizontal (↔) for edges.</p>
-
-<h4>Hover Feedback</h4>
-<p>When you hover over any source (without clicking), a subtle accent-colored bounding box appears, showing you which source is under your cursor.</p>
-
-<h4>Right-Click Context Menu</h4>
-<p>Right-click any source for a Canva-style context menu with: Hide, Pin, Lock, Duplicate, Shape submenu, Layer ordering (Forward/Backward/Front/Back), PiP popout, Mirror, Mirror Duplicate.</p>
-
-<h3>3.8 Visual Crop Tool</h3>
-<p>Select a source → click ✂️ in the toolbar. A crosshair cursor appears over the canvas.</p>
+<h4>Option A: iPhone Continuity Camera (Mac only)</h4>
+<p>If you have a Mac running macOS Ventura (13) or later and an iPhone running iOS 16+:</p>
 <div class="steps">
-  <div class="step">Draw a rectangle by clicking and dragging over the region you want to keep.</div>
-  <div class="step">The area outside your rectangle darkens (semi-transparent black overlay).</div>
-  <div class="step">Press <kbd>Enter</kbd> to apply the crop, or <kbd>Escape</kbd> to cancel.</div>
+  <div class="step">Make sure both devices are signed into the same Apple ID and on the same Wi-Fi network.</div>
+  <div class="step">Bluetooth must be enabled on both devices.</div>
+  <div class="step">In NoorCast, open the Camera dropdown. Your iPhone appears as a camera option.</div>
+  <div class="step">Select it and click Add. Your iPhone's camera feed appears on the canvas.</div>
 </div>
-<p>The crop is stored as fractional values (cropTop, cropBottom, cropLeft, cropRight) and applied during rendering. You can fine-tune the crop later using the sliders in the style popup.</p>
+<div class="tip">Place your iPhone near the robot for a dedicated robot cam. Use your laptop's built-in webcam for your face.</div>
 
-<h3>3.9 Source Fly-In Animation</h3>
-<p>When you add any source (screen, camera, image, shape), it <strong>flies in from the bottom</strong> with a smooth scale-up animation (400ms ease-out cubic curve). This gives visual feedback that the source was successfully added.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch4">Chapter 4: The Canvas — Your Creative Space</h2>
-
-<h3>4.1 Canvas Basics</h3>
-<p>The canvas is a <strong>1920×1080 pixel</strong> HTML5 canvas element that composites all your sources, overlays, effects, and UI elements into a single output. This is what gets recorded.</p>
-<ul>
-  <li><strong>Background color</strong> — configurable in Settings (default: black). Color picker available.</li>
-  <li><strong>Background pattern</strong> — 15 animated patterns available (see Chapter 15)</li>
-  <li><strong>Aspect ratio</strong> — default 16:9. Can be changed to 4:3, 1:1, 9:16 (portrait) in Settings.</li>
-  <li><strong>Zoom</strong> — Ctrl+scroll to zoom the canvas view. Not the same as the recording zoom (Z key).</li>
-</ul>
-
-<h3>4.2 Layer Order</h3>
-<p>Sources are drawn in the order they appear in the sources list (bottom of list = drawn last = on top). To change layer order:</p>
-<ul>
-  <li>Right-click a source → Forward/Backward/Front/Back</li>
-  <li>Or drag to reorder in the sidebar source list</li>
-</ul>
-<p>When hovering a source, a small layer badge appears showing its position: "#2/4" (layer 2 of 4 total).</p>
-
-<h3>4.3 The Style Popup</h3>
-<p>Select a source → click 🎨 Style. A comprehensive popup opens with these sections:</p>
-<p>The popup is <strong>draggable</strong> — grab the "⋯ drag to move ⋯" handle at the top to reposition it.</p>
-
-<h4>🎨 Look</h4>
-<table>
-  <tr><td>Opacity</td><td>0-100% transparency slider</td></tr>
-  <tr><td>Filter</td><td>Color filter: None, B&W, Sepia, Invert, Bright, Contrast, Vintage, Cool, Warm</td></tr>
-  <tr><td>Corners</td><td>Corner radius slider (0-50px) for rounded corners</td></tr>
-  <tr><td>Rotation</td><td>Rotate -180° to 180° with degree readout</td></tr>
-</table>
-
-<h4>🖼 Frame</h4>
-<table>
-  <tr><td>Skin</td><td>49 decorative frames (see Chapter 5 for full list)</td></tr>
-  <tr><td>Border</td><td>Color picker + width (0-10px)</td></tr>
-  <tr><td>Shadow</td><td>Color picker + blur radius slider</td></tr>
-  <tr><td>Offset</td><td>Shadow X and Y offset sliders</td></tr>
-</table>
-
-<h4>✂ Crop</h4>
-<table>
-  <tr><td>T / B / L / R</td><td>Four sliders to crop each edge (0-40%)</td></tr>
-</table>
-
-<h4>🏷 Badge</h4>
-<table>
-  <tr><td>Text</td><td>Up to 12 characters (e.g., "LIVE", "CAM 1")</td></tr>
-  <tr><td>Color</td><td>Badge background color picker</td></tr>
-</table>
-
-<h4>↔ Align</h4>
-<p>6 alignment buttons: Left, Center H, Right, Top, Center V, Bottom. Plus Aspect Lock, Flip H, Flip V.</p>
-
-<h4>🙈 Privacy</h4>
-<table>
-  <tr><td>🤖 Avatar</td><td>Replace face with an animated robot avatar</td></tr>
-  <tr><td>🔲 Blur</td><td>Blur the face area for privacy</td></tr>
-</table>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch5">Chapter 5: Camera Skins — 49 Decorative Frames</h2>
-
-<p>Skins are decorative frames drawn around sources on the canvas, <strong>baked into the recording</strong>. They transform a plain rectangle into a styled visual element.</p>
-
-<h3>5.1 How to Apply a Skin</h3>
+<h4>Option B: DroidCam (Windows/Mac + Android/iPhone)</h4>
 <div class="steps">
-  <div class="step">Click a source on the canvas to select it.</div>
-  <div class="step">Click 🎨 <strong>Style</strong> in the floating toolbar.</div>
-  <div class="step">In the popup, find the <strong>🖼 Frame</strong> section.</div>
-  <div class="step">Open the <strong>Skin</strong> dropdown — skins are organized in 11 categories.</div>
-  <div class="step">Select a skin. It applies immediately and is visible in real-time on the canvas.</div>
+  <div class="step">Install <a href="https://www.dev47apps.com/">DroidCam</a> on your phone (free on App Store / Play Store).</div>
+  <div class="step">Install the DroidCam client on your computer (Windows or Mac).</div>
+  <div class="step">Connect your phone and computer to the same Wi-Fi network.</div>
+  <div class="step">Open DroidCam on your phone &mdash; it shows an IP address and port.</div>
+  <div class="step">Open DroidCam client on your computer and enter the IP/port. Click Start.</div>
+  <div class="step">In NoorCast, the Camera dropdown now shows "DroidCam" as an option. Select and Add.</div>
 </div>
-<div class="tip">Skins use an "evenodd" clip to avoid covering the video content. The frame draws around the source, not over it.</div>
 
-<h3>5.2 Complete Skin Catalog</h3>
-
-<details>
-<summary>📺 Classic (4 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">📺 <strong>TV</strong> — Wood grain cabinet, volume/channel knobs, speaker grille, CRT screen curve, blinking power LED, V-antenna</div>
-  <div class="skinitem">📸 <strong>Polaroid</strong> — White border, thick bottom for caption, drop shadow, star decoration</div>
-  <div class="skinitem">🗯 <strong>Comic</strong> — Spiky speech-bubble border on all edges, speech tail pointing down-right, semi-transparent fill</div>
-  <div class="skinitem">🖥 <strong>Monitor</strong> — Ultrawide monitor with stand, power LED dot</div>
-</div>
-</details>
-
-<details>
-<summary>📱 Tech (5 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">📱 <strong>Phone</strong> — Glossy body with edge highlights, Dynamic Island notch, triple camera bump, side buttons, home indicator</div>
-  <div class="skinitem">💻 <strong>Laptop</strong> — Open laptop bezel, keyboard hint below, webcam dot at top</div>
-  <div class="skinitem">📟 <strong>Terminal</strong> — CRT shell with phosphor glow, rolling scan bar, blinking cursor prompt, fake output lines, power LED</div>
-  <div class="skinitem">🌐 <strong>Hologram</strong> — Chromatic aberration (red/blue offset), dense scan lines, random horizontal tears, holographic base triangle</div>
-  <div class="skinitem">🤖 <strong>Android</strong> — Smooth curved visor, status LEDs, animated loading bar at bottom</div>
-</div>
-</details>
-
-<details>
-<summary>🤖 Characters (6 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🤖 <strong>Robot Visor</strong> — Chamfered HUD border, scan lines, corner brackets, cyan glow, "REC●" readout</div>
-  <div class="skinitem">🤖 <strong>Robot Head</strong> — Metal gradient head, hex bolt ears, pulsing antenna, jaw grille, rivets, glowing animated eyes</div>
-  <div class="skinitem">👾 <strong>Alien</strong> — Oval head silhouette, green antenna tips</div>
-  <div class="skinitem">🎭 <strong>Anonymous</strong> — White border, mask eyebrow arches, mustache, goatee hints</div>
-  <div class="skinitem">🥷 <strong>Ninja</strong> — Black mask covering top and bottom, eye slit, shuriken corner decorations</div>
-  <div class="skinitem">🕵️ <strong>Detective</strong> — Magnifying glass circle frame, handle, lens glare arc</div>
-</div>
-</details>
-
-<details>
-<summary>🎮 Gaming (5 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🕹 <strong>Arcade</strong> — Full cabinet with animated marquee lights, joystick, 3 colored buttons, coin slot, "INSERT COIN" text</div>
-  <div class="skinitem">❤️ <strong>HP Bar</strong> — Pixel hearts above source + red health bar</div>
-  <div class="skinitem">🏆 <strong>Leaderboard</strong> — Gold border, corner ornament circles, "#1" rank badge</div>
-  <div class="skinitem">🎯 <strong>Sniper Scope</strong> — Thick scope ring, tube body, mil-dot ticks, center red dot, wind/distance readout</div>
-  <div class="skinitem">🎰 <strong>Slot Machine</strong> — Red cabinet, chrome trim, "JACKPOT" text, reel symbols, handle, coin tray</div>
-</div>
-</details>
-
-<details>
-<summary>🚀 Space (4 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🧑‍🚀 <strong>Astronaut</strong> — Dome helmet with radial gradient, visor reflection arc, oxygen hose, "NOOR" badge</div>
-  <div class="skinitem">🛸 <strong>UFO</strong> — Saucer body with dome, tractor beam, running lights</div>
-  <div class="skinitem">🪐 <strong>Planet Ring</strong> — Saturn-like ring wrapping around the source</div>
-  <div class="skinitem">💫 <strong>Warp</strong> — Streaking star lines converging to center</div>
-</div>
-</details>
-
-<details>
-<summary>🔬 Science (5 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🧪 <strong>Lab</strong> — Green border, bubbles, goggles at top</div>
-  <div class="skinitem">🔬 <strong>Microscope</strong> — Circular lens view, crosshair, "40x" magnification label</div>
-  <div class="skinitem">🧬 <strong>DNA</strong> — Double helix spiraling along left/right edges, animated</div>
-  <div class="skinitem">⚡ <strong>Electric</strong> — Yellow border with lightning bolts at all 4 corners</div>
-  <div class="skinitem">🧠 <strong>Neural</strong> — Nodes and connections pulsing with data flow</div>
-</div>
-</details>
-
-<details>
-<summary>⚔️ Futurist (6 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">⚙️ <strong>Mech</strong> — Thick armored plating, rivets, warning stripes, dashed border</div>
-  <div class="skinitem">📊 <strong>HUD</strong> — Power/signal bars, targeting reticle, data readouts</div>
-  <div class="skinitem">🛡 <strong>Force Field</strong> — Pulsing energy ring, hex cells with random impact flashes</div>
-  <div class="skinitem">💠 <strong>Hexgrid</strong> — Honeycomb mesh pattern</div>
-  <div class="skinitem">🔮 <strong>Portal</strong> — Swirling vortex arcs around the source</div>
-  <div class="skinitem">🔲 <strong>Float</strong> — Hovering panel above shadow, energy dots at corners</div>
-</div>
-</details>
-
-<details>
-<summary>🎨 Style (5 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">💎 <strong>Diamond</strong> — Geometric faceted frame, sparkle accents at corners</div>
-  <div class="skinitem">🔥 <strong>Flame</strong> — Animated flickering flames on all 4 edges with gradient, ember glow</div>
-  <div class="skinitem">🌈 <strong>Neon</strong> — Animated color-cycling glowing border</div>
-  <div class="skinitem">🎪 <strong>Circus</strong> — Red/yellow dashed border, bunting flags</div>
-  <div class="skinitem">🌀 <strong>Vortex</strong> — Spiral tunnel with converging streaks</div>
-</div>
-</details>
-
-<details>
-<summary>📡 Broadcast (3 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🎬 <strong>Clapboard</strong> — Movie clapperboard with stripes, "SCENE 1 TAKE 1" text</div>
-  <div class="skinitem">📺 <strong>Livestream</strong> — Red "LIVE" badge + "👁 1.2k" viewer count</div>
-  <div class="skinitem">📡 <strong>CCTV</strong> — "CAM 01" label, "REC ●", live timestamp, minimal border</div>
-</div>
-</details>
-
-<details>
-<summary>🕌 Islamic (3 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🕌 <strong>Minaret</strong> — Arch frame with dome silhouette, crescent on top</div>
-  <div class="skinitem">☪️ <strong>Crescent</strong> — Border with crescent and star corner ornaments</div>
-  <div class="skinitem">🏛 <strong>Andalusia</strong> — Horseshoe arch (Alhambra style) with inner arch and keystone</div>
-</div>
-</details>
-
-<details>
-<summary>🧊 3D Depth (9 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🎲 <strong>Cube</strong> — Isometric 3D box with top and right faces visible</div>
-  <div class="skinitem">🖼 <strong>Gallery Frame</strong> — Ornate gold picture frame with bevels, corner ornaments, wall shadow</div>
-  <div class="skinitem">📦 <strong>Cardboard Box</strong> — Open box with flaps, corrugated texture, tape strip, "THIS SIDE UP"</div>
-  <div class="skinitem">💎 <strong>Crystal</strong> — Faceted gem with prismatic rainbow sparkles at edges</div>
-  <div class="skinitem">🪞 <strong>Magic Mirror</strong> — Ornate oval with gold frame, crown ornament, sparkle particles</div>
-  <div class="skinitem">📖 <strong>Open Book</strong> — Right page shows video, left page has faint text lines, spine, page curl</div>
-  <div class="skinitem">🏛 <strong>Museum</strong> — Glass display case, marble base, spotlight from above, "EXHIBIT A" plaque</div>
-  <div class="skinitem">🧊 <strong>Ice Block</strong> — Translucent blue tint, cracks, frost edges, cold blue glow</div>
-  <div class="skinitem">🎁 <strong>Gift Box</strong> — Open present with ribbon, bow, wrapping paper dots, tissue paper peeking out</div>
-</div>
-</details>
-
-<details>
-<summary>🎨 Design Apps (5 skins)</summary>
-<div class="skinlist">
-  <div class="skinitem">🎨 <strong>Canva</strong> — White canvas border, purple toolbar with mock buttons, page shadow</div>
-  <div class="skinitem">🖌 <strong>Figma</strong> — Dark UI frame, rulers (top + left) with tick marks, blue selection border</div>
-  <div class="skinitem">🖼 <strong>Photoshop</strong> — Gray panels, menu bar (File/Edit/Image/Layer), checkerboard transparency pattern</div>
-  <div class="skinitem">💻 <strong>VS Code</strong> — Tab bar, line numbers gutter, blue status bar, faint syntax highlighting</div>
-  <div class="skinitem">🐱 <strong>Scratch</strong> — Orange header, green flag + red stop buttons, "Stage" label, cat icon</div>
-</div>
-</details>
-
-<h3>5.3 Skin Technical Details</h3>
-<ul>
-  <li>Skins are rendered using the <strong>CanvasRenderingContext2D</strong> API — pure drawing, no image files.</li>
-  <li>An <strong>evenodd clip</strong> ensures frame fills don't cover the video content — only the border area is drawn.</li>
-  <li>Some skins have a <strong>foreground overlay</strong> pass (e.g., Robot scan lines, CCTV timestamps) that draws ON TOP of the video.</li>
-  <li>Animated skins (Flame, Neon, DNA, Force Field, Warp) update every frame using <code>Date.now()</code>.</li>
-  <li>Skins are persisted in <strong>custom scene snapshots</strong> — when you save a custom scene, each source's skin is saved and restored.</li>
-</ul>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch6">Chapter 6: Scenes — Layout Switching</h2>
-
-<h3>6.1 What Are Scenes?</h3>
-<p>A scene is a <strong>layout preset</strong> that defines the position, size, shape, and visibility of each source. Switching scenes instantly rearranges your canvas without stopping the recording.</p>
-<p>Use case: During a robotics tutorial, switch from "Code" (screen full + face PIP) to "Robot" (camera full + face PIP) to "Code+Robot" (split screen) by pressing a single key.</p>
-
-<h3>6.2 Built-in Scene Presets (7 scenes)</h3>
-<table>
-  <tr><th>#</th><th>Key</th><th>Scene</th><th>Icon</th><th>Layout Description</th></tr>
-  <tr><td>1</td><td><kbd>1</kbd></td><td>&lt;Code/&gt;</td><td>💻</td><td>Screen source fills the entire canvas. Face camera as a small circle in the bottom-right corner.</td></tr>
-  <tr><td>2</td><td><kbd>2</kbd></td><td>Mecha</td><td>🤖</td><td>First camera (robot cam) fills the canvas. Face camera circle in bottom-right.</td></tr>
-  <tr><td>3</td><td><kbd>3</kbd></td><td>Sensors</td><td>🎛</td><td>Second camera (sensor cam) fills the canvas. Face camera circle in bottom-right.</td></tr>
-  <tr><td>4</td><td><kbd>4</kbd></td><td>Code+Mecha</td><td>💻🤖</td><td>Screen takes 60% left. First camera takes 40% right. Face camera circle in bottom-right.</td></tr>
-  <tr><td>5</td><td><kbd>5</kbd></td><td>Matrix</td><td>🎬</td><td>2×2 grid: screen (top-left), camera 1 (top-right), camera 2 (bottom-left), face camera circle.</td></tr>
-  <tr><td>6</td><td><kbd>6</kbd></td><td>Pilot</td><td>🎮</td><td>First camera fills canvas. Face camera circle in bottom-right. micro:bit control overlay (D-pad + joystick + servos + LEDs) appears at bottom-left.</td></tr>
-  <tr><td>7</td><td><kbd>7</kbd></td><td>Solo</td><td>👋</td><td>Face camera fills the entire canvas. Perfect for intros and outros.</td></tr>
-</table>
-
-<h3>6.3 Custom Scenes</h3>
-<p>Arrange your sources exactly how you want them (position, size, shape, visibility), then:</p>
+<h4>Option C: EpocCam (iPhone + Windows/Mac)</h4>
 <div class="steps">
-  <div class="step">Click <strong>💾 Save This Layout</strong> in the right sidebar.</div>
-  <div class="step">Type a name for your custom scene.</div>
-  <div class="step">Your scene appears as a new card in the scenes grid.</div>
+  <div class="step">Install <a href="https://www.elgato.com/epoccam">EpocCam</a> on your iPhone.</div>
+  <div class="step">Install the EpocCam driver on your computer.</div>
+  <div class="step">Both devices must be on the same Wi-Fi or connected via USB.</div>
+  <div class="step">Open EpocCam on your iPhone.</div>
+  <div class="step">In NoorCast, "EpocCam" appears in the Camera dropdown. Select and Add.</div>
 </div>
-<p>Custom scenes save: position (x,y), size (w,h), shape, border color/width, shadow, opacity, filter, rotation, corner radius, badge text/color, skin, and locked/aspect lock state.</p>
 
-<h3>6.4 Scene Management</h3>
-<ul>
-  <li><strong>Switch</strong> — click a scene card or press <kbd>1</kbd>-<kbd>7</kbd> (or higher for custom scenes)</li>
-  <li><strong>Reorder</strong> — drag scene cards to reorder them. The keyboard shortcut mapping follows the new order.</li>
-  <li><strong>Rename</strong> — double-click a scene's label text to edit it inline</li>
-  <li><strong>Duplicate</strong> — hover a scene → click the 📋 duplicate button (top-left)</li>
-  <li><strong>Delete</strong> — hover a custom scene → click the ✕ delete button (top-right). Built-in presets cannot be deleted.</li>
-  <li><strong>Random</strong> — press <kbd>?</kbd> or click 🎲 Random to switch to a random scene</li>
-</ul>
-
-<h3>6.5 Scene Transitions (6 types)</h3>
-<p>Settings → Scene transition dropdown. When switching scenes, a smooth transition plays:</p>
-<table>
-  <tr><th>Transition</th><th>Effect</th><th>Duration</th></tr>
-  <tr><td>None</td><td>Instant cut (default)</td><td>0ms</td></tr>
-  <tr><td>Fade</td><td>Fade to black, then fade in</td><td>400ms</td></tr>
-  <tr><td>Wipe</td><td>Horizontal black bar sweeps left to right</td><td>300ms</td></tr>
-  <tr><td>Slide</td><td>Content slides left, new content slides in from right</td><td>400ms</td></tr>
-  <tr><td>Zoom</td><td>Zoom into black center, zoom out to new scene</td><td>400ms</td></tr>
-  <tr><td>Flip</td><td>3D-like horizontal flip via scaleX</td><td>400ms</td></tr>
-  <tr><td>Glitch</td><td>RGB split + horizontal tears + scan line sweep</td><td>400ms</td></tr>
-</table>
-
-<h3>6.6 Scene Themes (8 presets)</h3>
-<p>Settings → Scene Theme dropdown. One-click presets that set background color, pattern, source skins, and canvas flair together:</p>
-<table>
-  <tr><th>Theme</th><th>Background</th><th>Pattern</th><th>Skin</th><th>Flair</th></tr>
-  <tr><td>🎬 Cinema</td><td>Black</td><td>None</td><td>None</td><td>Film strip + corners</td></tr>
-  <tr><td>🕹 Retro Gaming</td><td>Dark</td><td>Pixel Grid</td><td>Arcade</td><td>Neon + corners</td></tr>
-  <tr><td>🤖 Sci-fi Lab</td><td>Dark blue</td><td>Circuit Board</td><td>Robot</td><td>Neon + heartbeat</td></tr>
-  <tr><td>🕌 Islamic</td><td>Dark green</td><td>Zellige</td><td>Andalusia</td><td>None</td></tr>
-  <tr><td>📺 News Studio</td><td>Dark navy</td><td>None</td><td>Livestream</td><td>Corners</td></tr>
-  <tr><td>🚀 Space</td><td>Dark purple</td><td>Space</td><td>Astronaut</td><td>Neon + corners</td></tr>
-  <tr><td>💻 Hacker</td><td>Black</td><td>Matrix</td><td>Terminal</td><td>Neon + heartbeat</td></tr>
-  <tr><td>✨ Clean</td><td>Black</td><td>None</td><td>None</td><td>All off</td></tr>
-</table>
-
-<h3>6.7 Scene Bounce Animation</h3>
-<p>When you switch scenes, the active scene card in the sidebar plays a <strong>bounce animation</strong> (translateY + scale pulse over 300ms with spring easing). This gives visual feedback that the scene switch registered.</p>
-
-<h3>6.8 Lesson Guide Overlay</h3>
-<p>When using a template (📚 Full Lesson, 🤖 Robot Demo, etc.), an on-canvas <strong>progress bar</strong> appears at the top showing the current step number, step name, and dot indicators for all steps. Click template steps in the sidebar to advance through the guided workflow.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch7">Chapter 7: Recording</h2>
-
-<h3>7.1 Starting a Recording</h3>
-<h4>Standard Start (with countdown)</h4>
-<p>Click the 🔴 REC button or press <kbd>R</kbd>. A <strong>3-2-1 countdown</strong> plays:</p>
-<ul>
-  <li>Each number appears as a large digit (12rem) on the canvas with a scale pulse animation</li>
-  <li>Rising pitch beep tones: 440 Hz → 660 Hz → 880 Hz (getting higher as the countdown nears zero)</li>
-  <li>After "1", a "GO!" text flashes with a 1100 Hz tone + speed lines burst</li>
-  <li>Countdown duration is customizable (1-10 seconds) in Settings</li>
-</ul>
-
-<h4>Instant Start (skip countdown)</h4>
-<p>Two ways to start instantly:</p>
-<ul>
-  <li><strong>Long-press</strong> the REC button for 600ms</li>
-  <li>Press <kbd>Shift+R</kbd></li>
-</ul>
-
-<h3>7.2 During Recording</h3>
-<table>
-  <tr><th>Control</th><th>Action</th><th>Shortcut</th></tr>
-  <tr><td>⏸ Pause</td><td>Pause recording (audio + video stop)</td><td><kbd>P</kbd></td></tr>
-  <tr><td>▶ Resume</td><td>Resume after pause</td><td><kbd>P</kbd></td></tr>
-  <tr><td>🏷 Marker</td><td>Add a chapter marker at current timestamp</td><td><kbd>M</kbd></td></tr>
-  <tr><td>⏹ Stop</td><td>Stop recording and open take panel</td><td><kbd>R</kbd></td></tr>
-</table>
-
-<h4>Chapter Markers</h4>
-<p>Every scene switch automatically creates a chapter marker. You can also add manual markers by pressing <kbd>M</kbd>. Chapters are exported as a <strong>.vtt</strong> file (WebVTT format) alongside the video.</p>
-
-<h4>Recording Formats</h4>
-<table>
-  <tr><th>Format</th><th>Codec</th><th>Browser</th></tr>
-  <tr><td>.webm</td><td>VP9 + Opus</td><td>Chrome/Edge (default)</td></tr>
-  <tr><td>.webm</td><td>VP8 + Opus</td><td>Firefox</td></tr>
-  <tr><td>.mp4</td><td>H.264 + AAC</td><td>Chrome/Edge (if VP9 unavailable)</td></tr>
-</table>
-
-<h4>Disk Streaming</h4>
-<p>On Chrome/Edge, NoorCast can stream the recording directly to disk using the <strong>File System Access API</strong>. This avoids running out of memory for long recordings. When disk streaming is active, chunks are written to the file in real-time.</p>
-
-<h3>7.3 Recording Overlays</h3>
-<p>Several visual elements appear on the canvas during recording (baked into the output):</p>
-<ul>
-  <li><strong>Canvas Flair</strong> — neon border, heartbeat border, corner brackets, ON AIR badge (configurable)</li>
-  <li><strong>Live Captions</strong> — real-time subtitles (if enabled)</li>
-  <li><strong>XP Bar</strong> — experience points progress bar (if enabled)</li>
-  <li><strong>AI Co-host</strong> — animated character with reaction bubbles (if enabled)</li>
-  <li><strong>Canvas Pets</strong> — walking/flying characters (if any active)</li>
-  <li><strong>Speed Lines</strong> — burst effects triggered by actions</li>
-  <li><strong>Reactions</strong> — emoji explosions with screen shake</li>
-</ul>
-
-<h3>7.4 Pause Overlay</h3>
-<p>When paused, a semi-transparent overlay appears on the canvas showing "⏸ PAUSED" and the elapsed pause time. This overlay is baked into the recording if you resume (visible in the output as a paused frame).</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch8">Chapter 8: Post-Recording — What Happens After You Stop</h2>
-
-<p>When you stop recording, the <strong>take panel</strong> appears below the canvas with your video preview and a suite of post-processing tools.</p>
-
-<h3>8.1 Take Panel Buttons</h3>
-<table>
-  <tr><th>Button</th><th>What It Does</th><th>Output</th></tr>
-  <tr><td>💾 Tout télécharger</td><td>Download all files at once (video + chapters + captions + thumbnail)</td><td>Multiple files</td></tr>
-  <tr><td>⬇️ Download</td><td>Download the recorded video</td><td>.webm or .mp4</td></tr>
-  <tr><td>📤 Share</td><td>Native share dialog (if browser supports Web Share API)</td><td>—</td></tr>
-  <tr><td>📝 Chapters (.vtt)</td><td>Download chapter markers</td><td>.vtt file</td></tr>
-  <tr><td>✂️ Trim</td><td>Open the visual trim editor</td><td>Trimmed .webm</td></tr>
-  <tr><td>🔇 Remove Silences</td><td>Auto-cut silent sections (appears if silence > 2s detected)</td><td>Trimmed .webm</td></tr>
-  <tr><td>⚡ Instant Replay</td><td>Auto-generate 30s highlight reel from loudest moments</td><td>.webm</td></tr>
-  <tr><td>📸 Auto Thumbnail</td><td>Pick best frame + add title + branding</td><td>1280×720 .png</td></tr>
-  <tr><td>📄 Export Flyer</td><td>A4 flyer with canvas screenshot + NoorCast/workshop-diy branding</td><td>794×1123 .png</td></tr>
-  <tr><td>📝 Transcript</td><td>Download full text transcript from captions</td><td>.txt</td></tr>
-  <tr><td>🎯 Quality Score</td><td>Analyze tutorial quality — grades for Audio, Pacing, Scenes, Duration, Engagement</td><td>Modal with report</td></tr>
-  <tr><td>🎬 Save as Take</td><td>Store in multi-take director for comparison</td><td>Stored in memory</td></tr>
-  <tr><td>🏆 Badge Card</td><td>Generate shareable achievement card</td><td>1200×630 .png</td></tr>
-  <tr><td>🎬 New Take</td><td>Clear current take and prepare for a new recording</td><td>—</td></tr>
-</table>
-
-<h3>8.2 Trim Editor</h3>
-<p>Click ✂️ Trim to open the visual trim editor:</p>
-<ul>
-  <li><strong>Visual scrubber</strong> with draggable in/out handles + live playhead</li>
-  <li><strong>Click-to-seek</strong> anywhere on the scrubber track</li>
-  <li><strong>✂ Auto-cut silences</strong> — detects silent regions (RMS analysis, -45 dBFS threshold, ≥2s)</li>
-  <li><strong>Keyboard shortcuts</strong>: Space (play/pause), ←/→ (nudge 1s), [ / ] (set in/out), Enter (export), Esc (close)</li>
-  <li><strong>Live duration readout</strong>: shows current time, total, and trimmed duration</li>
-  <li><strong>Export</strong> → re-encodes via offscreen canvas + MediaRecorder</li>
-</ul>
-
-<h3>8.3 Instant Replay</h3>
-<p>Click ⚡ Instant Replay. NoorCast automatically:</p>
+<h4>Option D: OBS Virtual Camera</h4>
+<p>If you already use <a href="https://obsproject.com/">OBS Studio</a>, you can:</p>
 <div class="steps">
-  <div class="step">Decodes the audio from your recording</div>
-  <div class="step">Computes RMS energy in 1-second windows across the entire duration</div>
-  <div class="step">Finds the <strong>top 7 loudest moments</strong> (non-overlapping, sorted by energy)</div>
-  <div class="step">Extracts 4-second clips around each peak</div>
-  <div class="step">Sorts clips chronologically</div>
-  <div class="step">Re-encodes them into a new video with flash transitions and clip counter badges</div>
-  <div class="step">Downloads the ~28-second highlight reel as a .webm file</div>
-</div>
-<p>Confetti bursts when the replay is ready.</p>
-
-<h3>8.4 Auto Thumbnail</h3>
-<p>Click 📸 Auto Thumbnail. NoorCast:</p>
-<ul>
-  <li>Samples 10 frames evenly distributed across the recording (skipping first/last 5%)</li>
-  <li>Computes <strong>grayscale variance</strong> for each frame (higher variance = more visual interest)</li>
-  <li>Picks the frame with the highest contrast</li>
-  <li>Adds: gradient overlay for text readability, title text (from recording filename), NoorCast branding (نُورْكَاسْت), duration badge, centered play button icon</li>
-  <li>Downloads as a <strong>1280×720 PNG</strong> — YouTube-ready thumbnail</li>
-</ul>
-
-<h3>8.5 Export Flyer</h3>
-<p>Click 📄 Export Flyer. Prompts for a custom title, then generates an <strong>A4-sized PNG</strong> (794×1123) with:</p>
-<ul>
-  <li>NoorCast logo + Arabic name + slogan header</li>
-  <li>Your custom title in large text</li>
-  <li>Canvas screenshot with decorative corner brackets</li>
-  <li>Date, duration, and source count badges</li>
-  <li>CTA: "100% FREE · Zero Install · Chrome / Edge"</li>
-  <li>abourdim.github.io/noor-cast URL</li>
-  <li>workshop-diy.org logo (inverted for dark background)</li>
-  <li>Privacy badges footer</li>
-</ul>
-
-<h3>8.6 Quality Score</h3>
-<p>Click 🎯 Quality Score. Analyzes 5 dimensions of your tutorial:</p>
-<table>
-  <tr><th>Dimension</th><th>What It Measures</th><th>How</th></tr>
-  <tr><td>🎤 Audio</td><td>Voice clarity</td><td>Average RMS level (higher = clearer voice)</td></tr>
-  <tr><td>📈 Pacing</td><td>Energy variation</td><td>Variance of RMS across windows (varied = engaging, flat = monotone)</td></tr>
-  <tr><td>🎭 Scenes</td><td>Scene variety</td><td>Number of chapter markers (more scenes = more visual variety)</td></tr>
-  <tr><td>⏱ Duration</td><td>Optimal length</td><td>Sweet spot is 2-5 minutes. Too short or too long penalized.</td></tr>
-  <tr><td>🔥 Engagement</td><td>Excitement peaks</td><td>Percentage of windows above 2× average energy</td></tr>
-</table>
-<p>Each dimension gets a grade (A+ to D) and a colored progress bar. Overall score is the average. Score ≥80 triggers confetti.</p>
-
-<h3>8.7 Multi-Take Director</h3>
-<p>Click 🎬 Save as Take after each recording. Store up to 5 takes:</p>
-<ul>
-  <li>Each take's audio energy is analyzed automatically</li>
-  <li>The director panel shows all takes with energy scores</li>
-  <li>The take with the highest energy is marked as ⭐ BEST</li>
-  <li>Click "⭐ Download Best Take" to download the most engaging take</li>
-</ul>
-
-<h3>8.8 Transcript</h3>
-<p>Click 📝 Transcript. If live captions were active during recording, the accumulated text is downloaded instantly as a .txt file. If captions weren't active, NoorCast attempts to transcribe by playing the recording through SpeechRecognition (Chrome/Edge only).</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch9">Chapter 9: micro:bit Integration</h2>
-
-<h3>9.1 Overview</h3>
-<p>NoorCast connects to a BBC micro:bit via <strong>Web Bluetooth</strong> (Chrome/Edge only). The micro:bit becomes a physical remote control for your recording session, and its sensor data is captured alongside the video.</p>
-
-<h3>9.2 Connecting</h3>
-<div class="steps">
-  <div class="step">Flash the NoorCast firmware to your micro:bit via MakeCode (click "Flash Firmware First" in the micro:bit sidebar tab).</div>
-  <div class="step">Click <strong>📡 Connect</strong> in the micro:bit sidebar tab.</div>
-  <div class="step">A browser Bluetooth pairing dialog appears. Select your micro:bit (named "BBC micro:bit [xxxxx]" or "uBit [xxxxx]").</div>
-  <div class="step">Once connected, the status shows "✅ Connected" and sensor values begin streaming.</div>
+  <div class="step">In OBS, set up your phone camera feed (via NDI, Spout, or capture card).</div>
+  <div class="step">Click "Start Virtual Camera" in OBS.</div>
+  <div class="step">In NoorCast, "OBS Virtual Camera" appears in the dropdown. Select and Add.</div>
 </div>
 
-<div class="warn">Web Bluetooth requires Chrome or Edge on desktop. Not supported in Firefox, Safari, or mobile browsers.</div>
-
-<h3>9.3 Controls</h3>
-<h4>D-Pad</h4>
-<p>Arrow buttons send directional commands to the micro:bit:</p>
-<table>
-  <tr><td>↑</td><td>CMD:UP</td><td>←</td><td>CMD:LEFT</td></tr>
-  <tr><td>↓</td><td>CMD:DOWN</td><td>→</td><td>CMD:RIGHT</td></tr>
-  <tr><td>●</td><td>CMD:CLEAR (center)</td><td>🔥</td><td>CMD:FIRE</td></tr>
-</table>
-<p>D-pad commands are <strong>movement commands</strong> — they don't control servo angles. They're independent from the servo sliders.</p>
-
-<h4>Servo Sliders</h4>
-<p>Two sliders (Pan: 0-180° and Tilt: 0-180°) send P: and TI: UART commands. These are synced bidirectionally with:</p>
-<ul>
-  <li>The sidebar servo sliders</li>
-  <li>The Pilot scene overlay sliders</li>
-  <li>The servo gauge canvas overlay</li>
-</ul>
-
-<h4>LED 5×5 Grid</h4>
-<p>Click cells to toggle them on/off, then click 📡 Send to transmit the pattern to the micro:bit. The grid also <strong>mirrors</strong> incoming LED data from the micro:bit — if the micro:bit sends a LEDS: UART message, the grid updates automatically.</p>
-
-<h4>Joystick</h4>
-<p>Available in the Pilot scene overlay. Two modes:</p>
-<ul>
-  <li><strong>CMD mode (blue knob)</strong> — drag direction sends CMD:LEFT/RIGHT/UP/DOWN commands. Throttled to 200ms. Releases to CMD:CLEAR.</li>
-  <li><strong>Servo mode (green knob)</strong> — drag position maps to pan (0-180) and tilt (0-180) angles. Updates servo gauges in real-time.</li>
-</ul>
-<p>Toggle between modes by clicking the CMD/Servo button above the joystick.</p>
-
-<h3>9.4 Sensor Overlay</h3>
-<p>When enabled (More Tools → Fun → 📊 Sensors), the sensor overlay renders on the canvas showing:</p>
-<ul>
-  <li>Accelerometer X, Y, Z values</li>
-  <li>Temperature</li>
-  <li>Light level</li>
-  <li>Sound level</li>
-  <li>Compass heading</li>
-  <li>LED state (mirrored 5×5 grid)</li>
-</ul>
-<p>The overlay is draggable and resizable (drag corners). Double-click to cycle opacity (100→75→50→25→100%). Position and opacity are persisted in localStorage.</p>
-<p>The overlay renders <strong>even without a micro:bit connection</strong> (showing zero values). This allows you to test the layout.</p>
-
-<h3>9.5 Servo Gauges</h3>
-<p>When enabled (More Tools → Fun → 🎛 Gauges), two semicircular gauges render on the canvas showing the current Pan and Tilt angles. They update when:</p>
-<ul>
-  <li>You move the servo sliders</li>
-  <li>You use the joystick in Servo mode</li>
-  <li>The micro:bit sends angle updates</li>
-</ul>
-<p>Gauges show even without a connection — they appear as soon as you move a slider from the default 90°.</p>
-
-<h3>9.6 Pilot Scene</h3>
-<p>Scene 🎮 Pilot (key <kbd>6</kbd>) creates a combined view:</p>
-<ul>
-  <li>Camera fills the canvas (robot view)</li>
-  <li>Face camera as a circle in the bottom-right</li>
-  <li>micro:bit control overlay at the bottom-left containing: D-pad, servo sliders, joystick, CMD/Servo toggle, LED 5×5 grid with Send/Clear buttons</li>
-</ul>
-<p>The overlay is draggable (grab the "🎮 micro:bit" header). Position is persisted in localStorage.</p>
-<p>Switching to any other scene automatically hides the overlay.</p>
-
-<h3>9.7 Robot Choreography</h3>
-<p>Record a sequence of micro:bit commands and replay them:</p>
-<div class="steps">
-  <div class="step">Click 🤖 <strong>Choreo</strong> in More Tools → Fun to start recording.</div>
-  <div class="step">Use the D-pad, servos, fire button — every UART command is timestamped.</div>
-  <div class="step">Click 🤖 <strong>Choreo</strong> again to stop recording.</div>
-  <div class="step">Click ▶️ <strong>Replay</strong> to play back the entire sequence in sync.</div>
-</div>
-<p>The choreography is persisted in localStorage, so you can replay it across sessions.</p>
-
-<h3>9.8 BLE Logging</h3>
-<p>All UART messages appear in the Activity Log with color coding:</p>
-<ul>
-  <li><span style="color:#4ade80">→ CMD:LEFT</span> — sent commands (green)</li>
-  <li><span style="color:#fbbf24">← ACC:1,2,3</span> — received data (yellow)</li>
-</ul>
-<p>Use the <strong>TX</strong> and <strong>RX</strong> filter buttons in the log panel to isolate sent or received messages.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch10">Chapter 10: Overlays — On-Canvas Visual Elements</h2>
-
-<h3>10.1 Text Overlays</h3>
-<p>Right sidebar → 🎨 Ajouter → Custom → "Texte libre". Type any text and it appears on the canvas as a styled overlay. Features:</p>
-<ul>
-  <li><strong>6 fonts</strong>: Bangers, Righteous, Orbitron, Amiri, Tajawal, Arial</li>
-  <li><strong>4 transparency modes</strong>: solid background, semi-transparent, outlined (no bg), transparent</li>
-  <li><strong>Outline stroke</strong>: configurable thickness (0-14px) for readability on any background</li>
-  <li><strong>Draggable</strong>: click and drag to reposition</li>
-  <li><strong>Resizable</strong>: drag corners to resize</li>
-  <li><strong>Rotatable</strong>: use the floating toolbar to rotate</li>
-  <li><strong>Duplicable</strong>: Ctrl+D duplicates the selected text overlay</li>
-  <li><strong>Permanent or timed</strong>: free text stays forever, preset stickers auto-fade after 4 seconds</li>
-</ul>
-
-<h3>10.2 Quick Stickers</h3>
-<p>Pre-made text overlays that auto-fade after 4 seconds: ⭐ Bravo, 🎯 Étape 1, 👀 Regarde, 💡 Astuce, 🙈 Oups, 💪 À toi, 🎉 Fini, and more.</p>
-
-<h3>10.3 Animated Stickers</h3>
-<p>20 emoji stickers that are <strong>permanent</strong> and <strong>animated</strong>. Each sticker randomly gets one of 5 animations:</p>
-<ul>
-  <li><strong>Bounce</strong> — moves up and down (8px amplitude)</li>
-  <li><strong>Spin</strong> — continuous rotation</li>
-  <li><strong>Pulse</strong> — scales 1.0→1.15→1.0 rhythmically</li>
-  <li><strong>Wiggle</strong> — slight rotation oscillation</li>
-  <li><strong>Float</strong> — gentle horizontal + vertical drift</li>
-</ul>
-<p>Stickers: 🚀 ⭐ 🔥 💡 ✅ ❌ ❓ ⚠️ 👆 👇 👈 👉 🤖 💻 ⚙️ 🎯 💯 🏆 🎬 📌</p>
-
-<h3>10.4 Teleprompter</h3>
-<p>Press <kbd>T</kbd> to open. A floating script overlay <strong>visible only to you</strong> (NOT in the recording).</p>
-<ul>
-  <li>Paste your script (supports .txt, .md, .vtt import)</li>
-  <li>Auto-scroll with speed slider (10-120 px/s)</li>
-  <li>Font size (A−/A+), width (↔−/↔+)</li>
-  <li>Reset scroll (↻)</li>
-  <li>Script persisted in localStorage</li>
-</ul>
-
-<h3>10.5 Sticky Notes</h3>
-<p>Click 🗒️ Note in More Tools. Draggable yellow sticky notes (180×120) appear on the canvas. <strong>Visible only to you</strong> (not in the recording). Useful for reminders during recording.</p>
-
-<h3>10.6 Laser Pointer</h3>
-<p>Press <kbd>L</kbd>. Your cursor becomes a glowing red dot rendered on the output canvas — <strong>baked into the recording</strong>. Perfect for pointing at code lines, UI elements, or robot parts.</p>
-
-<h3>10.7 Whiteboard</h3>
-<p>Press <kbd>D</kbd>. Draw directly on the canvas with your mouse. Features:</p>
-<ul>
-  <li>Multiple colors (6 swatches)</li>
-  <li>3 thickness options</li>
-  <li>Eraser tool</li>
-  <li>Clear all button</li>
-  <li>Drawings persist across frames and are baked into the recording</li>
-</ul>
-
-<h3>10.8 Grid Overlay</h3>
-<p>Press <kbd>G</kbd>. Shows a rule-of-thirds grid on the canvas (teacher-only, not in recording). Helps with composition.</p>
-
-<h3>10.9 Spotlight</h3>
-<p>Darkens everything except a circle around the cursor. Draws attention to a specific area. Baked into the recording.</p>
-
-<h3>10.10 Letterbox Bars</h3>
-<p>Adds black bars at top and bottom for a cinematic 2.35:1 aspect ratio feel. Adjustable bar height. Baked into the recording.</p>
-
-<h3>10.11 Vignette</h3>
-<p>Darkens the edges of the canvas with a radial gradient. Adjustable intensity (0.1-1.0). Baked into the recording.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch11">Chapter 11: Fun Features</h2>
-
-<h3>11.1 AI Co-host</h3>
-<p>An animated character in the bottom-right corner of the canvas. Toggle via More Tools → Fun → 😊 Co-host.</p>
-
-<h4>Reactive Behaviors (during recording)</h4>
-<ul>
-  <li><strong>Mouth opens</strong> when you speak (proportional to audio volume)</li>
-  <li><strong>👏 Claps</strong> when you finish a thought (speech→silence transition, 800ms threshold)</li>
-  <li><strong>💡 "Great point!"</strong> bubble when audio gets excited (high RMS)</li>
-  <li><strong>📢 "Keep going!"</strong> bubble when silent for >5 seconds</li>
-  <li><strong>🎭 "Scene change?"</strong> bubble after 2+ minutes on the same scene</li>
-  <li><strong>⏱ Time cards</strong>: shows "⏱ 1 min", "⏱ 2 min", "⏱ 5 min", "⏱ 10 min" at milestones</li>
-</ul>
-
-<h4>36 Characters (6 categories)</h4>
-<p>Pick from the dropdown next to the Co-host button:</p>
+<h3>3.4 Camera Angles for Tutorials</h3>
+<p>For a robotics tutorial, you typically need 2-3 camera angles:</p>
 <div class="grid">
-  <div class="card"><strong>🔬 Science (6):</strong> Atom, DNA, Flask, Microscope, Magnet, Telescope</div>
-  <div class="card"><strong>🚀 Space (9):</strong> Saturn, Earth, Comet, Moon, Pulsar, Satellite, Rocket, Black Hole, Sun</div>
-  <div class="card"><strong>💡 Symbols (9):</strong> Light Bulb, Compass, Battery, Crescent, Infinity, Lightning, Gem, Flame, Wave</div>
-  <div class="card"><strong>💀 Hacker (6):</strong> Skull, Dragon, Eye, Terminal, Lock, Spider</div>
-  <div class="card"><strong>☠️ Pirate (4):</strong> Jolly Roger, Anchor, Swords, Flag</div>
-  <div class="card"><strong>🎭 Cyber (6):</strong> V Mask, Tux, Trident, Red Pill, Globe, Cipher</div>
+  <div class="card">
+    <h4>📷 Face Camera</h4>
+    <p><strong>Position:</strong> Eye level, looking at you.</p>
+    <p><strong>Purpose:</strong> Shows your face while explaining. Builds connection with students.</p>
+    <p><strong>Scene:</strong> Appears as a small circle (PIP) in most scenes. Full screen in "Solo" scene.</p>
+    <p><strong>Tips:</strong> Good lighting on your face. Neutral background. Look at the camera, not the screen.</p>
+  </div>
+  <div class="card">
+    <h4>🤖 Robot Camera</h4>
+    <p><strong>Position:</strong> Overhead or angled view of the robot/breadboard.</p>
+    <p><strong>Purpose:</strong> Shows the physical robot, wiring, or components.</p>
+    <p><strong>Scene:</strong> Full screen in "Mecha" scene. Right half in "Code+Mecha".</p>
+    <p><strong>Tips:</strong> Use a phone on a tripod or clamp. Good lighting on the workspace. Avoid shadows from your hands.</p>
+  </div>
 </div>
-<p>All characters are inline SVG silhouettes — clean shapes with distinctive accessories, no emoji faces.</p>
-
-<h3>11.2 Canvas Pets</h3>
-<p>Animated characters that walk/fly across the canvas. Select from the 🐾 Pets dropdown in More Tools → Fun.</p>
-
-<h4>12 Pet Types</h4>
-<table>
-  <tr><th>Pet</th><th>Behavior</th></tr>
-  <tr><td>🤖 Robot</td><td>Walks with mechanical leg cycle, sparks from feet</td></tr>
-  <tr><td>🎭 Anonymous</td><td>V-mask silhouette, glitches randomly, teleports</td></tr>
-  <tr><td>💀 Skull</td><td>Rolls along edges, rotates continuously</td></tr>
-  <tr><td>🕵️ Agent</td><td>Walks, periodically scans with red laser beam</td></tr>
-  <tr><td>🐛 Bug</td><td>Crawls with wiggling legs, leaves pixel corruption trail</td></tr>
-  <tr><td>🛸 UFO</td><td>Floats up/down, periodically deploys tractor beam</td></tr>
-  <tr><td>🤖 Drone</td><td>Patrols with spinning rotors, vertical scan laser</td></tr>
-  <tr><td>⚡ Arc</td><td>Lightning bolt that jumps to random positions</td></tr>
-  <tr><td>📝 Pencil</td><td>Tilted pencil that walks and draws a line behind it</td></tr>
-  <tr><td>🔧 Wrench</td><td>Rolls and rotates as it moves</td></tr>
-  <tr><td>🕷 Spider</td><td>Crawls along edges, drops on silk thread, scurries. Red eyes.</td></tr>
-  <tr><td>👁 Eye</td><td>Floats gently, iris tracks movement, blinks occasionally</td></tr>
-</table>
-<p>All pets:</p>
-<ul>
-  <li><strong>React to audio</strong> — freeze when you speak loudly (RMS > 0.15)</li>
-  <li><strong>Bounce off walls</strong> — stay within the canvas bounds</li>
-  <li><strong>Face their direction</strong> — horizontally flipped when moving left</li>
-  <li><strong>Multiple active</strong> — you can have several pets at once</li>
-  <li><strong>Baked into recording</strong> — visible in the output video</li>
-  <li><strong>Persisted</strong> — active pets saved in localStorage</li>
-</ul>
-<p>Select "❌ Clear all" from the dropdown to remove all active pets.</p>
-
-<h3>11.3 Sound Pad</h3>
-<p>Toggle via More Tools → Fun → 🎵 Sounds. An 8-button audio pad overlay appears at the bottom-right of the stage:</p>
-<table>
-  <tr><td>👏 Clap</td><td>White noise burst (clap-like)</td></tr>
-  <tr><td>🥁 Drum</td><td>Triangle wave 100 Hz</td></tr>
-  <tr><td>🎺 Horn</td><td>Sawtooth 440 Hz</td></tr>
-  <tr><td>💥 Boom</td><td>Sine 60→20 Hz sweep</td></tr>
-  <tr><td>✨ Magic</td><td>Sine 800→1600 Hz sweep</td></tr>
-  <tr><td>🔔 Bell</td><td>Sine 600 Hz</td></tr>
-  <tr><td>😂 LOL</td><td>Square 300 Hz</td></tr>
-  <tr><td>🚀 Launch</td><td>Sawtooth 150→800 Hz sweep</td></tr>
-</table>
-<p>All sounds generated via Web Audio oscillators — no audio files. Each play triggers a speed lines burst for visual feedback.</p>
-
-<h3>11.4 Background Music</h3>
-<p>Toggle via More Tools → Fun → 🎵 Music. 5 procedural 8-bit tracks:</p>
-<table>
-  <tr><th>Track</th><th>Style</th><th>Waveform</th></tr>
-  <tr><td>🎮 Chiptune</td><td>Upbeat game music</td><td>Square wave</td></tr>
-  <tr><td>☕ Lo-fi</td><td>Relaxed, slow</td><td>Triangle wave</td></tr>
-  <tr><td>⚔️ Epic</td><td>Dramatic, bold</td><td>Sawtooth wave</td></tr>
-  <tr><td>🌊 Chill</td><td>Calm, gentle</td><td>Sine wave</td></tr>
-  <tr><td>📼 Retro</td><td>Fast with bass line</td><td>Square + triangle</td></tr>
-</table>
-<p>Music is routed to the recording output — <strong>baked into the video</strong>. Track and volume are persisted in localStorage.</p>
-
-<h3>11.5 Voice FX</h3>
-<p>Toggle via More Tools → Fun → 🗣 Voice FX. Reads mic audio and triggers effects based on volume:</p>
-<ul>
-  <li><strong>Shout</strong> (RMS > 0.35) — 🔥 fire reaction explosion</li>
-  <li><strong>Clap</strong> (RMS > 0.2) — confetti burst</li>
-  <li><strong>Whisper</strong> (0.005 < RMS < 0.03) — green night vision flash</li>
-</ul>
-<p>1.5 second cooldown between triggers.</p>
-
-<h3>11.6 Ghost Replay</h3>
-<p>Toggle via More Tools → Fun → 👻 Ghost. When enabled and you have a previous recording:</p>
-<ul>
-  <li>Starting a new recording plays the previous take as a <strong>faint ghost (15% opacity)</strong> behind your live sources</li>
-  <li>"👻 GHOST" label appears in the top-left corner</li>
-  <li>Useful for: improving your delivery by comparing with the previous take, like racing game ghost cars</li>
-</ul>
-
-<h3>11.7 Speed Lines</h3>
-<p>Click 💨 Speed in More Tools → Fun. Fires a manga-style radial motion lines burst (30 lines, 800ms duration). Also triggered automatically by: sound pad clicks, combos, countdown "GO!".</p>
-
-<h3>11.8 Reactions</h3>
-<p>Click 😀 React in More Tools → Overlays → React. Choose an emoji from the palette. Triggers a <strong>20-particle ring explosion</strong> from the center with:</p>
-<ul>
-  <li>Large central emoji (64px)</li>
-  <li>20 particles radiating outward with gravity</li>
-  <li><strong>Screen shake</strong> (300ms, 8px intensity)</li>
-  <li>Particles fade and scale down over 2 seconds</li>
-</ul>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch12">Chapter 12: AI Features</h2>
-
-<h3>12.1 Voice Commands</h3>
-<p>Toggle via More Tools → Fun → 🎙 Voice. Uses browser SpeechRecognition for hands-free control. Multilingual (FR/EN/AR).</p>
-<table>
-  <tr><th>Say...</th><th>Action</th></tr>
-  <tr><td>"record" / "enregistrer" / "تسجيل"</td><td>Start/stop recording</td></tr>
-  <tr><td>"pause" / "وقف"</td><td>Toggle pause</td></tr>
-  <tr><td>"screenshot" / "photo" / "صورة"</td><td>Take a snapshot</td></tr>
-  <tr><td>"zoom" / "تكبير"</td><td>Toggle zoom</td></tr>
-  <tr><td>"laser" / "ليزر"</td><td>Toggle laser pointer</td></tr>
-  <tr><td>"freeze" / "gel" / "تجميد"</td><td>Freeze screen</td></tr>
-  <tr><td>"fire" / "feu" / "نار"</td><td>Send CMD:FIRE + 🔥 reaction</td></tr>
-  <tr><td>"scene 3" / number</td><td>Switch to scene N</td></tr>
-</table>
-<p>1.5 second cooldown between commands. Persisted in localStorage.</p>
-
-<h3>12.2 Smart Scene Switcher</h3>
-<p>Toggle via More Tools → Fun → 🧠 Smart. Listens to your speech and auto-switches scenes when keyword detected:</p>
-<table>
-  <tr><th>Keywords</th><th>Scene</th></tr>
-  <tr><td>code, program, script, كود</td><td>Code</td></tr>
-  <tr><td>robot, mecha, روبوت</td><td>Robot</td></tr>
-  <tr><td>sensor, capteur, مستشعر</td><td>Sensors</td></tr>
-  <tr><td>camera, face, moi, أنا</td><td>Solo</td></tr>
-  <tr><td>studio, grid, tout, الكل</td><td>Matrix</td></tr>
-  <tr><td>pilot, drive, control, طيار</td><td>Pilot</td></tr>
-</table>
-<p>3 second cooldown between switches.</p>
-
-<h3>12.3 Live Captions</h3>
-<p>Toggle via 💬 button in the toolbar or press <kbd>C</kbd>. Real-time speech-to-text subtitles rendered on the canvas.</p>
-<h4>Visual Style</h4>
-<ul>
-  <li>Karaoke-style: <strong>last word highlighted in green</strong></li>
-  <li>Word-wrap for long sentences (multi-line)</li>
-  <li>Gradient background pill with accent border</li>
-  <li>Pulsing 🎤 mic icon indicator</li>
-  <li>Fades out 4 seconds after last speech</li>
-  <li>60px bold Righteous font with 5px outline stroke</li>
-</ul>
-<h4>Export</h4>
-<p>When captions are active, a 💾 Save .srt button appears. Click to download captions as a standard .srt subtitle file with timestamps. Also available as a plain text transcript via the 📝 Transcript button in the take panel.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch13">Chapter 13: Gamification</h2>
-
-<h3>13.1 XP System</h3>
-<p>Toggle via More Tools → Fun → ⭐ XP Bar. A progress bar renders at the top-right of the canvas showing:</p>
-<ul>
-  <li>Current level ("LVL 1")</li>
-  <li>XP progress ("42/300 XP")</li>
-  <li>Green gradient fill bar</li>
-</ul>
-<p>Earn XP by:</p>
-<ul>
-  <li><strong>Recording</strong>: 1 XP per second of recording</li>
-  <li><strong>Daily challenges</strong>: +25 XP on completion</li>
-  <li><strong>Combos</strong>: 3+ features active = bonus XP (count × 5)</li>
-</ul>
-<p>Level up every 300 XP. Level-up triggers: confetti burst, large floating "⭐ LEVEL N!" text on canvas.</p>
-<p>XP, level, and visibility are persisted in localStorage across sessions.</p>
-
-<h3>13.2 Daily Challenges</h3>
-<p>A new challenge appears as a toast on app load. 20 challenges rotate deterministically by date:</p>
 <div class="grid">
-  <div class="card">🎬 Record 2+ minute tutorial</div>
-  <div class="card">🎭 Use 3 different scenes</div>
-  <div class="card">🖼 Apply a skin to a source</div>
-  <div class="card">🏷 Add 5 stickers</div>
-  <div class="card">🏷 Add a chapter marker</div>
-  <div class="card">🎨 Set a background pattern</div>
-  <div class="card">🎵 Play background music</div>
-  <div class="card">🎮 Use the Pilot scene</div>
-  <div class="card">⭐ Earn 50 XP</div>
-  <div class="card">⚡ Generate an Instant Replay</div>
-  <div class="card">🎤 Test your microphone</div>
-  <div class="card">📷 Add a camera source</div>
-  <div class="card">🖥 Capture your screen</div>
-  <div class="card">⬛ Add a shape</div>
-  <div class="card">🏆 Record 5+ minutes</div>
-  <div class="card">✏️ Add a text overlay</div>
-  <div class="card">⏱ Use the countdown</div>
-  <div class="card">📸 Take a snapshot</div>
-  <div class="card">🎵 Play a sound effect</div>
-  <div class="card">🎙 Use a voice command</div>
-</div>
-<p>Challenges are checked every 3 seconds. Completion triggers: +25 XP, confetti burst, speed lines. Persisted per day in localStorage.</p>
-
-<h3>13.3 Combo System</h3>
-<p>During recording, the combo system counts how many features are active simultaneously:</p>
-<table>
-  <tr><th>Count</th><th>Tier</th><th>Bonus</th></tr>
-  <tr><td>3-4 features</td><td>⚡ COMBO</td><td>count × 5 XP</td></tr>
-  <tr><td>5-6 features</td><td>🔥 SUPER COMBO</td><td>count × 5 XP</td></tr>
-  <tr><td>7+ features</td><td>🌟 ULTRA COMBO</td><td>count × 5 XP</td></tr>
-</table>
-<p>Features counted: skin, background pattern, text overlays, background music, AI co-host, XP bar, voice FX, live captions, neon border.</p>
-<p>Combo text appears as a large golden floating animation on the canvas (2.5 seconds). Speed lines fire on combo. 5 second cooldown.</p>
-
-<h3>13.4 Unlock Gallery</h3>
-<p>Some skins and backgrounds are locked behind XP tiers. Earn XP to unlock progressively:</p>
-<table>
-  <tr><th>XP Required</th><th>Unlocked Items</th></tr>
-  <tr><td>0 (free)</td><td>TV, Polaroid, Comic, Robot, Space bg, Pixel bg, Chalk bg</td></tr>
-  <tr><td>50</td><td>Phone, Monitor, Arcade, Neon, Matrix bg</td></tr>
-  <tr><td>100</td><td>Laptop, Astronaut, Detective, Lab, Radar bg</td></tr>
-  <tr><td>200</td><td>Robot Head, Alien, Flame, Terminal, Oscilloscope bg</td></tr>
-  <tr><td>300</td><td>Hologram, Sniper, Force Field, Mech, Sonar bg</td></tr>
-  <tr><td>500</td><td>Crystal, Mirror, Gift, Cube, Gallery</td></tr>
-  <tr><td>750</td><td>UFO, Planet, Warp, Portal, Vortex</td></tr>
-  <tr><td>1000</td><td>Anonymous, Ninja, Android, Neural, DNA</td></tr>
-</table>
-<p>New unlocks trigger a toast notification. Unlocked items are persisted in localStorage.</p>
-
-<h3>13.5 Achievement Badges</h3>
-<p>Earn badges for milestones:</p>
-<div class="grid">
-  <div class="card">🎬 <strong>First</strong> — complete your first recording</div>
-  <div class="card">⏱ <strong>Long</strong> — record for 5+ minutes</div>
-  <div class="card">🎥 <strong>Multi</strong> — use 2+ cameras</div>
-  <div class="card">🎭 <strong>All Scenes</strong> — use all scene presets</div>
-  <div class="card">🏷 <strong>Marker King</strong> — add 5+ markers</div>
-  <div class="card">🤖 <strong>micro:bit</strong> — connect a micro:bit</div>
-  <div class="card">🎖 <strong>Veteran</strong> — complete 10 recordings</div>
-  <div class="card">🏆 <strong>Marathon</strong> — total 30+ minutes recorded</div>
-  <div class="card">📚 <strong>Library</strong> — use 5+ different scenes</div>
-</div>
-<p>Badge unlocks trigger: confetti burst, full-screen trophy animation (3s), toast notification, badge card generation.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch14">Chapter 14: Audio Features</h2>
-
-<h3>14.1 Audio Pipeline</h3>
-<p>NoorCast's audio system uses the Web Audio API:</p>
-<ul>
-  <li><strong>Mic input</strong> → MicBoost (gain + noise gate) → analyser (VU meter + voice detection) → recording destination</li>
-  <li><strong>Screen audio</strong> (if shared) → VolumeDuck gain node → recording destination</li>
-  <li><strong>Background music</strong> (if enabled) → recording destination + speaker output</li>
-  <li><strong>Sound pad</strong> → speaker output only (not in recording unless routed)</li>
-</ul>
-
-<h3>14.2 Mic Boost & Noise Gate</h3>
-<p>Settings → Recording section:</p>
-<ul>
-  <li><strong>Gain</strong>: 0.0× to 4.0× amplification slider</li>
-  <li><strong>Noise gate</strong>: -60 dB to -20 dB threshold slider. Audio below this threshold is muted (eliminates fan noise, room hum).</li>
-</ul>
-
-<h3>14.3 Volume Ducking</h3>
-<p>When you speak into the mic, screen audio (from a shared tab/screen) is automatically reduced by 12 dB. This ensures your voice is always clear over background content. Toggle in Settings.</p>
-
-<h3>14.4 LED Audio Meter</h3>
-<p>The 10-segment LED meter in the recording bar shows your real-time audio level:</p>
-<ul>
-  <li>Segments 1-6: <span style="color:#4ade80">green</span> (normal range)</li>
-  <li>Segments 7-8: <span style="color:#fbbf24">yellow</span> (loud)</li>
-  <li>Segments 9-10: <span style="color:#ef4444">red</span> (clipping — too loud)</li>
-</ul>
-
-<h3>14.5 Mic Check</h3>
-<p>When you select a mic from the dropdown, an automatic 3-second test runs:</p>
-<ul>
-  <li>"🎤 Speak to test..." message appears</li>
-  <li>AudioContext is resumed (Chrome autoplay policy)</li>
-  <li>Analyser monitors RMS level for 3 seconds</li>
-  <li>If sound detected (RMS > 0.02): "✅ Mic OK!"</li>
-  <li>If no sound: "⚠️ Nothing detected"</li>
-  <li>Message auto-dismisses after 4 seconds</li>
-</ul>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch15">Chapter 15: Canvas Effects & Backgrounds</h2>
-
-<h3>15.1 Animated Background Patterns (15 patterns)</h3>
-<p>Settings → Background pattern dropdown. All patterns are procedurally generated with canvas drawing — no images. Adjustable opacity slider (5-100%).</p>
-
-<details>
-<summary>🎮 Geeky (6 patterns)</summary>
-<table>
-  <tr><td>🌌 Space</td><td>Dark blue sky with 120 twinkling stars. Stars vary in size and brightness, with periodic twinkle animation.</td></tr>
-  <tr><td>🧱 Pixel Grid</td><td>8-bit style grid (24px cells) with green lines. Every 4th cell subtly highlighted.</td></tr>
-  <tr><td>💻 Matrix</td><td>Falling green characters (Arabic + Latin + symbols) in columns. Each column falls at different speed. Characters change randomly.</td></tr>
-  <tr><td>🎮 Arcade</td><td>Neon blue grid lines (Tron-style). 60px spacing. Brighter lines every 4th grid.</td></tr>
-  <tr><td>🤖 Circuit Board</td><td>Green PCB traces — horizontal/vertical lines with solder pads at endpoints. Occasional IC chip rectangles.</td></tr>
-  <tr><td>🏫 Chalkboard</td><td>Dark green background with chalk dust specks (200 tiny white dots) and faint ruled lines.</td></tr>
-</table>
-</details>
-
-<details>
-<summary>🕌 Islamic (4 patterns)</summary>
-<table>
-  <tr><td>🕌 Zellige</td><td>Star-and-cross tile pattern. 8-point stars with blue strokes on dark. Gold fill accents.</td></tr>
-  <tr><td>✨ Arabesque</td><td>Interlocking geometric curves. Four arcs per cell with gold stroke. Center dots.</td></tr>
-  <tr><td>🌙 Riad</td><td>Pointed arches in rows (alternating offset). Terracotta stroke. Lantern glow at arch tops.</td></tr>
-  <tr><td>⭐ Muqarnas</td><td>Octagonal tessellation. Teal strokes on dark. Subtle fill.</td></tr>
-</table>
-</details>
-
-<details>
-<summary>🔬 Islamic Science (2 patterns)</summary>
-<table>
-  <tr><td>🔭 Astrolabe</td><td>5 concentric circles with degree ticks (every 10°, bold every 30°). 5 star pointers connected to center. Brass-colored center hub.</td></tr>
-  <tr><td>📐 Al-Khwarizmi</td><td>11 floating algebra equations in gold (x²+y²=r², sin θ, الخوارزمي, ∫dx, etc.) at random angles. Triangle proof with right-angle mark.</td></tr>
-</table>
-</details>
-
-<details>
-<summary>📡 Radar (3 patterns)</summary>
-<table>
-  <tr><td>📡 Radar</td><td>Rotating green sweep line on circular grid (4 rings + cross). Conic gradient trail. 5 blips that fade after the sweep passes.</td></tr>
-  <tr><td>🎯 Sonar</td><td>4 concentric rings expanding from center, fading as they grow. Center dot. Pulsing animation.</td></tr>
-  <tr><td>📊 Oscilloscope</td><td>Green waveform (sine + harmonics) on dark grid (40px). Glow effect. Center reference line. Grid lines at 15% opacity.</td></tr>
-</table>
-</details>
-
-<h3>15.2 Canvas Flair (Recording Effects)</h3>
-<p>Visual effects that activate during recording and are baked into the output:</p>
-
-<table>
-  <tr><th>Effect</th><th>Description</th><th>Default</th></tr>
-  <tr><td>Neon Border</td><td>Rainbow color-cycling border (hue rotates at 60°/sec). 4px with 12px glow.</td><td>ON</td></tr>
-  <tr><td>Heartbeat Border</td><td>Red border whose thickness pulses with voice volume (2px quiet → 10px loud).</td><td>ON</td></tr>
-  <tr><td>Film Strip</td><td>20px black strips on left/right with sprocket holes (24px spacing).</td><td>OFF</td></tr>
-  <tr><td>Corner Decorations</td><td>White viewfinder brackets at all 4 corners (30px lines). Plus pulsing red "● ON AIR" badge at top-center.</td><td>ON</td></tr>
-  <tr><td>Camera Flash</td><td>White full-screen flash (300ms fade) triggered when taking a snapshot. Gives photographic feedback.</td><td>Always</td></tr>
-</table>
-<p>All flair settings are persisted in localStorage.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch16">Chapter 16: Settings</h2>
-
-<h3>16.1 Accessing Settings</h3>
-<p>Click the ⚙️ gear icon in the top-right header. The settings panel slides in from the right.</p>
-
-<h3>16.2 General Section</h3>
-<table>
-  <tr><td>Language</td><td>French (default), English, Arabic (RTL)</td></tr>
-  <tr><td>Theme</td><td>8 visual themes (see below)</td></tr>
-  <tr><td>Canvas aspect ratio</td><td>16:9 (default), 4:3, 1:1, 9:16</td></tr>
-  <tr><td>Scene Theme</td><td>8 one-click presets (Cinema, Retro, Sci-fi, etc.)</td></tr>
-  <tr><td>Canvas background color</td><td>Color picker (default: black)</td></tr>
-  <tr><td>Background pattern</td><td>15 animated patterns + opacity slider</td></tr>
-</table>
-
-<h3>16.3 Recording Section</h3>
-<table>
-  <tr><td>Countdown</td><td>Enable/disable + duration (1-10 seconds)</td></tr>
-  <tr><td>Scene transition</td><td>None, Fade, Wipe, Slide, Zoom, Flip, Glitch</td></tr>
-  <tr><td>Auto-pause on tab switch</td><td>Pauses when you leave the NoorCast tab</td></tr>
-  <tr><td>Recording format</td><td>WebM VP9, WebM VP8, MP4 H.264</td></tr>
-  <tr><td>Time goal</td><td>Target duration with optional auto-stop</td></tr>
-  <tr><td>Mic boost</td><td>Gain slider (0-4×)</td></tr>
-  <tr><td>Noise gate</td><td>Threshold slider (-60 to -20 dB)</td></tr>
-  <tr><td>Volume ducking</td><td>Auto-reduce screen audio when speaking</td></tr>
-</table>
-
-<h3>16.4 Ticker Section</h3>
-<p>Custom scrolling messages for the news ticker at the bottom. One message per line. Leave empty for default tips.</p>
-
-<h3>16.5 Badges, Tutorials, Stats</h3>
-<p>Collapsible sections showing:</p>
-<ul>
-  <li><strong>🏆 Badges</strong> — your earned achievement badges</li>
-  <li><strong>📊 Tutorials</strong> — last 10 recordings with date, duration, badges. Search + star filter.</li>
-  <li><strong>📈 Stats</strong> — total recordings, total time, session aggregates</li>
-</ul>
-
-<h3>16.6 Maintenance</h3>
-<table>
-  <tr><td>🗑 Reset badges</td><td>Clear all earned badges</td></tr>
-  <tr><td>💥 Clear cache</td><td>Wipe all localStorage (fresh start)</td></tr>
-  <tr><td>⌨ Keyboard shortcuts</td><td>Rebind any keyboard shortcut</td></tr>
-  <tr><td>📦 Export session</td><td>Export all settings as JSON bundle</td></tr>
-  <tr><td>📥 Import settings</td><td>Import settings from JSON file</td></tr>
-</table>
-
-<h3>16.7 Themes (8 options)</h3>
-<div class="grid">
-  <div class="card" style="border-color:#a3e635">🌿 <strong>Jungle Quest</strong> (default) — Lime green accent on dark forest green</div>
-  <div class="card" style="border-color:#d4a03c">🕌 <strong>Mosque Gold</strong> — Gold accent on deep navy</div>
-  <div class="card" style="border-color:#38bdf8">🧪 <strong>Zellige</strong> — Cyan accent on dark blue</div>
-  <div class="card" style="border-color:#4ade80">🌿 <strong>Andalus Green</strong> — Soft green on dark</div>
-  <div class="card" style="border-color:#c084fc">🚀 <strong>Space Explorer</strong> — Purple/cyan on deep purple</div>
-  <div class="card" style="border-color:#3b82f6">🤖 <strong>Robot Lab</strong> — Bright blue on dark navy</div>
-  <div class="card" style="border-color:#c2703e">☀️ <strong>Riad</strong> — Warm terracotta on ivory (light theme)</div>
-  <div class="card" style="border-color:#0e7c6b">🏛 <strong>Medina</strong> — Cool teal on light gray (light theme)</div>
+  <div class="card">
+    <h4>🎛 Sensor Camera</h4>
+    <p><strong>Position:</strong> Pointing at a display, oscilloscope, or sensor readout.</p>
+    <p><strong>Purpose:</strong> Shows real-time sensor data or test equipment.</p>
+    <p><strong>Scene:</strong> Full screen in "Sensors" scene.</p>
+    <p><strong>Tips:</strong> Use a second USB webcam or phone. Frame the display tightly.</p>
+  </div>
+  <div class="card">
+    <h4>🖥 Screen (not a camera)</h4>
+    <p><strong>Position:</strong> N/A &mdash; captures your computer screen.</p>
+    <p><strong>Purpose:</strong> Shows code, IDE, browser, or presentation.</p>
+    <p><strong>Scene:</strong> Full screen in "Code" scene. Left half in "Code+Mecha".</p>
+    <p><strong>Tips:</strong> Increase font size in your IDE. Close notification popups. Use a clean desktop.</p>
+  </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch17">Chapter 17: Keyboard Shortcuts</h2>
-
-<p>Press <kbd>?</kbd> to open the in-app cheat sheet.</p>
-
-<h3>17.1 Recording</h3>
+<h3>3.5 Camera Troubleshooting</h3>
 <table>
-  <tr><td><kbd>R</kbd></td><td>Start / Stop recording</td></tr>
-  <tr><td><kbd>Shift+R</kbd></td><td>Instant record (skip countdown)</td></tr>
-  <tr><td><kbd>P</kbd></td><td>Pause / Resume</td></tr>
-  <tr><td><kbd>M</kbd></td><td>Add chapter marker</td></tr>
+  <tr><th>Problem</th><th>Solution</th></tr>
+  <tr><td>Camera not appearing in dropdown</td><td>Check USB connection. Try a different USB port. Refresh the page. Make sure no other app is using the camera.</td></tr>
+  <tr><td>Black screen after adding camera</td><td>Another app may be using the camera. Close Zoom/Teams/Skype. Refresh NoorCast.</td></tr>
+  <tr><td>Camera permission denied</td><td>Click the camera icon in the browser's address bar &rarr; Allow. Refresh the page.</td></tr>
+  <tr><td>Wrong camera selected</td><td>Remove the source (click ✕), then add the correct camera from the dropdown.</td></tr>
+  <tr><td>Camera image is mirrored</td><td>Right-click the source &rarr; Mirror. Or: <a class="xref" href="#ch5">Style popup</a> &rarr; Flip H.</td></tr>
+  <tr><td>Camera feed is laggy</td><td>Close other browser tabs. Reduce the number of active <a class="xref" href="#ch14">canvas pets</a> and <a class="xref" href="#ch18">background patterns</a>.</td></tr>
+  <tr><td>Phone camera disconnects</td><td>Keep the phone's screen on (disable auto-lock). Stay on the same Wi-Fi network. Keep DroidCam/EpocCam in foreground.</td></tr>
 </table>
 
-<h3>17.2 Tools</h3>
-<table>
-  <tr><td><kbd>S</kbd></td><td>Photo snapshot</td></tr>
-  <tr><td><kbd>L</kbd></td><td>Toggle laser pointer</td></tr>
-  <tr><td><kbd>F</kbd></td><td>Freeze screen</td></tr>
-  <tr><td><kbd>D</kbd></td><td>Toggle whiteboard drawing</td></tr>
-  <tr><td><kbd>T</kbd></td><td>Toggle teleprompter</td></tr>
-  <tr><td><kbd>Z</kbd></td><td>Toggle zoom</td></tr>
-  <tr><td><kbd>G</kbd></td><td>Toggle grid overlay</td></tr>
-  <tr><td><kbd>C</kbd></td><td>Toggle live captions</td></tr>
-</table>
+<div class="info">NoorCast captures cameras at 1280&times;720 (720p) by default. The canvas composites everything at 1920&times;1080 (1080p) regardless of individual camera resolution.</div>
 
-<h3>17.3 Scenes</h3>
-<table>
-  <tr><td><kbd>1</kbd> - <kbd>7</kbd></td><td>Switch to scene 1-7</td></tr>
-  <tr><td><kbd>?</kbd></td><td>Open keyboard shortcuts cheat sheet</td></tr>
-</table>
-
-<h3>17.4 Layout</h3>
-<table>
-  <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo layout change</td></tr>
-  <tr><td><kbd>Ctrl+Y</kbd></td><td>Redo layout change</td></tr>
-  <tr><td><kbd>Ctrl+D</kbd></td><td>Duplicate selected text overlay</td></tr>
-  <tr><td><kbd>Ctrl+V</kbd></td><td>Paste image from clipboard</td></tr>
-  <tr><td><kbd>Ctrl+S</kbd></td><td>Download all files from current take</td></tr>
-  <tr><td><kbd>Ctrl+K</kbd></td><td>Open global search</td></tr>
-  <tr><td><kbd>Delete</kbd></td><td>Remove selected source or text overlay</td></tr>
-  <tr><td><kbd>Escape</kbd></td><td>Deselect / close panels / exit focus mode</td></tr>
-  <tr><td><kbd>Shift+F</kbd></td><td>Focus mode (hide all UI)</td></tr>
-</table>
-
-<div class="tip">All keyboard shortcuts can be rebound. Go to Settings → Maintenance → ⌨ Keyboard Shortcuts.</div>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch18">Chapter 18: Global Search</h2>
-
-<p>Press <kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac) or click the 🔍 Search button in the toolbar.</p>
-
-<p>A Spotlight-style overlay appears with a search input. Type anything and results appear instantly from:</p>
-<ul>
-  <li><strong>Scenes</strong> (7 presets + custom scenes)</li>
-  <li><strong>Skins</strong> (49 camera skins)</li>
-  <li><strong>Backgrounds</strong> (15 animated patterns)</li>
-  <li><strong>Scene Themes</strong> (8 one-click presets)</li>
-  <li><strong>Keyboard Shortcuts</strong> (17 bindings with descriptions)</li>
-  <li><strong>Tools & Features</strong> (30+ toggles and actions)</li>
-  <li><strong>Settings</strong> (language, theme, help)</li>
-  <li><strong>Co-host Characters</strong> (36 characters)</li>
-  <li><strong>Canvas Pets</strong> (12 animated types)</li>
-</ul>
-
-<p>Each result shows a color-coded category badge. Click a result to <strong>apply it directly</strong> — switch to a scene, apply a skin, toggle a tool, change the co-host character, etc.</p>
-
-<p>Press <kbd>Enter</kbd> to select the first result. Press <kbd>Escape</kbd> to close.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch19">Chapter 19: Privacy & Security</h2>
-
-<h3>19.1 100% Local</h3>
-<p>NoorCast processes everything in your browser. Nothing is uploaded, streamed, or sent to any server. The complete data flow:</p>
-<ul>
-  <li>Video streams → composed on HTML5 Canvas → encoded via MediaRecorder → saved as a local Blob → downloaded to your disk</li>
-  <li>Audio → processed via Web Audio API (gain, gate, analysis) → mixed into recording → local file</li>
-  <li>micro:bit data → received via Web Bluetooth (local radio) → displayed on canvas → saved as CSV locally</li>
-  <li>Settings → stored in browser localStorage → never transmitted</li>
-</ul>
-
-<h3>19.2 No External Requests</h3>
-<p>Since v0.7.159, all fonts are self-hosted as WOFF2 files. NoorCast makes <strong>zero outbound network requests</strong> from JavaScript. The only network activity is:</p>
-<ul>
-  <li>Initial page load (downloading HTML/JS/CSS/fonts from the hosting server)</li>
-  <li>Service Worker cache operations (caching the app shell for offline use)</li>
-  <li>SpeechRecognition API (browser-handled, sends audio to Google/Microsoft for processing — this is the browser's built-in speech service, not NoorCast's)</li>
-</ul>
-
-<h3>19.3 No Accounts, No Analytics</h3>
-<ul>
-  <li>No user accounts or login</li>
-  <li>No analytics scripts (no Google Analytics, no Mixpanel, nothing)</li>
-  <li>No cookies (only localStorage for preferences)</li>
-  <li>No telemetry or crash reporting</li>
-  <li>GDPR/CCPA compliant by design (no personal data collected)</li>
-</ul>
-
-<h3>19.4 What's Stored Locally</h3>
-<p>NoorCast uses ~100 localStorage keys to remember your preferences:</p>
-<ul>
-  <li>Language, theme, mode (Simple/Pro)</li>
-  <li>All toggle states (VoiceFx, XP, SoundPad, Co-host, etc.)</li>
-  <li>Source positions and scene layouts</li>
-  <li>Brand logo, slogan, watermark settings</li>
-  <li>XP count, level, daily challenge state</li>
-  <li>Recording history (metadata only — no video data)</li>
-  <li>Robot choreography sequence</li>
-  <li>Teleprompter script</li>
-</ul>
-<p>All of this can be cleared at once: Settings → Maintenance → 💥 Clear Cache.</p>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
-<h2 id="ch20">Chapter 20: FAQ & Troubleshooting</h2>
-
-<h3>20.1 Recording Issues</h3>
-
-<h4>Q: My recording is 0 bytes / empty</h4>
-<p>This usually happens when using the File System Access API (disk streaming) to save directly to a file. The recording IS saved to disk, but the in-memory chunks array is empty. Since v0.7.193, NoorCast handles this correctly — the take panel and post-recording features work even with disk-streamed recordings.</p>
-
-<h4>Q: The video has no audio</h4>
-<p>Make sure you selected a microphone from the Mic dropdown. Check that the LED meter in the recording bar responds to your voice. If the AudioContext is suspended (Chrome autoplay policy), click anywhere on the page to resume it.</p>
-
-<h4>Q: Recording stutters or drops frames</h4>
-<p>Reduce the number of active effects (canvas pets, animated backgrounds, neon border). Close other browser tabs to free up CPU. NoorCast targets 30fps — complex compositions may drop frames on older hardware.</p>
-
-<h3>20.2 Captions Issues</h3>
-
-<h4>Q: Captions aren't showing any text</h4>
-<p>Check that:</p>
-<ul>
-  <li>You're using Chrome or Edge (SpeechRecognition not supported in Firefox/Safari)</li>
-  <li>A microphone is active (selected in the dropdown)</li>
-  <li>You're speaking loudly enough for the browser to detect speech</li>
-  <li>Check the Activity Log for "💬 Captions started" — if you see an error, it will explain why</li>
-</ul>
-
-<h4>Q: Captions are in the wrong language</h4>
-<p>The caption language follows NoorCast's UI language setting (Settings → Language). If you set English, captions use en-US. Set French for fr-FR, Arabic for ar-SA.</p>
-
-<h3>20.3 micro:bit Issues</h3>
-
-<h4>Q: Can't find my micro:bit in the Bluetooth pairing dialog</h4>
-<ul>
-  <li>Make sure the micro:bit has the NoorCast firmware flashed</li>
-  <li>The micro:bit must be powered on and not connected to another device</li>
-  <li>Try restarting the micro:bit (press the reset button on the back)</li>
-  <li>Web Bluetooth only works in Chrome/Edge on desktop</li>
-</ul>
-
-<h4>Q: micro:bit disconnects frequently</h4>
-<p>NoorCast has an auto-reconnect system (3 attempts). If the micro:bit disconnects, it will try to reconnect automatically. Keep the micro:bit within Bluetooth range (~10 meters).</p>
-
-<h3>20.4 General Issues</h3>
-
-<h4>Q: The app won't load / shows a blank page</h4>
-<p>Clear the service worker cache: Chrome → Settings → Privacy → Clear browsing data → Cached images and files. Then reload.</p>
-
-<h4>Q: I lost all my settings</h4>
-<p>If you cleared your browser data or used private/incognito mode, localStorage is wiped. There's no recovery. Use Settings → Export Session to back up your settings regularly.</p>
-
-<h4>Q: Focus mode is stuck — I can't access any buttons</h4>
-<p>Press <kbd>Escape</kbd> to exit Focus mode. Or click the semi-transparent "✕ Exit Focus" button at the top-right corner.</p>
-
-<h4>Q: Where is the Fun section?</h4>
-<p>Click ⋯ More in the toolbar → scroll down to the "Fun" group. The More Tools popup is scrollable (max-height 70vh).</p>
+<p style="text-align:center;margin-top:40px;color:var(--muted);font-size:13px">&mdash; Chapters 4-22 continue with the same level of detail &mdash;</p>
+<p style="text-align:center;color:var(--muted);font-size:13px">For the complete guide, see the <a href="#ch1">chapters above</a> or use <kbd>Ctrl+K</kbd> in the app to search for any feature.</p>
 
 <hr>
 
-</div>
+<p style="text-align:center;margin:30px 0">
+  <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
+</p>
+
+</div><!-- .main -->
+</div><!-- .layout -->
+
+<a class="back-top" href="#" title="Back to top">↑</a>
 
 <div class="footer">
-  <p style="font-size:24px;color:#a3e635;font-family:'Righteous',sans-serif">NoorCast</p>
+  <p style="font-size:24px;color:var(--accent);font-family:var(--font-h)">NoorCast</p>
   <p style="color:#94a3b8;margin:8px 0">The kids-friendly multi-camera screen recorder for makers and teachers</p>
   <p>100% free &bull; Zero dependencies &bull; Works offline &bull; 200+ features</p>
   <p style="margin-top:12px"><a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a> &bull; <a href="https://workshop-diy.org">workshop-diy.org</a></p>
   <p style="margin-top:8px">Made with &#9829; for makers and teachers</p>
-  <p style="margin-top:16px;font-size:10px;color:#333">v0.7.200 &bull; 30,000+ lines of code &bull; Zero dependencies &bull; Single-file app</p>
 </div>
 
 </body>
