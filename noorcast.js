@@ -3588,6 +3588,7 @@ const Engine = {
     LessonGuide.render(ctx, width, height);
     AICohost.render(ctx, width, height);
     CanvasFlair.render(ctx, width, height);
+    CanvasPets.render(ctx, width, height);
     ComboSystem.tick();
     ComboSystem.render(ctx, width, height);
 
@@ -19817,6 +19818,153 @@ const SceneThemes = {
   },
 };
 
+/* v0.7.197: CanvasPets — animated characters that walk/fly across the canvas.
+   Interactive: react to audio, cursor, recording state. Baked into recording. */
+const CanvasPets = {
+  active: [],
+  types: ['robot', 'anonymous', 'skull', 'agent', 'bug', 'ufo', 'drone', 'arc', 'pencil', 'wrench', 'spider', 'eye'],
+  labels: {
+    robot: '🤖 Robot', anonymous: '🎭 Anon', skull: '💀 Skull', agent: '🕵️ Agent',
+    bug: '🐛 Bug', ufo: '🛸 UFO', drone: '🤖 Drone', arc: '⚡ Arc',
+    pencil: '📝 Pencil', wrench: '🔧 Wrench', spider: '🕷 Spider', eye: '👁 Eye',
+  },
+
+  add(type) {
+    const W = Engine.width || 1920, H = Engine.height || 1080;
+    this.active.push({
+      type, x: Math.random() * W, y: H - 40,
+      vx: (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 2),
+      vy: 0, state: 'walk', phase: Math.random() * 10, trail: [],
+    });
+    showToast(this.labels[type] + ' added!', 1200);
+    this._save();
+  },
+  remove(type) { this.active = this.active.filter(function(p) { return p.type !== type; }); this._save(); },
+  toggle(type) { if (this.active.some(function(p) { return p.type === type; })) this.remove(type); else this.add(type); },
+  _save() { try { localStorage.setItem('tc-canvas-pets', JSON.stringify(this.active.map(function(p) { return p.type; }))); } catch(e) {} },
+  load() { try { var raw = JSON.parse(localStorage.getItem('tc-canvas-pets')); if (raw) raw.forEach(function(t) { CanvasPets.add(t); }); } catch(e) {} },
+
+  render(ctx, W, H) {
+    if (!this.active.length) return;
+    var t = Date.now() / 1000;
+    var rms = MicBoost._lastRms || 0;
+    var frozen = rms > 0.15;
+
+    this.active.forEach(function(pet) {
+      pet.phase += 0.1;
+      if (!frozen) { pet.x += pet.vx; pet.y += pet.vy; }
+      if (pet.x < 10) { pet.x = 10; pet.vx = Math.abs(pet.vx); }
+      if (pet.x > W - 10) { pet.x = W - 10; pet.vx = -Math.abs(pet.vx); }
+      if (pet.y < 10) { pet.y = 10; pet.vy = Math.abs(pet.vy); }
+      if (pet.y > H - 10) { pet.y = H - 10; pet.vy = -Math.abs(pet.vy); }
+      ctx.save();
+      ctx.translate(pet.x, pet.y);
+      if (pet.vx < 0) ctx.scale(-1, 1);
+      var fn = CanvasPets['_draw_' + pet.type];
+      if (fn) fn(ctx, pet, t, frozen, rms);
+      ctx.restore();
+    });
+  },
+
+  _draw_robot: function(ctx, pet, t, frozen) {
+    var lp = frozen ? 0 : Math.sin(t * 8) * 4;
+    ctx.fillStyle = '#64748b'; ctx.fillRect(-10, -20, 20, 16);
+    ctx.fillStyle = '#94a3b8'; ctx.fillRect(-8, -26, 16, 8);
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(-5, -24, 4, 3); ctx.fillRect(2, -24, 4, 3);
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-6, -4); ctx.lineTo(-6 + lp, 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -4); ctx.lineTo(6 - lp, 6); ctx.stroke();
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(0, -34); ctx.stroke();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0, -34, 2, 0, Math.PI * 2); ctx.fill();
+    if (!frozen && Math.random() > 0.9) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(lp > 0 ? -8 : 8, 4, 1.5, 0, Math.PI * 2); ctx.fill(); }
+  },
+  _draw_anonymous: function(ctx, pet, t, frozen) {
+    if (!frozen && Math.random() > 0.995) pet.x += (Math.random() - 0.5) * 100;
+    ctx.fillStyle = '#111'; ctx.fillRect(-10, -28, 20, 28);
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(0, -24, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(-4, -26, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(4, -26, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(17,17,17,.6)';
+    ctx.beginPath(); ctx.moveTo(-10, -14); ctx.lineTo(-14, 0); ctx.lineTo(14, 0); ctx.lineTo(10, -14); ctx.fill();
+    if (Math.random() > 0.92) { ctx.fillStyle = 'rgba(74,222,128,.2)'; ctx.fillRect(-12, -30 + Math.random() * 30, 24, 2); }
+  },
+  _draw_skull: function(ctx, pet, t) {
+    ctx.rotate(pet.phase * 0.5);
+    ctx.fillStyle = '#e2e8f0'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-4, -2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(4, -2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(-3, 4, 6, 2);
+  },
+  _draw_agent: function(ctx, pet, t, frozen) {
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(-8, -24, 16, 24); ctx.fillRect(-6, -30, 12, 8);
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(-5, -28, 10, 4);
+    if (Math.sin(t * 2) > 0.5) { ctx.strokeStyle = 'rgba(239,68,68,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(80, -28 + Math.sin(t * 4) * 20); ctx.stroke(); }
+  },
+  _draw_bug: function(ctx, pet, t) {
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 1;
+    for (var i = 0; i < 3; i++) { var lx = -4 + i * 4, ly = Math.sin(t * 10 + i) * 2; ctx.beginPath(); ctx.moveTo(lx, 4); ctx.lineTo(lx - 3, 8 + ly); ctx.stroke(); ctx.beginPath(); ctx.moveTo(lx, 4); ctx.lineTo(lx + 3, 8 - ly); ctx.stroke(); }
+    if (Math.random() > 0.85) { ctx.fillStyle = 'rgba(74,222,128,.15)'; ctx.fillRect(-3, -3, 2, 2); }
+  },
+  _draw_ufo: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 2 + pet.phase) * 0.5;
+    ctx.fillStyle = '#666'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(56,189,248,.3)'; ctx.beginPath(); ctx.arc(0, -4, 6, Math.PI, 0); ctx.fill();
+    if (Math.sin(t * 1.5) > 0.7) { ctx.fillStyle = 'rgba(163,230,53,.06)'; ctx.beginPath(); ctx.moveTo(-6, 4); ctx.lineTo(-16, 40); ctx.lineTo(16, 40); ctx.lineTo(6, 4); ctx.fill(); }
+    ctx.fillStyle = '#fbbf24'; for (var i = 0; i < 4; i++) { var a = Math.PI + (i / 3) * Math.PI; ctx.beginPath(); ctx.arc(Math.cos(a) * 10, Math.sin(a) * 3, 1.5, 0, Math.PI * 2); ctx.fill(); }
+  },
+  _draw_drone: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 3) * 0.3;
+    ctx.fillStyle = '#333'; ctx.fillRect(-8, -3, 16, 6);
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 1; var rot = t * 20;
+    ctx.beginPath(); ctx.moveTo(-12 + Math.cos(rot) * 6, -4); ctx.lineTo(-12 - Math.cos(rot) * 6, -4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(12 + Math.cos(rot) * 6, -4); ctx.lineTo(12 - Math.cos(rot) * 6, -4); ctx.stroke();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(-12, -4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(8, -2); ctx.lineTo(12, -4); ctx.stroke();
+    ctx.strokeStyle = 'rgba(239,68,68,.2)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(0, 60); ctx.stroke();
+  },
+  _draw_arc: function(ctx, pet, t) {
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -10);
+    for (var i = 0; i < 5; i++) ctx.lineTo((Math.random() - 0.5) * 16, -10 + i * 5);
+    ctx.stroke();
+    ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 6; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fillStyle = '#fbbf24'; ctx.fill(); ctx.shadowBlur = 0;
+    if (Math.random() > 0.98) pet.x += (Math.random() - 0.5) * 200;
+  },
+  _draw_pencil: function(ctx, pet, t) {
+    ctx.rotate(-0.3);
+    ctx.fillStyle = '#fbbf24'; ctx.fillRect(-2, -20, 4, 16);
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.moveTo(-2, -4); ctx.lineTo(2, -4); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(-2, -24, 4, 4);
+  },
+  _draw_wrench: function(ctx, pet, t) {
+    ctx.rotate(pet.phase * 0.3);
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-6, -18); ctx.lineTo(6, -18); ctx.lineTo(4, -12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(4, -12); ctx.stroke();
+  },
+  _draw_spider: function(ctx, pet, t, frozen) {
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -6, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+    for (var i = 0; i < 4; i++) { var a = (i / 4) * Math.PI - Math.PI / 2, w = frozen ? 0 : Math.sin(t * 8 + i * 2) * 3;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * 6, Math.sin(a) * 5); ctx.lineTo(Math.cos(a) * 14 + w, Math.sin(a) * 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-Math.cos(a) * 6, Math.sin(a) * 5); ctx.lineTo(-Math.cos(a) * 14 - w, Math.sin(a) * 12); ctx.stroke();
+    }
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(-2, -7, 1, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(2, -7, 1, 0, Math.PI * 2); ctx.fill();
+    if (pet.state === 'drop') { ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(0, -200); ctx.stroke(); }
+    if (!frozen && Math.random() > 0.998) pet.state = pet.state === 'drop' ? 'walk' : 'drop';
+  },
+  _draw_eye: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 1.5) * 0.3;
+    pet.vx *= 0.99; if (Math.abs(pet.vx) < 0.3) pet.vx = (Math.random() > 0.5 ? 1 : -1) * 1.5;
+    ctx.scale(pet.vx > 0 ? 1 : -1, 1);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(Math.sin(t) * 3, Math.cos(t * 0.7) * 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(Math.sin(t) * 3, Math.cos(t * 0.7) * 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    if (Math.sin(t * 0.5) > 0.95) { ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.fill(); }
+  },
+};
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -21202,6 +21350,11 @@ function wireEvents() {
     });
     cohostSel.addEventListener('click', (e) => e.stopPropagation());
   }
+  $('tcPetSelect')?.addEventListener('change', (e) => {
+    const type = e.target.value;
+    if (type) { CanvasPets.toggle(type); e.target.value = ''; }
+  });
+  $('tcPetSelect')?.addEventListener('click', (e) => e.stopPropagation());
   $('tcGhostBtn')?.addEventListener('click', (e) => {
     GhostReplay.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', GhostReplay.enabled);
@@ -22046,6 +22199,7 @@ async function init() {
   CanvasFlair.load();       // v0.7.191
   UnlockGallery.load();    // v0.7.192
   GhostReplay.load();      // v0.7.192
+  CanvasPets.load();       // v0.7.197
   AICohost.load();        // v0.7.188
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
