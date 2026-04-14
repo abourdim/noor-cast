@@ -8475,6 +8475,7 @@ const Recorder = {
         }
       }
       this.chunks = [];
+      this._savedToDisk = false;
       this.retryRegions = [];
       this._chunkCount = 0;
       this._totalBytes = 0;
@@ -8769,14 +8770,16 @@ const Recorder = {
         showToast('💾 Recording saved to disk!', 3000);
       }).catch(() => {});
       this._fileWriter = null;
-      // Still run the rest of finish() for chapters/history but with an empty blob
+      this._savedToDisk = true;
+      // Still run the rest of finish() for chapters/history
     }
     log(`🏁 finish: ${this.chunks.length} chunks, ${this._totalBytes || 0} B total`, 'info');
     const mimeType = this.chunks[0]?.type || 'video/webm';
     const blob = new Blob(this.chunks, { type: mimeType });
 
     // v0.2.1: catch empty recordings loudly instead of silently downloading 0 B.
-    if (blob.size === 0) {
+    // v0.7.193: skip this check if saved to disk (chunks went to file, not array)
+    if (blob.size === 0 && !this._savedToDisk) {
       log('✗ 0-byte recording — pipeline produced no data', 'error');
       showToast(t('recEmpty'), 5000);
       this.updateUI();
