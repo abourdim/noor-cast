@@ -3585,6 +3585,7 @@ const Engine = {
     AchievementPopup.render(ctx, width, height);
     LessonGuide.render(ctx, width, height);
     AICohost.render(ctx, width, height);
+    CanvasFlair.render(ctx, width, height);
 
     // v0.7.182: XP ticks during recording (1 XP per second)
     if (Recorder.state === 'recording' && XpBar.visible) {
@@ -5368,7 +5369,7 @@ const SceneTransition = {
   _midpointAt: 0,
   _pendingApply: null,
 
-  MODES: ['fade', 'wipe', 'slide', 'zoom', 'flip'],
+  MODES: ['fade', 'wipe', 'slide', 'zoom', 'flip', 'glitch'],
 
   load() {
     try {
@@ -5530,6 +5531,39 @@ const SceneTransition = {
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.191: glitch transition — RGB split + horizontal tears
+  _render_glitch(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const t = elapsed / dur;
+
+    ctx.save();
+    // Random horizontal tears
+    const numTears = 8 + Math.floor(t * 10);
+    for (let i = 0; i < numTears; i++) {
+      const ty = Math.random() * H;
+      const th = 2 + Math.random() * 8;
+      const tx = (Math.random() - 0.5) * 40;
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(239,68,68,.3)' : i % 3 === 1 ? 'rgba(56,189,248,.3)' : 'rgba(74,222,128,.3)';
+      ctx.fillRect(tx, ty, W, th);
+    }
+
+    // Black flash at midpoint
+    let alpha;
+    if (elapsed < half) alpha = Math.pow(elapsed / half, 2);
+    else alpha = Math.pow(1 - (elapsed - half) / half, 2);
+    ctx.fillStyle = `rgba(0,0,0,${alpha * 0.8})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Scan line sweep
+    const scanY = (t * H * 2) % H;
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    ctx.fillRect(0, scanY, W, 3);
+
     ctx.restore();
   },
 };
@@ -13726,6 +13760,8 @@ const ShareTake = {
 
 /* Snapshot — download current canvas as PNG */
 function snapshot() {
+  // v0.7.191: camera flash effect
+  CanvasFlair.flash();
   // v0.7.54: if annotation mode is on, open the modal instead of
   // immediately downloading. Opt-in via localStorage tc-snap-annotate.
   // This check runs BEFORE the v0.7.79 mult check — annotation always
@@ -19317,6 +19353,117 @@ const VisualCrop = {
   },
 };
 
+/* v0.7.191: CanvasFlair — visual effects that make the recording output pop.
+   All drawn on the output canvas = baked into the final video. */
+const CanvasFlair = {
+  neonBorder: true,     // animated color-cycling border during recording
+  heartbeatBorder: true, // border pulses with voice volume
+  filmStrip: false,      // sprocket holes on sides
+  cornerDeco: true,      // viewfinder brackets at corners
+  _flashUntil: 0,       // camera flash timestamp
+
+  load() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-canvas-flair'));
+      if (s) {
+        if (typeof s.neon === 'boolean') this.neonBorder = s.neon;
+        if (typeof s.heartbeat === 'boolean') this.heartbeatBorder = s.heartbeat;
+        if (typeof s.film === 'boolean') this.filmStrip = s.film;
+        if (typeof s.corner === 'boolean') this.cornerDeco = s.corner;
+      }
+    } catch {}
+  },
+  _save() {
+    try { localStorage.setItem('tc-canvas-flair', JSON.stringify({ neon: this.neonBorder, heartbeat: this.heartbeatBorder, film: this.filmStrip, corner: this.cornerDeco })); } catch {}
+  },
+
+  flash() { this._flashUntil = Date.now() + 300; },
+
+  render(ctx, W, H) {
+    const t = Date.now() / 1000;
+    const recording = Recorder.state === 'recording';
+    const rms = MicBoost._lastRms || 0;
+
+    // ── Animated neon border (recording only) ──
+    if (this.neonBorder && recording) {
+      const hue = (t * 60) % 360;
+      ctx.save();
+      ctx.strokeStyle = `hsla(${hue},100%,60%,.4)`;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = `hsla(${hue},100%,60%,.5)`;
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(2, 2, W - 4, H - 4);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    // ── Heartbeat border (pulses with voice) ──
+    if (this.heartbeatBorder && recording) {
+      const thickness = 2 + Math.min(8, rms * 60);
+      ctx.save();
+      ctx.strokeStyle = `rgba(239,68,68,${0.2 + rms * 2})`;
+      ctx.lineWidth = thickness;
+      ctx.strokeRect(thickness / 2, thickness / 2, W - thickness, H - thickness);
+      ctx.restore();
+    }
+
+    // ── Film strip edges ──
+    if (this.filmStrip) {
+      ctx.save();
+      ctx.fillStyle = '#111';
+      // Left strip
+      ctx.fillRect(0, 0, 20, H);
+      // Right strip
+      ctx.fillRect(W - 20, 0, 20, H);
+      // Sprocket holes
+      ctx.fillStyle = '#333';
+      for (let y = 10; y < H; y += 24) {
+        ctx.beginPath(); ctx.roundRect(4, y, 12, 8, 2); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(W - 16, y, 12, 8, 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // ── Corner decorations (viewfinder brackets) ──
+    if (this.cornerDeco && recording) {
+      const bk = 30, pad = 8;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      ctx.lineWidth = 2;
+      // TL
+      ctx.beginPath(); ctx.moveTo(pad, pad + bk); ctx.lineTo(pad, pad); ctx.lineTo(pad + bk, pad); ctx.stroke();
+      // TR
+      ctx.beginPath(); ctx.moveTo(W - pad - bk, pad); ctx.lineTo(W - pad, pad); ctx.lineTo(W - pad, pad + bk); ctx.stroke();
+      // BL
+      ctx.beginPath(); ctx.moveTo(pad, H - pad - bk); ctx.lineTo(pad, H - pad); ctx.lineTo(pad + bk, H - pad); ctx.stroke();
+      // BR
+      ctx.beginPath(); ctx.moveTo(W - pad - bk, H - pad); ctx.lineTo(W - pad, H - pad); ctx.lineTo(W - pad, H - pad - bk); ctx.stroke();
+
+      // ON AIR badge (top-center, pulsing)
+      const pulse = 0.6 + Math.sin(t * 3) * 0.4;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.roundRect(W / 2 - 40, pad, 80, 22, 6); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('● ON AIR', W / 2, pad + 15);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+
+    // ── Camera flash (on snapshot) ──
+    if (Date.now() < this._flashUntil) {
+      const age = (this._flashUntil - Date.now()) / 300;
+      ctx.save();
+      ctx.fillStyle = `rgba(255,255,255,${age * 0.8})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -21510,6 +21657,7 @@ async function init() {
   DailyChallenges.load(); // v0.7.185
   RobotChoreo.load();     // v0.7.186
   SmartSceneSwitcher.load(); // v0.7.188
+  CanvasFlair.load();       // v0.7.191
   AICohost.load();        // v0.7.188
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
