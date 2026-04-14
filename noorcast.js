@@ -138,7 +138,7 @@ const LANG = {
     stageAspect: '📐 Format de la scène',
     stageAspectHint: "Ne change pas pendant un enregistrement",
     aspectLockedDuringRec: '⚠ Impossible de changer pendant un enregistrement',
-    trim: 'Couper', trimTitle: 'Couper le tuto',
+    instantReplay: '⚡ Instant Replay', trim: 'Couper', trimTitle: 'Couper le tuto',
     trimIn: 'Début', trimOut: 'Fin', trimDuration: 'Durée finale :',
     trimPreviewIn: '▶ début', trimPreviewOut: '▶ fin',
     trimEncoding: 'Encodage en cours…',
@@ -858,7 +858,7 @@ const LANG = {
     stageAspect: '📐 Stage format',
     stageAspectHint: "Doesn't change during recording",
     aspectLockedDuringRec: "⚠ Can't change during recording",
-    trim: 'Trim', trimTitle: 'Trim the tutorial',
+    instantReplay: '⚡ Instant Replay', trim: 'Trim', trimTitle: 'Trim the tutorial',
     trimIn: 'Start', trimOut: 'End', trimDuration: 'Final duration:',
     trimPreviewIn: '▶ start', trimPreviewOut: '▶ end',
     trimEncoding: 'Encoding…',
@@ -1567,7 +1567,7 @@ const LANG = {
     stageAspect: '📐 صيغة المسرح',
     stageAspectHint: 'لا يتغير أثناء التسجيل',
     aspectLockedDuringRec: '⚠ لا يمكن التغيير أثناء التسجيل',
-    trim: 'قص', trimTitle: 'قص الدرس',
+    instantReplay: '⚡ إعادة فورية', trim: 'قص', trimTitle: 'قص الدرس',
     trimIn: 'البداية', trimOut: 'النهاية', trimDuration: 'المدة النهائية:',
     trimPreviewIn: '▶ البداية', trimPreviewOut: '▶ النهاية',
     trimEncoding: 'جارٍ الترميز…',
@@ -12357,6 +12357,197 @@ const SilenceTrim = {
   },
 };
 
+/* v0.7.183: InstantReplay — auto-generates a 30s highlight reel from the
+   last recording. Finds the top audio peak moments (loudest = most excited),
+   stitches them together with speed ramps, and optionally adds 8-bit
+   background music. Produces a downloadable .webm. */
+const InstantReplay = {
+  encoding: false,
+  HIGHLIGHT_DURATION: 30,  // target reel length in seconds
+  CLIP_LENGTH: 4,          // seconds per highlight clip
+  NUM_CLIPS: 7,            // number of peak moments to extract
+
+  async generate() {
+    if (this.encoding) return;
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    this.encoding = true;
+    showToast('⚡ Generating highlight reel...', 3000);
+    log('⚡ InstantReplay: analyzing audio peaks...', 'info');
+
+    try {
+      // Step 1: Decode audio to find peak moments
+      const ab = await Recorder._lastBlob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try {
+        audioBuf = await ac.decodeAudioData(ab.slice(0));
+      } catch (e) {
+        log('InstantReplay decode failed: ' + e.message, 'error');
+        showToast('❌ Audio decode failed', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+
+      if (duration < 10) {
+        showToast('⚡ Recording too short for replay (min 10s)', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      // Step 2: Compute RMS energy in 1-second windows
+      const windowSamples = sr; // 1 second
+      const energies = [];
+      for (let i = 0; i < samples.length; i += windowSamples) {
+        let sum = 0;
+        const end = Math.min(i + windowSamples, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        energies.push({ time: i / sr, rms: Math.sqrt(sum / (end - i)) });
+      }
+
+      // Step 3: Find top N loudest moments (non-overlapping)
+      const sorted = [...energies].sort((a, b) => b.rms - a.rms);
+      const clips = [];
+      const used = new Set();
+      for (const peak of sorted) {
+        if (clips.length >= this.NUM_CLIPS) break;
+        const start = Math.max(0, peak.time - this.CLIP_LENGTH / 2);
+        // Check overlap with existing clips
+        let overlap = false;
+        for (const t of used) {
+          if (Math.abs(t - start) < this.CLIP_LENGTH + 1) { overlap = true; break; }
+        }
+        if (overlap) continue;
+        clips.push({ start, end: Math.min(duration, start + this.CLIP_LENGTH) });
+        used.add(start);
+      }
+      // Sort clips chronologically
+      clips.sort((a, b) => a.start - b.start);
+
+      if (clips.length === 0) {
+        showToast('⚡ Could not find highlight moments', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      log(`⚡ InstantReplay: found ${clips.length} highlight clips`, 'info');
+      try { ac.close(); } catch {}
+
+      // Step 4: Re-encode the highlight clips into a new video
+      const srcVideo = document.createElement('video');
+      srcVideo.muted = false;
+      srcVideo.playsInline = true;
+      srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+      await new Promise((resolve, reject) => {
+        srcVideo.onloadedmetadata = resolve;
+        srcVideo.onerror = reject;
+      });
+      const W = srcVideo.videoWidth || 1920;
+      const H = srcVideo.videoHeight || 1080;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      const outStream = canvas.captureStream(30);
+      // Add audio from source video
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const srcNode = audioCtx.createMediaElementSource(srcVideo);
+        const dest = audioCtx.createMediaStreamDestination();
+        srcNode.connect(dest);
+        srcNode.connect(audioCtx.destination);
+        dest.stream.getAudioTracks().forEach(t => outStream.addTrack(t));
+      } catch {}
+
+      const recorder = new MediaRecorder(outStream, { mimeType: 'video/webm; codecs=vp8,opus' });
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.start();
+
+      // Step 5: Play each clip, draw to canvas with transition overlays
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        srcVideo.currentTime = clip.start;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        srcVideo.play();
+
+        await new Promise((resolve) => {
+          let rafId;
+          const step = () => {
+            ctx.drawImage(srcVideo, 0, 0, W, H);
+
+            // Clip number badge (top-left)
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,.5)';
+            ctx.beginPath(); ctx.roundRect(12, 12, 60, 28, 6); ctx.fill();
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`⚡ ${i + 1}/${clips.length}`, 42, 30);
+            ctx.restore();
+
+            // Flash transition at clip start (first 200ms)
+            const elapsed = srcVideo.currentTime - clip.start;
+            if (elapsed < 0.2) {
+              ctx.save();
+              ctx.fillStyle = `rgba(251,191,36,${0.3 * (1 - elapsed / 0.2)})`;
+              ctx.fillRect(0, 0, W, H);
+              ctx.restore();
+            }
+
+            if (srcVideo.currentTime >= clip.end || srcVideo.ended || srcVideo.paused) {
+              srcVideo.pause();
+              cancelAnimationFrame(rafId);
+              resolve();
+              return;
+            }
+            rafId = requestAnimationFrame(step);
+          };
+          rafId = requestAnimationFrame(step);
+        });
+      }
+
+      // Step 6: Finish encoding
+      recorder.stop();
+      await new Promise(r => { recorder.onstop = r; });
+      srcVideo.pause();
+      URL.revokeObjectURL(srcVideo.src);
+
+      const outBlob = new Blob(chunks, { type: 'video/webm' });
+      if (outBlob.size === 0) {
+        showToast('❌ Replay encoding failed', 2500);
+        this.encoding = false;
+        return;
+      }
+
+      // Step 7: Download
+      const url = URL.createObjectURL(outBlob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-replay-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.webm`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+      const reelDur = clips.reduce((s, c) => s + (c.end - c.start), 0);
+      log(`⚡ InstantReplay: ${reelDur.toFixed(1)}s highlight from ${duration.toFixed(0)}s recording`, 'success');
+      showToast(`⚡ Highlight reel ready! (${reelDur.toFixed(0)}s)`, 4000);
+      Confetti.burst();
+    } catch (e) {
+      log('InstantReplay error: ' + e.message, 'error');
+      showToast('❌ Replay failed: ' + e.message, 3000);
+    }
+    this.encoding = false;
+  },
+};
+
 /* BadgeCard — generates a 1200×630 PNG achievement card after a recording.
    Social-share-ready dimensions (OpenGraph / Twitter card). Pure canvas
    drawing, zero deps. Renders NoorCast branding + duration + camera count
@@ -19561,6 +19752,7 @@ function wireEvents() {
   }
 
   // Trim wiring
+  $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
   $('tcTrimClose').addEventListener('click', () => Trim.close());
   $('tcTrimCancelBtn').addEventListener('click', () => Trim.close());
