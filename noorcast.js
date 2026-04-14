@@ -19048,9 +19048,24 @@ const TutorialScore = {
    mic RMS. Pure canvas drawing, no images. */
 const AICohost = {
   visible: false,
-  character: 'emoji', // emoji, robot, cat, alien, penguin
-  characters: ['emoji', 'robot', 'cat', 'alien', 'penguin'],
-  charLabels: { emoji: '😊 Emoji', robot: '🤖 Robot', cat: '🐱 Cat', alien: '👾 Alien', penguin: '🐧 Penguin' },
+  character: 'coder',
+  characters: [
+    'maker', 'engineer', 'coder', 'scientist', 'architect',
+    'teacher', 'scholar', 'mathematician',
+    'anonymous', 'agent', 'shadow', 'android',
+    'astronaut', 'xenomorph', 'pilot',
+    'director', 'artist', 'dj',
+    'imam', 'calligrapher',
+  ],
+  charLabels: {
+    maker: '🔧 Maker', engineer: '⚙️ Engineer', coder: '💻 Coder',
+    scientist: '🔬 Scientist', architect: '📐 Architect',
+    teacher: '🎓 Teacher', scholar: '📖 Scholar', mathematician: '🧮 Math',
+    anonymous: '🎭 Anonymous', agent: '🕵️ Agent', shadow: '🥷 Shadow', android: '🤖 Android',
+    astronaut: '🧑‍🚀 Astronaut', xenomorph: '👽 Xeno', pilot: '🛸 Pilot',
+    director: '🎬 Director', artist: '🎨 Artist', dj: '🎵 DJ',
+    imam: '📿 Scholar', calligrapher: '☪️ Calligrapher',
+  },
   _x: 0, _y: 0,
   _mood: 'idle',
   _mouthOpen: 0,
@@ -19118,52 +19133,168 @@ const AICohost = {
     ctx.save();
     ctx.translate(cx, cy + bobY);
 
-    // Body — character-specific color
-    const colors = { emoji: '#fbbf24', robot: '#94a3b8', cat: '#fb923c', alien: '#4ade80', penguin: '#1e293b' };
-    const strokes = { emoji: '#d4a020', robot: '#64748b', cat: '#ea580c', alien: '#16a34a', penguin: '#0f172a' };
-    ctx.fillStyle = colors[this.character] || '#fbbf24';
+    // Body — character-specific
+    const ch = this.character;
+    const charColors = {
+      maker: '#8b6914', engineer: '#f59e0b', coder: '#1e293b', scientist: '#e2e8f0',
+      architect: '#94a3b8', teacher: '#4a5568', scholar: '#d4a03c', mathematician: '#2d3748',
+      anonymous: '#1a1a1a', agent: '#1e293b', shadow: '#111', android: '#64748b',
+      astronaut: '#e2e8f0', xenomorph: '#1a2a1a', pilot: '#6b4226',
+      director: '#2d2d2d', artist: '#e879f9', dj: '#1e1e2e',
+      imam: '#f5f0e0', calligrapher: '#d4a03c',
+    };
+    ctx.fillStyle = charColors[ch] || '#555';
     ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = strokes[this.character] || '#d4a020'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
-    // Character-specific features
-    if (this.character === 'robot') {
-      // Square body hint
-      ctx.fillStyle = '#64748b'; ctx.fillRect(-22, -22, 44, 44);
-      ctx.strokeStyle = '#475569'; ctx.strokeRect(-22, -22, 44, 44);
-      // Antenna
-      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(0, -36); ctx.stroke();
-      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0, -36, 4, 0, Math.PI * 2); ctx.fill();
-    } else if (this.character === 'cat') {
-      // Ears
-      ctx.fillStyle = '#fb923c';
-      ctx.beginPath(); ctx.moveTo(-20, -26); ctx.lineTo(-12, -40); ctx.lineTo(-4, -26); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(4, -26); ctx.lineTo(12, -40); ctx.lineTo(20, -26); ctx.fill();
-      // Inner ears
-      ctx.fillStyle = '#fda4af';
-      ctx.beginPath(); ctx.moveTo(-16, -27); ctx.lineTo(-12, -35); ctx.lineTo(-8, -27); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(8, -27); ctx.lineTo(12, -35); ctx.lineTo(16, -27); ctx.fill();
-      // Whiskers
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(-30, 2); ctx.lineTo(-14, 4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-28, 8); ctx.lineTo(-14, 7); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(14, 4); ctx.lineTo(30, 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(14, 7); ctx.lineTo(28, 8); ctx.stroke();
-    } else if (this.character === 'alien') {
-      // Antennae
-      ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-8, -30); ctx.lineTo(-14, -44); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(8, -30); ctx.lineTo(14, -44); ctx.stroke();
-      ctx.fillStyle = '#4ade80';
-      ctx.beginPath(); ctx.arc(-14, -44, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(14, -44, 4, 0, Math.PI * 2); ctx.fill();
-    } else if (this.character === 'penguin') {
-      // White belly
-      ctx.fillStyle = '#e2e8f0';
-      ctx.beginPath(); ctx.ellipse(0, 6, 16, 20, 0, 0, Math.PI * 2); ctx.fill();
-      // Beak
+
+    // Character-specific head features
+    if (ch === 'maker' || ch === 'scientist') {
+      // Goggles on forehead
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(-10, -24, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(10, -24, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-3, -24); ctx.lineTo(3, -24); ctx.stroke();
+      if (ch === 'scientist') {
+        // Lab coat collar
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.moveTo(-20, 20); ctx.lineTo(-10, 10); ctx.lineTo(0, 20); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(10, 10); ctx.lineTo(0, 20); ctx.fill();
+      }
+    } else if (ch === 'engineer') {
+      // Hard hat
       ctx.fillStyle = '#f59e0b';
-      ctx.beginPath(); ctx.moveTo(-5, 2); ctx.lineTo(0, 8); ctx.lineTo(5, 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -20, 26, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#d4a020'; ctx.fillRect(-26, -20, 52, 4);
+    } else if (ch === 'coder') {
+      // Headphones
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, -16, 28, Math.PI + 0.3, -0.3); ctx.stroke();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.roundRect(-30, -10, 8, 16, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(22, -10, 8, 16, 3); ctx.fill();
+      // Terminal green text glow
+      ctx.fillStyle = 'rgba(74,222,128,.3)'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('</>', 0, 24);
+    } else if (ch === 'architect') {
+      // Ruler
+      ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(20, -30); ctx.lineTo(30, 20); ctx.stroke();
+      for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(21 + i * 2, -28 + i * 10); ctx.lineTo(25 + i * 2, -28 + i * 10); ctx.stroke(); }
+    } else if (ch === 'teacher') {
+      // Graduation cap
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath(); ctx.moveTo(-22, -26); ctx.lineTo(0, -36); ctx.lineTo(22, -26); ctx.lineTo(0, -20); ctx.closePath(); ctx.fill();
+      ctx.fillRect(-2, -36, 4, -6);
+      ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(0, -42, 3, 0, Math.PI * 2); ctx.fill();
+      // Tassel
+      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(18, -34); ctx.stroke();
+    } else if (ch === 'scholar' || ch === 'imam') {
+      // Turban/head covering
+      ctx.fillStyle = ch === 'imam' ? '#f5f0e0' : '#d4a03c';
+      ctx.beginPath(); ctx.arc(0, -18, 24, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(-24, -20, 48, 8, 2); ctx.fill();
+      // Wise beard
+      ctx.fillStyle = 'rgba(100,80,60,.3)';
+      ctx.beginPath(); ctx.moveTo(-12, 14); ctx.quadraticCurveTo(0, 30, 12, 14); ctx.fill();
+    } else if (ch === 'mathematician') {
+      // Floating equations
+      ctx.fillStyle = 'rgba(163,230,53,.4)'; ctx.font = '7px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('∑∞', -18, -28); ctx.fillText('π²', 18, -26);
+      ctx.fillText('∫dx', -20, 28); ctx.fillText('√n', 20, 26);
+    } else if (ch === 'anonymous') {
+      // Dark mask — just eyes visible
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
+    } else if (ch === 'agent') {
+      // Sunglasses
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.roundRect(-18, -14, 14, 9, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(4, -14, 14, 9, 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-4, -10); ctx.lineTo(4, -10); ctx.stroke();
+      // Earpiece
+      ctx.fillStyle = '#444'; ctx.beginPath(); ctx.arc(28, -4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(28, -1); ctx.lineTo(24, 10); ctx.stroke();
+    } else if (ch === 'shadow') {
+      // Dark silhouette only — mysterious
+      ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
+    } else if (ch === 'android') {
+      // Chrome face, LED eyes handled below
+      ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.roundRect(-24, -24, 48, 48, 6); ctx.fill();
+      ctx.strokeStyle = '#546e7a'; ctx.lineWidth = 1; ctx.strokeRect(-24, -24, 48, 48);
+      // Antenna
+      ctx.strokeStyle = '#90a4ae'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, -38); ctx.stroke();
+      ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (ch === 'astronaut') {
+      // Helmet
+      ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(20,20,40,.2)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+      // Visor glare
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(-8, -8, 12, 0.5, 1.8); ctx.stroke();
+    } else if (ch === 'xenomorph') {
+      // Elongated dark head
+      ctx.fillStyle = '#1a2a1a';
+      ctx.beginPath(); ctx.ellipse(0, -4, 22, 34, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#2a3a2a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(0, -4, 22, 34, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (ch === 'pilot') {
+      // Aviator goggles
+      ctx.fillStyle = '#6b4226'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.ellipse(-10, -10, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(10, -10, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(56,189,248,.3)';
+      ctx.beginPath(); ctx.ellipse(-10, -10, 8, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(10, -10, 8, 6, 0, 0, Math.PI * 2); ctx.fill();
+      // Scarf
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.moveTo(-10, 26); ctx.quadraticCurveTo(0, 22, 10, 26); ctx.lineTo(15, 38); ctx.lineTo(-5, 34); ctx.fill();
+    } else if (ch === 'director') {
+      // Beret
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath(); ctx.ellipse(0, -26, 22, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -28, 18, Math.PI, 0); ctx.fill();
+      // Megaphone hint
+      ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('📣', 26, 4);
+    } else if (ch === 'artist') {
+      // Beret + paint
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath(); ctx.ellipse(0, -26, 22, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(2, -28, 16, Math.PI, 0); ctx.fill();
+      // Paint splatter
+      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(-20, 18, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(22, 14, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(-16, -6, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (ch === 'dj') {
+      // Big headphones
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, -14, 30, Math.PI + 0.2, -0.2); ctx.stroke();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.roundRect(-34, -12, 10, 20, 4); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(24, -12, 10, 20, 4); ctx.fill();
+      // Mixer vibes
+      ctx.fillStyle = 'rgba(56,189,248,.3)'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('♪♫♪', 0, 26);
+    } else if (ch === 'calligrapher') {
+      // Ink pen
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(22, -20); ctx.lineTo(30, -34); ctx.stroke();
+      ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(30, -34, 2, 0, Math.PI * 2); ctx.fill();
+      // Geometric pattern hint
+      ctx.strokeStyle = 'rgba(212,160,60,.3)'; ctx.lineWidth = 0.8;
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        ctx.beginPath(); ctx.arc(Math.cos(a) * 20, Math.sin(a) * 20, 6, a, a + 1.5); ctx.stroke();
+      }
     }
 
     // Eyes
@@ -19229,8 +19360,8 @@ const AICohost = {
       ctx.beginPath(); ctx.ellipse(18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Antenna (emoji only — others have their own)
-    if (this.character === 'emoji') {
+    // Antenna (only for characters that don't have their own headgear)
+    if (!this.characters.includes(this.character)) {
       ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
       const antAngle = Math.sin(t * 3) * 0.2;
       ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
