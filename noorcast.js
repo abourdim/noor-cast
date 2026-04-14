@@ -3227,6 +3227,8 @@ const Engine = {
         ctx.lineWidth = src.borderWidth;
         ctx.strokeRect(x, y, w, h);
       }
+      // v0.7.180: decorative source skin frame (image path)
+      if (src.skin && src.skin !== 'none') SourceSkins.draw(ctx, src.skin, x, y, w, h);
       // v0.7.155: on-canvas source badge/label stamp (image path)
       if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
       ctx.restore();
@@ -3430,6 +3432,9 @@ const Engine = {
     // v0.7.158: extracted helpers for title chip + border
     this._drawTitleChip(ctx, src, x, y, w, h);
     this._drawBorder(ctx, src, x, y, w, h);
+
+    // v0.7.180: decorative source skin frame
+    if (src.skin && src.skin !== 'none') SourceSkins.draw(ctx, src.skin, x, y, w, h);
 
     // v0.7.155: on-canvas source badge/label stamp (video path)
     if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
@@ -5650,6 +5655,199 @@ function sceneThumbSvg(preview) {
     ${rects}
   </svg>`;
 }
+
+/* v0.7.180: SourceSkins — decorative frames drawn around sources on the
+   canvas. Pure canvas drawing (no images). Each skin function receives
+   (ctx, x, y, w, h) where x/y/w/h are the source bounds. */
+const SourceSkins = {
+  list: ['none', 'tv', 'polaroid', 'comic', 'robot'],
+  labels: { none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot' },
+
+  draw(ctx, skin, x, y, w, h) {
+    if (this['_draw_' + skin]) this['_draw_' + skin](ctx, x, y, w, h);
+  },
+
+  // 📺 Retro TV — thick dark bezel, rounded outer corners, antenna nubs
+  _draw_tv(ctx, x, y, w, h) {
+    const pad = 14, r = 16;
+    const bx = x - pad, by = y - pad - 10, bw = w + pad * 2, bh = h + pad * 2 + 18;
+    ctx.save();
+    // Outer shell
+    ctx.fillStyle = '#2a2a2a';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, r); ctx.fill();
+    // Inner bezel gradient
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.roundRect(bx + 4, by + 4, bw - 8, bh - 8, r - 4); ctx.fill();
+    // Screen inset border
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 4); ctx.stroke();
+    // Antenna nubs
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x + w * 0.35, by); ctx.lineTo(x + w * 0.25, by - 20); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.65, by); ctx.lineTo(x + w * 0.75, by - 20); ctx.stroke();
+    // Antenna tips
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(x + w * 0.25, by - 20, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.75, by - 20, 3, 0, Math.PI * 2); ctx.fill();
+    // Power LED
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(bx + bw - 18, by + bh - 12, 3, 0, Math.PI * 2); ctx.fill();
+    // Channel dots
+    ctx.fillStyle = '#555';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath(); ctx.arc(bx + 18, by + bh - 18 + i * 0, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // 📸 Polaroid — white border, thick bottom, slight shadow
+  _draw_polaroid(ctx, x, y, w, h) {
+    const top = 10, side = 10, bot = 40;
+    ctx.save();
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,.4)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 6;
+    // White frame
+    ctx.fillStyle = '#f5f5f0';
+    ctx.fillRect(x - side, y - top, w + side * 2, h + top + bot);
+    ctx.shadowBlur = 0;
+    // Inner edge (subtle gray line around photo)
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Bottom text area — faint handwriting-style label
+    ctx.fillStyle = '#999';
+    ctx.font = `italic ${Math.max(10, bot * 0.4)}px 'Righteous', cursive`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', x + w / 2, y + h + bot / 2);
+    ctx.restore();
+  },
+
+  // 🗯 Comic — spiky speech-bubble border
+  _draw_comic(ctx, x, y, w, h) {
+    const pad = 8, spikes = 14, depth = 10;
+    ctx.save();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 4;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    // Top edge with spikes
+    const sx = x - pad, sy = y - pad, sw = w + pad * 2, sh = h + pad * 2;
+    ctx.moveTo(sx, sy);
+    for (let i = 0; i < spikes; i++) {
+      const t = (i + 0.5) / spikes;
+      const px = sx + t * sw;
+      ctx.lineTo(px - sw / spikes * 0.3, sy - depth);
+      ctx.lineTo(px + sw / spikes * 0.3, sy);
+    }
+    ctx.lineTo(sx + sw, sy);
+    // Right edge with spikes
+    for (let i = 0; i < Math.ceil(spikes * sh / sw); i++) {
+      const t = (i + 0.5) / Math.ceil(spikes * sh / sw);
+      const py = sy + t * sh;
+      ctx.lineTo(sx + sw + depth, py - sh / spikes * 0.3);
+      ctx.lineTo(sx + sw, py + sh / spikes * 0.3);
+    }
+    ctx.lineTo(sx + sw, sy + sh);
+    // Bottom edge with spikes
+    for (let i = spikes - 1; i >= 0; i--) {
+      const t = (i + 0.5) / spikes;
+      const px = sx + t * sw;
+      ctx.lineTo(px + sw / spikes * 0.3, sy + sh + depth);
+      ctx.lineTo(px - sw / spikes * 0.3, sy + sh);
+    }
+    ctx.lineTo(sx, sy + sh);
+    // Left edge with spikes
+    for (let i = Math.ceil(spikes * sh / sw) - 1; i >= 0; i--) {
+      const t = (i + 0.5) / Math.ceil(spikes * sh / sw);
+      const py = sy + t * sh;
+      ctx.lineTo(sx - depth, py + sh / spikes * 0.3);
+      ctx.lineTo(sx, py - sh / spikes * 0.3);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.15;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+    // Speech tail (bottom-right)
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.65, y + h + pad);
+    ctx.lineTo(x + w * 0.85, y + h + pad + 30);
+    ctx.lineTo(x + w * 0.75, y + h + pad);
+    ctx.fillStyle = '#111';
+    ctx.fill();
+    ctx.restore();
+  },
+
+  // 🤖 Robot visor — hexagonal HUD with scan lines and data readout
+  _draw_robot(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.save();
+    // HUD border — double line, cyan glow
+    ctx.shadowColor = 'rgba(56,189,248,.5)';
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3;
+    // Outer hex-ish border (chamfered corners)
+    const ch = 20; // chamfer size
+    ctx.beginPath();
+    ctx.moveTo(x - pad + ch, y - pad);
+    ctx.lineTo(x + w + pad - ch, y - pad);
+    ctx.lineTo(x + w + pad, y - pad + ch);
+    ctx.lineTo(x + w + pad, y + h + pad - ch);
+    ctx.lineTo(x + w + pad - ch, y + h + pad);
+    ctx.lineTo(x - pad + ch, y + h + pad);
+    ctx.lineTo(x - pad, y + h + pad - ch);
+    ctx.lineTo(x - pad, y - pad + ch);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Inner thin border
+    ctx.strokeStyle = 'rgba(56,189,248,.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + ch * 0.5, y);
+    ctx.lineTo(x + w - ch * 0.5, y);
+    ctx.lineTo(x + w, y + ch * 0.5);
+    ctx.lineTo(x + w, y + h - ch * 0.5);
+    ctx.lineTo(x + w - ch * 0.5, y + h);
+    ctx.lineTo(x + ch * 0.5, y + h);
+    ctx.lineTo(x, y + h - ch * 0.5);
+    ctx.lineTo(x, y + ch * 0.5);
+    ctx.closePath();
+    ctx.stroke();
+    // Scan lines (faint horizontal lines)
+    ctx.strokeStyle = 'rgba(56,189,248,.06)';
+    ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 4) {
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
+    }
+    // Corner brackets
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    const bk = 18;
+    // TL
+    ctx.beginPath(); ctx.moveTo(x, y + bk); ctx.lineTo(x, y); ctx.lineTo(x + bk, y); ctx.stroke();
+    // TR
+    ctx.beginPath(); ctx.moveTo(x + w - bk, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + bk); ctx.stroke();
+    // BL
+    ctx.beginPath(); ctx.moveTo(x, y + h - bk); ctx.lineTo(x, y + h); ctx.lineTo(x + bk, y + h); ctx.stroke();
+    // BR
+    ctx.beginPath(); ctx.moveTo(x + w - bk, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - bk); ctx.stroke();
+    // Data readout text (top-right)
+    ctx.fillStyle = 'rgba(56,189,248,.6)';
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('REC●', x + w - 6, y + 14);
+    ctx.restore();
+  },
+};
 
 /* ─────────── Templates ─────────── */
 
@@ -10389,6 +10587,14 @@ const SourceToolbar = {
       SceneAutoSave.trigger();
     });
     $('tcSrcFilter')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.180: per-source skin (decorative frame)
+    $('tcSrcSkin')?.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.skin = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcSkin')?.addEventListener('click', (e) => e.stopPropagation());
     // v0.7.117: per-source border color + width
     $('tcSrcBorderColor')?.addEventListener('input', (e) => {
       e.stopPropagation();
@@ -10520,6 +10726,10 @@ const SourceToolbar = {
       const btn = $('tcSrcStyleBtn');
       const r = btn.getBoundingClientRect();
       pop.style.display = '';
+      // v0.7.180: sync skin picker value from selected source
+      const selSrc = sel();
+      const skinSel = $('tcSrcSkin');
+      if (skinSel && selSrc) skinSel.value = selSrc.skin || 'none';
       pop.style.top = 'auto'; pop.style.bottom = 'auto';
       const ph = pop.offsetHeight, pw = pop.offsetWidth;
       let left = r.left;
