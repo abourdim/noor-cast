@@ -3366,6 +3366,8 @@ const Engine = {
     ctx.fillRect(0, 0, width, height);
     // v0.7.180: decorative background pattern
     BgPatterns.render(ctx, width, height);
+    // v0.7.192: ghost of previous take (behind sources)
+    GhostReplay.render(ctx, width, height);
     // v0.7.6: source selection chrome buffer — drawn after sources so it's on top
     this._srcChrome = null;
 
@@ -3586,6 +3588,8 @@ const Engine = {
     LessonGuide.render(ctx, width, height);
     AICohost.render(ctx, width, height);
     CanvasFlair.render(ctx, width, height);
+    ComboSystem.tick();
+    ComboSystem.render(ctx, width, height);
 
     // v0.7.182: XP ticks during recording (1 XP per second)
     if (Recorder.state === 'recording' && XpBar.visible) {
@@ -8520,6 +8524,7 @@ const Recorder = {
       // smaller slices reduce that risk.
       this.recorder.start(250);
       this.startTime = Date.now();
+      GhostReplay.startIfReady(); // v0.7.192
       this.pausedDuration = 0;
       this.pauseCount = 0;  // v0.7.88: count manual pauses for this take
       this.state = 'recording';
@@ -8786,6 +8791,7 @@ const Recorder = {
     this._prevUrls = [url];
     // Stash the raw take for the trim feature
     this._lastBlob = blob;
+    GhostReplay.stop(); // v0.7.192
     this._lastMime = mimeType;
     video.src = url;
     $('tcTake').style.display = 'block';
@@ -17810,6 +17816,7 @@ const XpBar = {
       showToast(`⭐ Level ${this._level}!`, 2000);
     }
     this._save();
+    UnlockGallery.checkUnlocks(); // v0.7.192
   },
 
   render(ctx, W, H) {
@@ -19464,6 +19471,195 @@ const CanvasFlair = {
   },
 };
 
+/* v0.7.192: UnlockGallery — skins and backgrounds are locked by default.
+   Kids earn XP to unlock them. Creates a progression loop. */
+const UnlockGallery = {
+  _unlocked: null, // Set of unlocked skin/bg keys
+
+  load() {
+    this._unlocked = new Set(['none', 'tv', 'polaroid', 'comic', 'robot', 'space', 'pixel', 'chalk']); // starter pack
+    try {
+      const raw = localStorage.getItem('tc-unlocked-gallery');
+      if (raw) JSON.parse(raw).forEach(k => this._unlocked.add(k));
+    } catch {}
+  },
+  _save() {
+    try { localStorage.setItem('tc-unlocked-gallery', JSON.stringify([...this._unlocked])); } catch {}
+  },
+
+  isUnlocked(key) { return !this._unlocked || this._unlocked.has(key); },
+
+  unlock(key) {
+    if (this._unlocked.has(key)) return false;
+    this._unlocked.add(key);
+    this._save();
+    return true;
+  },
+
+  // Check XP level and auto-unlock items at milestones
+  checkUnlocks() {
+    const xp = XpBar._xp;
+    const tiers = [
+      { xp: 0,    items: ['tv', 'polaroid', 'comic', 'robot', 'space', 'pixel', 'chalk'] },
+      { xp: 50,   items: ['phone', 'monitor', 'arcade', 'neon', 'matrix'] },
+      { xp: 100,  items: ['laptop', 'astronaut', 'detective', 'lab', 'radar'] },
+      { xp: 200,  items: ['robothead', 'alien', 'flame', 'terminal', 'oscilloscope'] },
+      { xp: 300,  items: ['hologram', 'sniper', 'forcefield', 'mech', 'sonar'] },
+      { xp: 500,  items: ['crystal', 'mirror', 'gift', 'cube', 'gallery'] },
+      { xp: 750,  items: ['ufo', 'planet', 'warp', 'portal', 'vortex'] },
+      { xp: 1000, items: ['anonymous', 'ninja', 'android', 'neural', 'dna'] },
+    ];
+    let newUnlocks = [];
+    for (const tier of tiers) {
+      if (xp >= tier.xp) {
+        for (const item of tier.items) {
+          if (this.unlock(item)) newUnlocks.push(item);
+        }
+      }
+    }
+    if (newUnlocks.length > 0) {
+      showToast(`🔓 Unlocked ${newUnlocks.length} new items!`, 2500);
+      log(`🔓 Unlocked: ${newUnlocks.join(', ')}`, 'success');
+    }
+  },
+
+  // Get lock status text for a skin/bg
+  getLockText(key) {
+    if (this.isUnlocked(key)) return '';
+    // Find which tier it belongs to
+    const tiers = [50, 100, 200, 300, 500, 750, 1000];
+    const allTiers = [
+      { xp: 50, items: ['phone', 'monitor', 'arcade', 'neon', 'matrix'] },
+      { xp: 100, items: ['laptop', 'astronaut', 'detective', 'lab', 'radar'] },
+      { xp: 200, items: ['robothead', 'alien', 'flame', 'terminal', 'oscilloscope'] },
+      { xp: 300, items: ['hologram', 'sniper', 'forcefield', 'mech', 'sonar'] },
+      { xp: 500, items: ['crystal', 'mirror', 'gift', 'cube', 'gallery'] },
+      { xp: 750, items: ['ufo', 'planet', 'warp', 'portal', 'vortex'] },
+      { xp: 1000, items: ['anonymous', 'ninja', 'android', 'neural', 'dna'] },
+    ];
+    for (const t of allTiers) {
+      if (t.items.includes(key)) return `🔒 ${t.xp} XP`;
+    }
+    return '🔒';
+  },
+};
+
+/* v0.7.192: ComboSystem — use multiple features in a row for bonus XP.
+   Tracks active features each frame. 3+ simultaneous = COMBO! */
+const ComboSystem = {
+  _lastCombo: 0,
+  _comboCount: 0,
+  _displayUntil: 0,
+  _displayText: '',
+
+  tick() {
+    if (Recorder.state !== 'recording') return;
+    const now = Date.now();
+    if (now - this._lastCombo < 5000) return; // 5s cooldown
+
+    // Count active features
+    let count = 0;
+    if (Engine.sources.some(s => s.skin && s.skin !== 'none')) count++;
+    if (BgPatterns.current !== 'none') count++;
+    if (TextOverlays.items.length > 0) count++;
+    if (BgMusic.playing) count++;
+    if (AICohost.visible) count++;
+    if (XpBar.visible) count++;
+    if (VoiceFx.enabled) count++;
+    if (LiveCaptions.enabled) count++;
+    if (CanvasFlair.neonBorder) count++;
+
+    if (count >= 3 && count > this._comboCount) {
+      this._comboCount = count;
+      this._lastCombo = now;
+      const bonus = count * 5;
+      XpBar.addXp(bonus);
+
+      let tier = '';
+      if (count >= 7) tier = '🌟 ULTRA COMBO';
+      else if (count >= 5) tier = '🔥 SUPER COMBO';
+      else tier = '⚡ COMBO';
+
+      this._displayText = `${tier} x${count} (+${bonus} XP)`;
+      this._displayUntil = now + 2500;
+      showToast(this._displayText, 2500);
+      SpeedLines.fire(400);
+    }
+  },
+
+  render(ctx, W, H) {
+    if (Date.now() > this._displayUntil) { this._comboCount = 0; return; }
+    const t = (this._displayUntil - Date.now()) / 2500;
+    ctx.save();
+    ctx.globalAlpha = t;
+    ctx.font = `bold ${36 + (1 - t) * 10}px "Righteous", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fbbf24';
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 15;
+    ctx.fillText(this._displayText, W / 2, H * 0.4);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+};
+
+/* v0.7.192: GhostReplay — plays a faint ghost of the previous take
+   behind the live canvas during a new recording. Like racing game ghosts. */
+const GhostReplay = {
+  enabled: false,
+  _video: null,
+  _active: false,
+  opacity: 0.15,
+
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('tc-ghost-replay', this.enabled ? '1' : '0'); } catch {}
+  },
+  load() { try { this.enabled = localStorage.getItem('tc-ghost-replay') === '1'; } catch {} },
+
+  // Called when recording starts — if enabled and previous take exists
+  startIfReady() {
+    if (!this.enabled || !Recorder._lastBlob) return;
+    if (this._video) { this._video.pause(); this._video = null; }
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.src = URL.createObjectURL(Recorder._lastBlob);
+    video.onloadedmetadata = () => {
+      video.play();
+      this._video = video;
+      this._active = true;
+      log('👻 Ghost replay active', 'info');
+    };
+  },
+
+  stop() {
+    this._active = false;
+    if (this._video) {
+      this._video.pause();
+      try { URL.revokeObjectURL(this._video.src); } catch {}
+      this._video = null;
+    }
+  },
+
+  render(ctx, W, H) {
+    if (!this._active || !this._video || this._video.ended) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    try {
+      ctx.drawImage(this._video, 0, 0, W, H);
+    } catch {}
+    // Ghost label
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px ui-monospace, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('👻 GHOST', 10, 20);
+    ctx.restore();
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -20836,6 +21032,11 @@ function wireEvents() {
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
   });
+  $('tcGhostBtn')?.addEventListener('click', (e) => {
+    GhostReplay.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', GhostReplay.enabled);
+    showToast(GhostReplay.enabled ? '👻 Ghost ON' : '👻 Ghost OFF', 1200);
+  });
   $('tcSmartSceneBtn')?.addEventListener('click', (e) => {
     SmartSceneSwitcher.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', SmartSceneSwitcher.enabled);
@@ -21658,6 +21859,8 @@ async function init() {
   RobotChoreo.load();     // v0.7.186
   SmartSceneSwitcher.load(); // v0.7.188
   CanvasFlair.load();       // v0.7.191
+  UnlockGallery.load();    // v0.7.192
+  GhostReplay.load();      // v0.7.192
   AICohost.load();        // v0.7.188
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
