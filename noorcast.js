@@ -16377,6 +16377,14 @@ const Sensors = {
       btn.id = 'tcStageConnectBtn';
       btn.style.cssText = 'position:absolute;bottom:14px;right:14px;z-index:80;padding:10px 18px;border-radius:12px;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.4);color:#4ade80;font:bold .85rem "Righteous",sans-serif;cursor:pointer;backdrop-filter:blur(4px);transition:transform .15s,background .15s;display:flex;align-items:center;gap:6px';
       btn.innerHTML = '📡 Connect micro:bit';
+      // Restore saved position
+      try {
+        const pos = JSON.parse(localStorage.getItem('tc-connect-btn-pos'));
+        if (pos && typeof pos.x === 'number') {
+          btn.style.left = pos.x + 'px'; btn.style.top = pos.y + 'px';
+          btn.style.bottom = 'auto'; btn.style.right = 'auto';
+        }
+      } catch {}
       btn.addEventListener('click', () => { if (!btn._dragged) Sensors.connect(); btn._dragged = false; });
       // Draggable
       let dx = 0, dy = 0;
@@ -16391,7 +16399,11 @@ const Sensors = {
           btn.style.top = Math.max(0, Math.min(stageRect.height - btn.offsetHeight, ev.clientY - dy)) + 'px';
           btn.style.bottom = 'auto'; btn.style.right = 'auto';
         };
-        const onUp = () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
+        const onUp = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          try { localStorage.setItem('tc-connect-btn-pos', JSON.stringify({ x: btn.offsetLeft, y: btn.offsetTop })); } catch {}
+        };
         document.addEventListener('pointermove', onMove);
         document.addEventListener('pointerup', onUp);
       });
