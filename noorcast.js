@@ -138,7 +138,7 @@ const LANG = {
     stageAspect: '📐 Format de la scène',
     stageAspectHint: "Ne change pas pendant un enregistrement",
     aspectLockedDuringRec: '⚠ Impossible de changer pendant un enregistrement',
-    instantReplay: '⚡ Instant Replay', trim: 'Couper', trimTitle: 'Couper le tuto',
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', trim: 'Couper', trimTitle: 'Couper le tuto',
     trimIn: 'Début', trimOut: 'Fin', trimDuration: 'Durée finale :',
     trimPreviewIn: '▶ début', trimPreviewOut: '▶ fin',
     trimEncoding: 'Encodage en cours…',
@@ -858,7 +858,7 @@ const LANG = {
     stageAspect: '📐 Stage format',
     stageAspectHint: "Doesn't change during recording",
     aspectLockedDuringRec: "⚠ Can't change during recording",
-    instantReplay: '⚡ Instant Replay', trim: 'Trim', trimTitle: 'Trim the tutorial',
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', trim: 'Trim', trimTitle: 'Trim the tutorial',
     trimIn: 'Start', trimOut: 'End', trimDuration: 'Final duration:',
     trimPreviewIn: '▶ start', trimPreviewOut: '▶ end',
     trimEncoding: 'Encoding…',
@@ -1567,7 +1567,7 @@ const LANG = {
     stageAspect: '📐 صيغة المسرح',
     stageAspectHint: 'لا يتغير أثناء التسجيل',
     aspectLockedDuringRec: '⚠ لا يمكن التغيير أثناء التسجيل',
-    instantReplay: '⚡ إعادة فورية', trim: 'قص', trimTitle: 'قص الدرس',
+    instantReplay: '⚡ إعادة فورية', autoThumbnail: '📸 صورة مصغرة', trim: 'قص', trimTitle: 'قص الدرس',
     trimIn: 'البداية', trimOut: 'النهاية', trimDuration: 'المدة النهائية:',
     trimPreviewIn: '▶ البداية', trimPreviewOut: '▶ النهاية',
     trimEncoding: 'جارٍ الترميز…',
@@ -17932,6 +17932,322 @@ const BgMusic = {
   },
 };
 
+/* v0.7.185: VoiceCommands — hands-free app control via SpeechRecognition.
+   Listens for keywords and triggers actions. Only active when toggled on. */
+const VoiceCommands = {
+  enabled: false,
+  _recognition: null,
+  _cooldown: 0,
+
+  supported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); },
+
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.enabled) this.start();
+    else this.stop();
+    try { localStorage.setItem('tc-voicecmd', this.enabled ? '1' : '0'); } catch {}
+  },
+
+  load() { try { this.enabled = localStorage.getItem('tc-voicecmd') === '1'; } catch {} },
+
+  start() {
+    if (!this.supported() || this._recognition) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = false;
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    rec.onresult = (ev) => {
+      const now = Date.now();
+      if (now - this._cooldown < 1500) return;
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        const text = ev.results[i][0].transcript.toLowerCase().trim();
+        if (this._exec(text)) { this._cooldown = now; return; }
+      }
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (this.enabled) { try { rec.start(); } catch {} } };
+    try { rec.start(); } catch {}
+    this._recognition = rec;
+    log('🎙 Voice commands active', 'info');
+  },
+
+  stop() {
+    if (this._recognition) { try { this._recognition.stop(); } catch {} this._recognition = null; }
+  },
+
+  _exec(text) {
+    // Record / Stop
+    if (text.includes('record') || text.includes('enregistr') || text.includes('تسجيل')) {
+      if (Recorder.state === 'idle') Recorder.start(); else Recorder.stop();
+      showToast('🎙 ' + (Recorder.state === 'idle' ? 'Record!' : 'Stop!'), 1200);
+      return true;
+    }
+    // Pause
+    if (text.includes('pause') || text.includes('وقف')) {
+      Recorder.togglePause();
+      showToast('🎙 Pause', 1200);
+      return true;
+    }
+    // Screenshot / Photo
+    if (text.includes('screenshot') || text.includes('photo') || text.includes('صورة')) {
+      snapshot();
+      showToast('🎙 📸 Screenshot!', 1200);
+      return true;
+    }
+    // Zoom
+    if (text.includes('zoom') || text.includes('تكبير')) {
+      Zoom.toggle();
+      showToast('🎙 🔍 Zoom!', 1200);
+      return true;
+    }
+    // Laser
+    if (text.includes('laser') || text.includes('ليزر')) {
+      Laser.toggle();
+      showToast('🎙 🔴 Laser!', 1200);
+      return true;
+    }
+    // Freeze
+    if (text.includes('freeze') || text.includes('gel') || text.includes('تجميد')) {
+      Recorder.toggleFreeze();
+      showToast('🎙 ❄️ Freeze!', 1200);
+      return true;
+    }
+    // Fire
+    if (text.includes('fire') || text.includes('feu') || text.includes('نار')) {
+      Sensors.sendUart('CMD:FIRE');
+      Reactions.burst('🔥');
+      showToast('🎙 🔥 FIRE!', 1200);
+      return true;
+    }
+    // Scene switching by number
+    const numMatch = text.match(/scene?\s*(\d)/i) || text.match(/(\d)/);
+    if (numMatch) {
+      const idx = parseInt(numMatch[1]) - 1;
+      if (idx >= 0 && idx < Scenes.presets.length) {
+        Scenes.switch(Scenes.presets[idx].key);
+        showToast(`🎙 Scene ${idx + 1}`, 1200);
+        return true;
+      }
+    }
+    return false;
+  },
+};
+
+/* v0.7.185: DailyChallenges — gamification hook that gives kids a new
+   challenge each day. Completing a challenge awards XP. Challenges rotate
+   from a pool of 20+ tasks. Stored in localStorage. */
+const DailyChallenges = {
+  _challenges: [
+    { id: 'rec2min', text: '🎬 Record a 2+ minute tutorial', check: () => Recorder._elapsed >= 120000 },
+    { id: '3scenes', text: '🎭 Use 3 different scenes', check: () => Badges.scenesUsed && Badges.scenesUsed.size >= 3 },
+    { id: 'skin', text: '🖼 Apply a skin to a source', check: () => Engine.sources.some(s => s.skin && s.skin !== 'none') },
+    { id: '5stickers', text: '🏷 Add 5 stickers', check: () => TextOverlays.items.length >= 5 },
+    { id: 'marker', text: '🏷 Add a chapter marker', check: () => Chapters.items.length >= 1 },
+    { id: 'background', text: '🎨 Set a background pattern', check: () => BgPatterns.current !== 'none' },
+    { id: 'music', text: '🎵 Play background music', check: () => BgMusic.playing },
+    { id: 'pilot', text: '🎮 Use the Pilot scene', check: () => Scenes.active === 'pilot' },
+    { id: 'xp50', text: '⭐ Earn 50 XP', check: () => XpBar._xp >= 50 },
+    { id: 'replay', text: '⚡ Generate an Instant Replay', check: () => DailyChallenges._replayDone },
+    { id: 'mic', text: '🎤 Test your microphone', check: () => Engine.sources.some(s => s.type === 'mic') },
+    { id: 'camera', text: '📷 Add a camera source', check: () => Engine.sources.some(s => s.type === 'cam') },
+    { id: 'screen', text: '🖥 Capture your screen', check: () => Engine.sources.some(s => s.type === 'screen') },
+    { id: 'shape', text: '⬛ Add a shape', check: () => Engine.sources.some(s => s.type === 'shape') },
+    { id: 'rec5min', text: '🏆 Record 5+ minutes', check: () => Recorder._elapsed >= 300000 },
+    { id: 'text', text: '✏️ Add a text overlay', check: () => TextOverlays.items.length >= 1 },
+    { id: 'countdown', text: '⏱ Use the countdown', check: () => DailyChallenges._countdownUsed },
+    { id: 'snapshot', text: '📸 Take a snapshot', check: () => DailyChallenges._snapshotTaken },
+    { id: 'soundpad', text: '🎵 Play a sound effect', check: () => DailyChallenges._soundPlayed },
+    { id: 'voicecmd', text: '🎙 Use a voice command', check: () => VoiceCommands.enabled },
+  ],
+  _today: null,
+  _completed: false,
+  _replayDone: false,
+  _countdownUsed: false,
+  _snapshotTaken: false,
+  _soundPlayed: false,
+  _checkInterval: null,
+
+  load() {
+    try {
+      const key = new Date().toISOString().slice(0, 10);
+      const saved = JSON.parse(localStorage.getItem('tc-daily-challenge'));
+      if (saved && saved.date === key) {
+        this._today = this._challenges.find(c => c.id === saved.id) || this._pick(key);
+        this._completed = !!saved.completed;
+      } else {
+        this._today = this._pick(key);
+        this._completed = false;
+        this._save();
+      }
+    } catch {
+      this._today = this._challenges[0];
+    }
+  },
+
+  _pick(dateKey) {
+    // Deterministic: hash the date to pick a challenge
+    let hash = 0;
+    for (let i = 0; i < dateKey.length; i++) hash = ((hash << 5) - hash) + dateKey.charCodeAt(i);
+    return this._challenges[Math.abs(hash) % this._challenges.length];
+  },
+
+  _save() {
+    try {
+      localStorage.setItem('tc-daily-challenge', JSON.stringify({
+        date: new Date().toISOString().slice(0, 10),
+        id: this._today.id,
+        completed: this._completed,
+      }));
+    } catch {}
+  },
+
+  startChecking() {
+    if (this._completed || !this._today) return;
+    this._checkInterval = setInterval(() => {
+      if (this._completed || !this._today) return;
+      try {
+        if (this._today.check()) {
+          this._completed = true;
+          this._save();
+          clearInterval(this._checkInterval);
+          XpBar.addXp(25);
+          showToast(`🏅 Challenge complete! +25 XP`, 3000);
+          Confetti.burst();
+          SpeedLines.fire(500);
+        }
+      } catch {}
+    }, 3000);
+  },
+
+  getText() {
+    if (!this._today) return '';
+    return this._completed ? `✅ ${this._today.text}` : `🎯 ${this._today.text}`;
+  },
+};
+
+/* v0.7.185: AutoThumbnail — generates a YouTube-ready thumbnail PNG from
+   the recording. Picks the highest-contrast frame, adds title text +
+   NoorCast branding. 1280×720 output. */
+const AutoThumbnail = {
+  async generate() {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    showToast('📸 Generating thumbnail...', 2000);
+
+    try {
+      const srcVideo = document.createElement('video');
+      srcVideo.muted = true;
+      srcVideo.playsInline = true;
+      srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+      await new Promise((resolve, reject) => { srcVideo.onloadedmetadata = resolve; srcVideo.onerror = reject; });
+      const duration = srcVideo.duration;
+
+      // Sample 10 frames evenly distributed across the video
+      const samples = 10;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280; canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+      let bestFrame = null, bestContrast = -1;
+
+      for (let i = 0; i < samples; i++) {
+        const time = (i / samples) * duration * 0.9 + duration * 0.05; // skip first/last 5%
+        srcVideo.currentTime = time;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        ctx.drawImage(srcVideo, 0, 0, 1280, 720);
+
+        // Compute contrast (variance of grayscale)
+        const imgData = ctx.getImageData(0, 0, 320, 180); // sample at low res for speed
+        const px = imgData.data;
+        let sum = 0, sumSq = 0, count = 0;
+        for (let j = 0; j < px.length; j += 16) { // sample every 4th pixel
+          const gray = (px[j] * 0.3 + px[j + 1] * 0.59 + px[j + 2] * 0.11);
+          sum += gray; sumSq += gray * gray; count++;
+        }
+        const mean = sum / count;
+        const variance = sumSq / count - mean * mean;
+        if (variance > bestContrast) {
+          bestContrast = variance;
+          bestFrame = time;
+        }
+      }
+
+      // Draw the best frame
+      if (bestFrame !== null) {
+        srcVideo.currentTime = bestFrame;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        ctx.drawImage(srcVideo, 0, 0, 1280, 720);
+      }
+
+      URL.revokeObjectURL(srcVideo.src);
+
+      // Add gradient overlay at bottom for text readability
+      const grad = ctx.createLinearGradient(0, 720 * 0.55, 0, 720);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,.7)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Title text
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 48px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.shadowColor = 'rgba(0,0,0,.7)';
+      ctx.shadowBlur = 10;
+      const title = Recorder._lastTitle || 'My Tutorial';
+      ctx.fillText(title, 640, 660);
+
+      // NoorCast branding (bottom-right)
+      ctx.font = 'bold 20px "Righteous", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#a3e635';
+      ctx.fillText('نُورْكَاسْت NoorCast', 1260, 700);
+
+      // Duration badge (top-right)
+      const dur = Math.floor(duration);
+      const durText = `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}`;
+      ctx.fillStyle = 'rgba(0,0,0,.6)';
+      ctx.beginPath(); ctx.roundRect(1180, 16, 80, 30, 6); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(durText, 1220, 36);
+
+      // Play button overlay (center)
+      ctx.fillStyle = 'rgba(0,0,0,.4)';
+      ctx.beginPath(); ctx.arc(640, 320, 40, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(625, 300); ctx.lineTo(665, 320); ctx.lineTo(625, 340); ctx.closePath();
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+
+      // Download
+      canvas.toBlob((blob) => {
+        if (!blob) { showToast('❌ Thumbnail failed', 2000); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        a.href = url;
+        a.download = `noorcast-thumb-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        showToast('📸 Thumbnail ready!', 2500);
+        // Also show as download link
+        const dlThumb = $('tcDownloadThumb');
+        if (dlThumb) { dlThumb.href = url; dlThumb.download = a.download; dlThumb.style.display = ''; }
+      }, 'image/png');
+    } catch (e) {
+      log('AutoThumbnail error: ' + e.message, 'error');
+      showToast('❌ Thumbnail failed', 2000);
+    }
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -19208,6 +19524,11 @@ function wireEvents() {
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
   });
+  $('tcVoiceCmdBtn')?.addEventListener('click', (e) => {
+    VoiceCommands.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceCommands.enabled);
+    showToast(VoiceCommands.enabled ? '🎙 Voice Commands ON' : '🎙 Voice Commands OFF', 1200);
+  });
   $('tcBgMusicBtn')?.addEventListener('click', (e) => {
     BgMusic.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', BgMusic.playing);
@@ -19921,6 +20242,7 @@ function wireEvents() {
 
   // Trim wiring
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
+  $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
   $('tcTrimClose').addEventListener('click', () => Trim.close());
   $('tcTrimCancelBtn').addEventListener('click', () => Trim.close());
@@ -19984,6 +20306,8 @@ async function init() {
   ServoGauge.load(); // v0.7.177
   VoiceFx.load();    // v0.7.182
   BgMusic.load();    // v0.7.184
+  VoiceCommands.load(); // v0.7.185
+  DailyChallenges.load(); // v0.7.185
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
@@ -20064,6 +20388,15 @@ async function init() {
   // First-pass device list — labels are blank until the user grants permission,
   // then refreshDeviceList() is called automatically after addCamera/setMic.
   await Engine.refreshDeviceList();
+
+  // v0.7.185: start daily challenge + voice commands if enabled
+  DailyChallenges.startChecking();
+  if (VoiceCommands.enabled) VoiceCommands.start();
+  setTimeout(() => {
+    if (DailyChallenges._today && !DailyChallenges._completed) {
+      showToast(`🎯 Today: ${DailyChallenges._today.text}`, 4000);
+    }
+  }, 3000);
 
   log(t('ready'), 'success');
 }
