@@ -3579,6 +3579,7 @@ const Engine = {
     XpBar.render(ctx, width, height);
     AchievementPopup.render(ctx, width, height);
     LessonGuide.render(ctx, width, height);
+    AICohost.render(ctx, width, height);
 
     // v0.7.182: XP ticks during recording (1 XP per second)
     if (Recorder.state === 'recording' && XpBar.visible) {
@@ -18667,6 +18668,335 @@ const QRShare = {
   },
 };
 
+/* v0.7.188: SmartSceneSwitcher — listens to live speech and auto-switches
+   scenes when it detects keywords like "code", "robot", "camera", etc. */
+const SmartSceneSwitcher = {
+  enabled: false,
+  _recognition: null,
+  _cooldown: 0,
+
+  // Keyword → scene key mapping
+  _rules: [
+    { words: ['code', 'program', 'script', 'كود', 'برنامج'], scene: 'code' },
+    { words: ['robot', 'mecha', 'روبوت', 'آلة'], scene: 'robot' },
+    { words: ['sensor', 'capteur', 'مستشعر', 'temperature', 'light'], scene: 'sensors' },
+    { words: ['camera', 'caméra', 'كاميرا', 'face', 'visage', 'me', 'moi', 'أنا'], scene: 'you' },
+    { words: ['studio', 'grid', 'grille', 'all', 'tout', 'الكل'], scene: 'studio' },
+    { words: ['pilot', 'pilote', 'drive', 'control', 'طيار', 'تحكم'], scene: 'pilot' },
+  ],
+
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('tc-smart-scene', this.enabled ? '1' : '0'); } catch {}
+    if (this.enabled) this.start(); else this.stop();
+  },
+  load() { try { this.enabled = localStorage.getItem('tc-smart-scene') === '1'; } catch {} },
+
+  start() {
+    if (this._recognition) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = false;
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    rec.onresult = (ev) => {
+      const now = Date.now();
+      if (now - this._cooldown < 3000) return; // 3s cooldown between switches
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        const text = ev.results[i][0].transcript.toLowerCase();
+        for (const rule of this._rules) {
+          if (rule.words.some(w => text.includes(w))) {
+            if (Scenes.active !== rule.scene) {
+              Scenes.switch(rule.scene);
+              this._cooldown = now;
+              log(`🧠 Smart switch → ${rule.scene} ("${text.slice(0, 30)}")`, 'info');
+              showToast(`🧠 → ${Scenes.presets.find(p => p.key === rule.scene)?.icon || ''} ${rule.scene}`, 1500);
+            }
+            return;
+          }
+        }
+      }
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (this.enabled && this._recognition) { try { rec.start(); } catch {} } };
+    try { rec.start(); } catch {}
+    this._recognition = rec;
+    log('🧠 Smart Scene Switcher active', 'info');
+  },
+
+  stop() {
+    if (this._recognition) { try { this._recognition.stop(); } catch {} this._recognition = null; }
+  },
+};
+
+/* v0.7.188: TutorialScore — post-recording quality analysis.
+   Grades: audio clarity, pacing, scene variety, duration, engagement.
+   Shows a visual report card on canvas. */
+const TutorialScore = {
+  _lastScore: null,
+
+  async analyze() {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    showToast('🎯 Analyzing tutorial quality...', 2000);
+
+    try {
+      const ab = await Recorder._lastBlob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try { audioBuf = await ac.decodeAudioData(ab.slice(0)); } catch { showToast('❌ Decode failed', 2000); return; }
+
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+
+      // 1. Audio clarity — average RMS (higher = clearer voice)
+      let totalRms = 0, windows = 0;
+      for (let i = 0; i < samples.length; i += sr) {
+        let sum = 0;
+        const end = Math.min(i + sr, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        totalRms += Math.sqrt(sum / (end - i));
+        windows++;
+      }
+      const avgRms = totalRms / (windows || 1);
+      const audioScore = Math.min(100, Math.round(avgRms * 500));
+
+      // 2. Pacing — variance of energy (varied = good, flat = monotone)
+      const energies = [];
+      for (let i = 0; i < samples.length; i += sr) {
+        let sum = 0;
+        const end = Math.min(i + sr, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        energies.push(Math.sqrt(sum / (end - i)));
+      }
+      const mean = energies.reduce((a, b) => a + b, 0) / energies.length;
+      const variance = energies.reduce((a, e) => a + (e - mean) ** 2, 0) / energies.length;
+      const pacingScore = Math.min(100, Math.round(Math.sqrt(variance) * 1000));
+
+      // 3. Scene variety
+      const scenesUsed = Chapters.items.length;
+      const sceneScore = Math.min(100, scenesUsed * 20);
+
+      // 4. Duration — sweet spot is 2-5 minutes
+      let durationScore;
+      if (duration < 30) durationScore = 20;
+      else if (duration < 120) durationScore = 50 + (duration / 120) * 30;
+      else if (duration <= 300) durationScore = 90 + (1 - Math.abs(duration - 180) / 180) * 10;
+      else if (duration <= 600) durationScore = 70;
+      else durationScore = 50;
+      durationScore = Math.round(durationScore);
+
+      // 5. Engagement — peaks above 2x average
+      const peaks = energies.filter(e => e > mean * 2).length;
+      const engagementScore = Math.min(100, Math.round((peaks / (windows || 1)) * 400));
+
+      // Overall
+      const overall = Math.round((audioScore + pacingScore + sceneScore + durationScore + engagementScore) / 5);
+
+      try { ac.close(); } catch {}
+
+      this._lastScore = { audioScore, pacingScore, sceneScore, durationScore, engagementScore, overall, duration };
+      this._showReport();
+    } catch (e) {
+      log('TutorialScore error: ' + e.message, 'error');
+      showToast('❌ Analysis failed', 2000);
+    }
+  },
+
+  _grade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B+';
+    if (score >= 60) return 'B';
+    if (score >= 50) return 'C+';
+    if (score >= 40) return 'C';
+    return 'D';
+  },
+
+  _showReport() {
+    if (!this._lastScore) return;
+    const s = this._lastScore;
+    const old = document.querySelector('.tc-score-modal');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'tc-score-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)';
+
+    const grades = [
+      { label: '🎤 Audio', score: s.audioScore },
+      { label: '📈 Pacing', score: s.pacingScore },
+      { label: '🎭 Scenes', score: s.sceneScore },
+      { label: '⏱ Duration', score: s.durationScore },
+      { label: '🔥 Engagement', score: s.engagementScore },
+    ];
+
+    const rows = grades.map(g => {
+      const grade = this._grade(g.score);
+      const barColor = g.score >= 70 ? '#4ade80' : g.score >= 50 ? '#fbbf24' : '#ef4444';
+      return `
+        <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+          <span style="width:110px;font-size:.85rem">${g.label}</span>
+          <div style="flex:1;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden">
+            <div style="width:${g.score}%;height:100%;background:${barColor};border-radius:6px;transition:width .5s"></div>
+          </div>
+          <span style="width:30px;font-weight:bold;color:${barColor}">${grade}</span>
+        </div>
+      `;
+    }).join('');
+
+    const overallGrade = this._grade(s.overall);
+    const overallColor = s.overall >= 70 ? '#4ade80' : s.overall >= 50 ? '#fbbf24' : '#ef4444';
+
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border-radius:16px;padding:24px;max-width:380px;width:90%;border:1px solid rgba(163,230,53,.3)">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:2rem;font-weight:bold;color:${overallColor}">${overallGrade}</div>
+          <div style="font-size:2.5rem;font-weight:bold;color:${overallColor}">${s.overall}/100</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.5)">Tutorial Quality Score</div>
+        </div>
+        ${rows}
+        <div style="text-align:center;margin-top:16px">
+          <button id="tcScoreClose" style="padding:8px 24px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-size:.9rem">Close</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#tcScoreClose').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    if (s.overall >= 80) Confetti.burst();
+    showToast(`🎯 Score: ${s.overall}/100 (${overallGrade})`, 3000);
+  },
+};
+
+/* v0.7.188: AICohost — animated canvas character that reacts to audio.
+   A small cartoon face in a corner that nods, claps, thinks based on
+   mic RMS. Pure canvas drawing, no images. */
+const AICohost = {
+  visible: false,
+  _x: 0, _y: 0,
+  _mood: 'idle', // idle, speaking, excited, thinking
+  _mouthOpen: 0,
+  _blinkTimer: 0,
+  _blinking: false,
+
+  toggle() {
+    this.visible = !this.visible;
+    try { localStorage.setItem('tc-cohost', this.visible ? '1' : '0'); } catch {}
+  },
+  load() { try { this.visible = localStorage.getItem('tc-cohost') === '1'; } catch {} },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const t = Date.now() / 1000;
+    const rms = MicBoost._lastRms || 0;
+
+    // Update mood
+    if (rms > 0.2) this._mood = 'excited';
+    else if (rms > 0.03) this._mood = 'speaking';
+    else if (rms > 0.005) this._mood = 'thinking';
+    else this._mood = 'idle';
+
+    this._mouthOpen = Math.min(1, rms * 5);
+
+    // Blink
+    if (t - this._blinkTimer > 3 + Math.random() * 2) {
+      this._blinkTimer = t;
+      this._blinking = true;
+      setTimeout(() => { this._blinking = false; }, 150);
+    }
+
+    // Position: bottom-right corner
+    const cx = W - 70, cy = H - 80;
+    const bobY = Math.sin(t * 2) * 3;
+
+    ctx.save();
+    ctx.translate(cx, cy + bobY);
+
+    // Body circle
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
+
+    // Eyes
+    const eyeY = -8;
+    if (this._blinking) {
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-10, eyeY); ctx.lineTo(-6, eyeY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, eyeY); ctx.lineTo(10, eyeY); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#333';
+      const eyeSize = this._mood === 'excited' ? 5 : 4;
+      ctx.beginPath(); ctx.arc(-8, eyeY, eyeSize, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8, eyeY, eyeSize, 0, Math.PI * 2); ctx.fill();
+      // Pupils
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-7, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(9, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fill();
+      // Excited sparkle eyes
+      if (this._mood === 'excited') {
+        ctx.fillStyle = '#fff';
+        ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('✨', -8, eyeY - 10);
+        ctx.fillText('✨', 8, eyeY - 10);
+      }
+    }
+
+    // Mouth
+    const mouthY = 6;
+    if (this._mood === 'excited') {
+      // Big happy mouth
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(0, mouthY, 10 + this._mouthOpen * 5, 0, Math.PI);
+      ctx.fill();
+    } else if (this._mood === 'speaking') {
+      // Open mouth (talking)
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.ellipse(0, mouthY + 2, 6, 3 + this._mouthOpen * 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this._mood === 'thinking') {
+      // Small O mouth
+      ctx.fillStyle = '#333';
+      ctx.beginPath(); ctx.arc(0, mouthY + 2, 3, 0, Math.PI * 2); ctx.fill();
+      // Thought bubble
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.beginPath(); ctx.arc(22, -20, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(30, -30, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.15)';
+      ctx.beginPath(); ctx.arc(40, -42, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('🤔', 40, -38);
+    } else {
+      // Idle smile
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, mouthY, 8, 0.1, Math.PI - 0.1); ctx.stroke();
+    }
+
+    // Cheeks (blush when excited)
+    if (this._mood === 'excited' || this._mood === 'speaking') {
+      ctx.fillStyle = 'rgba(251,146,60,.25)';
+      ctx.beginPath(); ctx.ellipse(-18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(18, 2, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Antenna
+    ctx.strokeStyle = '#d4a020'; ctx.lineWidth = 2;
+    const antAngle = Math.sin(t * 3) * 0.2;
+    ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(Math.sin(antAngle) * 10, -48); ctx.stroke();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(Math.sin(antAngle) * 10, -48, 4, 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -19943,6 +20273,17 @@ function wireEvents() {
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
   });
+  $('tcSmartSceneBtn')?.addEventListener('click', (e) => {
+    SmartSceneSwitcher.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', SmartSceneSwitcher.enabled);
+    showToast(SmartSceneSwitcher.enabled ? '🧠 Smart Scene ON' : '🧠 Smart Scene OFF', 1200);
+  });
+  $('tcCohostBtn')?.addEventListener('click', (e) => {
+    AICohost.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', AICohost.visible);
+    showToast(AICohost.visible ? '😊 Co-host ON' : '😊 Co-host OFF', 1200);
+  });
+  $('tcScoreBtn')?.addEventListener('click', () => TutorialScore.analyze());
   $('tcChoreoRecBtn')?.addEventListener('click', (e) => {
     if (RobotChoreo.recording) {
       RobotChoreo.stopRecording();
@@ -20744,6 +21085,8 @@ async function init() {
   VoiceCommands.load(); // v0.7.185
   DailyChallenges.load(); // v0.7.185
   RobotChoreo.load();     // v0.7.186
+  SmartSceneSwitcher.load(); // v0.7.188
+  AICohost.load();        // v0.7.188
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
@@ -20828,6 +21171,7 @@ async function init() {
   // v0.7.185: start daily challenge + voice commands if enabled
   DailyChallenges.startChecking();
   if (VoiceCommands.enabled) VoiceCommands.start();
+  if (SmartSceneSwitcher.enabled) SmartSceneSwitcher.start();
   setTimeout(() => {
     if (DailyChallenges._today && !DailyChallenges._completed) {
       showToast(`🎯 Today: ${DailyChallenges._today.text}`, 4000);
