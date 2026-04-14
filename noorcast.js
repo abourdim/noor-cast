@@ -2752,9 +2752,16 @@ function log(msg, type = 'info') {
 function showToast(msg, ms = 2000) {
   const toast = $('toastIndicator'), m = $('toastMessage'); if (!toast || !m) return;
   m.textContent = msg;
-  toast.classList.add('show');
+  toast.style.display = 'block';
+  // Force reflow so the transition triggers from the initial state
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
   clearTimeout(showToast._timer);
-  if (ms > 0) showToast._timer = setTimeout(() => toast.classList.remove('show'), ms);
+  if (ms > 0) showToast._timer = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => { toast.style.display = 'none'; }, 400);
+  }, ms);
 }
 
 function openPanel(id) {
@@ -3605,6 +3612,19 @@ const Engine = {
     ctx.save();
     ctx.globalAlpha = src.opacity ?? 1;
 
+    // v0.7.182: fly-in entrance animation
+    if (src._flyInUntil && Date.now() < src._flyInUntil) {
+      const t = 1 - (src._flyInUntil - Date.now()) / 400; // 0→1 over 400ms
+      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const offY = this.height * (1 - ease);
+      const scale = 0.5 + ease * 0.5;
+      ctx.translate(src.x + src.w / 2, src.y + src.h / 2);
+      ctx.translate(0, offY);
+      ctx.scale(scale, scale);
+      ctx.translate(-(src.x + src.w / 2), -(src.y + src.h / 2));
+      ctx.globalAlpha *= ease;
+    }
+
     // v0.7.62: image sources (from clipboard paste) take a simplified draw
     // path — shape clip + drawImage — bypassing the video filter/mirror/
     // blur/title chain, since they're static bitmaps that don't need any
@@ -4282,6 +4302,7 @@ const Engine = {
         badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
       this.sources.push(src);
+      src._flyInUntil = Date.now() + 400;
       stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
       // v0.7.83: if the screen capture has audio, route it through a
       // VolumeDuck gain node so mic-ducking works
@@ -4339,6 +4360,7 @@ const Engine = {
         badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
       this.sources.push(src);
+      src._flyInUntil = Date.now() + 400;
       this.onSourcesChanged();
       if (Scenes.active) Scenes.reapply();
       log(`+ ${src.label}`, 'success');
@@ -4391,6 +4413,7 @@ const Engine = {
           badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
         };
         this.sources.push(src);
+        src._flyInUntil = Date.now() + 400;
         this.onSourcesChanged();
         showToast(`📋 ${label || 'clipboard'}`, 1500);
         if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
@@ -4431,6 +4454,7 @@ const Engine = {
       badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
     };
     this.sources.push(src);
+    src._flyInUntil = Date.now() + 400;
     this.onSourcesChanged();
     showToast(`🟩 ${shapeType}`, 1200);
     if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
@@ -5337,10 +5361,12 @@ const SceneTransition = {
   _midpointAt: 0,
   _pendingApply: null,
 
+  MODES: ['fade', 'wipe', 'slide', 'zoom', 'flip'],
+
   load() {
     try {
       const stored = localStorage.getItem('tc-scene-transition-mode');
-      if (stored === 'fade' || stored === 'wipe') {
+      if (this.MODES.includes(stored)) {
         this.mode = stored;
         this.enabled = true;
       } else if (stored === 'none' || stored === null) {
@@ -5388,14 +5414,12 @@ const SceneTransition = {
   render(ctx, W, H) {
     const now = performance.now();
     if (now >= this._activeUntil) return;
-    if (this.mode === 'wipe') {
-      this._renderWipe(ctx, W, H, now);
-    } else {
-      this._renderFade(ctx, W, H, now);
-    }
+    const fn = this['_render_' + this.mode];
+    if (fn) fn.call(this, ctx, W, H, now);
+    else this._render_fade(ctx, W, H, now);
   },
 
-  _renderFade(ctx, W, H, now) {
+  _render_fade(ctx, W, H, now) {
     const elapsed = this.DURATION - (this._activeUntil - now);
     const half = this.DURATION / 2;
     // Fade out 0..1 over first half, then fade in 1..0 over second half
@@ -5408,8 +5432,8 @@ const SceneTransition = {
     ctx.restore();
   },
 
-  // v0.7.153: horizontal wipe — a vertical black bar sweeps left-to-right
-  _renderWipe(ctx, W, H, now) {
+  // v0.7.153: horizontal wipe
+  _render_wipe(ctx, W, H, now) {
     const dur = this.WIPE_DURATION;
     const elapsed = dur - (this._activeUntil - now);
     const progress = Math.max(0, Math.min(1, elapsed / dur));
@@ -5433,6 +5457,72 @@ const SceneTransition = {
       ctx.fillStyle = '#000';
       ctx.fillRect(trailX, 0, W - trailX, H);
     }
+    ctx.restore();
+  },
+
+  // v0.7.182: slide transition — content slides left/right
+  _render_slide(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    let offset;
+    if (elapsed < half) offset = -(elapsed / half) * W;
+    else offset = W - ((elapsed - half) / half) * W;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(offset, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.182: zoom transition — zoom into black then out
+  _render_zoom(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const cx = W / 2, cy = H / 2;
+    let scale, alpha;
+    if (elapsed < half) {
+      const t = elapsed / half;
+      scale = 1 + t * 2;
+      alpha = t;
+    } else {
+      const t = (elapsed - half) / half;
+      scale = 3 - t * 2;
+      alpha = 1 - t;
+    }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.fillStyle = '#000';
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.182: flip transition — 3D-like horizontal flip via scaleX
+  _render_flip(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const cx = W / 2;
+    let scaleX, alpha;
+    if (elapsed < half) {
+      const t = elapsed / half;
+      scaleX = 1 - t;
+      alpha = t * 0.8;
+    } else {
+      const t = (elapsed - half) / half;
+      scaleX = t;
+      alpha = (1 - t) * 0.8;
+    }
+    ctx.save();
+    ctx.translate(cx, 0);
+    ctx.scale(Math.max(0.01, scaleX), 1);
+    ctx.translate(-cx, 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
     ctx.restore();
   },
 };

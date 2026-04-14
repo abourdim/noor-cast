@@ -777,11 +777,16 @@ details.collapsible > .card { margin-top: 8px; }
    ═══════════════════════════════════════════════════════════════════ */
 
 .toast-indicator {
-  display: none; position: fixed; bottom: 20px; inset-inline-end: 20px;
+  display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
   background: linear-gradient(135deg, var(--accent), var(--band2));
-  padding: 10px 18px; border-radius: 50px;
-  box-shadow: 0 4px 16px var(--glow); z-index: 9999;
-  animation: slideIn .3s ease-out;
+  padding: 12px 22px; border-radius: 50px;
+  box-shadow: 0 8px 24px var(--glow); z-index: 9999;
+  transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0;
+}
+.toast-indicator.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 .toast-inner { display: flex; align-items: center; gap: 8px; }
 .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,.2); border-top-color: var(--bg); border-radius: 50%; animation: spin .8s linear infinite; }
