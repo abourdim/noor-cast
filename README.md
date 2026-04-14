@@ -31,14 +31,16 @@ a robot. If that's you, here's what you get that nobody else offers:
 - **Guided templates.** Pick `📚 Full lesson`, `🤖 Robot demo`,
   `🔧 Fix-it`, or `🤖 Robot Tuto` on first launch and NoorCast walks
   you through a 5-step sequence. Zero decision fatigue.
-- **60+ features.** Source flip/crop/rotate/opacity/shadow/border/filter,
-  countdown timer, emoji reactions, sticky notes, sound board, undo/redo,
-  multi-select, FPS counter, vignette, letterbox, piano overlay, and more.
+- **200+ features.** 49 camera skins, 15 animated backgrounds, 12 canvas
+  pets, 36 AI co-host characters, instant replay, voice commands, smart
+  scene switcher, XP system, daily challenges, combo system, live captions,
+  auto-thumbnail, export flyer, robot choreography, quality score, and more.
 - **Smart silence trimmer.** One click after Stop removes all the "umm..."
   pauses. No external editor.
-- **Kid-friendly.** 10 colorful text stickers, confetti on finish, big
-  red REC button, achievement badges, 8 visual themes.
+- **Kid-friendly.** Animated stickers, confetti, sound pad, background
+  music, speed lines, bouncy animations, 8 visual themes, XP leveling.
 - **Runs on a Chromebook.** No dependencies, no install, no RAM hog.
+- **[Full User Guide](./guide.html)** with every feature documented.
 
 **The first 5 minutes:** grant cam/mic permissions → pick the `🤖 Démo robot`
 template → connect your micro:bit via the `📡 Connecter micro:bit` button →
@@ -62,10 +64,11 @@ one video with scene presets for every stage of the tutorial:
 | 2 | 🤖 **Robot** | Robot cam full + face cam PIP |
 | 3 | 🎛 **Capteurs** | Sensor cam full + face cam PIP |
 | 4 | 💻🤖 **Code + Robot** | Screen left 60% / robot right 40% + face cam PIP |
-| 5 | 🎬 **Studio** | 2×2 grid: screen + all cams |
-| 6 | 👋 **Toi** | Face cam full (intro/outro) |
+| 5 | 🎬 **Matrix** | 2×2 grid: screen + all cams |
+| 6 | 🎮 **Pilot** | Camera full + micro:bit D-pad/joystick/servo/LED overlay |
+| 7 | 👋 **Solo** | Face cam full (intro/outro) |
 
-Switch between them in real time during the recording using number keys **1-6**.
+Switch between them in real time during the recording using number keys **1-7**.
 
 ---
 
@@ -234,6 +237,86 @@ A rapid-fire series of 11 usability and polish features:
   lesson repo, Canvas course). Every BadgeCard PNG generated after
   a take includes the URL at the bottom in monospace.
 
+### 🖼 49 Camera Skins (v0.7.180+)
+Decorative frames around sources, baked into recording. Style popup → Frame → Skin:
+- **Classic**: TV (wood grain, knobs), Polaroid, Comic (spiky), Monitor
+- **Tech**: Phone (Dynamic Island), Laptop, Terminal (CRT), Hologram (glitch), Android
+- **Characters**: Robot Visor, Robot Head, Alien, Anonymous, Ninja, Detective
+- **Gaming**: Arcade (marquee lights), HP Bar, Leaderboard, Sniper Scope, Slot Machine
+- **Space**: Astronaut (helmet), UFO (tractor beam), Planet Ring, Warp Speed
+- **Science**: Lab (bubbles), Microscope, DNA (helix), Electric, Neural Net
+- **Futurist**: Mech (armor), HUD (targeting), Force Field (hex), Hexgrid, Portal, Float
+- **Style**: Diamond, Flame (animated), Neon (rainbow), Circus, Vortex
+- **Broadcast**: Clapboard, Livestream (LIVE badge), CCTV (timestamps)
+- **Islamic**: Minaret (arch), Crescent, Andalusia (horseshoe arch)
+- **3D Depth**: Cube, Gallery Frame, Cardboard Box, Crystal, Magic Mirror, Book, Museum, Ice, Gift
+- **Design Apps**: Canva, Figma, Photoshop, VS Code, Scratch
+
+### 🌌 15 Animated Backgrounds (v0.7.180)
+Settings → Background pattern. Adjustable opacity (5-100%):
+- **Geeky**: Space (twinkling stars), Pixel Grid, Matrix Rain, Arcade (Tron), Circuit Board, Chalkboard
+- **Islamic**: Zellige, Arabesque, Riad (arches), Muqarnas
+- **Islamic Science**: Astrolabe, Al-Khwarizmi (equations)
+- **Radar**: Radar Sweep (rotating), Sonar (pulsing), Oscilloscope (waveform)
+
+### 🧠 AI Co-host (v0.7.188+)
+Animated character in bottom-right, reacts to voice:
+- 36 SVG characters across 6 categories: Science (Atom, DNA, Flask...), Space (Saturn, Rocket...), Symbols, Hacker (Skull, Dragon...), Pirate, Cyber (V Mask, Tux...)
+- Claps on speech→silence, shows "Great point!" / "Keep going!" bubbles
+- Scene prompter (suggests change after 2 min), timer buddy (1/2/5/10 min cards)
+
+### 🐾 12 Canvas Pets (v0.7.197)
+Animated characters walking/flying across the canvas:
+- Robot (sparks), Anonymous (glitches), Skull (rolls), Agent (laser scan), Bug (pixel trail), UFO (tractor beam), Drone (patrol), Arc (lightning), Spider (drops on silk), Eye (floats/tracks), Pencil (draws), Wrench (rolls)
+- React to audio (freeze when loud), baked into recording, multiple active
+
+### ⚡ Instant Replay (v0.7.184)
+Auto-generates a 30s highlight reel: analyzes audio peaks → extracts 7 loudest 4s clips → stitches chronologically with flash transitions → downloads .webm
+
+### 🎙 Voice Commands (v0.7.185)
+SpeechRecognition hands-free control: "record", "stop", "pause", "screenshot", "zoom", "laser", "freeze", "fire", "scene 3". FR/EN/AR.
+
+### 🧠 Smart Scene Switcher (v0.7.188)
+Auto-switches scenes on keywords: "code" → Code scene, "robot" → Robot scene, etc.
+
+### 🏆 Gamification (v0.7.182+)
+- **XP Bar**: 1 XP/sec recording, level up every 300 XP with confetti
+- **Daily Challenges**: 20 rotating tasks, +25 XP on completion
+- **Combo System**: 3+ features active = COMBO, 5+ = SUPER, 7+ = ULTRA
+- **Unlock Gallery**: skins/backgrounds locked behind XP tiers (50→1000)
+
+### 📸 Post-Recording Tools (v0.7.184+)
+- **Auto Thumbnail**: picks best frame + title + branding → 1280×720 PNG
+- **Export Flyer**: A4 PNG with canvas screenshot + NoorCast/workshop-diy.org branding
+- **Transcript**: downloads full text from captions (.txt)
+- **Quality Score**: grades Audio/Pacing/Scenes/Duration/Engagement (A+ to D)
+- **Multi-take Director**: store up to 5 takes, compare audio energy, download best
+- **Ghost Replay**: previous take plays as faint ghost during new recording
+
+### 🎮 Pilot Scene & micro:bit Overlay (v0.7.179+)
+- D-pad + joystick + servo sliders + LED grid as draggable overlay on canvas
+- Joystick with CMD/Servo toggle mode
+- Robot Choreography: record/replay UART command sequences
+- LED mirroring from micro:bit, synced servo gauges
+
+### 🎨 Canvas Flair (v0.7.191)
+During recording, baked into output:
+- Animated neon border (rainbow cycling)
+- Heartbeat border (pulses with voice volume)
+- Film strip edges (sprocket holes)
+- Corner decorations + pulsing "ON AIR" badge
+- Camera flash on snapshot
+- 6 scene transitions: Fade, Wipe, Slide, Zoom, Flip, Glitch
+
+### 🎵 Audio Features (v0.7.182+)
+- **Background Music**: 5 procedural 8-bit tracks (Chiptune, Lo-fi, Epic, Chill, Retro)
+- **Sound Pad**: 8 audio buttons (clap, drum, horn, boom, magic, bell, LOL, launch)
+- **Voice FX**: shout = fire, clap = confetti, whisper = night vision
+- **Live Captions**: karaoke-style subtitles, word highlighting, save as .srt
+
+### 🎨 Scene Themes (v0.7.193)
+One-click canvas presets: Cinema, Retro Gaming, Sci-fi Lab, Islamic, News Studio, Space, Hacker, Clean
+
 ### ✨ Effects (v0.4.0)
 - **Background blur** (🌫 per source) — sharp center, blurred edge ring, no ML model
 - **Theme-accent glow** around every visible source (follows the 8 themes)
@@ -348,12 +431,17 @@ python3 -m http.server 8000
 | `D` | Toggle whiteboard drawing mode |
 | `Z` | Toggle smooth zoom (cursor-centered, 1.8×) |
 | `S` | Take a photo snapshot |
-| `Esc` | Close all panels |
-| `Q` | Quiz card — drop a question overlay mid-recording (v0.5.0) |
-| `Ctrl+Shift+D` | Toggle debug HUD (FPS + memory) |
-| `micro:bit A` | Same as `Z` — toggle zoom from the physical robot button |
-| `micro:bit B` | Same as `M` — add a chapter marker (v0.5.0) |
-| `micro:bit tilt` | Drive the laser pointer position (v0.5.0, requires laser on) |
+| `T` | Toggle teleprompter |
+| `G` | Toggle grid overlay |
+| `C` | Toggle live captions |
+| `?` | Keyboard cheat sheet |
+| `Shift+F` | Focus mode (hide all UI) |
+| `Shift+R` | Instant record (skip countdown) |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / redo layout |
+| `Ctrl+S` | Download all files |
+| `Ctrl+V` | Paste image from clipboard |
+| `Esc` | Close panels / exit focus mode |
+| `Delete` | Remove selected source/overlay |
 
 ---
 
@@ -361,16 +449,17 @@ python3 -m http.server 8000
 
 | File | Lines | Purpose |
 |---|---|---|
-| `index.html` | ~1,800 | UI shell: header, studio grid, source/text/context toolbars, settings panel (5 sections), help panel (6 tabs), rec bar, take panel, ticker |
-| `noorcast.js` | ~15,200 | All app logic: i18n (350 keys × 3 langs), engine (canvas renderer, 26 overlay passes), recorder (MediaRecorder + trim + silence removal), 110+ singleton objects covering scenes, drag, sensors, gamification, onboarding, and 60+ features |
-| `style.css` | ~4,800 | 8 themes, responsive layout, 44 component-specific rule groups |
+| `index.html` | ~2,000 | UI shell: header, studio grid, toolbars, settings, help, rec bar, take panel |
+| `noorcast.js` | ~22,000 | All app logic: i18n (400+ keys × 3 langs), engine, recorder, 150+ singletons, 200+ features |
+| `style.css` | ~5,200 | 8 themes, responsive layout, 50+ component groups |
+| `guide.html` | ~500 | Full user guide (11 sections, dark theme) |
 | `manifest.json` | ~12 | PWA manifest |
 | `icon.svg` | ~25 | PWA icon (static clapperboard + play + LED) |
 | `logo.svg` | ~30 | Animated header logo (clap that claps every 3s) |
 
 No build step, no dependencies, no `node_modules`. Just open `index.html` or run `python3 -m http.server`.
 
-**Privacy:** Zero outbound network calls from JS. All data stays on the local machine (84 localStorage keys). The only external request is Google Fonts loaded from CDN in the HTML.
+**Privacy:** Zero outbound network calls. All fonts self-hosted (WOFF2). All data stays on the local machine (100+ localStorage keys). No CDN, no analytics, no telemetry.
 
 ---
 
