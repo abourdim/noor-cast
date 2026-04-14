@@ -6208,39 +6208,68 @@ const SourceSkins = {
     }
   },
 
-  // 📺 Retro TV — thick dark bezel, rounded outer corners, antenna nubs
+  // 📺 Retro TV — wood grain cabinet, volume/channel knobs, CRT curve, antenna
   _draw_tv(ctx, x, y, w, h) {
-    const pad = 14, r = 16;
-    const bx = x - pad, by = y - pad - 10, bw = w + pad * 2, bh = h + pad * 2 + 18;
+    const pad = 18, r = 14;
+    const bx = x - pad, by = y - pad - 12, bw = w + pad * 2 + 50, bh = h + pad * 2 + 20;
     ctx.save();
-    // Outer shell
-    ctx.fillStyle = '#2a2a2a';
+    // Wood grain cabinet
+    const woodGrad = ctx.createLinearGradient(bx, by, bx, by + bh);
+    woodGrad.addColorStop(0, '#5c3a1e'); woodGrad.addColorStop(0.3, '#7a4f2e');
+    woodGrad.addColorStop(0.7, '#6b4226'); woodGrad.addColorStop(1, '#4a2c14');
+    ctx.fillStyle = woodGrad;
     ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, r); ctx.fill();
-    // Inner bezel gradient
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath(); ctx.roundRect(bx + 4, by + 4, bw - 8, bh - 8, r - 4); ctx.fill();
-    // Screen inset border
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 4); ctx.stroke();
-    // Antenna nubs
-    ctx.strokeStyle = '#666';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x + w * 0.35, by); ctx.lineTo(x + w * 0.25, by - 20); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + w * 0.65, by); ctx.lineTo(x + w * 0.75, by - 20); ctx.stroke();
-    // Antenna tips
-    ctx.fillStyle = '#888';
-    ctx.beginPath(); ctx.arc(x + w * 0.25, by - 20, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + w * 0.75, by - 20, 3, 0, Math.PI * 2); ctx.fill();
-    // Power LED
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath(); ctx.arc(bx + bw - 18, by + bh - 12, 3, 0, Math.PI * 2); ctx.fill();
-    // Channel dots
-    ctx.fillStyle = '#555';
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath(); ctx.arc(bx + 18, by + bh - 18 + i * 0, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Wood grain lines
+    ctx.strokeStyle = 'rgba(0,0,0,.1)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 8; i++) {
+      const gy = by + 10 + i * (bh / 8) + Math.sin(i * 2) * 3;
+      ctx.beginPath(); ctx.moveTo(bx + 4, gy); ctx.bezierCurveTo(bx + bw * 0.3, gy + 2, bx + bw * 0.7, gy - 2, bx + bw - 4, gy); ctx.stroke();
     }
+    // Inner dark bezel
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.roundRect(x - 6, y - 6, w + 12, h + 12, 8); ctx.fill();
+    // CRT screen curve (gradient overlay)
+    const crtGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, w * 0.7);
+    crtGrad.addColorStop(0, 'rgba(255,255,255,0)'); crtGrad.addColorStop(1, 'rgba(0,0,0,.15)');
+    ctx.fillStyle = crtGrad;
+    ctx.fillRect(x, y, w, h);
+    // Screen inset border glow
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 3); ctx.stroke();
+    // Control panel (right side)
+    const cpX = x + w + pad - 4, cpY = y;
+    // Volume knob
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 30, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 30, 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cpX + 18, cpY + 30); ctx.lineTo(cpX + 18, cpY + 20); ctx.stroke();
+    ctx.fillStyle = '#666'; ctx.font = '7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('VOL', cpX + 18, cpY + 48);
+    // Channel knob
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 80, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 80, 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cpX + 18, cpY + 80); ctx.lineTo(cpX + 25, cpY + 75); ctx.stroke();
+    ctx.fillStyle = '#666'; ctx.fillText('CH', cpX + 18, cpY + 96);
+    // Power LED (blinking)
+    const ledOn = Math.floor(Date.now() / 1000) % 2 === 0;
+    ctx.fillStyle = ledOn ? '#ef4444' : '#440000';
+    ctx.shadowColor = ledOn ? '#ef4444' : 'transparent'; ctx.shadowBlur = ledOn ? 6 : 0;
+    ctx.beginPath(); ctx.arc(cpX + 18, cpY + h - 10, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Antenna — V-shape with balls
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x + w * 0.4, by); ctx.lineTo(x + w * 0.2, by - 30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.6, by); ctx.lineTo(x + w * 0.8, by - 30); ctx.stroke();
+    ctx.fillStyle = '#ccc';
+    ctx.beginPath(); ctx.arc(x + w * 0.2, by - 30, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.8, by - 30, 4, 0, Math.PI * 2); ctx.fill();
+    // Speaker grille (bottom)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(bx + 10, by + bh - 16, bw - 60, 8);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 12; i++) {
+      const sx = bx + 14 + i * ((bw - 68) / 12);
+      ctx.beginPath(); ctx.moveTo(sx, by + bh - 16); ctx.lineTo(sx, by + bh - 8); ctx.stroke();
+    }
+    ctx.textAlign = 'left';
     ctx.restore();
   },
 
@@ -6382,14 +6411,45 @@ const SourceSkins = {
   },
 
   _draw_phone(ctx, x, y, w, h) {
-    const pad = 12, r = 20;
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad * 2, w + pad * 2, h + pad * 3.5, r); ctx.fill();
-    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 6); ctx.fill();
-    // Notch
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 30, y - pad * 2, 60, 14, [0,0,8,8]); ctx.fill();
-    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x + w / 2, y - pad * 2 + 7, 3, 0, Math.PI * 2); ctx.fill();
-    // Home bar
-    ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 25, y + h + pad * 0.8, 50, 4, 2); ctx.fill();
+    const pad = 14, r = 24;
+    const fx = x - pad, fy = y - pad * 2.5, fw = w + pad * 2, fh = h + pad * 4;
+    ctx.save();
+    // Phone body — glossy black with edge highlight
+    const bodyGrad = ctx.createLinearGradient(fx, fy, fx + fw, fy);
+    bodyGrad.addColorStop(0, '#2a2a2a'); bodyGrad.addColorStop(0.05, '#3a3a3a');
+    bodyGrad.addColorStop(0.95, '#3a3a3a'); bodyGrad.addColorStop(1, '#2a2a2a');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, r); ctx.fill();
+    // Thin metal frame
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, r); ctx.stroke();
+    // Screen area (darker inset)
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, 8); ctx.fill();
+    // Dynamic Island (notch)
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - 35, fy + 8, 70, 18, 10); ctx.fill();
+    // Front camera dot
+    ctx.fillStyle = '#1a1a3a';
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, fy + 17, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, fy + 17, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Home indicator bar
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - 30, y + h + pad * 0.5, 60, 4, 2); ctx.fill();
+    // Side buttons — volume (left), power (right)
+    ctx.fillStyle = '#444';
+    ctx.fillRect(fx - 2, fy + 50, 2, 20); // vol up
+    ctx.fillRect(fx - 2, fy + 75, 2, 20); // vol down
+    ctx.fillRect(fx + fw, fy + 60, 2, 30); // power
+    // Camera bump (back, top-left corner, subtle)
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x + 4, fy + 6, 22, 22, 6); ctx.stroke();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(x + 11, fy + 13, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 20, fy + 13, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 15, fy + 22, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   },
 
   _draw_monitor(ctx, x, y, w, h) {
@@ -6405,26 +6465,56 @@ const SourceSkins = {
   },
 
   _draw_robothead(ctx, x, y, w, h) {
-    const pad = 12;
-    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.fill();
-    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
-    // Antenna
-    ctx.strokeStyle = '#999'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y - pad); ctx.lineTo(x + w / 2, y - pad - 20); ctx.stroke();
-    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x + w / 2, y - pad - 20, 5, 0, Math.PI * 2); ctx.fill();
-    // Bolt ears
-    ctx.fillStyle = '#888';
-    ctx.beginPath(); ctx.arc(x - pad - 8, y + h / 2, 6, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + w + pad + 8, y + h / 2, 6, 0, Math.PI * 2); ctx.fill();
-    // Eyes
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+    const pad = 16, cx = x + w / 2;
+    ctx.save();
+    // Head shape — rounded rectangle with chin
+    const headGrad = ctx.createLinearGradient(x, y, x, y + h);
+    headGrad.addColorStop(0, '#666'); headGrad.addColorStop(0.5, '#555'); headGrad.addColorStop(1, '#444');
+    ctx.fillStyle = headGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2 + 10, [16, 16, 8, 8]); ctx.fill();
+    // Metal texture lines
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x - pad, y + i * (h / 5)); ctx.lineTo(x + w + pad, y + i * (h / 5)); ctx.stroke(); }
+    // Rivets
+    ctx.fillStyle = '#777';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad], [x + w + pad - 6, y + h + pad]].forEach(([rx, ry]) => {
+      ctx.beginPath(); ctx.arc(rx, ry, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(rx, ry, 3.5, 0, Math.PI * 2); ctx.stroke();
+    });
+    // Antenna with bobble
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, y - pad); ctx.lineTo(cx, y - pad - 25); ctx.stroke();
+    // Antenna bobble (pulsing)
+    const pulse = 0.8 + Math.sin(Date.now() / 300) * 0.2;
+    ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 8 * pulse;
+    ctx.beginPath(); ctx.arc(cx, y - pad - 25, 6 * pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Ear bolts (hexagonal)
+    ctx.fillStyle = '#777'; ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    [x - pad - 10, x + w + pad + 10].forEach(ex => {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const px = ex + Math.cos(a) * 8; const py = y + h / 2 + Math.sin(a) * 8; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    });
+    // Jaw line
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - pad + 10, y + h + 6); ctx.lineTo(x + w + pad - 10, y + h + 6); ctx.stroke();
+    // Mouth grille
+    ctx.fillStyle = '#333';
+    for (let i = 0; i < 5; i++) ctx.fillRect(cx - 20 + i * 10, y + h + 8, 6, 3);
+    ctx.restore();
   },
   _fg_robothead(ctx, x, y, w, h) {
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.35, 8, 0, Math.PI * 2); ctx.fill();
+    // Eyes that glow and track (simplified — just pulse)
+    const pulse = 0.7 + Math.sin(Date.now() / 400) * 0.3;
+    ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 10 * pulse;
+    ctx.fillStyle = `rgba(56,189,248,${0.6 + pulse * 0.4})`;
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.3, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.3, 10, 0, Math.PI * 2); ctx.fill();
+    // Pupil dots
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(x + w * 0.3 + 2, y + h * 0.3 - 2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7 + 2, y + h * 0.3 - 2, 3, 0, Math.PI * 2); ctx.fill();
   },
 
   _draw_alien(ctx, x, y, w, h) {
@@ -6483,28 +6573,42 @@ const SourceSkins = {
   },
 
   _draw_flame(ctx, x, y, w, h) {
-    const pad = 6;
-    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
-    // Flame tips along top
-    ctx.fillStyle = '#ef4444';
-    for (let i = 0; i < 8; i++) {
-      const fx = x + (i / 7) * w;
-      const fh = 8 + Math.sin(i * 1.5) * 6;
-      ctx.beginPath();
-      ctx.moveTo(fx - 8, y - pad);
-      ctx.quadraticCurveTo(fx, y - pad - fh, fx + 8, y - pad);
-      ctx.fill();
-    }
-    // Bottom flames
-    for (let i = 0; i < 8; i++) {
-      const fx = x + (i / 7) * w;
-      const fh = 6 + Math.cos(i * 1.2) * 4;
-      ctx.beginPath();
-      ctx.moveTo(fx - 6, y + h + pad);
-      ctx.quadraticCurveTo(fx, y + h + pad + fh, fx + 6, y + h + pad);
-      ctx.fill();
-    }
+    const t = Date.now() / 1000;
+    ctx.save();
+    // Animated flames around all edges
+    const drawFlames = (fx, fy, count, dir, len) => {
+      for (let i = 0; i < count; i++) {
+        const p = i / count;
+        const flicker = Math.sin(t * 8 + i * 2.3) * 0.4 + 0.6;
+        const fh = (len + Math.sin(t * 6 + i * 1.7) * len * 0.5) * flicker;
+        const px = dir === 'h' ? fx + p * w : fx;
+        const py = dir === 'h' ? fy : fy + p * h;
+        const grad = ctx.createLinearGradient(px, py, px + (dir === 'v' ? (fx < x ? -fh : fh) : 0), py + (dir === 'h' ? (fy < y ? -fh : fh) : 0));
+        grad.addColorStop(0, 'rgba(255,200,0,.8)');
+        grad.addColorStop(0.4, 'rgba(255,100,0,.6)');
+        grad.addColorStop(1, 'rgba(255,30,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        if (dir === 'h') {
+          const dy = fy < y ? -1 : 1;
+          ctx.moveTo(px - 6, py); ctx.quadraticCurveTo(px + Math.sin(t * 5 + i) * 4, py + fh * dy, px + 6, py);
+        } else {
+          const dx = fx < x ? -1 : 1;
+          ctx.moveTo(px, py - 6); ctx.quadraticCurveTo(px + fh * dx, py + Math.sin(t * 5 + i) * 4, px, py + 6);
+        }
+        ctx.fill();
+      }
+    };
+    drawFlames(x, y - 4, 12, 'h', 18);         // top
+    drawFlames(x, y + h + 4, 12, 'h', 18);      // bottom
+    drawFlames(x - 4, y, 8, 'v', 14);           // left
+    drawFlames(x + w + 4, y, 8, 'v', 14);       // right
+    // Ember glow border
+    ctx.strokeStyle = `rgba(255,100,0,${0.3 + Math.sin(t * 4) * 0.15})`;
+    ctx.lineWidth = 2; ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 3); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   },
 
   _draw_neon(ctx, x, y, w, h) {
@@ -6525,16 +6629,35 @@ const SourceSkins = {
   // ═══ SPACE ═══
 
   _draw_astronaut(ctx, x, y, w, h) {
-    const pad = 14;
-    ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 8, w + pad * 2, h + pad * 2 + 16, 20); ctx.fill();
-    ctx.fillStyle = '#bbb'; ctx.beginPath(); ctx.roundRect(x - pad + 4, y - pad - 4, w + pad * 2 - 8, h + pad * 2 + 8, 16); ctx.fill();
-    ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
-    // Visor reflection
-    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x + w * 0.25, y + h * 0.25, Math.min(w, h) * 0.15, 0.8, 2.2); ctx.stroke();
-    // Oxygen tube
-    ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(x + w + pad, y + h * 0.5); ctx.lineTo(x + w + pad + 15, y + h * 0.5 + 20); ctx.stroke();
+    const pad = 18, cx = x + w / 2, cy = y + h / 2;
+    ctx.save();
+    // Helmet — dome shape
+    const helmGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.7);
+    helmGrad.addColorStop(0, '#e0e0e0'); helmGrad.addColorStop(0.7, '#ccc'); helmGrad.addColorStop(1, '#999');
+    ctx.fillStyle = helmGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 10, w + pad * 2, h + pad * 2 + 20, [30, 30, 16, 16]); ctx.fill();
+    // Helmet rim
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 10, w + pad * 2, h + pad * 2 + 20, [30, 30, 16, 16]); ctx.stroke();
+    // Visor glass (dark)
+    ctx.fillStyle = 'rgba(20,20,40,.3)';
+    ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 12); ctx.fill();
+    // Visor reflection arc
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.2, Math.min(w, h) * 0.25, 0.6, 2.0); ctx.stroke();
+    // Oxygen hose (right side)
+    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad - 2, cy + 10);
+    ctx.bezierCurveTo(x + w + pad + 20, cy + 10, x + w + pad + 20, cy + 40, x + w + pad + 5, cy + 50);
+    ctx.stroke();
+    // Hose connector
+    ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(x + w + pad + 5, cy + 50, 5, 0, Math.PI * 2); ctx.fill();
+    // NASA-style badge (left chest)
+    ctx.fillStyle = 'rgba(0,80,180,.5)'; ctx.beginPath(); ctx.roundRect(x - pad + 4, y + h + 4, 24, 10, 3); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('NOOR', x - pad + 16, y + h + 12);
+    ctx.textAlign = 'left';
+    ctx.restore();
   },
 
   _draw_ufo(ctx, x, y, w, h) {
@@ -6574,18 +6697,48 @@ const SourceSkins = {
   // ═══ GAMING ═══
 
   _draw_arcade(ctx, x, y, w, h) {
-    const pad = 14;
-    ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 25, w + pad * 2, h + pad * 2 + 45, [12,12,4,4]); ctx.fill();
-    ctx.fillStyle = '#16213e'; ctx.beginPath(); ctx.roundRect(x - pad + 3, y - pad - 22, w + pad * 2 - 6, 18, 4); ctx.fill();
-    // Marquee text
-    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px "Righteous", sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('★ ARCADE ★', x + w / 2, y - pad - 9);
-    ctx.textAlign = 'left';
-    // Screen border
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+    const pad = 16, cx = x + w / 2;
+    const bx = x - pad, by = y - pad - 30, bw = w + pad * 2, bh = h + pad * 2 + 60;
+    ctx.save();
+    // Cabinet body
+    const cabGrad = ctx.createLinearGradient(bx, by, bx + bw, by);
+    cabGrad.addColorStop(0, '#0f1a3d'); cabGrad.addColorStop(0.5, '#162050'); cabGrad.addColorStop(1, '#0f1a3d');
+    ctx.fillStyle = cabGrad;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, [14, 14, 6, 6]); ctx.fill();
+    // Marquee (top, illuminated)
+    const marqGrad = ctx.createLinearGradient(bx, by, bx, by + 24);
+    marqGrad.addColorStop(0, '#fbbf24'); marqGrad.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = marqGrad;
+    ctx.beginPath(); ctx.roundRect(bx + 4, by + 4, bw - 8, 22, [10, 10, 0, 0]); ctx.fill();
+    // Marquee lights
+    const t = Date.now() / 200;
+    for (let i = 0; i < 10; i++) {
+      const on = Math.floor(t + i) % 3 === 0;
+      ctx.fillStyle = on ? '#fff' : '#c9860a';
+      ctx.beginPath(); ctx.arc(bx + 10 + i * ((bw - 20) / 9), by + 6, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#1a1a2e'; ctx.font = 'bold 12px "Righteous", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('★ ARCADE ★', cx, by + 20);
+    // Screen bezel
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 4); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Control panel below screen
+    ctx.fillStyle = '#1a1a3a';
+    ctx.fillRect(bx + 8, y + h + pad - 4, bw - 16, 24);
+    // Joystick
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(cx - 25, y + h + pad + 8, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(cx - 25, y + h + pad + 4, 5, 0, Math.PI * 2); ctx.fill();
+    // Buttons
+    const btnColors = ['#ef4444', '#3b82f6', '#fbbf24'];
+    btnColors.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx + 10 + i * 16, y + h + pad + 8, 6, 0, Math.PI * 2); ctx.fill(); });
     // Coin slot
-    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 12, y + h + pad + 2, 24, 8, 3); ctx.fill();
-    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 6, y + h + pad + 4, 12, 4, 2); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(cx - 10, y + h + pad + 24, 20, 6, 3); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(cx - 5, y + h + pad + 25, 10, 4, 2); ctx.fill();
+    // INSERT COIN text
+    ctx.fillStyle = '#666'; ctx.font = '6px ui-monospace, monospace';
+    ctx.fillText('INSERT COIN', cx, y + h + pad + 38);
+    ctx.textAlign = 'left';
+    ctx.restore();
   },
 
   _draw_healthbar(ctx, x, y, w) {
@@ -6817,20 +6970,42 @@ const SourceSkins = {
   // ═══ FUTURIST ═══
 
   _draw_hologram(ctx, x, y, w, h) {
-    const pad = 3, t = Date.now() / 1000;
-    // Glitch offset
-    const glitch = Math.sin(t * 10) > 0.8 ? 3 : 0;
-    ctx.strokeStyle = 'rgba(56,189,248,.5)'; ctx.lineWidth = 1.5;
-    ctx.strokeRect(x - pad + glitch, y - pad, w + pad * 2, h + pad * 2);
-    ctx.strokeStyle = 'rgba(239,68,68,.3)'; ctx.lineWidth = 1;
-    ctx.strokeRect(x - pad - glitch, y - pad + 1, w + pad * 2, h + pad * 2);
+    const t = Date.now() / 1000, pad = 6;
+    ctx.save();
+    // Chromatic aberration — offset red/blue borders
+    const glitchX = Math.sin(t * 12) > 0.7 ? 4 : Math.sin(t * 8) > 0.9 ? -3 : 0;
+    const glitchY = Math.cos(t * 15) > 0.85 ? 2 : 0;
+    ctx.strokeStyle = 'rgba(239,68,68,.4)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - pad + glitchX, y - pad + glitchY, w + pad * 2, h + pad * 2);
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - pad - glitchX, y - pad - glitchY, w + pad * 2, h + pad * 2);
+    // Main border
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    // Holographic base (triangle below)
+    ctx.fillStyle = 'rgba(56,189,248,.06)';
+    ctx.beginPath();
+    ctx.moveTo(x - 20, y + h + pad + 2);
+    ctx.lineTo(x + w / 2, y + h + pad + 30);
+    ctx.lineTo(x + w + 20, y + h + pad + 2);
+    ctx.fill();
+    // Flicker: random horizontal tear
+    if (Math.random() > 0.92) {
+      const tearY = y + Math.random() * h;
+      ctx.fillStyle = 'rgba(56,189,248,.1)';
+      ctx.fillRect(x, tearY, w, 2 + Math.random() * 4);
+    }
+    ctx.restore();
   },
   _fg_hologram(ctx, x, y, w, h) {
-    // Scan lines
-    ctx.strokeStyle = 'rgba(56,189,248,.04)'; ctx.lineWidth = 1;
-    for (let ly = y; ly < y + h; ly += 3) {
+    // Dense scan lines
+    ctx.strokeStyle = 'rgba(56,189,248,.05)'; ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 2) {
       ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
     }
+    // "HOLO" label top-left
+    ctx.fillStyle = 'rgba(56,189,248,.4)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.textAlign = 'left'; ctx.fillText('HOLO', x + 4, y + 10);
   },
 
   _draw_hexgrid(ctx, x, y, w, h) {
@@ -6953,59 +7128,139 @@ const SourceSkins = {
 
   _draw_forcefield(ctx, x, y, w, h) {
     const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
-    const r = Math.max(w, h) / 2 + 12;
-    // Hex pattern
-    ctx.strokeStyle = 'rgba(56,189,248,.15)'; ctx.lineWidth = 0.8;
-    for (let a = 0; a < Math.PI * 2; a += 0.5) {
-      for (let ri = 0.5; ri < 1.1; ri += 0.3) {
-        const hx = cx + Math.cos(a + t * 0.3) * r * ri;
-        const hy = cy + Math.sin(a + t * 0.3) * r * ri;
+    const r = Math.max(w, h) / 2 + 16;
+    ctx.save();
+    // Outer energy ring (pulsing)
+    const pulseR = r + Math.sin(t * 3) * 4;
+    ctx.strokeStyle = `rgba(56,189,248,${0.2 + Math.sin(t * 2) * 0.1})`;
+    ctx.lineWidth = 3; ctx.shadowColor = 'rgba(56,189,248,.4)'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(cx, cy, pulseR, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Hex cells — tiled across the frame area
+    ctx.strokeStyle = 'rgba(56,189,248,.12)'; ctx.lineWidth = 0.8;
+    const hexSize = 14;
+    for (let gx = x - 20; gx < x + w + 20; gx += hexSize * 1.5) {
+      for (let gy = y - 20; gy < y + h + 20; gy += hexSize * 1.73) {
+        const off = (Math.floor((gy - y) / (hexSize * 1.73)) % 2) * hexSize * 0.75;
+        const hx = gx + off, hy = gy;
+        const dist = Math.sqrt((hx - cx) ** 2 + (hy - cy) ** 2);
+        if (dist > r + 5 || dist < r - 30) continue;
+        // Impact flash near random cell
+        const impactPhase = Math.sin(t * 5 + hx * 0.1 + hy * 0.1);
+        const alpha = impactPhase > 0.95 ? 0.5 : 0.12;
+        ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
+        if (impactPhase > 0.95) { ctx.fillStyle = 'rgba(56,189,248,.08)'; }
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
-          const ha = (i / 6) * Math.PI * 2;
-          const px = hx + Math.cos(ha) * 8; const py = hy + Math.sin(ha) * 8;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          const a = (i / 6) * Math.PI * 2;
+          const px = hx + Math.cos(a) * hexSize / 2, py = hy + Math.sin(a) * hexSize / 2;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
         }
         ctx.closePath(); ctx.stroke();
+        if (impactPhase > 0.95) ctx.fill();
       }
     }
-    // Energy pulse
-    ctx.strokeStyle = `rgba(56,189,248,${0.15 + Math.sin(t * 3) * 0.1})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Inner glow ring
+    ctx.strokeStyle = 'rgba(56,189,248,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
   },
 
   _draw_terminal(ctx, x, y, w, h) {
-    const pad = 10;
-    ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.fill();
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.stroke();
+    const pad = 14;
+    ctx.save();
+    // CRT monitor shell — thick curved bezel
+    const shellGrad = ctx.createLinearGradient(x, y, x, y + h);
+    shellGrad.addColorStop(0, '#2a2a2a'); shellGrad.addColorStop(1, '#1a1a1a');
+    ctx.fillStyle = shellGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 12); ctx.fill();
+    // Inner phosphor glow
+    ctx.fillStyle = 'rgba(0,20,0,.5)';
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 4); ctx.fill();
+    // CRT screen curve (vignette)
+    const crtGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, w * 0.65);
+    crtGrad.addColorStop(0, 'rgba(0,0,0,0)'); crtGrad.addColorStop(1, 'rgba(0,0,0,.3)');
+    ctx.fillStyle = crtGrad; ctx.fillRect(x, y, w, h);
+    // Bezel screws
+    ctx.fillStyle = '#444';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad - 6], [x + w + pad - 6, y + h + pad - 6]].forEach(([sx, sy]) => {
+      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(sx - 2, sy); ctx.lineTo(sx + 2, sy); ctx.stroke();
+    });
+    // Power LED
+    const on = Math.floor(Date.now() / 800) % 2 === 0;
+    ctx.fillStyle = on ? '#4ade80' : '#1a3a1a';
+    ctx.shadowColor = on ? '#4ade80' : 'transparent'; ctx.shadowBlur = on ? 4 : 0;
+    ctx.beginPath(); ctx.arc(x + w + pad - 8, y + h + pad - 6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   },
   _fg_terminal(ctx, x, y, w, h) {
-    // Scan lines
-    ctx.strokeStyle = 'rgba(74,222,128,.03)'; ctx.lineWidth = 1;
+    // Dense phosphor scan lines
+    ctx.strokeStyle = 'rgba(74,222,128,.04)'; ctx.lineWidth = 1;
     for (let ly = y; ly < y + h; ly += 2) { ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke(); }
-    // Prompt
-    ctx.fillStyle = 'rgba(74,222,128,.5)'; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'left';
+    // Rolling scan bar (CRT refresh)
+    const scanY = y + ((Date.now() / 10) % h);
+    ctx.fillStyle = 'rgba(74,222,128,.03)';
+    ctx.fillRect(x, scanY, w, 30);
+    // Prompt with blinking cursor
+    ctx.fillStyle = 'rgba(74,222,128,.6)'; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'left';
     const blink = Math.floor(Date.now() / 500) % 2;
-    ctx.fillText('guest@noorcast:~$ ' + (blink ? '█' : ''), x + 6, y + h - 10);
+    ctx.fillText('guest@noorcast:~$ ' + (blink ? '█' : ' '), x + 6, y + h - 10);
+    // Fake output lines (faint)
+    ctx.fillStyle = 'rgba(74,222,128,.15)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.fillText('> recording started...', x + 6, y + 14);
+    ctx.fillText('> sources: 2 active', x + 6, y + 24);
   },
 
   _draw_sniper(ctx, x, y, w, h) {
-    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
-    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke();
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2 + 8;
+    ctx.save();
+    // Outer scope ring (thick)
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Inner ring
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 6, 0, Math.PI * 2); ctx.stroke();
+    // Scope body (tube hint, left side)
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - 30, cy - 8, 30, 16);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 30, cy - 8, 30, 16);
+    // Lens coating (subtle blue reflection)
+    const lensGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
+    lensGrad.addColorStop(0, 'rgba(56,100,248,.04)'); lensGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lensGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   },
   _fg_sniper(ctx, x, y, w, h) {
     const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
-    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + h); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + w, cy); ctx.stroke();
-    // Range ticks
-    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '7px ui-monospace, monospace'; ctx.textAlign = 'left';
-    ctx.fillText('100m', cx + 4, cy - r * 0.5);
-    ctx.fillText('200m', cx + 4, cy - r * 0.8);
-    ctx.textAlign = 'right'; ctx.fillText('4x', x + w - 8, y + 14); ctx.textAlign = 'left';
+    ctx.save();
+    // Crosshair lines (thin)
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, y + 10); ctx.lineTo(cx, cy - 15); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + 15); ctx.lineTo(cx, y + h - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 10, cy); ctx.lineTo(cx - 15, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 15, cy); ctx.lineTo(x + w - 10, cy); ctx.stroke();
+    // Center dot
+    ctx.fillStyle = 'rgba(239,68,68,.5)';
+    ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI * 2); ctx.fill();
+    // Mil-dot ticks on crosshair
+    ctx.fillStyle = 'rgba(255,255,255,.25)';
+    for (let i = 1; i <= 4; i++) {
+      const d = (r * 0.15) * i;
+      ctx.beginPath(); ctx.arc(cx, cy - d - 15, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy + d + 15, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - d - 15, cy, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + d + 15, cy, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Range/zoom readout
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.textAlign = 'right'; ctx.fillText('4.0x', x + w - 12, y + 16);
+    ctx.fillText('DIST: 150m', x + w - 12, y + 26);
+    ctx.textAlign = 'left'; ctx.fillText('WIND: 2.1→', x + 12, y + h - 12);
+    ctx.restore();
   },
 
   _draw_neural(ctx, x, y, w, h) {
