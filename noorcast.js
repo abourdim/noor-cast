@@ -13137,6 +13137,31 @@ const SourceToolbar = {
     });
     // v0.7.167: prevent Style popup interactions from deselecting the source
     $('tcSrcStylePopup')?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    // v0.7.189: make style popup draggable
+    const sspPop = $('tcSrcStylePopup');
+    if (sspPop && !sspPop.querySelector('.tc-ssp-drag-handle')) {
+      const handle = document.createElement('div');
+      handle.className = 'tc-ssp-drag-handle';
+      handle.textContent = '⋯ drag to move ⋯';
+      sspPop.insertBefore(handle, sspPop.firstChild);
+      let dragX = 0, dragY = 0;
+      handle.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dragX = e.clientX - sspPop.offsetLeft;
+        dragY = e.clientY - sspPop.offsetTop;
+        const onMove = (ev) => {
+          sspPop.style.left = Math.max(0, Math.min(window.innerWidth - sspPop.offsetWidth, ev.clientX - dragX)) + 'px';
+          sspPop.style.top = Math.max(0, ev.clientY - dragY) + 'px';
+          sspPop.style.bottom = 'auto';
+        };
+        const onUp = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+    }
     $('tcSrcStylePopup')?.addEventListener('mousedown', (e) => e.stopPropagation());
     // v0.7.167: shape color picker
     $('tcSrcShapeColor')?.addEventListener('input', (e) => {

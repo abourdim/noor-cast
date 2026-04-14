@@ -2761,6 +2761,15 @@ body.log-open .app {
   box-shadow: 0 8px 32px rgba(0,0,0,.55);
   z-index: 9999;
 }
+/* v0.7.189: draggable handle for style popup */
+.tc-ssp-drag-handle {
+  cursor: grab; text-align: center; padding: 4px 0 6px;
+  font-size: .7rem; color: rgba(255,255,255,.3);
+  font-family: var(--font-mono, monospace);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 6px; user-select: none;
+}
+.tc-ssp-drag-handle:active { cursor: grabbing; }
 .tc-ssp-section {
   padding: 6px 8px;
   margin-bottom: 4px;
