@@ -3398,10 +3398,13 @@ const Engine = {
     LiveCaptions.render(ctx, width, height);
 
     // draw sensor overlay if active (unscaled)
-    Sensors.drawOverlay(ctx);
+    if (Sensors._overlayVisible) Sensors.drawOverlay(ctx);
 
     // v0.7.177: servo gauge overlay (pan + tilt semicircular gauges)
-    ServoGauge.render(ctx, width, height);
+    if (ServoGauge.visible) ServoGauge.render(ctx, width, height);
+
+    // v0.7.182: resize handles on sensor overlay + servo gauge when hovered
+    this._drawOverlayHandles(ctx);
 
     // Whiteboard strokes (persist across frames)
     ctx.drawImage(this.overlayCanvas, 0, 0);
@@ -4080,6 +4083,41 @@ const Engine = {
       ctx.setLineDash([]);
       ctx.restore();
     }
+  },
+
+  // v0.7.182: draw resize handles on sensor overlay + servo gauge when hovered
+  _drawOverlayHandles(ctx) {
+    const hovId = Drag._hoveredSourceId;
+    const state = Drag.state;
+    const overlays = [];
+    if (Sensors._overlayVisible && Sensors._overlayW > 0) {
+      overlays.push({ kind: 'sensorOverlay', x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH });
+    }
+    if (ServoGauge.visible && ServoGauge.w > 0) {
+      overlays.push({ kind: 'servoGauge', x: ServoGauge.x, y: ServoGauge.y, w: ServoGauge.w, h: ServoGauge.h });
+    }
+    overlays.forEach(o => {
+      // Show handles when being dragged/resized OR when hovered (no source selected)
+      const isDragging = state && state.kind === o.kind;
+      const isHovered = !hovId && !state && Drag._lastHoveredOverlay === o.kind;
+      if (!isDragging && !isHovered) return;
+      const { x, y, w, h } = o;
+      ctx.save();
+      // Dashed outline
+      ctx.strokeStyle = 'rgba(163,230,53,.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]);
+      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+      ctx.setLineDash([]);
+      // Corner handles (8px circles)
+      const drawH = (hx, hy) => {
+        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = 'rgba(163,230,53,.8)'; ctx.lineWidth = 2; ctx.stroke();
+      };
+      drawH(x, y); drawH(x + w, y); drawH(x, y + h); drawH(x + w, y + h);
+      ctx.restore();
+    });
   },
 
   /* v0.7.144: apply a rounded-rect clip when cornerRadius > 0.
@@ -8778,12 +8816,19 @@ const Drag = {
         }
       } else {
         this._hoveredSourceId = null;
-        this.stage.style.cursor = '';
         LayerBadge.hide();
         SourceHud.hide();
+        // v0.7.182: detect overlay hover for resize handles
+        if (hit && (hit.kind === 'sensorOverlay' || hit.kind === 'servoGauge')) {
+          this._lastHoveredOverlay = hit.kind;
+          this.stage.style.cursor = 'move';
+        } else {
+          this._lastHoveredOverlay = null;
+          this.stage.style.cursor = '';
+        }
       }
     });
-    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this.stage.style.cursor = ''; });
+    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this._lastHoveredOverlay = null; this.stage.style.cursor = ''; });
     // v0.7.53: Ctrl+wheel on the stage = smooth zoom toward the cursor.
     // Without Ctrl, let the page scroll normally.
     this.stage.addEventListener('wheel', (e) => {
@@ -15058,6 +15103,7 @@ const Sensors = {
   _overlayX: null, _overlayY: null, _overlayW: 0, _overlayH: 0,
   _overlayOpacity: 0.85,
   _overlayScale: 1.0,
+  _overlayVisible: true,
 
   _saveOverlayPos() {
     try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale })); } catch {}
@@ -17806,6 +17852,16 @@ function wireEvents() {
   });
   $('tcSpeedLinesBtn')?.addEventListener('click', () => {
     SpeedLines.fire(800);
+  });
+  $('tcSensorOverlayBtn')?.addEventListener('click', (e) => {
+    Sensors._overlayVisible = !Sensors._overlayVisible;
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', Sensors._overlayVisible);
+    showToast(Sensors._overlayVisible ? '📊 Sensors ON' : '📊 Sensors OFF', 1200);
+  });
+  $('tcServoGaugeBtn')?.addEventListener('click', (e) => {
+    ServoGauge.visible = !ServoGauge.visible;
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', ServoGauge.visible);
+    showToast(ServoGauge.visible ? '🎛 Gauges ON' : '🎛 Gauges OFF', 1200);
   });
   $('tcSnapBtn').addEventListener('click', () => snapshot());
 
