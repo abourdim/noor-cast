@@ -6107,7 +6107,22 @@ const SourceSkins = {
   labels: { none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot' },
 
   draw(ctx, skin, x, y, w, h) {
-    if (this['_draw_' + skin]) this['_draw_' + skin](ctx, x, y, w, h);
+    if (!this['_draw_' + skin]) return;
+    // Phase 1: frame/bezel — clipped to exclude video area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.rect(x, y + h, w, -h);
+    ctx.clip('evenodd');
+    this['_draw_' + skin](ctx, x, y, w, h);
+    ctx.restore();
+    // Phase 2: overlay elements (scan lines, brackets) — drawn on top
+    const fgFn = this['_fg_' + skin];
+    if (fgFn) {
+      ctx.save();
+      fgFn.call(this, ctx, x, y, w, h);
+      ctx.restore();
+    }
   },
 
   // 📺 Retro TV — thick dark bezel, rounded outer corners, antenna nubs
@@ -6228,17 +6243,14 @@ const SourceSkins = {
     ctx.restore();
   },
 
-  // 🤖 Robot visor — hexagonal HUD with scan lines and data readout
+  // 🤖 Robot visor — hexagonal HUD border (clipped, behind video)
   _draw_robot(ctx, x, y, w, h) {
-    const pad = 6;
+    const pad = 6, ch = 20;
     ctx.save();
-    // HUD border — double line, cyan glow
     ctx.shadowColor = 'rgba(56,189,248,.5)';
     ctx.shadowBlur = 10;
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 3;
-    // Outer hex-ish border (chamfered corners)
-    const ch = 20; // chamfer size
     ctx.beginPath();
     ctx.moveTo(x - pad + ch, y - pad);
     ctx.lineTo(x + w + pad - ch, y - pad);
@@ -6250,22 +6262,11 @@ const SourceSkins = {
     ctx.lineTo(x - pad, y - pad + ch);
     ctx.closePath();
     ctx.stroke();
-    ctx.shadowBlur = 0;
-    // Inner thin border
-    ctx.strokeStyle = 'rgba(56,189,248,.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x + ch * 0.5, y);
-    ctx.lineTo(x + w - ch * 0.5, y);
-    ctx.lineTo(x + w, y + ch * 0.5);
-    ctx.lineTo(x + w, y + h - ch * 0.5);
-    ctx.lineTo(x + w - ch * 0.5, y + h);
-    ctx.lineTo(x + ch * 0.5, y + h);
-    ctx.lineTo(x, y + h - ch * 0.5);
-    ctx.lineTo(x, y + ch * 0.5);
-    ctx.closePath();
-    ctx.stroke();
-    // Scan lines (faint horizontal lines)
+    ctx.restore();
+  },
+  // 🤖 Robot overlay — scan lines, brackets, readout (on top of video)
+  _fg_robot(ctx, x, y, w, h) {
+    // Scan lines
     ctx.strokeStyle = 'rgba(56,189,248,.06)';
     ctx.lineWidth = 1;
     for (let ly = y; ly < y + h; ly += 4) {
@@ -6275,20 +6276,15 @@ const SourceSkins = {
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
     const bk = 18;
-    // TL
     ctx.beginPath(); ctx.moveTo(x, y + bk); ctx.lineTo(x, y); ctx.lineTo(x + bk, y); ctx.stroke();
-    // TR
     ctx.beginPath(); ctx.moveTo(x + w - bk, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + bk); ctx.stroke();
-    // BL
     ctx.beginPath(); ctx.moveTo(x, y + h - bk); ctx.lineTo(x, y + h); ctx.lineTo(x + bk, y + h); ctx.stroke();
-    // BR
     ctx.beginPath(); ctx.moveTo(x + w - bk, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - bk); ctx.stroke();
-    // Data readout text (top-right)
+    // Data readout
     ctx.fillStyle = 'rgba(56,189,248,.6)';
     ctx.font = '10px ui-monospace, monospace';
     ctx.textAlign = 'right';
     ctx.fillText('REC●', x + w - 6, y + 14);
-    ctx.restore();
   },
 };
 
