@@ -288,6 +288,7 @@
     <a class="nav-link" href="#ch24"><span class="icon">🔧</span> Advanced Ref</a>
     <a class="nav-link" href="#ch25"><span class="icon">📚</span> Templates</a>
     <a class="nav-link" href="#ch26"><span class="icon">♿</span> Access & Perf</a>
+    <a class="nav-link" href="#ch27"><span class="icon">🛒</span> Selling on Etsy</a>
   </div>
 </aside>
 
@@ -1947,6 +1948,149 @@
   <li>PWA installable — add to desktop/home screen via browser menu</li>
   <li>Only exception: <a class="xref" href="#ch15">Live Captions</a> require internet on Chrome (browser sends audio to Google for speech recognition)</li>
 </ul>
+
+<hr>
+
+<!-- ═══════════════ Ch 27 ═══════════════ -->
+<h2 id="ch27"><span class="ch-num">27</span> Selling NoorCast on Etsy</h2>
+<p>NoorCast ships with a complete <strong>Etsy digital product package</strong> inside the <code>etsy-package/</code> folder. This chapter walks you through listing, pricing, and marketing your product.</p>
+
+<h3>27.1 What's in the Package</h3>
+<table>
+  <tr><th>Item</th><th>Format</th><th>Purpose</th></tr>
+  <tr><td><code>NoorCast-v0.7.zip</code></td><td>ZIP (5.2 MB)</td><td>The file buyers download — contains the full app + all extras</td></tr>
+  <tr><td>7 listing mockups</td><td>PNG 2000×1500</td><td>Ready-to-upload Etsy listing photos</td></tr>
+  <tr><td>Quick-Start Card</td><td>PNG + HTML (A4)</td><td>Printable 5-step setup guide</td></tr>
+  <tr><td>Shortcuts Cheat Sheet</td><td>PNG + HTML (A4 landscape)</td><td>Laminate-ready keyboard shortcuts reference</td></tr>
+  <tr><td>Classroom Poster</td><td>PNG + HTML (A3)</td><td>"Recording Studio Rules" — hang in classroom</td></tr>
+  <tr><td>Lesson Plan Template</td><td>PNG + HTML (A4, 2 pages)</td><td>Blank template + sample micro:bit lesson with rubric</td></tr>
+  <tr><td>Sticker Sheet</td><td>PNG + HTML (A4)</td><td>30 printable reward badges for students</td></tr>
+  <tr><td>README Quick-Start</td><td>PNG + HTML (A4)</td><td>Branded 1-page overview</td></tr>
+  <tr><td>LICENSE.txt</td><td>Text</td><td>Commercial license with lifetime updates</td></tr>
+</table>
+
+<h3>27.2 Step-by-Step: Creating Your Etsy Listing</h3>
+<div class="steps">
+  <div class="step">
+    <strong>Create an Etsy seller account.</strong> Go to <a href="https://www.etsy.com/sell">etsy.com/sell</a> and follow the setup wizard. Choose "Digital items" as your shop type. Etsy charges $0.20 per listing + 6.5% transaction fee.
+  </div>
+  <div class="step">
+    <strong>Create a new listing.</strong> Click "Add a listing" → choose <em>Digital</em> as the listing type. This means buyers get an instant download after purchase — no shipping needed.
+  </div>
+  <div class="step">
+    <strong>Upload the ZIP file.</strong> Under "Digital files", upload <code>NoorCast-v0.7.zip</code> (5.2 MB). Etsy allows up to 5 digital files per listing. The ZIP is the only file buyers need.
+  </div>
+  <div class="step">
+    <strong>Add listing photos.</strong> Upload the 7 mockup images from <code>etsy-package/output/</code>:
+    <ol>
+      <li><strong>etsy-mockup-1.png</strong> — Hero cover (use as primary photo)</li>
+      <li><strong>etsy-mockup-2.png</strong> — What's Included</li>
+      <li><strong>etsy-mockup-3.png</strong> — Features Grid</li>
+      <li><strong>etsy-mockup-4.png</strong> — Printable Materials</li>
+      <li><strong>etsy-mockup-5.png</strong> — Privacy & Trust</li>
+      <li><strong>etsy-mockup-6.png</strong> — Micro:bit Integration</li>
+      <li><strong>etsy-mockup-7.png</strong> — Languages (EN/FR/AR)</li>
+    </ol>
+  </div>
+  <div class="step">
+    <strong>Write the title.</strong> Use keywords for Etsy SEO (max 140 characters):
+    <div class="card" style="margin-top:8px">
+      <code>NoorCast — Screen Recorder for Teachers | Multi-Camera Tutorial Maker | Digital Download | Browser App + Printables</code>
+    </div>
+  </div>
+  <div class="step">
+    <strong>Write the description.</strong> Cover these points: what it is, what's included, key features, system requirements, privacy promise, languages, and "free lifetime updates". See <code>plan.md</code> for a ready-to-paste description.
+  </div>
+  <div class="step">
+    <strong>Add tags.</strong> Etsy allows 13 tags. Use these:
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span class="pill pg">screen recorder</span>
+      <span class="pill pg">teacher tools</span>
+      <span class="pill pb">digital download</span>
+      <span class="pill pb">classroom technology</span>
+      <span class="pill py">tutorial maker</span>
+      <span class="pill py">STEM education</span>
+      <span class="pill pg">micro:bit</span>
+      <span class="pill pb">coding for kids</span>
+      <span class="pill py">video recording app</span>
+      <span class="pill pg">lesson plan template</span>
+      <span class="pill pb">educational software</span>
+      <span class="pill py">maker education</span>
+      <span class="pill pg">kid friendly app</span>
+    </div>
+  </div>
+  <div class="step">
+    <strong>Set category & attributes.</strong> Choose: Digital Downloads → Software → Education. Set "Who made it?" to "I did". Set "When was it made?" to the current year.
+  </div>
+  <div class="step">
+    <strong>Set the price.</strong> See pricing advice below. Click "Publish" when ready!
+  </div>
+</div>
+
+<h3>27.3 Pricing Strategy</h3>
+<div class="card">
+  <h4 style="color:var(--gold)">💰 Recommended Pricing</h4>
+  <table>
+    <tr><th>Phase</th><th>Price</th><th>Rationale</th></tr>
+    <tr><td><strong>Launch</strong> (first 50 sales)</td><td><span style="color:var(--accent);font-size:18px;font-weight:bold">$12.99</span></td><td>Build reviews fast. Early buyers = social proof. Low price removes purchase friction.</td></tr>
+    <tr><td><strong>Regular</strong></td><td><span style="color:var(--accent);font-size:18px;font-weight:bold">$16.99</span></td><td>Sweet spot for teacher digital tools. Competitive with similar Etsy products.</td></tr>
+    <tr><td><strong>Premium bundle</strong></td><td><span style="color:var(--accent);font-size:18px;font-weight:bold">$22.99</span></td><td>App + extended lesson pack + MakeCode tutorial. Higher perceived value.</td></tr>
+  </table>
+</div>
+
+<div class="tip">Etsy takes $0.20 listing fee + 6.5% transaction fee + 3% payment processing. On a $16.99 sale, you keep roughly <strong>$15.15</strong>.</div>
+
+<div class="card">
+  <h4 style="color:var(--blue)">📊 Competitive Landscape</h4>
+  <table>
+    <tr><th>Competitor Type</th><th>Typical Price</th><th>Your Advantage</th></tr>
+    <tr><td>Screen recorder apps (Camtasia, OBS plugins)</td><td>$30-250</td><td>Zero install, runs in browser, kid-friendly</td></tr>
+    <tr><td>Teacher printable bundles (Etsy)</td><td>$5-15</td><td>You include a full app + printables</td></tr>
+    <tr><td>STEM lesson plan packs (TPT)</td><td>$8-25</td><td>App + lesson plans + micro:bit integration</td></tr>
+    <tr><td>Free alternatives (OBS, Loom)</td><td>$0</td><td>120+ features, gamification, offline, privacy</td></tr>
+  </table>
+</div>
+
+<h3>27.4 Etsy SEO Tips</h3>
+<ul>
+  <li><strong>Title keywords matter most.</strong> Front-load with the most searched terms: "Screen Recorder", "Teacher", "Digital Download".</li>
+  <li><strong>Use all 13 tags.</strong> Mix broad ("educational software") and specific ("micro:bit") terms.</li>
+  <li><strong>Long-tail in description.</strong> Naturally include phrases like "no install screen recorder for classroom", "privacy-first recording tool for schools".</li>
+  <li><strong>Update seasonally.</strong> Add tags like "back to school" in August, "STEM gift" in November.</li>
+  <li><strong>Listing photos sell.</strong> Your 7 mockups are designed for Etsy's 2000×1500 format — use all of them.</li>
+</ul>
+
+<h3>27.5 Marketing Channels</h3>
+<table>
+  <tr><th>Channel</th><th>Action</th><th>Cost</th></tr>
+  <tr><td><strong>Etsy Ads</strong></td><td>Start with $1-2/day budget, target "screen recorder" + "teacher tools"</td><td>$30-60/mo</td></tr>
+  <tr><td><strong>Reddit</strong></td><td>Post in r/Teachers, r/STEM_Educators, r/microbit, r/edtech</td><td>Free</td></tr>
+  <tr><td><strong>Twitter/X</strong></td><td>Share mockup images + demo GIF with #EdTech #STEM #MakerEd hashtags</td><td>Free</td></tr>
+  <tr><td><strong>YouTube</strong></td><td>Record a 2-minute demo of NoorCast (use NoorCast to record itself!)</td><td>Free</td></tr>
+  <tr><td><strong>Teacher forums</strong></td><td>Share on micro:bit community, MakeCode forums, teacher Facebook groups</td><td>Free</td></tr>
+  <tr><td><strong>Workshop-diy.org</strong></td><td>Add an Etsy link/button on your website</td><td>Free</td></tr>
+  <tr><td><strong>Email</strong></td><td>If you have a mailing list, announce the launch with a discount code</td><td>Free</td></tr>
+</table>
+
+<h3>27.6 Post-Sale Best Practices</h3>
+<ul>
+  <li><strong>Free lifetime updates</strong> — Mention this prominently. Re-upload the ZIP when you release new versions. Buyers can re-download.</li>
+  <li><strong>Reply to messages fast</strong> — Etsy rewards responsive sellers with better search placement.</li>
+  <li><strong>Ask for reviews</strong> — After purchase, Etsy sends a review reminder. Good reviews are the #1 driver of Etsy sales.</li>
+  <li><strong>Offer support</strong> — Include a "Need help?" section in the README pointing to Etsy messages.</li>
+  <li><strong>Track analytics</strong> — Etsy provides views, favorites, and conversion rates. Optimize tags based on what drives traffic.</li>
+</ul>
+
+<h3>27.7 Rebuilding the Package</h3>
+<p>If you update NoorCast and need to regenerate the Etsy package:</p>
+<div class="steps">
+  <div class="step">Update the app files (noorcast.js, style.css, etc.)</div>
+  <div class="step">Run <code>node etsy-package/build-package.js</code> — this renders all printables to PNG and rebuilds the ZIP</div>
+  <div class="step">Upload the new <code>NoorCast-v0.7.zip</code> to your Etsy listing (replace the old file)</div>
+  <div class="step">Etsy notifies previous buyers that an update is available</div>
+</div>
+
+<div class="info">The build script requires Playwright (already in devDependencies). It uses a headless browser to render the HTML printables to high-resolution PNG images, then bundles everything into a ZIP.</div>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
