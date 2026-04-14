@@ -14825,6 +14825,8 @@ const PianoOverlay = {
     if (this._activeKeys[keyObj.key]) return; // already playing
     try {
       const ac = Engine.audioCtx || Sfx.ctx();
+      // Resume AudioContext if suspended (Chrome autoplay policy)
+      if (ac.state === 'suspended') ac.resume();
       const osc = ac.createOscillator();
       const gain = ac.createGain();
       osc.type = 'sine';
