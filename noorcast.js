@@ -8923,12 +8923,12 @@ const Drag = {
      Hit-test in reverse. */
   _hitTest(mx, my) {
     // 0. Sensor overlay (draggable)
-    if (Sensors._overlayX !== null && Sensors._overlayW > 0 && Sensors.server?.connected) {
+    if (Sensors._overlayX !== null && Sensors._overlayW > 0) {
       const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
       if (this._insideRect(so, mx, my)) return { kind: 'sensorOverlay', ref: so };
     }
     // 0b. Servo gauge (draggable)
-    if (ServoGauge.visible && ServoGauge.w > 0 && Sensors.server?.connected) {
+    if (ServoGauge.visible && ServoGauge.w > 0) {
       if (this._insideRect(ServoGauge, mx, my)) return { kind: 'servoGauge', ref: ServoGauge };
     }
     // 0c. Watermark (draggable)
@@ -9816,7 +9816,7 @@ const ServoGauge = {
     const tilt = Sensors._tiltAngle;
     // Only show when servos have been moved from default
     if (pan === undefined && tilt === undefined) return;
-    if (pan === 90 && tilt === 90 && !Sensors.server?.connected) return;
+    if (pan === undefined && tilt === undefined) return;
 
     ctx.save();
     ctx.globalAlpha = this._opacity;
@@ -14926,7 +14926,7 @@ const SensorChart = {
 
 const Sensors = {
   device: null, server: null,
-  values: null, // { a: 0, b: 0, x: 0, y: 0, z: 0, light: 0 }
+  values: { a: 0, b: 0, x: 0, y: 0, z: 0, temp: 0, light: 0, sound: 0, compass: 0 },
   autoOverlayEnabled: false,  // v0.5.0 — opt-in in Settings
   _lastAutoOverlayAt: 0,
 
@@ -15070,7 +15070,7 @@ const Sensors = {
   },
 
   drawOverlay(ctx) {
-    if (!this.values || !this.server || !this.server.connected) return;
+    if (!this.values) return;
     const v = this.values;
     const W = ctx.canvas.width, H = ctx.canvas.height;
     // Default position: bottom-left
@@ -18029,7 +18029,7 @@ function wireEvents() {
       if (e.target.closest('.tc-brand-panel')) return;
       const [mx, my] = Drag._stageToCanvas(e);
       // Double-click sensor overlay: cycle opacity 100→75→50→25→100
-      if (Sensors._overlayW > 0 && Sensors.server?.connected) {
+      if (Sensors._overlayW > 0) {
         const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
         if (Drag._insideRect(so, mx, my)) {
           const steps = [1, 0.75, 0.5, 0.25];
