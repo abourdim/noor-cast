@@ -16280,6 +16280,29 @@ const Sensors = {
     if (s) { s.textContent = statusText; s.style.color = connected ? '#a3e635' : '#ef4444'; }
     if (cb) cb.style.display = connected ? 'none' : '';
     if (db) db.style.display = connected ? '' : 'none';
+    // v0.7.191: floating connect button on stage
+    this._updateStageConnectBtn(connected);
+  },
+
+  _updateStageConnectBtn(connected) {
+    let btn = document.getElementById('tcStageConnectBtn');
+    if (connected) {
+      if (btn) btn.style.display = 'none';
+      return;
+    }
+    if (!btn) {
+      const stage = $('tcStage');
+      if (!stage) return;
+      btn = document.createElement('button');
+      btn.id = 'tcStageConnectBtn';
+      btn.style.cssText = 'position:absolute;bottom:14px;right:14px;z-index:80;padding:10px 18px;border-radius:12px;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.4);color:#4ade80;font:bold .85rem "Righteous",sans-serif;cursor:pointer;backdrop-filter:blur(4px);transition:transform .15s,background .15s;display:flex;align-items:center;gap:6px';
+      btn.innerHTML = '📡 Connect micro:bit';
+      btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.05)'; btn.style.background = 'rgba(34,197,94,.25)'; });
+      btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; btn.style.background = 'rgba(34,197,94,.15)'; });
+      btn.addEventListener('click', () => Sensors.connect());
+      stage.appendChild(btn);
+    }
+    btn.style.display = '';
   },
 
   async connect() {
@@ -20218,6 +20241,7 @@ function wireEvents() {
   });
   $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
   Sensors._loadOverlayPos();
+  Sensors._updateStageConnectBtn(false); // show connect button by default
   $('btConnectBtn').addEventListener('click', () => Sensors.connect());
   $('btDisconnectBtn')?.addEventListener('click', async () => {
     if (Sensors.device && Sensors.device.gatt && Sensors.device.gatt.connected) {
