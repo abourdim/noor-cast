@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NoorCast Keyboard Shortcuts Cheat Sheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Orbitron:wght@500&family=Tajawal:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4 landscape; margin: 0; }
+  body { width: 297mm; height: 210mm; font-family: 'Tajawal', sans-serif; background: #060e06; color: #cbd5e1; overflow: hidden; }
+
+  .page { width: 297mm; height: 210mm; padding: 10mm 14mm; position: relative; overflow: hidden; }
+  .page::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(163,230,53,.012) 3px, rgba(163,230,53,.012) 6px);
+    pointer-events: none;
+  }
+
+  .header { text-align: center; margin-bottom: 6mm; }
+  .header h1 { font-family: 'Righteous', sans-serif; font-size: 32px; color: #a3e635; display: inline; }
+  .header span { font-size: 16px; color: #64748b; margin-left: 12px; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .group { margin-bottom: 6px; }
+  .group-title {
+    font-family: 'Righteous', sans-serif; font-size: 14px; color: #fbbf24;
+    padding: 4px 10px; background: rgba(251,191,36,.06); border-radius: 8px;
+    border-left: 3px solid #fbbf24; margin-bottom: 4px;
+  }
+
+  .row {
+    display: flex; align-items: center; gap: 8px; padding: 4px 8px;
+    border-radius: 6px; transition: background .15s;
+  }
+  .row:nth-child(even) { background: rgba(163,230,53,.02); }
+
+  kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 26px; padding: 0 8px;
+    background: rgba(0,0,0,.6); border: 1px solid rgba(163,230,53,.25);
+    border-radius: 6px; font-family: 'Orbitron', monospace; font-size: 11px;
+    color: #a3e635; box-shadow: 0 2px 4px rgba(0,0,0,.4);
+    white-space: nowrap;
+  }
+  .label { font-size: 12px; color: #94a3b8; flex: 1; }
+
+  .footer {
+    position: absolute; bottom: 8mm; left: 14mm; right: 14mm;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(163,230,53,.1); padding-top: 4px;
+  }
+  .footer span { font-size: 10px; color: #64748b; }
+  .footer .brand { font-family: 'Orbitron', monospace; font-size: 11px; color: #a3e635; }
+
+  .laminate-tip {
+    position: absolute; top: 10mm; right: 14mm;
+    font-size: 9px; color: #64748b; background: rgba(163,230,53,.05);
+    border: 1px solid rgba(163,230,53,.1); border-radius: 8px; padding: 3px 10px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>NoorCast Shortcuts</h1>
+    <span>Cheat Sheet &mdash; Laminate Me!</span>
+  </div>
+  <div class="laminate-tip">Print &rarr; Laminate &rarr; Stick near your screen</div>
+
+  <div class="cols">
+
+    <!-- Column 1: Recording & Playback -->
+    <div>
+      <div class="group">
+        <div class="group-title">Recording</div>
+        <div class="row"><kbd>R</kbd><span class="label">Start / Stop recording</span></div>
+        <div class="row"><kbd>Shift+R</kbd><span class="label">Instant rec (skip countdown)</span></div>
+        <div class="row"><kbd>P</kbd><span class="label">Pause / Resume</span></div>
+        <div class="row"><kbd>M</kbd><span class="label">Add chapter marker</span></div>
+        <div class="row"><kbd>S</kbd><span class="label">Take snapshot (PNG)</span></div>
+        <div class="row"><kbd>Ctrl+S</kbd><span class="label">Save all files</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Scenes</div>
+        <div class="row"><kbd>1</kbd> - <kbd>9</kbd><span class="label">Switch to scene 1-9</span></div>
+        <div class="row"><kbd>Shift+Alt+&larr;</kbd><span class="label">Reorder scene left</span></div>
+        <div class="row"><kbd>Shift+Alt+&rarr;</kbd><span class="label">Reorder scene right</span></div>
+        <div class="row"><kbd>?</kbd><span class="label">Random scene / shortcuts help</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Canvas Tools</div>
+        <div class="row"><kbd>L</kbd><span class="label">Laser pointer on/off</span></div>
+        <div class="row"><kbd>F</kbd><span class="label">Freeze screen</span></div>
+        <div class="row"><kbd>D</kbd><span class="label">Whiteboard / draw mode</span></div>
+        <div class="row"><kbd>B</kbd><span class="label">Big marker brush</span></div>
+        <div class="row"><kbd>G</kbd><span class="label">Grid overlay</span></div>
+        <div class="row"><kbd>Z</kbd><span class="label">Manual zoom</span></div>
+      </div>
+    </div>
+
+    <!-- Column 2: Sources & Layers -->
+    <div>
+      <div class="group">
+        <div class="group-title">Overlays</div>
+        <div class="row"><kbd>C</kbd><span class="label">Captions on/off</span></div>
+        <div class="row"><kbd>T</kbd><span class="label">Teleprompter</span></div>
+        <div class="row"><kbd>Q</kbd><span class="label">Quiz card / question</span></div>
+        <div class="row"><kbd>Shift+F</kbd><span class="label">Focus mode</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Sources & Layers</div>
+        <div class="row"><kbd>Alt+1</kbd> - <kbd>Alt+9</kbd><span class="label">Toggle source visibility</span></div>
+        <div class="row"><kbd>[</kbd><span class="label">Send layer back</span></div>
+        <div class="row"><kbd>]</kbd><span class="label">Bring layer front</span></div>
+        <div class="row"><kbd>Shift+[</kbd><span class="label">Send to very back</span></div>
+        <div class="row"><kbd>Shift+]</kbd><span class="label">Bring to very front</span></div>
+        <div class="row"><kbd>Del</kbd><span class="label">Delete selected element</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Text Overlay</div>
+        <div class="row"><kbd>,</kbd> / <kbd>.</kbd><span class="label">Rotate text left/right</span></div>
+        <div class="row"><kbd>/</kbd><span class="label">Reset rotation</span></div>
+        <div class="row"><kbd>Ctrl+D</kbd><span class="label">Duplicate text</span></div>
+        <div class="row"><kbd>Ctrl+V</kbd><span class="label">Paste image to canvas</span></div>
+      </div>
+    </div>
+
+    <!-- Column 3: History & Advanced -->
+    <div>
+      <div class="group">
+        <div class="group-title">History</div>
+        <div class="row"><kbd>Ctrl+Z</kbd><span class="label">Undo / Retry 30s</span></div>
+        <div class="row"><kbd>Ctrl+Shift+Z</kbd><span class="label">Redo layout</span></div>
+        <div class="row"><kbd>Ctrl+Y</kbd><span class="label">Redo layout (alt)</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Advanced</div>
+        <div class="row"><kbd>Ctrl+Shift+D</kbd><span class="label">Debug HUD</span></div>
+        <div class="row"><kbd>Esc</kbd><span class="label">Close any open panel</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Voice Commands</div>
+        <div class="row"><span style="font-size:16px;">🎙</span><span class="label">"Record" / "Stop"</span></div>
+        <div class="row"><span style="font-size:16px;">🎙</span><span class="label">"Pause" / "Resume"</span></div>
+        <div class="row"><span style="font-size:16px;">🎙</span><span class="label">"Next scene"</span></div>
+        <div class="row"><span style="font-size:16px;">🎙</span><span class="label">"Snapshot"</span></div>
+        <div class="row"><span style="font-size:16px;">🎙</span><span class="label">"Freeze" / "Laser"</span></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Pro Tips</div>
+        <div class="row" style="flex-direction:column;align-items:start;">
+          <span class="label" style="color:#38bdf8;">All shortcuts are rebindable in Settings!</span>
+          <span class="label" style="color:#64748b;font-size:11px;">Press <kbd style="font-size:9px;">?</kbd> in the app for the built-in cheat sheet</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>NoorCast v0.7 &bull; Print this on A4 landscape, laminate it, love it.</span>
+    <span class="brand">workshop-diy.org</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NoorCast Etsy Listing Mockups</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Orbitron:wght@500&family=Tajawal:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: #111; }
+
+  /* Each mockup is 2000x1500 px (Etsy recommended listing photo size) */
+  .mockup {
+    width: 2000px; height: 1500px; position: relative; overflow: hidden;
+    margin: 20px auto; page-break-after: always;
+  }
+
+  /* ====== MOCKUP 1: Hero / Cover ====== */
+  .m1 {
+    background: linear-gradient(135deg, #060e06 0%, #0c1f0a 50%, #071407 100%);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .m1::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(163,230,53,.008) 4px, rgba(163,230,53,.008) 8px);
+  }
+  .m1 .content { position: relative; text-align: center; }
+  .m1 h1 { font-family: 'Righteous', sans-serif; font-size: 120px; color: #a3e635; text-shadow: 0 0 80px rgba(163,230,53,.2); letter-spacing: 6px; }
+  .m1 .arabic { font-size: 50px; color: #d4a03c; margin-top: -10px; }
+  .m1 .tagline { font-size: 36px; color: #94a3b8; margin-top: 20px; }
+  .m1 .pills { display: flex; gap: 16px; justify-content: center; margin-top: 30px; }
+  .m1 .pill { padding: 10px 30px; border-radius: 30px; font-size: 20px; font-weight: 700; }
+  .m1 .pg { background: rgba(163,230,53,.12); color: #a3e635; border: 2px solid rgba(163,230,53,.3); }
+  .m1 .pb { background: rgba(56,189,248,.12); color: #38bdf8; border: 2px solid rgba(56,189,248,.3); }
+  .m1 .py { background: rgba(251,191,36,.12); color: #fbbf24; border: 2px solid rgba(251,191,36,.3); }
+
+  .m1 .features-row {
+    display: flex; gap: 40px; margin-top: 60px; justify-content: center;
+  }
+  .m1 .feat-item { text-align: center; }
+  .m1 .feat-item .num { font-family: 'Orbitron', monospace; font-size: 48px; color: #a3e635; }
+  .m1 .feat-item .lab { font-size: 18px; color: #64748b; }
+
+  .m1 .bottom {
+    position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;
+  }
+  .m1 .bottom span { font-size: 22px; color: #64748b; }
+  .m1 .bottom .brand { font-family: 'Orbitron', monospace; color: #a3e635; }
+
+  /* LED corners */
+  .led { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,.5); }
+  .led-tl { top: 30px; left: 30px; }
+  .led-tr { top: 30px; right: 30px; }
+  .led-bl { bottom: 30px; left: 30px; }
+  .led-br { bottom: 30px; right: 30px; }
+
+  /* ====== MOCKUP 2: What's Included ====== */
+  .m2 {
+    background: #060e06;
+    display: flex; flex-direction: column; padding: 80px 100px;
+  }
+  .m2 h2 { font-family: 'Righteous', sans-serif; font-size: 64px; color: #a3e635; text-align: center; margin-bottom: 50px; }
+  .m2 .items { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; }
+  .m2 .item {
+    background: rgba(12,24,12,.6); border: 1px solid rgba(163,230,53,.12);
+    border-radius: 20px; padding: 30px 36px; display: flex; gap: 20px; align-items: center;
+  }
+  .m2 .item .emoji { font-size: 52px; flex-shrink: 0; }
+  .m2 .item h3 { font-family: 'Righteous', sans-serif; font-size: 26px; color: #a3e635; }
+  .m2 .item p { font-size: 18px; color: #94a3b8; margin-top: 4px; }
+
+  /* ====== MOCKUP 3: Features Grid ====== */
+  .m3 {
+    background: linear-gradient(180deg, #060e06, #0a1a0a);
+    padding: 80px 100px;
+  }
+  .m3 h2 { font-family: 'Righteous', sans-serif; font-size: 56px; color: #a3e635; text-align: center; margin-bottom: 40px; }
+  .m3 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .m3 .cell {
+    background: rgba(12,24,12,.5); border: 1px solid rgba(163,230,53,.08);
+    border-radius: 16px; padding: 24px; text-align: center;
+  }
+  .m3 .cell .emoji { font-size: 42px; }
+  .m3 .cell h4 { font-family: 'Righteous', sans-serif; font-size: 20px; color: #a3e635; margin: 8px 0 4px; }
+  .m3 .cell p { font-size: 14px; color: #64748b; }
+
+  /* ====== MOCKUP 4: Printables Preview ====== */
+  .m4 {
+    background: linear-gradient(135deg, #0c1f0a, #060e06);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .m4 h2 { font-family: 'Righteous', sans-serif; font-size: 56px; color: #fbbf24; margin-bottom: 40px; }
+  .m4 .cards { display: flex; gap: 30px; }
+  .m4 .pcard {
+    width: 320px; background: rgba(12,24,12,.7); border: 1px solid rgba(163,230,53,.15);
+    border-radius: 20px; padding: 30px; text-align: center;
+    transform: rotate(-2deg);
+  }
+  .m4 .pcard:nth-child(2) { transform: rotate(1deg) translateY(-20px); }
+  .m4 .pcard:nth-child(3) { transform: rotate(-1deg); }
+  .m4 .pcard:nth-child(4) { transform: rotate(2deg) translateY(-10px); }
+  .m4 .pcard:nth-child(5) { transform: rotate(-1.5deg) translateY(5px); }
+  .m4 .pcard .emoji { font-size: 56px; }
+  .m4 .pcard h4 { font-family: 'Righteous', sans-serif; font-size: 20px; color: #a3e635; margin: 10px 0 4px; }
+  .m4 .pcard p { font-size: 14px; color: #64748b; }
+
+  /* ====== MOCKUP 5: Privacy / Trust ====== */
+  .m5 {
+    background: #060e06;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .m5 .shield { font-size: 120px; margin-bottom: 20px; }
+  .m5 h2 { font-family: 'Righteous', sans-serif; font-size: 64px; color: #a3e635; }
+  .m5 .sub { font-size: 28px; color: #94a3b8; margin-top: 10px; text-align: center; max-width: 1200px; }
+  .m5 .badges { display: flex; gap: 40px; margin-top: 50px; }
+  .m5 .badge {
+    text-align: center; padding: 24px 36px;
+    background: rgba(12,24,12,.5); border: 1px solid rgba(163,230,53,.1);
+    border-radius: 16px;
+  }
+  .m5 .badge .emoji { font-size: 48px; }
+  .m5 .badge h4 { font-family: 'Righteous', sans-serif; font-size: 22px; color: #a3e635; margin: 8px 0 4px; }
+  .m5 .badge p { font-size: 15px; color: #64748b; max-width: 200px; }
+
+  /* ====== MOCKUP 6: Micro:bit ====== */
+  .m6 {
+    background: linear-gradient(135deg, #071407, #0c1f0a);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .m6 h2 { font-family: 'Righteous', sans-serif; font-size: 56px; color: #38bdf8; margin-bottom: 10px; }
+  .m6 .sub { font-size: 24px; color: #94a3b8; margin-bottom: 40px; }
+  .m6 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .m6 .cell {
+    background: rgba(12,24,12,.6); border: 1px solid rgba(56,189,248,.1);
+    border-radius: 16px; padding: 30px; text-align: center; width: 340px;
+  }
+  .m6 .cell .emoji { font-size: 48px; }
+  .m6 .cell h4 { font-family: 'Righteous', sans-serif; font-size: 22px; color: #38bdf8; margin: 8px 0 4px; }
+  .m6 .cell p { font-size: 15px; color: #64748b; }
+
+  /* ====== MOCKUP 7: Languages ====== */
+  .m7 {
+    background: #060e06;
+    display: flex; align-items: center; justify-content: center; gap: 80px;
+  }
+  .m7 .lang {
+    text-align: center; padding: 40px 60px;
+    background: rgba(12,24,12,.5); border: 1px solid rgba(163,230,53,.1);
+    border-radius: 24px;
+  }
+  .m7 .lang .flag { font-size: 80px; }
+  .m7 .lang h3 { font-family: 'Righteous', sans-serif; font-size: 32px; color: #a3e635; margin: 12px 0; }
+  .m7 .lang p { font-size: 18px; color: #64748b; }
+  .m7 .lang.rtl { direction: rtl; }
+</style>
+</head>
+<body>
+
+<!-- MOCKUP 1: Hero -->
+<div class="mockup m1">
+  <div class="led led-tl"></div><div class="led led-tr"></div><div class="led led-bl"></div><div class="led led-br"></div>
+  <div class="content">
+    <h1>NoorCast</h1>
+    <div class="arabic">نور كاست</div>
+    <div class="tagline">Multi-Camera Screen Recorder for Teachers</div>
+    <div class="pills">
+      <div class="pill pg">Zero Install</div>
+      <div class="pill pb">100% Local</div>
+      <div class="pill py">Kid-Friendly</div>
+    </div>
+    <div class="features-row">
+      <div class="feat-item"><div class="num">120+</div><div class="lab">Features</div></div>
+      <div class="feat-item"><div class="num">49</div><div class="lab">Source Skins</div></div>
+      <div class="feat-item"><div class="num">36</div><div class="lab">AI Co-hosts</div></div>
+      <div class="feat-item"><div class="num">3</div><div class="lab">Languages</div></div>
+      <div class="feat-item"><div class="num">0</div><div class="lab">Data Collected</div></div>
+    </div>
+  </div>
+  <div class="bottom">
+    <span class="brand">workshop-diy.org</span>
+    <span> &bull; Digital Download &bull; Free Lifetime Updates</span>
+  </div>
+</div>
+
+<!-- MOCKUP 2: What's Included -->
+<div class="mockup m2">
+  <h2>What's Included</h2>
+  <div class="items">
+    <div class="item"><div class="emoji">🌐</div><div><h3>NoorCast App</h3><p>Full multi-camera recorder — opens in any browser, works offline</p></div></div>
+    <div class="item"><div class="emoji">📖</div><div><h3>Complete User Guide</h3><p>26 chapters, 1970 lines, SVG diagrams, 119 features documented</p></div></div>
+    <div class="item"><div class="emoji">🗺️</div><div><h3>Quick-Start Card</h3><p>A4 printable — setup in 5 steps, essential shortcuts</p></div></div>
+    <div class="item"><div class="emoji">⌨️</div><div><h3>Shortcuts Cheat Sheet</h3><p>A4 landscape — laminate and stick near your screen!</p></div></div>
+    <div class="item"><div class="emoji">🎨</div><div><h3>Classroom Poster</h3><p>A3 "Recording Studio Rules" — fun, printable, hang it proud</p></div></div>
+    <div class="item"><div class="emoji">📋</div><div><h3>Lesson Plan Templates</h3><p>Blank template + sample micro:bit lesson with rubric</p></div></div>
+    <div class="item"><div class="emoji">⭐</div><div><h3>Reward Sticker Sheet</h3><p>30 printable stickers — achievements, XP levels, badges</p></div></div>
+    <div class="item"><div class="emoji">📜</div><div><h3>Commercial License</h3><p>Use in your school, organization, or business. Lifetime.</p></div></div>
+  </div>
+</div>
+
+<!-- MOCKUP 3: Features Grid -->
+<div class="mockup m3">
+  <h2>120+ Features Built In</h2>
+  <div class="grid">
+    <div class="cell"><div class="emoji">📷</div><h4>Multi-Camera</h4><p>Screen + webcams + phone cameras simultaneously</p></div>
+    <div class="cell"><div class="emoji">🎭</div><h4>49 Source Skins</h4><p>Robot heads, hacker frames, phone bezels, retro CRT</p></div>
+    <div class="cell"><div class="emoji">🖼️</div><h4>15 Backgrounds</h4><p>Islamic art, circuit boards, radar, matrix rain</p></div>
+    <div class="cell"><div class="emoji">🤖</div><h4>36 AI Co-hosts</h4><p>Pirate, hacker, astronaut SVG characters</p></div>
+    <div class="cell"><div class="emoji">🎙</div><h4>Live Captions</h4><p>Real-time subtitles with karaoke-style highlight</p></div>
+    <div class="cell"><div class="emoji">🗣️</div><h4>Voice Commands</h4><p>"Record", "stop", "next scene" — hands-free</p></div>
+    <div class="cell"><div class="emoji">📡</div><h4>Micro:bit BLE</h4><p>Pan/tilt servos, D-pad, LED grid, live sensors</p></div>
+    <div class="cell"><div class="emoji">🏆</div><h4>Gamification</h4><p>XP bar, achievements, daily challenges, combos</p></div>
+    <div class="cell"><div class="emoji">⏮️</div><h4>Instant Replay</h4><p>Rewind last 30 seconds during recording</p></div>
+    <div class="cell"><div class="emoji">📱</div><h4>QR Sharing</h4><p>Generate QR code for quick classroom sharing</p></div>
+    <div class="cell"><div class="emoji">🎵</div><h4>Sound Pad</h4><p>Piano, drums, applause, sound effects</p></div>
+    <div class="cell"><div class="emoji">🐾</div><h4>Canvas Pets</h4><p>12 animated characters walking across your video</p></div>
+    <div class="cell"><div class="emoji">📝</div><h4>Teleprompter</h4><p>Scrolling script overlay while recording</p></div>
+    <div class="cell"><div class="emoji">❄️</div><h4>Freeze & Laser</h4><p>Pause screen + laser pointer for annotations</p></div>
+    <div class="cell"><div class="emoji">📊</div><h4>Quality Score</h4><p>Auto-rate your tutorial: audio, duration, variety</p></div>
+    <div class="cell"><div class="emoji">🔒</div><h4>100% Offline</h4><p>Works without internet after first load</p></div>
+  </div>
+</div>
+
+<!-- MOCKUP 4: Printables -->
+<div class="mockup m4">
+  <h2>Bonus Printable Materials</h2>
+  <div class="cards">
+    <div class="pcard"><div class="emoji">🗺️</div><h4>Quick-Start</h4><p>A4 portrait</p></div>
+    <div class="pcard"><div class="emoji">⌨️</div><h4>Shortcuts</h4><p>A4 landscape</p></div>
+    <div class="pcard"><div class="emoji">🎬</div><h4>Poster</h4><p>A3 portrait</p></div>
+    <div class="pcard"><div class="emoji">📋</div><h4>Lesson Plans</h4><p>A4, 2 pages</p></div>
+    <div class="pcard"><div class="emoji">⭐</div><h4>Stickers</h4><p>30 badges</p></div>
+  </div>
+</div>
+
+<!-- MOCKUP 5: Privacy -->
+<div class="mockup m5">
+  <div class="shield">🛡️</div>
+  <h2>100% Private & Local</h2>
+  <div class="sub">No accounts. No cloud. No tracking. No analytics. Everything stays on YOUR device.</div>
+  <div class="badges">
+    <div class="badge"><div class="emoji">🔒</div><h4>Zero Data</h4><p>Nothing leaves your browser. Ever.</p></div>
+    <div class="badge"><div class="emoji">📵</div><h4>Works Offline</h4><p>No internet needed after first load</p></div>
+    <div class="badge"><div class="emoji">🏫</div><h4>School Safe</h4><p>GDPR/COPPA friendly. No student data.</p></div>
+    <div class="badge"><div class="emoji">💾</div><h4>Local Storage</h4><p>All settings saved in your browser</p></div>
+    <div class="badge"><div class="emoji">🚫</div><h4>No Accounts</h4><p>No sign-up, no login, no email</p></div>
+  </div>
+</div>
+
+<!-- MOCKUP 6: Micro:bit -->
+<div class="mockup m6">
+  <h2>Micro:bit Integration</h2>
+  <div class="sub">Connect via Web Bluetooth — control your recording with physical buttons!</div>
+  <div class="grid">
+    <div class="cell"><div class="emoji">🕹️</div><h4>D-Pad Control</h4><p>Navigate menus and trigger actions from micro:bit buttons</p></div>
+    <div class="cell"><div class="emoji">🔧</div><h4>Servo Control</h4><p>Pan & tilt camera servos with real-time gauges on canvas</p></div>
+    <div class="cell"><div class="emoji">💡</div><h4>LED Grid</h4><p>Show patterns, emojis, and data on the 5x5 LED matrix</p></div>
+    <div class="cell"><div class="emoji">📊</div><h4>Live Sensors</h4><p>Temperature, accelerometer, light level displayed as overlay</p></div>
+    <div class="cell"><div class="emoji">🎭</div><h4>Robot Choreography</h4><p>Record and playback servo movement sequences</p></div>
+    <div class="cell"><div class="emoji">🤖</div><h4>MakeCode Ready</h4><p>Includes MakeCode extension for easy micro:bit programming</p></div>
+  </div>
+</div>
+
+<!-- MOCKUP 7: Languages -->
+<div class="mockup m7">
+  <div class="lang"><div class="flag">🇬🇧</div><h3>English</h3><p>Full interface & guide</p></div>
+  <div class="lang"><div class="flag">🇫🇷</div><h3>French</h3><p>Interface compl&egrave;te</p></div>
+  <div class="lang rtl"><div class="flag">🇸🇦</div><h3>Arabic</h3><p>واجهة كاملة مع دعم RTL</p></div>
+</div>
+
+</body>
+</html>

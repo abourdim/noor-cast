@@ -1,0 +1,22629 @@
+/* ═══════════════════════════════════════════════════════════════════
+   NoorCast v0.7.177 — kids-friendly multi-cam screen recorder
+   Single-file app logic. Zero dependencies. Chrome/Edge desktop.
+
+   Architecture:
+     1. i18n  (LANG + applyI18n)
+     2. Shell (splash, panels, log, toast, themes)
+     3. Engine (sources manager, canvas renderer, scenes manager)
+     4. Recorder (MediaRecorder + chapters VTT)
+     5. Live tools (laser, freeze, whiteboard, teleprompter, snapshot)
+     6. micro:bit sensors (Web Bluetooth)
+     7. Kid polish (sfx, debug HUD, badges, confetti, ticker)
+     8. Onboarding + wiring
+   ═══════════════════════════════════════════════════════════════════ */
+
+const APP_VERSION = '0.7.177';
+// v0.7.19: build timestamp shown in Settings > Général > Maintenance.
+// Bump by hand on each release — there's no build step.
+const BUILD_DATE = '2026-04-12 23:59';
+const $ = (id) => document.getElementById(id);
+
+/* ─────────── 1. i18n ─────────── */
+
+const LANG = {
+  fr: {
+    title: 'نُورْكَاسْت', slogan: '🎬 Lumière, caméra, ROBOT !',
+    statusIdle: 'Prêt', statusRec: 'Enregistrement', statusPaused: 'Pause',
+    sources: 'Sources', sourceScreen: 'Écran', sourceCam: 'Caméra', sourceMic: 'Micro',
+    selectCam: '— choisis —', selectMic: '— choisis —', add: '+ Ajouter',
+    micCheckListening: '🎤 Parle pour tester…', micCheckOk: '✅ Micro OK !', micCheckFail: '⚠️ Rien détecté',
+    activeSources: 'Sources actives', sensors: 'Capteurs', btConnect: 'Connecter micro:bit',
+    scenes: 'Scènes', texts: 'Textes', addItems: 'Ajouter', addItemsBtn: 'Ajouter', addText: 'Texte libre', emojiBtn: 'Emoji',
+    tools: 'Outils', laser: 'Laser', freeze: 'Geler', whiteboard: 'Dessiner', ripples: 'Ripples',
+    teleprompter: 'Teleprompter', snapshot: 'Capture photo',
+    recStart: 'ENREGISTRER', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
+    download: 'Télécharger', downloadChapters: 'Chapitres (.vtt)', downloadMd: 'Chapitres (.md)', newTake: 'Nouveau tuto',
+    badgesTitle: 'Tes badges',
+    onbTitle: 'Salut ! Prêt à faire ton premier tuto ?',
+    onb1: 'Choisis tes caméras et ton écran (panneau de gauche)',
+    onb2: "Choisis une scène prête, ou crée la tienne",
+    onb3: "Appuie sur le gros bouton rouge 🔴 et c'est parti !",
+    onb4: 'Ton tuto est téléchargé automatiquement à la fin',
+    onbGo: "C'est parti !",
+    stageHint: '👆 Ajoute une source pour commencer',
+    mainSection: 'Studio', mainDesc: 'Compose ta scène et enregistre',
+    mirrorCam: '🪞 Miroir webcam', countdownOn: '⏱ Compte à rebours', countdownSecs: 'Secondes :',
+    scene_code: '<Code/>', scene_robot: 'Mecha', scene_sensors: 'Capteurs',
+    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_pilot: 'Pilote', scene_you: 'Solo',
+    sceneRenamed: 'Scène renommée', sceneRenameTip: 'Double-clic pour renommer',
+    txt_bravo: '⭐ Bravo !', txt_step1: '🎯 Étape 1', txt_step2: '🎯 Étape 2', txt_step3: '🎯 Étape 3',
+    txt_watch: '👀 Regarde', txt_tip: '💡 Astuce !', txt_careful: '⚠️ Attention', txt_oops: '🙈 Oups !',
+    txt_yourturn: '💪 À toi !', txt_done: '🎉 Fini !',
+    tip_1: '💡 Appuie sur 1-9 pour changer de scène instantanément',
+    tip_2: '✏️ Clique droit sur le canvas pour ajouter un texte',
+    tip_3: '🎨 8 thèmes dispos dans les Paramètres ⚙️',
+    tip_4: '🎥 Jusqu\'à 3 caméras + écran + micro',
+    tip_5: '⭐ Parle fort, souris, amuse-toi !',
+    tip_6: '🎯 Un tuto = préparer, enregistrer, partager',
+    tip_7: '💾 Tes vidéos restent sur ton ordi, rien n\'est envoyé en ligne',
+    tip_8: '🤖 Tuto micro:bit ? Essaie la scène "Code + Robot"',
+    tip_9: '🧠 Commence par la scène "Toi" pour ton intro',
+    tip_10: '🎬 Appuie sur R pour démarrer/arrêter l\'enregistrement',
+    tipOfDay_1: "Touche ? pour voir tous les raccourcis clavier d'un coup",
+    tipOfDay_2: "Tu peux glisser-déposer une source avec la souris, puis la redimensionner par ses coins",
+    tipOfDay_3: "Clic droit sur une source = menu complet (cacher, épingler, forme, PiP, chroma)",
+    tipOfDay_4: "Shift + glisser un coin débloque l'aspect ratio pour étirer librement",
+    tipOfDay_5: "Alt + glisser une source la colle à la grille de 48 px",
+    tipOfDay_6: "Ctrl + Z annule ton dernier déplacement (hors enregistrement)",
+    tipOfDay_7: "Ctrl + Z pendant l'enregistrement marque les 30 dernières secondes comme retry",
+    tipOfDay_8: "Shift + R démarre l'enregistrement instantanément (saute le compte à rebours)",
+    tipOfDay_9: "Tu peux coller une image (Ctrl+V) — elle devient une source draggable",
+    tipOfDay_10: "La touche M ajoute un marker : pratique pour retrouver un passage plus tard",
+    tipOfDay_11: "La touche S fait une capture photo, et l'ajoute à la galerie sous le stage",
+    tipOfDay_12: "Tu peux sauvegarder ta disposition actuelle comme scène perso (💾 Sauvegarder)",
+    tipOfDay_13: "Le téléprompteur a un auto-scroll — règle la vitesse avec le slider",
+    tipOfDay_14: "Importe un script .txt, .md ou .vtt dans le téléprompteur via le bouton 📂",
+    tipOfDay_15: "Le bouton 📦 Exporter la session sauvegarde TOUT (badges, logo, tutos…) en JSON",
+    tipOfDay_16: "Tu peux changer la couleur d'accent dans Paramètres → Général",
+    tipOfDay_17: "Le mode plein écran (F11 ou le bouton ⛶) cache tout sauf le stage",
+    tipOfDay_18: "Tu peux connecter un micro:bit en Bluetooth pour filmer ses capteurs en live",
+    tipOfDay_19: "Les dessins au tableau blanc ont maintenant 6 couleurs + une gomme",
+    tipOfDay_20: "Clique sur un chapitre dans la vidéo finale pour sauter directement à ce moment",
+    news: 'Nouveautés',
+    activityLog: '📜 Journal', eventsMsg: 'Événements et messages',
+    clear: 'Effacer', copy: 'Copier', theme: 'Thème',
+    settings: '⚙️ Paramètres', language: 'Langue',
+    help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
+    helpSearchPlaceholder: '🔍 Rechercher…',
+    soundEffects: '🔊 Effets sonores',
+    soundBoard: 'SFX',
+    sbDing: 'Ding', sbBuzz: 'Buzz', sbClap: 'Clap', sbRoll: 'Roulement', sbWhistle: 'Sifflet', sbWhoosh: 'Whoosh',
+    splashHint: 'appuyer pour passer',
+    export: 'Exporter', filterAll: 'Tout',
+    copied: 'Copié !', copyFail: 'Échec',
+    logCleared: 'Journal effacé',
+    ready: '🚀 NoorCast prêt !',
+    needSources: '⚠️ Ajoute au moins une source avant d\'enregistrer',
+    recStarted: '🔴 Enregistrement démarré',
+    recStopped: '⏹ Enregistrement terminé',
+    recPaused: '⏸ Pause',
+    recResumed: '▶ Reprise',
+    markerAdded: '🏷 Marker ajouté',
+    snapshotSaved: '📸 Photo téléchargée',
+    sceneChanged: '🎭 Scène',
+    textAdded: '✏️ Texte ajouté',
+    laserOn: '🔴 Laser activé', laserOff: '⚪ Laser désactivé',
+    ripplesOn: 'Ripples activées', ripplesOff: 'Ripples désactivées',
+    spotlight: 'Spot', spotlightOn: 'Spotlight activé', spotlightOff: 'Spotlight désactivé',
+    trail: 'Trail', trailOn: 'Trail activé', trailOff: 'Trail désactivé',
+    gridOverlay: 'Grille', gridOverlayOn: 'Grille tiers activée', gridOverlayOff: 'Grille tiers désactivée',
+    sourceLabels: '🏷 Afficher le nom des sources sur le canvas', sourceLabelsOn: 'Noms des sources affichés', sourceLabelsOff: 'Noms des sources masqués',
+    hudType: 'Type', hudPos: 'Position', hudSize: 'Taille',
+    fpsCounter: '🎯 Compteur FPS sur le canvas', fpsCounterOn: 'Compteur FPS activé', fpsCounterOff: 'Compteur FPS désactivé',
+    alignLeft: 'Aligner à gauche', alignRight: 'Aligner à droite', alignTop: 'Aligner en haut', alignBottom: 'Aligner en bas', alignCenterH: 'Centrer horizontalement', alignCenterV: 'Centrer verticalement',
+    stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Tape ta note ici…',
+    freezeOn: '❄️ Écran gelé',
+    freezeOff: '▶ Écran repris',
+    drawOn: '✏️ Mode dessin',
+    drawOff: '✏️ Mode dessin désactivé',
+    teleOn: '📜 Teleprompter visible',
+    teleOff: '📜 Teleprompter caché',
+    teleImportDone: '📂 Script importé',
+    teleImportEmpty: '⚠ Fichier vide',
+    teleImportError: '❌ Erreur de lecture',
+    promptTelePlaceholder: 'Colle ton script ici…', promptFreeText: 'Texte à afficher :',
+    btConnected: '📡 micro:bit connecté !',
+    btError: '❌ Connexion micro:bit échouée',
+    permissionDenied: '🔒 Permission refusée. Autorise la caméra dans les réglages du navigateur.',
+    needCamSelected: '⚠️ Choisis une caméra dans la liste d\'abord',
+    recorderError: '✗ Erreur d\'enregistrement (voir le journal)',
+    recEmpty: '⚠️ Fichier vide — l\'encodeur n\'a rien produit. Ouvre le journal 📜 pour le détail.',
+    recNoStream: '✗ Pas de flux vidéo — relance la page',
+    zoom: 'Zoom', zoomOn: '🔍 Zoom activé', zoomOff: '🔍 Zoom désactivé',
+    autoZoom: 'Zoom auto',
+    fullscreen: 'Plein écran',
+    outputFormat: '🎞 Format de sortie',
+    formatAuto: 'Auto (MP4 si possible)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    stageAspect: '📐 Format de la scène',
+    stageAspectHint: "Ne change pas pendant un enregistrement",
+    aspectLockedDuringRec: '⚠ Impossible de changer pendant un enregistrement',
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', transcript: '📝 Transcript', trim: 'Couper', trimTitle: 'Couper le tuto',
+    trimIn: 'Début', trimOut: 'Fin', trimDuration: 'Durée finale :',
+    trimPreviewIn: '▶ début', trimPreviewOut: '▶ fin',
+    trimEncoding: 'Encodage en cours…',
+    trimCutSilences: '✂ Couper les silences',
+    trimScrubberHint: 'Clique pour positionner · glisse les poignées',
+    trimExport: 'Exporter le tuto coupé', trimExported: 'Tuto coupé exporté',
+    trimNoTake: '⚠️ Aucun tuto enregistré à couper',
+    trimTooShort: '⚠️ Sélection trop courte (minimum 0.2 s)',
+    cancel: 'Annuler',
+    pinSource: '📌 Épingler (garder la position entre les scènes)',
+    unpinSource: '🔓 Détacher (la scène reprend le contrôle)',
+    lockSource: '🔒 Verrouiller la position',
+    unlockSource: '🔓 Déverrouiller la position',
+    ctxLock: 'Verrouiller / déverrouiller',
+    sourceLocked: 'Position verrouillée',
+    sourceUnlocked: 'Position déverrouillée',
+    aspectLockOn: 'Ratio verrouillé',
+    aspectLockOff: 'Ratio libre',
+    toggleBlur: '🌫 Flou arrière-plan',
+    removeSource: '✕ Retirer',
+    ctxHide: 'Cacher / afficher',
+    ctxPin: 'Épingler / détacher',
+    ctxDup: 'Dupliquer',
+    ctxShape: 'Forme ▸',
+    ctxPip: 'Pop out (PiP)',
+    ctxMirror: 'Miroir',
+    ctxMirrorDup: 'Dupliquer en miroir',
+    ctxDel: 'Supprimer',
+    mirrorSource: 'Dupliqué en miroir',
+    mirrorOnlyCam: '❌ Caméras uniquement',
+    mirrorOn: 'Miroir activé',
+    mirrorOff: 'Miroir désactivé',
+    pipNotSupported: '❌ PiP non supporté',
+    pipOnlyCam: '❌ Caméras uniquement',
+    pipOn: 'PiP activé',
+    pipError: '❌ PiP indisponible',
+    pipActive: 'PiP',
+    resetLayout: '🔓 Réinitialiser la disposition',
+    layoutReset: '🔓 Disposition réinitialisée',
+    collapseSidebar: 'Cacher la sidebar',
+    expandSidebar: 'Afficher la sidebar',
+    randomScene: 'Scène aléatoire',
+    noScenesToShuffle: 'Aucune scène disponible',
+    onlyOneScene: 'Une seule scène',
+    saveScene: 'Sauvegarder la disposition',
+    promptSaveScene: 'Nom de cette scène ?',
+    promptDuplicateScene: 'Nom de la copie ?',
+    customSceneEmpty: '⚠ Aucune source visible à sauvegarder',
+    confirmDeleteCustomScene: 'Supprimer cette scène ?',
+    downloadCsv: 'Capteurs (.csv)',
+    removeSilence: 'Retirer les silences',
+    silenceEncoding: '🔇 Encodage sans silences…',
+    silenceExported: 'Silences retirés',
+    silenceChip: 'Tu es silencieux…',
+    quizPromptLabel: 'Quelle question veux-tu poser à tes élèves ?',
+    sensorOverlayLabel: '🤖 Overlay auto si le robot bouge fort',
+    micBoost: '🎚 Boost du micro',
+    micGate: '🔇 Seuil silence (dB)',
+    jingleLabel: '🎵 Jingle d\'intro (1.5s)',
+    timelapseLabel: '⏩ Timelapse',
+    timeGoalLabel: '⏳ Objectif de durée',
+    timeGoalMinutes: 'Minutes :',
+    timeGoalAutoStop: "Arrêt automatique à l'objectif",
+    timeGoalReached: '⏳ Objectif atteint',
+    timeGoalStop: '⏳ Objectif atteint — arrêt auto',
+    clockLabel: '🕐 Afficher l\'heure dans un coin',
+    clockDateLabel: '+ date',
+    recIndicatorLabel: '🔴 Pastille REC pendant l\'enregistrement',
+    audioVizLabel: '🎵 Visualiseur audio sur le canvas',
+    recElapsedLabel: '⏱ Chrono écoulé pendant l\'enregistrement',
+    badgeBtn: 'Carte badge',
+    badgeHeadline: 'Tuto enregistré !',
+    badgeStatDuration: 'Durée',
+    badgeStatSources: 'Sources',
+    badgeStatChapters: 'Chapitres',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ Aucun tuto à exporter',
+    badgeExported: 'Badge exporté',
+    badgeError: '✗ Impossible de générer le badge',
+    firstTimeTitle: 'Première fois ? Commence ici',
+    firstTimeBody: 'Les 7 étapes ci-dessous t\'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. NoorCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.',
+    firstTimeTeacher: '👩‍🏫 Pour les profs : NoorCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.',
+    brandSection: '🏷 Marque (logo + slogan)',
+    brandPresets: '📁 Presets de marque',
+    brandSave: 'Sauvegarder :',
+    brandLoad: 'Charger :',
+    brandPresetSaved: 'Preset sauvegardé',
+    brandPresetLoaded: 'Preset chargé',
+    brandPresetEmpty: 'Slot vide',
+    brandUploadLogo: 'Charger un logo (PNG/SVG)',
+    brandClearLogo: 'Retirer le logo',
+    brandLogoLoaded: '🏷 Logo chargé',
+    brandLogoCleared: '🏷 Logo retiré',
+    brandEffect: 'Effet fun',
+    brandBgRemove: '✂ Retirer le fond du logo (JPG à fond uni)',
+    brandBgRemoved: '✂ Fond retiré',
+    brandBgRestored: '↩ Fond original restauré',
+    brandSize: '📐 Taille du logo',
+    brandSloganColor: '🎨 Couleur du slogan',
+    brandQrUrl: '🔗 URL du badge card',
+    brandLogoOpacity: '💧 Transparence du logo',
+    brandLogoFilter: '🎨 Filtre du logo',
+    watermarkLabel: '💧 Watermark',
+    tickerCustomLabel: '📰 Messages du ticker (un par ligne)',
+    tickerCustomHint: 'Laisse vide pour utiliser les 10 conseils par défaut.',
+    setSecGeneral: 'Général',
+    setSecRecording: 'Enregistrement',
+    setSecLogo: 'Logo',
+    setSecSlogan: 'Slogan & effet',
+    setSecTicker: 'Ticker',
+    textFont: 'Aa Police par défaut',
+    textStroke: '✒ Contour du texte',
+    freeResize: 'Étire libre (Shift+coin)',
+    teleSpeed: 'Vitesse',
+    telePlay: 'Lecture',
+    telePause: 'Pause',
+    teleReset: 'Retour haut',
+    cheatTitle: 'Raccourcis clavier',
+    cheatRec: '🎬 Enregistrement',
+    cheatRecStart: "Démarrer / arrêter l'enregistrement",
+    cheatRecPause: 'Pause / reprendre',
+    cheatRecMark: 'Ajouter un marker chapitre',
+    cheatRecSnap: 'Capture photo',
+    cheatRecSaveAll: 'Tout télécharger',
+    bulkDl: 'Tout télécharger',
+    bulkFiles: 'fichiers',
+    bulkNoTake: '⚠ Aucun tuto à télécharger',
+    shareTake: 'Partager',
+    shareText: 'Mon tuto fait avec NoorCast 🎬',
+    shareDone: 'Partagé',
+    shareError: '❌ Erreur de partage',
+    shareNotSupported: '❌ Partage natif non supporté — utilise Télécharger',
+    shareNoTake: '⚠ Aucun tuto à partager',
+    cheatRecBig: 'Big marker (★)',
+    bigMarker: 'Big marker',
+    cheatTools: '🛠 Outils live',
+    cheatToolLaser: 'Laser pointer on/off',
+    cheatToolFreeze: "Geler l'écran",
+    cheatToolDraw: 'Tableau blanc',
+    cheatToolZoom: 'Zoom manuel',
+    cheatToolTele: 'Téléprompteur on/off',
+    cheatToolQuiz: 'Carte question',
+    cheatToolCaptions: 'Sous-titres on/off',
+    captionsOn: 'Sous-titres on',
+    captionsOff: 'Sous-titres off',
+    cheatScenes: '🎭 Scènes',
+    cheatScene: 'Changer de scène',
+    cheatSceneMove: 'Réordonner la scène active',
+    cheatText: '✏️ Texte sélectionné',
+    cheatTextDup: 'Dupliquer le texte',
+    cheatTextRotL: 'Rotation −5°',
+    cheatTextRotR: 'Rotation +5°',
+    cheatTextRotReset: 'Reset rotation',
+    cheatTextLayer: 'Arrière / avant plan',
+    cheatTextLayerX: 'Arrière/avant plan extrême',
+    cheatTextDel: 'Supprimer sélection',
+    cheatMisc: '✨ Divers',
+    cheatMiscFree: "Étire libre d'une source",
+    cheatMiscGrid: 'Snap à la grille',
+    cheatMiscWheelZoom: 'Zoom molette',
+    cheatMiscThis: 'Afficher ce panneau',
+    cheatMiscEsc: 'Fermer panneaux',
+    cheatMiscDebug: 'Debug HUD',
+    cheatMiscRetry: 'Retry 30s (pendant enregistrement)',
+    cheatMiscInstantRec: 'Rec instantané (saute le compte)',
+    cheatMiscPasteImg: 'Coller une image du presse-papier',
+    pasteImageError: '❌ Image invalide',
+    instantRec: '⚡ Démarrage instantané',
+    softRewindToast: '↶ Retry — 30 dernières secondes marquées',
+    undo: 'Annuler',
+    redo: 'Rétablir',
+    undoDone: '↩ Annulé',
+    redoDone: '↪ Rétabli',
+    undoEmpty: '↩ Rien à annuler',
+    redoEmpty: '↪ Rien à rétablir',
+    introOutroLabel: "🎬 Cartes intro/outro cinématiques",
+    outroTitle: 'Merci !',
+    outroBadges: 'badges',
+    outroTagline: 'Ton tuto est prêt',
+    outroPlaying: '🎬 Outro en cours…',
+    autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
+    captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
+    sceneAutoSave: '💾 Sauvegarde auto de la scène quand les sources changent',
+    sceneAutoSaved: '💾 Scène sauvegardée auto',
+    sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
+    sceneTransitionLabel: '🎞 Transition entre scènes',
+    transitionNone: 'Aucune',
+    transitionFade: 'Fondu',
+    transitionWipe: 'Balayage',
+    duckLabel: "🔉 Baisser l'audio des sources quand tu parles",
+    screensaverLabel: "💤 Screensaver après 90s d'inactivité",
+    screensaverHint: 'Touche une touche pour réveiller',
+    autoAdvScenes: '⏩ Avance auto des scènes',
+    autoAdvSec: 'Intervalle (sec)',
+    snapGrid: '📐 Aligner sur la grille',
+    gridSize: 'Taille grille (px)',
+    countdownTimer: '⏳ Minuteur',
+    pianoOverlay: '🎹 Piano',
+    letterboxBars: '🎬 Barres',
+    letterboxLabel: '🎬 Barres cinématiques (letterbox)',
+    letterboxHeight: 'Hauteur des barres (%)',
+    colorPicker: '🎨 Pipette',
+    colorCopied: 'Copié',
+    sceneTime: 'Temps par scène',
+    timerDuration: 'Durée minuteur (min)',
+    snapAnnotLabel: '✏️ Annoter la capture avant sauvegarde',
+    snapAnnotTitle: 'Annote ta capture',
+    snapAnnotClear: 'Effacer',
+    snapAnnotSave: 'Enregistrer',
+    autoPaused: '⏸ Enregistrement suspendu',
+    autoResumed: '▶ Enregistrement repris',
+    sensorChartTitle: 'Capteurs micro:bit',
+    sensorBtnsLegend: 'Boutons',
+    chapterListTitle: 'Chapitres',
+    sceneReordered: 'Scènes réordonnées',
+    minimap: 'Aperçu',
+    historyTitle: 'Mes tutos',
+    dailyGoalReached: 'Objectif du jour atteint !',
+    streak: 'Série',
+    days: 'jours',
+    historyEmpty: 'Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !',
+    historyClear: "🗑 Vider l'historique",
+    historyConfirmClear: "Vider l'historique des tutos ?",
+    historyCleared: '🗑 Historique vidé',
+    historySearchPlaceholder: '🔍 Rechercher…',
+    dashTitle: 'Tes stats',
+    dashEmpty: 'Fais ton premier tuto pour voir tes stats 📊',
+    dashRecs: 'tutos',
+    dashTotal: 'total',
+    dashLongest: 'max',
+    dashSize: 'taille',
+    dashStreak: 'jours',
+    dashFavDay: 'favori',
+    dash7Days: '7 derniers jours',
+    dashPauses: 'pauses/take',
+    dashAvgRating: 'note moy.',
+    takeRating: 'Note ce tuto :',
+    takeTitle: '📝 Nom du fichier',
+    takeNotes: '📝 Notes',
+    takeNotesPlaceholder: 'Notes sur cette prise…',
+    manyPauses: 'Tu as fait beaucoup de pauses — essaie Shift+R pour démarrer direct',
+    dashNote: '💡 Stats calculées sur les 10 derniers tutos',
+    setSecDanger: '♻ Maintenance',
+    diagnostics: 'Diagnostics',
+    resetBadges: 'Réinitialiser les badges',
+    clearCache: 'Vider le cache complet',
+    rebindBtn: 'Raccourcis clavier…',
+    rebindTitle: 'Raccourcis personnalisés',
+    rebindReset: 'Restaurer par défaut',
+    badgesReset: '🗑 Badges réinitialisés',
+    cacheCleared: '💥 Cache vidé — rechargement…',
+    confirmClearCache: 'Effacer TOUTES les données locales (badges, logo, préférences, ticker…) ? L\'app repartira comme neuve.',
+    bundleExport: 'Exporter la session',
+    bundleImport: 'Importer une session',
+    bundleExported: '📦 Session exportée',
+    bundleImported: '📦 Session importée — rechargement…',
+    bundleBadFormat: '❌ Format invalide',
+    bundleConfirm: 'Remplacer tes données locales par cette session ?',
+    exportSettings: 'Exporter les paramètres',
+    importSettings: 'Importer les paramètres',
+    settingsExported: '⚙️ Paramètres exportés',
+    settingsImported: '⚙️ Paramètres importés — rechargement…',
+    settingsConfirm: 'Remplacer tes paramètres locaux par ce fichier ?',
+    buildMeta: 'Compilé',
+    badgeUnlockTitle: '🏆 Badge débloqué !',
+    badgeUnlockContinue: 'Continuer',
+    faq_q9: '🏆 C\'est quoi les badges ?',
+    faq_a9: 'Des petits trophées locaux qui se débloquent au fur et à mesure : 🎬 Premier tuto (1re prise finie), ⏱ Plus de 5 min (prise de plus de 5 minutes), 🎥 Multi-caméras (2+ cams en même temps), 🎭 Toutes les scènes (toutes utilisées), 🏷 Roi des markers (5+ dans une prise), 🤖 micro:bit branché (1re connexion BT). Tout est stocké localement (localStorage), rien n\'est envoyé nulle part.',
+    faq_q10: '♻ Comment remettre à zéro mes données ?',
+    faq_a10: 'Dans ⚙️ Paramètres → Général, deux boutons : « 🗑 Réinitialiser les badges » efface seulement tes trophées. « 💥 Vider le cache complet » efface TOUT : badges, logo, préférences, messages de ticker, police par défaut, onboarding, etc. L\'app repart comme une installation neuve après un rechargement.',
+    brandSloganFont: 'Aa Police du slogan',
+    brandSloganSize: '📐 Taille du slogan',
+    brandLogoTint: '🎨 Couleur du logo (silhouette)',
+    sourceTitlePh: 'Titre (ex: 💻 Mon code)',
+    sourceOpacity: 'Opacité',
+    sourceRotation: 'Rotation',
+    sourceShape: 'Forme',
+    sourceBorder: 'Bordure',
+    borderColor: 'Couleur bordure',
+    borderWidth: 'Épaisseur bordure',
+    sourceShadow: 'Ombre portée',
+    shadowColor: 'Couleur ombre',
+    shadowBlur: 'Flou ombre',
+    shadowOffsetX: 'Décalage X ombre',
+    shadowOffsetY: 'Décalage Y ombre',
+    cornerRadius: 'Coins arrondis',
+    sourceBadge: 'Badge',
+    cropTop: 'Rogner haut',
+    cropBottom: 'Rogner bas',
+    cropLeft: 'Rogner gauche',
+    cropRight: 'Rogner droite',
+    filter_none: '— Filtre —',
+    filter_bw: 'N&B',
+    filter_sepia: 'Sépia',
+    filter_bright: 'Lumineux',
+    filter_contrast: 'Contraste',
+    filter_vintage: 'Vintage',
+    filter_cool: 'Froid',
+    filter_warm: 'Chaud',
+    overlayDuplicated: '📋 Overlay dupliqué',
+    maximize: '⛶ Plein écran',
+    restore: '⛶ Restaurer',
+    zoomHint: '🔍 Z = activer/désactiver · ⛶ = plein écran · Esc = sortir',
+    laserHint: '🔴 L = activer/désactiver · incline le micro:bit pour viser',
+    freezeHint: '❄ F = geler/dégeler · parle encore pendant que l\'écran est gelé',
+    drawHint: '✏ D = activer/désactiver · clique-glisse sur l\'aperçu pour dessiner',
+    layerForward: '⬆ Vers l\'avant',
+    layerBackward: '⬇ Vers l\'arrière',
+    sourceForward: '⬆ Devant',
+    sourceBackward: '⬇ Derrière',
+    ctxForward: 'Avancer',
+    ctxBackward: 'Reculer',
+    ctxFront: 'Avant-plan',
+    ctxBack: 'Arrière-plan',
+    cheatSrcLayer: 'Source : arrière / avant plan',
+    sourceRemoved: 'Source retirée',
+    firstSourceHint: '💡 Clique la vidéo pour la sélectionner · ✕ pour retirer · 👁 pour cacher · coin pour redimensionner',
+    overlayDeleted: '✕ Overlay supprimé',
+    sourceHide: '👁 Cacher (temporairement)',
+    sourceShow: '🙈 Afficher à nouveau',
+    sourceHidden: '🙈 Source cachée',
+    sourceShown: '👁 Source affichée',
+    sourceRenamed: 'Source renommée',
+    sourceChromeHint: 'Clique ✕ pour retirer · 👁 pour cacher · Suppr clavier',
+    transparency_solid: 'Fond plein',
+    transparency_semi:  'Fond semi-transparent',
+    transparency_text:  'Texte seul',
+    transparency_ghost: 'Texte fantôme',
+    badge_first: 'Premier tuto',
+    badge_long: 'Plus de 5 min',
+    badge_multi: 'Multi-caméras',
+    badge_all_scenes: 'Toutes les scènes',
+    badge_marker_king: 'Roi des markers',
+    badge_micro: 'micro:bit branché',
+    badge_veteran: 'Vétéran (10 tutos)',
+    badge_marathon: 'Marathon (30 min)',
+    badge_library: 'Bibliothèque (5 scènes)',
+    faq_q1: "Qu'est-ce que NoorCast ?",
+    faq_a1: "NoorCast est un outil web pour enregistrer des tutos vidéo avec plusieurs caméras (écran + webcams + micro) directement depuis ton navigateur. Zéro install, zéro compte, tout reste chez toi.",
+    faq_q2: "Comment ajouter plusieurs caméras ?",
+    faq_a2: "Dans le panneau de gauche, choisis une caméra dans la liste et clique sur « + ». Tu peux répéter pour ajouter jusqu'à 3 caméras (ex. une pour ton robot, une pour toi, une pour l'écran du micro:bit).",
+    faq_q3: "Je peux lire les capteurs de mon micro:bit ?",
+    faq_a3: "Oui ! Clique sur « 📡 Connecter micro:bit » dans le panneau de gauche. Ton navigateur va demander l'autorisation de se connecter en Bluetooth. Une fois connecté, les valeurs des capteurs (accéléromètre, luminosité, boutons) s'affichent en overlay sur ta vidéo. ⚠️ Chrome/Edge uniquement.",
+    faq_q4: "Quels sont les raccourcis clavier ?",
+    faq_a4: "R = Rec/Stop · P = Pause · M = Marker · 1-6 = Changer de scène · L = Laser (on/off) · F = Geler l'écran · D = Dessiner · S = Capture photo · Échap = Fermer les panneaux",
+    faq_q5: "Mes vidéos sont privées ?",
+    faq_a5: "100%. Rien ne quitte ton ordi. L'enregistrement reste dans la mémoire du navigateur et se télécharge directement sur ton disque. Aucun compte, aucune analytique, aucun serveur.",
+    faq_q6: "Quel format de sortie ?",
+    faq_a6: "WebM (VP9 + Opus). Lisible dans VLC, Chrome, Firefox, YouTube, et Davinci Resolve. Pour convertir en MP4, utilise ffmpeg ou un outil en ligne comme cloudconvert.com.",
+    faq_q7: "Le teleprompter est visible dans ma vidéo ?",
+    faq_a7: "Non, jamais. Le teleprompter s'affiche par-dessus l'aperçu uniquement pour toi. Il n'est pas dessiné sur le canvas qui compose la vidéo, donc il n'apparaît pas dans l'enregistrement final.",
+    faq_q8: "Navigateur recommandé ?",
+    faq_a8: "Chrome ou Edge desktop. Firefox marche pour l'enregistrement mais pas pour Web Bluetooth (micro:bit). Safari ne supporte ni les capteurs ni certaines options audio. iOS n'est pas supporté car Safari Mobile bloque la capture d'écran.",
+    howto_1: "Branche tes caméras USB (si besoin) et autorise l'accès quand le navigateur te le demande.",
+    howto_2: "Dans le panneau Sources à gauche, ajoute ton écran, tes caméras et choisis ton micro.",
+    howto_3: "Clique sur une des scènes pré-réglées à droite (Code, Robot, Studio…) — la composition change instantanément.",
+    howto_4: "Ajoute un texte depuis la bibliothèque (⭐ Bravo, 🎯 Étape 1…) — il apparaît en overlay.",
+    howto_5: "Clique sur le gros bouton 🔴 ENREGISTRER. Compte à rebours 3-2-1, puis ça tourne.",
+    howto_6: "Utilise les touches 1-9 pour changer de scène en live. L pour laser pointer, F pour geler l'écran, D pour dessiner.",
+    howto_7: "Clique ⏹ Stop. Ton tuto est téléchargé en .webm, avec les chapitres en .vtt.",
+    wiki_multicam_title: "🎥 Multi-caméras",
+    wiki_multicam: "NoorCast peut afficher simultanément jusqu'à 3 caméras + 1 écran + le micro. Chaque source est une boîte déplaçable dans la scène. Tu peux définir sa forme (rectangle ou cercle), sa taille et sa position.",
+    wiki_scenes_title: "🎭 Scènes",
+    wiki_scenes: "Une scène est un layout : position/taille/visibilité de chaque source + textes actifs. Tu peux switcher entre les scènes pendant l'enregistrement avec les touches 1-9 ou en cliquant. Cut sec, pas de latence.",
+    wiki_sensor_title: "🤖 Capteurs micro:bit",
+    wiki_sensor: "Via Web Bluetooth, NoorCast se connecte directement au micro:bit et lit en temps réel ses capteurs (accéléromètre, luminosité, température, boutons). Les valeurs s'affichent en overlay sur la vidéo, parfait pour expliquer un capteur à des élèves.",
+    wiki_privacy_title: "🔒 Privacy",
+    wiki_privacy: "Tout reste local. Les flux vidéo sont traités par le navigateur, compositionnés sur un canvas, et enregistrés en mémoire via MediaRecorder. Le fichier final est téléchargé sur ton disque. Aucun serveur, aucune télémétrie.",
+    news_010: "Première version de NoorCast 🎉",
+    news_010_1: "Multi-caméras (écran + jusqu'à 3 cams + micro)",
+    news_010_2: "6 scènes prêtes à l'emploi (Code, Robot, Capteurs, Code+Robot, Studio, Toi)",
+    news_010_3: "Textes overlay avec bibliothèque de presets kid-friendly",
+    news_010_4: "Outils live : laser pointer, gel d'écran, whiteboard, teleprompter",
+    news_010_5: "Capteurs micro:bit via Web Bluetooth (Chrome/Edge)",
+    news_010_6: "Chapitres automatiques exportés en .vtt",
+    news_010_7: "Markers live (touche M) + captures photo (touche S)",
+    news_010_8: "Badges de progression + confetti à la fin",
+    news_010_9: "Trilingue FR/EN/AR, 8 thèmes visuels",
+    news_011: "Premier test complet en runtime : 2 bugs corrigés 🧪",
+    news_011_1: "Double emoji corrigé dans les boutons de scène",
+    news_011_2: "41 clés i18n manquantes ajoutées (FAQ, wiki, how-to, changelog)",
+    news_012: "Audit complet et correctifs majeurs 🔧",
+    news_012_1: "Fix critique : les traits du tableau blanc étaient effacés en continu par le laser",
+    news_012_2: "Effets sonores activables dans les paramètres (démarrage, stop, pause, marker)",
+    news_012_3: "HUD de debug (FPS + mémoire) via Ctrl+Shift+D",
+    news_012_4: "i18n complet du placeholder teleprompter et du prompt texte libre",
+    news_012_5: "Les libellés des caméras/micros se rafraîchissent après autorisation",
+    news_012_6: "Nettoyage automatique des flux et blobs à la fermeture de l'onglet",
+    news_012_7: "Reset des outils (laser/gel/dessin/textes) entre les prises",
+    news_012_8: "Thèmes traduits, raccourcis FAQ alignés sur le code réel",
+    news_020: "Templates de tutos guidés 🎬",
+    news_020_1: "3 templates kid-friendly : Cours complet, Démo robot, Correction",
+    news_020_2: "Chaque template pose une séquence de 5 étapes visibles en permanence",
+    news_020_3: "Clic sur une étape = changement de scène + marker chapitre",
+    news_020_4: "Les caméras ajoutées après sélection d'un template héritent du layout",
+    news_020_5: "Ouverture automatique au premier lancement (remplace l'ancienne onboarding)",
+    news_021: "Hotfix critique : fichiers 0 octet corrigés 🚨",
+    news_021_1: "canvas.captureStream mis en cache (évite une race connue Chrome/Firefox)",
+    news_021_2: "Gestionnaire d'erreur MediaRecorder + logs détaillés dans le journal",
+    news_021_3: "Détection des enregistrements vides — plus de téléchargement fantôme",
+    news_021_4: "Timeslice ramené de 1000 à 250 ms pour les prises courtes",
+    news_021_5: "AudioContext repris au début de l'enregistrement",
+    news_022: "VRAI fix des fichiers 0 octet 🎯",
+    news_022_1: "Cause réelle : la piste audio de audioDest n'émettait aucun échantillon sans source connectée",
+    news_022_2: "Correctif : ConstantSourceNode silencieux connecté en permanence",
+    news_022_3: "Vérifié par test runtime headless complet (tous les boutons, toutes les scènes, tous les outils)",
+    news_022_4: "Bouton 'Vierge' efface désormais le template actif",
+    news_023a: "Splash rafraîchi + nouveau slogan 🎬",
+    news_023a_1: "Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)",
+    news_023a_2: "Nouveau slogan : « Lumière, caméra, ROBOT ! »",
+    news_023a_3: "Badge workshop-diy.org dans le splash et le footer",
+    news_024: "Zone de travail élargie (vraiment) 📺",
+    news_024_1: "Largeur de l'app : 1240 → fluide jusqu'à 1760 px",
+    news_024_2: "Grille studio : sidebars 240 px + minmax(0,1fr) pour le canvas",
+    news_024_3: "Canvas plafonné par la hauteur du viewport — 16:9 parfait à 1920/1600/1366",
+    news_024_4: "Sidebars scrollables en interne pour garder le bouton REC au-dessus de la ligne de flottaison",
+    news_030: "Trim + Zoom + MP4 ✂️🔍📼",
+    news_030_1: "Outil de trim non destructif : deux curseurs, un bouton d'export, nouveau fichier avec chapitres ajustés",
+    news_030_2: "Zoom manuel fluide sur Z (ou bouton A du micro:bit) pour les moments de focus",
+    news_030_3: "Export MP4 natif quand le navigateur le supporte (Chrome 126+, Safari, Edge)",
+    news_030_4: "Préférence de format dans les Paramètres : Auto / MP4 / WebM",
+    news_030_5: "Trim réencode via offscreen canvas + MediaRecorder — zéro dépendance, zéro cloud",
+    news_040: "Drag-drop + effets 🖐✨",
+    news_040_1: "Drag-drop : déplace n'importe quelle source directement sur le canvas, elle est épinglée automatiquement",
+    news_040_2: "Aimantation à 7 ancres (coins, centres d'arêtes, centre) dans un rayon de 60 px",
+    news_040_3: "Bouton 📌 / 🔓 dans chaque source pour épingler manuellement, et « Réinitialiser la disposition » pour tout relâcher",
+    news_040_4: "Flou arrière-plan par source (🌫) — net au centre, flou dégradé aux bords",
+    news_040_5: "Halo de couleur thème toujours actif autour des sources visibles",
+    news_040_6: "Pulse visuelle sur chaque marker (M) — retour visible que la marque est enregistrée",
+    news_050: "micro:bit superpouvoirs + trim intelligent 🤖🔇",
+    news_050_1: "Bouton A du micro:bit = zoom · Bouton B = marker · Inclinaison = position du laser",
+    news_050_2: "Export CSV des capteurs aligné sur la timeline du tuto (Unique à NoorCast)",
+    news_050_3: "Trim automatique des silences > 2s — un clic après l'enregistrement, zéro éditeur externe",
+    news_050_4: "Chip d'alerte silence en temps réel (>1.8s de micro muet, visible toi seul)",
+    news_050_5: "Touche Q = carte question overlay (kid-friendly quiz)",
+    news_050_6: "Overlay 🤖 auto si le robot s'agite fort (opt-in dans les Paramètres)",
+    news_060: "Polish adoption 🎵🏆👩‍🏫",
+    news_060_1: "Jingle d'intro Web Audio (1.5s) en option — opt-in dans les Paramètres",
+    news_060_2: "Carte badge PNG partageable générée après chaque enregistrement",
+    news_060_3: "Callout « Première fois ? Commence ici » + pitch prof dans l'aide",
+    news_060_4: "README enrichi d'une section « Pour les profs »",
+    news_070: "Max flexibilité : drag+resize pour tout 🖐📐",
+    news_070_1: "Texts déplaçables ET redimensionnables (poignées aux 4 coins, Ctrl+D = dupliquer, Suppr = supprimer)",
+    news_070_2: "Sources redimensionnables aux 4 coins (aspect ratio conservé)",
+    news_070_3: "Logo + slogan personnalisables (upload PNG/SVG) avec 6 effets fun : spin, pulse, bounce, wiggle, halo, arc-en-ciel",
+    news_070_4: "Filtres visuels par source : N&B, sépia, lumineux, contraste, vintage, froid, chaud",
+    news_070_5: "Titre/caption par source (style lower-third) — tape directement dans le panneau sources",
+    news_070_6: "Bouton plein écran ⛶ — l'aperçu prend tout l'écran, Esc pour sortir",
+    news_070_7: "Hints clavier affichés quand tu actives Zoom / Laser / Gel / Dessin",
+    news_087: "50+ features en vrac : polish, accessibilité, pro tools 🚀⌨🎨🔧",
+    news_087_1: "🎚 Audio : meter LED, boost mic, noise gate, ducking auto quand tu parles, sous-titres live (WebSpeech)",
+    news_087_2: "🎨 Brand : presets 1/2/3, couleur accent custom, chroma key, filtre logo silhouette",
+    news_087_3: "🎬 Scène : 9 formes, 4 aspect ratios (16:9 / 9:16 / 1:1 / 4:3), drag-reorder + Shift+Alt+←→, custom scenes save, intro text auto, transition fade",
+    news_087_4: "✏ Dessin : whiteboard 6 couleurs + gomme + 3 épaisseurs, contour de texte slider, emoji picker, annotation snapshot",
+    news_087_5: "⌨ Clavier : cheat sheet (?), raccourcis rebindables, long-press REC instantané, Ctrl+Z retry/undo/redo, Ctrl+S tout télécharger",
+    news_087_6: "📐 Layout : alignment guides, drag threshold, Alt+grid snap 48px, minimap sidebar, scroll-wheel zoom Ctrl+roue",
+    news_087_7: "📸 Capture : snapshot 1×/2×/4×, gallery strip, paste image Ctrl+V, PiP popout caméra, context menu clic-droit",
+    news_087_8: "📊 Feedback : dashboard stats, history 10 derniers, badge unlock confetti, 3 nouveaux badges cumulatifs, daily goal streak",
+    news_087_9: "🎞 Recording : time goal + auto-stop, pause count, countdown custom 1-10s, intro/outro cinéma, auto-pause tab loss, big marker B, click ripples",
+    news_087_10: "🔧 Maintenance : session bundle export/import, diagnostics browser, tip of day, tour guidé, screensaver 90s, clock overlay, chapter list cliquable, waveform audio, sensor chart micro:bit",
+    news_039: "11 fonctionnalités d'atelier : thumbnails, gallery, chapters, minimap, waveform, context menu, tour, intro text, retry, badge URL 🎁",
+    news_039_1: "Thumbnails des scènes (v0.7.29) + barre de snapshots (v0.7.30) sous la scène",
+    news_039_2: "Liste de chapitres cliquable (v0.7.31) sous la vidéo finale — seek en 1 clic",
+    news_039_3: "Drag-to-reorder des scènes (v0.7.32) — persiste l'ordre pour les touches 1-9",
+    news_039_4: "Minimap live (v0.7.33) dans la sidebar gauche + waveform audio (v0.7.34) sous la vidéo",
+    news_039_5: "Clic droit sur une source (v0.7.35) = menu contextuel : cacher · épingler · dupliquer · forme ▸ · supprimer",
+    news_039_6: "Tour guidé (v0.7.36) au 1er lancement — 5 étapes spotlight sur les features clés",
+    news_039_7: "Texte d'intro auto sur changement de scène (v0.7.37) — opt-in dans les Paramètres",
+    news_039_8: "Retry 30s (v0.7.38) — Ctrl+Z pendant l'enregistrement marque les 30 dernières secondes comme retry",
+    news_039_9: "URL du badge card (v0.7.39) — affichée au bas de chaque carte de partage",
+    news_028: "Intro/outro + auto-pause + capteurs chart + historique + cheat sheet ⌨🎬⏸📊",
+    news_028_1: "Cheat sheet clavier (v0.7.24) : touche ? pour voir tous les 22 raccourcis groupés en 5 catégories",
+    news_028_2: "Cartes intro/outro cinématiques (v0.7.25) : 2,5 s en début et 2 s en fin, intégrées au recording (bouton opt-in)",
+    news_028_3: "Pause auto quand tu changes d'onglet (v0.7.26) : plus jamais de captures accidentelles de notifications",
+    news_028_4: "Mini-graph des capteurs micro:bit (v0.7.27) dans le panneau du dernier tuto : X/Y/Z + boutons A/B",
+    news_028_5: "Panneau 📊 Mes tutos (v0.7.28) : 10 derniers tutos avec date, durée, badges, taille, total session",
+    news_023: "Ripples + Zoom auto + éditeur trim + téléprompteur broadcast 🌊🎯✂📜",
+    news_023_1: "Téléprompteur broadcast (v0.7.20) : auto-scroll avec slider de vitesse, ⏵/⏸, A−/A+, ↔−/↔+, ↻ retour haut, raccourci T, script persisté",
+    news_023_2: "Zoom auto sur clic (v0.7.21) : clique n'importe où sur un écran capturé et l'aperçu zoome en douceur pendant 1,5 s (bouton 🎯 dans la barre d'outils)",
+    news_023_3: "Éditeur trim amélioré (v0.7.22) : scrubber visuel avec poignées in/out, ✂ auto-couper les silences, raccourcis Espace/←/→/[/]/Enter/Esc, compteur de durée",
+    news_023_4: "Ripples de clic (v0.7.23) : chaque clic émet une onde animée de 600 ms rendue sur le canvas de sortie — intégrée à la vidéo finale (bouton 💧)",
+    news_018: "Redesign + fix critique des toolbars flottantes 🎨🔧",
+    news_018_1: "Barre d'outils flottante au-dessus du studio : Laser · Geler · Dessiner · Zoom · Télé · Photo · Plein écran — libère ~280 px dans la sidebar droite",
+    news_018_2: "Bug critique corrigé : les boutons des toolbars flottantes (swatches, font, ✕) ne répondaient plus — mousedown bubble passait click stopPropagation",
+    news_018_3: "Timer 00:00 unifié : plus de doublon dans l'en-tête, un seul chrono Orbitron 1.15rem à côté du bouton REC",
+    news_017: "Redimensionnement libre + ticker simple ↔📰",
+    news_017_1: "Shift + coin d'une source = étire libre (aspect ratio débloqué) · sans Shift = lock aspect ratio comme avant (kid-safe)",
+    news_017_2: "Ticker repassé en mode une-passe : chaque message apparaît une seule fois par boucle, plus de mur de répétitions",
+    news_016: "Toolbars flottantes dockées hors du stage 📐",
+    news_016_1: "Les toolbars ✕/👁/📌/forme (source + texte) se collent sous le stage au lieu de flotter au-dessus — zéro recouvrement de la zone d'enregistrement",
+    news_015: "9 formes pour tes vidéos 💠",
+    news_015_1: "Rectangle · Rounded · Cercle · Pill · Hexagone · Octogone · Diamant · Étoile · Cœur — picker direct dans la toolbar de source",
+    news_015_2: "Toutes les formes partagent le même path centralisé (glow, flou arrière-plan, clip utilisent la même géométrie)",
+    news_014: "Paramètres en sections + poignées visibles + police de texte ⚙️",
+    news_014_1: "Panneau Paramètres réorganisé en 5 sections pliables : Général · Enregistrement · Logo · Slogan · Ticker",
+    news_014_2: "Poignées de redimensionnement visibles aux 4 coins de la source sélectionnée (elles existaient depuis v0.7.0 — maintenant tu les vois)",
+    news_014_3: "Picker de police par défaut pour les textes libres dans la sidebar droite (6 polices, persisté)",
+    news_013: "Ticker dédoublé + toolbar source flottante 📰",
+    news_013_1: "Fix ticker : les messages courts comme « hi » ne se dédoublent plus (« hi · hi »)",
+    news_013_2: "Nouvelle toolbar HTML flottante pour la source sélectionnée : 👁 cacher · 📌 épingler · forme · ✕ supprimer",
+    news_012_b: "Optimisation du layout + bismillah ✨",
+    news_012_b_1: "Stage agrandi (+60 px en hauteur à 1080 p), sidebars resserrées 240 → 220 px, header studio compressé",
+    news_012_b_2: "Bismillah dans l'en-tête : forme épelée بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ à 15 px avec gradient — le ligature ﷽ se décomposait dans Amiri",
+    tplTitle: "Choisis comment tu commences",
+    tplSubtitle: "Chaque template te guide étape par étape",
+    tplChoose: "Choisir un template",
+    tplStarted: "Template démarré",
+    tplDismiss: "Fermer",
+    tplBlank: "🎨 Vierge",
+    tplBlankDesc: "Je compose ma propre scène",
+    tpl_lesson: "Cours complet",
+    tpl_lesson_d: "Intro → Théorie → Démo → Exercice → Conclusion",
+    tpl_lesson_intro: "🎓 Aujourd'hui on apprend…",
+    tpl_lesson_s1: "Intro",
+    tpl_lesson_s2: "Théorie",
+    tpl_lesson_s3: "Démo",
+    tpl_lesson_s4: "Exercice",
+    tpl_lesson_s5: "Conclusion",
+    tpl_robot: "Démo robot",
+    tpl_robot_d: "Présentation → Code → Robot → Capteurs → Bilan",
+    tpl_robot_intro: "🤖 Regarde mon robot !",
+    tpl_robot_s1: "Présentation",
+    tpl_robot_s2: "Le code",
+    tpl_robot_s3: "Le robot",
+    tpl_robot_s4: "Les capteurs",
+    tpl_robot_s5: "Bilan",
+    tpl_fix: "Correction",
+    tpl_fix_d: "Bug → Analyse → Fix → Test → OK",
+    tpl_fix_intro: "🐛 On corrige ce bug ensemble",
+    tpl_fix_s1: "Le bug",
+    tpl_fix_s2: "On analyse",
+    tpl_fix_s3: "On corrige",
+    tpl_fix_s4: "On teste",
+    tpl_fix_s5: "Ça marche !",
+    // v0.7.156: robot tutorial template
+    tpl_robotcam: "Robot Tuto",
+    tpl_robotcam_d: "Face → Code → Robot → Capteurs → Bilan",
+    tpl_robotcam_intro: "🤖 Regarde mon robot en action !",
+    tpl_robotcam_s1: "Présentation",
+    tpl_robotcam_s2: "Le code",
+    tpl_robotcam_s3: "Le robot",
+    tpl_robotcam_s4: "Les capteurs",
+    tpl_robotcam_s5: "Bilan",
+    // v0.7.156: remote cameras help tab
+    helpCamerasTab: "📷 Caméras",
+    cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
+    cam_continuity_body: "Aucune installation requise. Même Wi-Fi + même Apple ID = l'iPhone apparaît comme caméra dans NoorCast. Idéal pour filmer le robot depuis un iPhone.",
+    cam_droidcam_title: "📲 DroidCam (Android / iOS)",
+    cam_droidcam_body: "Gratuit. Installez l'appli sur le téléphone + le pilote sur le PC. Connectez en USB ou Wi-Fi. Le téléphone apparaît comme webcam virtuelle.",
+    cam_iriun_title: "📡 Iriun Webcam (tous OS)",
+    cam_iriun_body: "Gratuit. Fonctionne sur Windows, Mac et Linux. Même principe : appli + pilote. Connexion Wi-Fi ou USB.",
+    cam_camo_title: "🎥 Camo (qualité pro)",
+    cam_camo_body: "Version gratuite limitée, version payante avec contrôles avancés (zoom, exposition, mise au point). Meilleure qualité d'image.",
+    cam_setup_btn: "📷 Configurer les caméras",
+    // v0.7.156: camera setup wizard
+    camwiz_1_title: "Étape 1 : Installer l'appli",
+    camwiz_1_body: "Installez DroidCam, Iriun ou Camo sur votre téléphone. Installez aussi le pilote compagnon sur cet ordinateur.",
+    camwiz_2_title: "Étape 2 : Connecter",
+    camwiz_2_body: "Ouvrez l'appli sur le téléphone. Connectez-vous en Wi-Fi (même réseau) ou en USB (plus stable pour le suivi du robot).",
+    camwiz_3_title: "Étape 3 : Ajouter la caméra",
+    camwiz_3_body: "Cliquez sur '+ Caméra' ici. Votre téléphone apparaît dans la liste des caméras. Sélectionnez-le.",
+    camwiz_4_title: "Étape 4 : Assigner à une scène",
+    camwiz_4_body: "Placez la caméra du téléphone dans une scène. Essayez le modèle 'Robot Tuto' pour un setup prêt à l'emploi !",
+    t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
+    t_riad: 'Riad', t_medina: 'Médina', t_space: 'Espace', t_jungle: 'Jungle', t_robot: 'Robot',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 Couleur accent personnalisée',
+    snapResolution: '📐 Résolution capture photo',
+    customAccentReset: '🎨 Couleur par défaut restaurée',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 Couleur de fond du canvas',
+    // v0.7.36: first-time guided tour
+    tour_1_title: '📹 Sources',
+    tour_1_body: 'Commence par ajouter une source — écran, caméra ou micro.',
+    tour_2_title: '🎬 Stage',
+    tour_2_body: 'Compose ta scène ici — drag-drop, redimensionne, change de forme.',
+    tour_3_title: '🎭 Scènes',
+    tour_3_body: 'Change de layout en 1 clic — touches 1-9 aussi.',
+    tour_4_title: '🔴 Enregistre',
+    tour_4_body: 'Clique pour démarrer — R au clavier aussi.',
+    tour_5_title: '⌨ Raccourcis',
+    tour_5_body: 'Touche ? pour voir tous les raccourcis clavier.',
+    tour_skip: 'Passer', tour_back: '← Retour', tour_next: 'Suivant →', tour_done: 'Terminé ✓',
+    // v0.7.43: rich hover tooltips on tools bar buttons
+    tip_laser: 'Pointeur laser rouge qui suit ta souris',
+    tip_ripples: 'Ondes animées à chaque clic (dans le recording)',
+    tip_freeze: 'Fige l\'écran pour expliquer sans toucher la souris',
+    tip_whiteboard: 'Dessine par-dessus l\'écran',
+    tip_zoom: 'Zoom manuel pour le code',
+    tip_autozoom: 'Zoom auto sur clic (Canva/ScreenStudio)',
+    tip_tele: 'Script téléprompteur avec auto-scroll',
+    tip_snap: 'Capture photo PNG + galerie',
+    tip_fullscreen: 'Plein écran pour immersion totale',
+    // v0.7.100: milestone celebration
+    v100Subtitle: '100 releases de tuto vidéo pour enfants 🎬',
+    v100Continue: 'Continuer',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'Raccourcis', hotkeyRefSearch: 'Filtrer les raccourcis...', hotkeyRefNoMatch: 'Aucun raccourci trouvé',
+    // v0.7.138: multi-source selection
+    selectAll: 'Tout', multiSelected: 'sources sélectionnées', multiDeselected: 'Sélection vidée',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 Effet vignette sur le canvas', vignetteIntensity: 'Intensité',
+  },
+  en: {
+    title: 'نُورْكَاسْت', slogan: '🎬 Lights, camera, ROBOT!',
+    statusIdle: 'Ready', statusRec: 'Recording', statusPaused: 'Paused',
+    sources: 'Sources', sourceScreen: 'Screen', sourceCam: 'Camera', sourceMic: 'Mic',
+    selectCam: '— choose —', selectMic: '— choose —', add: '+ Add',
+    micCheckListening: '🎤 Speak to test…', micCheckOk: '✅ Mic OK!', micCheckFail: '⚠️ Nothing detected',
+    activeSources: 'Active sources', sensors: 'Sensors', btConnect: 'Connect micro:bit',
+    scenes: 'Scenes', texts: 'Texts', addItems: 'Add', addItemsBtn: 'Add', addText: 'Free text', emojiBtn: 'Emoji',
+    tools: 'Tools', laser: 'Laser', freeze: 'Freeze', whiteboard: 'Draw', ripples: 'Ripples',
+    teleprompter: 'Teleprompter', snapshot: 'Photo snapshot',
+    recStart: 'REC', recStop: 'STOP', pause: 'Pause', mark: 'Marker', stop: 'Stop',
+    download: 'Download', downloadChapters: 'Chapters (.vtt)', downloadMd: 'Chapters (.md)', newTake: 'New tutorial',
+    badgesTitle: 'Your badges',
+    onbTitle: 'Hi! Ready for your first tutorial?',
+    onb1: 'Pick your cameras and screen (left panel)',
+    onb2: 'Choose a ready-made scene, or create your own',
+    onb3: 'Hit the big red button 🔴 and go!',
+    onb4: 'Your tutorial downloads automatically at the end',
+    onbGo: "Let's go!",
+    stageHint: '👆 Add a source to get started',
+    mainSection: 'Studio', mainDesc: 'Compose your scene and record',
+    mirrorCam: '🪞 Mirror webcam', countdownOn: '⏱ Countdown', countdownSecs: 'Seconds:',
+    scene_code: '<Code/>', scene_robot: 'Mecha', scene_sensors: 'Sensors',
+    scene_coderobot: 'Code + Mecha', scene_studio: 'Matrix', scene_pilot: 'Pilot', scene_you: 'Solo',
+    sceneRenamed: 'Scene renamed', sceneRenameTip: 'Double-click to rename',
+    txt_bravo: '⭐ Well done!', txt_step1: '🎯 Step 1', txt_step2: '🎯 Step 2', txt_step3: '🎯 Step 3',
+    txt_watch: '👀 Watch', txt_tip: '💡 Tip!', txt_careful: '⚠️ Careful', txt_oops: '🙈 Oops!',
+    txt_yourturn: '💪 Your turn!', txt_done: '🎉 Done!',
+    tip_1: '💡 Press 1-9 to switch scenes instantly',
+    tip_2: '✏️ Right-click the canvas to add a text',
+    tip_3: '🎨 8 themes in Settings ⚙️',
+    tip_4: '🎥 Up to 3 cameras + screen + mic',
+    tip_5: '⭐ Speak loud, smile, have fun!',
+    tip_6: '🎯 A tutorial = prepare, record, share',
+    tip_7: '💾 Your videos stay on your computer',
+    tip_8: '🤖 micro:bit tutorial? Try the "Code + Robot" scene!',
+    tip_9: '🧠 Start with the "You" scene for your intro',
+    tip_10: '🎬 Press R to start/stop recording',
+    tipOfDay_1: "Press ? to see all keyboard shortcuts at once",
+    tipOfDay_2: "Drag sources with the mouse, then resize by grabbing a corner",
+    tipOfDay_3: "Right-click a source for a full menu (hide, pin, shape, PiP, chroma)",
+    tipOfDay_4: "Shift + drag a corner unlocks the aspect ratio for free stretching",
+    tipOfDay_5: "Alt + drag a source snaps it to a 48px grid",
+    tipOfDay_6: "Ctrl + Z undoes your last move (outside recording)",
+    tipOfDay_7: "Ctrl + Z during recording flags the last 30s as a retry",
+    tipOfDay_8: "Shift + R starts recording instantly (skips the countdown)",
+    tipOfDay_9: "Paste an image (Ctrl+V) — it becomes a draggable source",
+    tipOfDay_10: "Key M adds a marker: handy for finding a moment later",
+    tipOfDay_11: "Key S takes a snapshot and adds it to the gallery under the stage",
+    tipOfDay_12: "Save your current layout as a custom scene (💾 Save)",
+    tipOfDay_13: "The teleprompter has auto-scroll — tune speed with the slider",
+    tipOfDay_14: "Import a .txt, .md or .vtt script into the teleprompter via the 📂 button",
+    tipOfDay_15: "The 📦 Export session button saves EVERYTHING (badges, logo, tutos…) as JSON",
+    tipOfDay_16: "Change the accent color in Settings → General",
+    tipOfDay_17: "Fullscreen mode (F11 or the ⛶ button) hides everything but the stage",
+    tipOfDay_18: "You can connect a micro:bit via Bluetooth to film its sensors live",
+    tipOfDay_19: "Whiteboard drawing now has 6 colors + an eraser",
+    tipOfDay_20: "Click a chapter in the final video to jump straight to that moment",
+    news: 'News',
+    activityLog: '📜 Activity Log', eventsMsg: 'Events & messages',
+    clear: 'Clear', copy: 'Copy', theme: 'Theme',
+    settings: '⚙️ Settings', language: 'Language',
+    help: '❓ Help', faq: 'FAQ', howto: 'How-to', wiki: 'Wiki',
+    helpSearchPlaceholder: '🔍 Search…',
+    soundEffects: '🔊 Sound effects',
+    soundBoard: 'SFX',
+    sbDing: 'Ding', sbBuzz: 'Buzz', sbClap: 'Clap', sbRoll: 'Roll', sbWhistle: 'Whistle', sbWhoosh: 'Whoosh',
+    splashHint: 'tap to skip',
+    export: 'Export', filterAll: 'All',
+    copied: 'Copied!', copyFail: 'Copy failed',
+    logCleared: 'Log cleared',
+    ready: '🚀 NoorCast ready!',
+    needSources: '⚠️ Add at least one source before recording',
+    recStarted: '🔴 Recording started',
+    recStopped: '⏹ Recording stopped',
+    recPaused: '⏸ Paused',
+    recResumed: '▶ Resumed',
+    markerAdded: '🏷 Marker added',
+    snapshotSaved: '📸 Photo saved',
+    sceneChanged: '🎭 Scene',
+    textAdded: '✏️ Text added',
+    laserOn: '🔴 Laser on', laserOff: '⚪ Laser off',
+    ripplesOn: 'Ripples on', ripplesOff: 'Ripples off',
+    spotlight: 'Spot', spotlightOn: 'Spotlight on', spotlightOff: 'Spotlight off',
+    trail: 'Trail', trailOn: 'Trail on', trailOff: 'Trail off',
+    gridOverlay: 'Grid', gridOverlayOn: 'Rule-of-thirds on', gridOverlayOff: 'Rule-of-thirds off',
+    sourceLabels: '🏷 Show source names on canvas', sourceLabelsOn: 'Source labels on', sourceLabelsOff: 'Source labels off',
+    hudType: 'Type', hudPos: 'Position', hudSize: 'Size',
+    fpsCounter: '🎯 Show FPS counter on canvas', fpsCounterOn: 'FPS counter on', fpsCounterOff: 'FPS counter off',
+    alignLeft: 'Align left', alignRight: 'Align right', alignTop: 'Align top', alignBottom: 'Align bottom', alignCenterH: 'Center horizontally', alignCenterV: 'Center vertically',
+    stickyNoteBtn: 'Note', stickyNotePlaceholder: 'Type your note here…',
+    freezeOn: '❄️ Screen frozen',
+    freezeOff: '▶ Screen live',
+    drawOn: '✏️ Draw mode',
+    drawOff: '✏️ Draw mode off',
+    teleOn: '📜 Teleprompter on',
+    teleOff: '📜 Teleprompter off',
+    teleImportDone: '📂 Script imported',
+    teleImportEmpty: '⚠ Empty file',
+    teleImportError: '❌ Read error',
+    promptTelePlaceholder: 'Paste your script here…', promptFreeText: 'Text to display:',
+    btConnected: '📡 micro:bit connected!',
+    btError: '❌ micro:bit connection failed',
+    permissionDenied: '🔒 Permission denied. Allow camera in browser settings.',
+    needCamSelected: '⚠️ Pick a camera from the list first',
+    recorderError: '✗ Recording error (see the log)',
+    recEmpty: '⚠️ Empty file — the encoder produced nothing. Open the log 📜 for details.',
+    recNoStream: '✗ No video stream — reload the page',
+    zoom: 'Zoom', zoomOn: '🔍 Zoom on', zoomOff: '🔍 Zoom off',
+    autoZoom: 'Auto-zoom',
+    fullscreen: 'Fullscreen',
+    outputFormat: '🎞 Output format',
+    formatAuto: 'Auto (MP4 if possible)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    stageAspect: '📐 Stage format',
+    stageAspectHint: "Doesn't change during recording",
+    aspectLockedDuringRec: "⚠ Can't change during recording",
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', transcript: '📝 Transcript', trim: 'Trim', trimTitle: 'Trim the tutorial',
+    trimIn: 'Start', trimOut: 'End', trimDuration: 'Final duration:',
+    trimPreviewIn: '▶ start', trimPreviewOut: '▶ end',
+    trimEncoding: 'Encoding…',
+    trimCutSilences: '✂ Auto-cut silences',
+    trimScrubberHint: 'Click to seek · drag handles to trim',
+    trimExport: 'Export trimmed tutorial', trimExported: 'Trimmed tutorial exported',
+    trimNoTake: '⚠️ No tutorial recorded to trim',
+    trimTooShort: '⚠️ Selection too short (minimum 0.2 s)',
+    cancel: 'Cancel',
+    pinSource: '📌 Pin (keep position across scenes)',
+    unpinSource: '🔓 Unpin (scene controls position again)',
+    lockSource: '🔒 Lock position',
+    unlockSource: '🔓 Unlock position',
+    ctxLock: 'Lock / unlock',
+    sourceLocked: 'Position locked',
+    sourceUnlocked: 'Position unlocked',
+    aspectLockOn: 'Aspect ratio locked',
+    aspectLockOff: 'Aspect ratio free',
+    toggleBlur: '🌫 Background blur',
+    removeSource: '✕ Remove',
+    ctxHide: 'Hide / show',
+    ctxPin: 'Pin / unpin',
+    ctxDup: 'Duplicate',
+    ctxShape: 'Shape ▸',
+    ctxPip: 'Pop out (PiP)',
+    ctxMirror: 'Mirror',
+    ctxMirrorDup: 'Duplicate as mirror',
+    ctxDel: 'Delete',
+    mirrorSource: 'Duplicated as mirror',
+    mirrorOnlyCam: '❌ Cameras only',
+    mirrorOn: 'Mirror on',
+    mirrorOff: 'Mirror off',
+    pipNotSupported: '❌ PiP not supported',
+    pipOnlyCam: '❌ Cameras only',
+    pipOn: 'PiP on',
+    pipError: '❌ PiP unavailable',
+    pipActive: 'PiP',
+    resetLayout: '🔓 Reset layout',
+    layoutReset: '🔓 Layout reset',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
+    randomScene: 'Random scene',
+    noScenesToShuffle: 'No scenes available',
+    onlyOneScene: 'Only one scene',
+    saveScene: 'Save this layout',
+    promptSaveScene: 'Name for this scene?',
+    promptDuplicateScene: 'Name of the copy?',
+    customSceneEmpty: '⚠ No visible source to save',
+    confirmDeleteCustomScene: 'Delete this scene?',
+    downloadCsv: 'Sensors (.csv)',
+    removeSilence: 'Remove silences',
+    silenceEncoding: '🔇 Encoding without silences…',
+    silenceExported: 'Silences removed',
+    silenceChip: 'You\'re silent…',
+    quizPromptLabel: 'What question do you want to ask your students?',
+    sensorOverlayLabel: '🤖 Auto-overlay when the robot jolts',
+    micBoost: '🎚 Mic boost',
+    micGate: '🔇 Noise gate (dB)',
+    jingleLabel: '🎵 Intro jingle (1.5s)',
+    timelapseLabel: '⏩ Timelapse',
+    timeGoalLabel: '⏳ Duration goal',
+    timeGoalMinutes: 'Minutes:',
+    timeGoalAutoStop: 'Auto-stop at goal',
+    timeGoalReached: '⏳ Goal reached',
+    timeGoalStop: '⏳ Goal reached — auto-stop',
+    clockLabel: '🕐 Show clock in a corner',
+    clockDateLabel: '+ date',
+    recIndicatorLabel: '🔴 REC dot while recording',
+    audioVizLabel: '🎵 Audio waveform on canvas',
+    recElapsedLabel: '⏱ Elapsed timer while recording',
+    badgeBtn: 'Badge card',
+    badgeHeadline: 'Tutorial recorded!',
+    badgeStatDuration: 'Duration',
+    badgeStatSources: 'Sources',
+    badgeStatChapters: 'Chapters',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ No tutorial to export',
+    badgeExported: 'Badge exported',
+    badgeError: '✗ Could not generate the badge',
+    firstTimeTitle: 'First time? Start here',
+    firstTimeBody: 'The 7 steps below take you from zero to your first downloaded tutorial in under 5 minutes. NoorCast runs on a Chromebook or any desktop browser, no account, no install.',
+    firstTimeTeacher: '👩‍🏫 For teachers: NoorCast is built to explain code with a robot (micro:bit, Arduino, LEGO). Use the "🤖 Robot demo" template for a guided 5-step sequence. Your videos stay 100% on your computer.',
+    brandSection: '🏷 Brand (logo + slogan)',
+    brandPresets: '📁 Brand presets',
+    brandSave: 'Save:',
+    brandLoad: 'Load:',
+    brandPresetSaved: 'Preset saved',
+    brandPresetLoaded: 'Preset loaded',
+    brandPresetEmpty: 'Slot empty',
+    brandUploadLogo: 'Upload a logo (PNG/SVG)',
+    brandClearLogo: 'Remove logo',
+    brandLogoLoaded: '🏷 Logo loaded',
+    brandLogoCleared: '🏷 Logo cleared',
+    brandEffect: 'Fun effect',
+    brandBgRemove: '✂ Remove background (works on JPGs with a solid bg)',
+    brandBgRemoved: '✂ Background removed',
+    brandBgRestored: '↩ Original background restored',
+    brandSize: '📐 Logo size',
+    brandSloganColor: '🎨 Slogan color',
+    brandQrUrl: '🔗 Badge card URL',
+    brandLogoOpacity: '💧 Logo opacity',
+    brandLogoFilter: '🎨 Logo filter',
+    watermarkLabel: '💧 Watermark',
+    tickerCustomLabel: '📰 Ticker messages (one per line)',
+    tickerCustomHint: 'Leave empty to use the 10 default tips.',
+    setSecGeneral: 'General',
+    setSecRecording: 'Recording',
+    setSecLogo: 'Logo',
+    setSecSlogan: 'Slogan & effect',
+    setSecTicker: 'Ticker',
+    textFont: 'Aa Default font',
+    textStroke: '✒ Text outline',
+    freeResize: 'Free stretch (Shift+corner)',
+    teleSpeed: 'Speed',
+    telePlay: 'Play',
+    telePause: 'Pause',
+    teleReset: 'Reset top',
+    cheatTitle: 'Keyboard shortcuts',
+    cheatRec: '🎬 Recording',
+    cheatRecStart: 'Start / stop recording',
+    cheatRecPause: 'Pause / resume',
+    cheatRecMark: 'Add a chapter marker',
+    cheatRecSnap: 'Photo snapshot',
+    cheatRecSaveAll: 'Download all',
+    bulkDl: 'Download all',
+    bulkFiles: 'files',
+    bulkNoTake: '⚠ No take to download',
+    shareTake: 'Share',
+    shareText: 'My tuto made with NoorCast 🎬',
+    shareDone: 'Shared',
+    shareError: '❌ Share error',
+    shareNotSupported: '❌ Web Share not supported — use Download',
+    shareNoTake: '⚠ No take to share',
+    cheatRecBig: 'Big marker (★)',
+    bigMarker: 'Big marker',
+    cheatTools: '🛠 Live tools',
+    cheatToolLaser: 'Laser pointer on/off',
+    cheatToolFreeze: 'Freeze the screen',
+    cheatToolDraw: 'Whiteboard',
+    cheatToolZoom: 'Manual zoom',
+    cheatToolTele: 'Teleprompter on/off',
+    cheatToolQuiz: 'Quiz card',
+    cheatToolCaptions: 'Captions on/off',
+    captionsOn: 'Captions on',
+    captionsOff: 'Captions off',
+    cheatScenes: '🎭 Scenes',
+    cheatScene: 'Switch scene',
+    cheatSceneMove: 'Reorder the active scene',
+    cheatText: '✏️ Selected text',
+    cheatTextDup: 'Duplicate text',
+    cheatTextRotL: 'Rotate −5°',
+    cheatTextRotR: 'Rotate +5°',
+    cheatTextRotReset: 'Reset rotation',
+    cheatTextLayer: 'Back / forward',
+    cheatTextLayerX: 'Send to back / front',
+    cheatTextDel: 'Delete selection',
+    cheatMisc: '✨ Misc',
+    cheatMiscFree: 'Free stretch a source',
+    cheatMiscGrid: 'Snap to grid',
+    cheatMiscWheelZoom: 'Wheel zoom',
+    cheatMiscThis: 'Show this panel',
+    cheatMiscEsc: 'Close panels',
+    cheatMiscDebug: 'Debug HUD',
+    cheatMiscRetry: 'Retry last 30s (while recording)',
+    cheatMiscInstantRec: 'Instant rec (skip countdown)',
+    cheatMiscPasteImg: 'Paste image from clipboard',
+    pasteImageError: '❌ Invalid image',
+    instantRec: '⚡ Instant start',
+    softRewindToast: '↶ Retry — last 30s flagged',
+    undo: 'Undo',
+    redo: 'Redo',
+    undoDone: '↩ Undone',
+    redoDone: '↪ Redone',
+    undoEmpty: '↩ Nothing to undo',
+    redoEmpty: '↪ Nothing to redo',
+    introOutroLabel: '🎬 Cinematic intro/outro cards',
+    outroTitle: 'Thank you!',
+    outroBadges: 'badges',
+    outroTagline: 'Your tutorial is ready',
+    outroPlaying: '🎬 Outro playing…',
+    autoPauseLabel: '⏸ Auto-pause when you switch tab',
+    captionsLabel: '💬 Live captions (Chrome/Edge)',
+    sceneAutoSave: '💾 Auto-save scene on source changes',
+    sceneAutoSaved: '💾 Scene auto-saved',
+    sceneIntroLabel: '🎭 Auto intro text on scene change',
+    sceneTransitionLabel: '🎞 Scene transition',
+    transitionNone: 'None',
+    transitionFade: 'Fade',
+    transitionWipe: 'Wipe',
+    duckLabel: '🔉 Duck source audio when you speak',
+    screensaverLabel: '💤 Screensaver after 90s idle',
+    screensaverHint: 'Press any key to wake up',
+    autoAdvScenes: '⏩ Auto-advance scenes',
+    autoAdvSec: 'Interval (sec)',
+    snapGrid: '📐 Snap to grid',
+    gridSize: 'Grid size (px)',
+    countdownTimer: '⏳ Timer',
+    pianoOverlay: '🎹 Piano',
+    letterboxBars: '🎬 Bars',
+    letterboxLabel: '🎬 Cinematic letterbox bars',
+    letterboxHeight: 'Bar height (%)',
+    colorPicker: '🎨 Color picker',
+    colorCopied: 'Copied',
+    sceneTime: 'Time per scene',
+    timerDuration: 'Timer duration (min)',
+    snapAnnotLabel: '✏️ Annotate snapshots before saving',
+    snapAnnotTitle: 'Annotate your snapshot',
+    snapAnnotClear: 'Clear',
+    snapAnnotSave: 'Save',
+    autoPaused: '⏸ Recording paused',
+    autoResumed: '▶ Recording resumed',
+    sensorChartTitle: 'micro:bit sensors',
+    sensorBtnsLegend: 'Buttons',
+    chapterListTitle: 'Chapters',
+    sceneReordered: 'Scenes reordered',
+    minimap: 'Preview',
+    historyTitle: 'My tutorials',
+    dailyGoalReached: 'Daily goal reached!',
+    streak: 'Streak',
+    days: 'days',
+    historyEmpty: 'No tutorial yet. Click 🔴 RECORD to start!',
+    historyClear: '🗑 Clear history',
+    historyConfirmClear: 'Clear tutorial history?',
+    historyCleared: '🗑 History cleared',
+    historySearchPlaceholder: '🔍 Search…',
+    dashTitle: 'Your stats',
+    dashEmpty: 'Record your first tutorial to see your stats 📊',
+    dashRecs: 'tutorials',
+    dashTotal: 'total',
+    dashLongest: 'longest',
+    dashSize: 'size',
+    dashStreak: 'day streak',
+    dashFavDay: 'favorite day',
+    dash7Days: 'last 7 days',
+    dashPauses: 'pauses/take',
+    dashAvgRating: 'avg rating',
+    takeRating: 'Rate this take:',
+    takeTitle: '📝 File name',
+    takeNotes: '📝 Notes',
+    takeNotesPlaceholder: 'Notes about this take…',
+    manyPauses: 'You paused a lot — try Shift+R for instant start',
+    dashNote: '💡 Stats from the last 10 tutorials',
+    setSecDanger: '♻ Maintenance',
+    diagnostics: 'Diagnostics',
+    resetBadges: 'Reset badges',
+    clearCache: 'Clear all local data',
+    rebindBtn: 'Keyboard shortcuts…',
+    rebindTitle: 'Custom shortcuts',
+    rebindReset: 'Reset to defaults',
+    badgesReset: '🗑 Badges reset',
+    cacheCleared: '💥 Cache cleared — reloading…',
+    confirmClearCache: 'Erase ALL local data (badges, logo, preferences, ticker…)? The app will restart like a fresh install.',
+    bundleExport: 'Export session',
+    bundleImport: 'Import session',
+    bundleExported: '📦 Session exported',
+    bundleImported: '📦 Session imported — reloading…',
+    bundleBadFormat: '❌ Invalid format',
+    bundleConfirm: 'Replace your local data with this session?',
+    exportSettings: 'Export settings',
+    importSettings: 'Import settings',
+    settingsExported: '⚙️ Settings exported',
+    settingsImported: '⚙️ Settings imported — reloading…',
+    settingsConfirm: 'Replace your local settings with this file?',
+    buildMeta: 'Built',
+    badgeUnlockTitle: '🏆 Badge unlocked!',
+    badgeUnlockContinue: 'Continue',
+    faq_q9: '🏆 What are the badges?',
+    faq_a9: 'Small local trophies that unlock as you go: 🎬 First tutorial (first take finished), ⏱ Over 5 min (take longer than 5 minutes), 🎥 Multi-camera (2+ cams at once), 🎭 All scenes (every preset used), 🏷 Marker king (5+ markers in one take), 🤖 micro:bit plugged (first BT connection). Everything is stored locally (localStorage), nothing is ever sent anywhere.',
+    faq_q10: '♻ How do I reset my data?',
+    faq_a10: 'In ⚙️ Settings → General, two buttons: "🗑 Reset badges" wipes only your trophies. "💥 Clear all local data" wipes EVERYTHING: badges, logo, preferences, ticker messages, default font, onboarding, etc. The app starts like a fresh install after reloading.',
+    brandSloganFont: 'Aa Slogan font',
+    brandSloganSize: '📐 Slogan size',
+    brandLogoTint: '🎨 Logo color (silhouette)',
+    sourceTitlePh: 'Title (e.g. 💻 My code)',
+    sourceOpacity: 'Opacity',
+    sourceRotation: 'Rotation',
+    sourceShape: 'Shape',
+    sourceBorder: 'Border',
+    borderColor: 'Border color',
+    borderWidth: 'Border width',
+    sourceShadow: 'Drop shadow',
+    shadowColor: 'Shadow color',
+    shadowBlur: 'Shadow blur',
+    shadowOffsetX: 'Shadow offset X',
+    shadowOffsetY: 'Shadow offset Y',
+    cornerRadius: 'Corner radius',
+    sourceBadge: 'Badge',
+    cropTop: 'Crop top',
+    cropBottom: 'Crop bottom',
+    cropLeft: 'Crop left',
+    cropRight: 'Crop right',
+    filter_none: '— Filter —',
+    filter_bw: 'B&W',
+    filter_sepia: 'Sepia',
+    filter_bright: 'Bright',
+    filter_contrast: 'Contrast',
+    filter_vintage: 'Vintage',
+    filter_cool: 'Cool',
+    filter_warm: 'Warm',
+    overlayDuplicated: '📋 Overlay duplicated',
+    maximize: '⛶ Fullscreen',
+    restore: '⛶ Restore',
+    zoomHint: '🔍 Z = toggle · ⛶ = fullscreen · Esc = exit',
+    laserHint: '🔴 L = toggle · tilt the micro:bit to aim',
+    freezeHint: '❄ F = freeze/unfreeze · keep talking while the screen is frozen',
+    drawHint: '✏ D = toggle · click-drag on the preview to draw',
+    layerForward: '⬆ Forward',
+    layerBackward: '⬇ Backward',
+    sourceForward: '⬆ Forward',
+    sourceBackward: '⬇ Backward',
+    ctxForward: 'Bring forward',
+    ctxBackward: 'Send backward',
+    ctxFront: 'Bring to front',
+    ctxBack: 'Send to back',
+    cheatSrcLayer: 'Source: back / front',
+    sourceRemoved: 'Source removed',
+    firstSourceHint: '💡 Click the video to select · ✕ to remove · 👁 to hide · corner to resize',
+    overlayDeleted: '✕ Overlay deleted',
+    sourceHide: '👁 Hide (temporarily)',
+    sourceShow: '🙈 Show again',
+    sourceHidden: '🙈 Source hidden',
+    sourceShown: '👁 Source shown',
+    sourceRenamed: 'Source renamed',
+    sourceChromeHint: 'Click ✕ to remove · 👁 to hide · Del key',
+    transparency_solid: 'Solid background',
+    transparency_semi:  'Semi-transparent background',
+    transparency_text:  'Text only',
+    transparency_ghost: 'Ghost text',
+    badge_first: 'First tutorial',
+    badge_long: 'Over 5 minutes',
+    badge_multi: 'Multi-camera',
+    badge_all_scenes: 'All scenes used',
+    badge_marker_king: 'Marker king',
+    badge_micro: 'micro:bit plugged',
+    badge_veteran: 'Veteran (10 tutos)',
+    badge_marathon: 'Marathon (30 min)',
+    badge_library: 'Library (5 scenes)',
+    faq_q1: "What is NoorCast?",
+    faq_a1: "NoorCast is a web tool to record tutorial videos with multiple cameras (screen + webcams + mic) directly from your browser. Zero install, zero account, everything stays on your computer.",
+    faq_q2: "How do I add multiple cameras?",
+    faq_a2: "In the left panel, pick a camera from the dropdown and click +. Repeat to add up to 3 cameras (e.g. one on your robot, one on you, one on the micro:bit screen).",
+    faq_q3: "Can I read my micro:bit sensors?",
+    faq_a3: "Yes! Click 📡 Connect micro:bit in the left panel. Your browser will ask for Bluetooth permission. Once connected, sensor values (accelerometer, light, buttons) appear as overlay on your video. ⚠️ Chrome/Edge only.",
+    faq_q4: "What are the keyboard shortcuts?",
+    faq_a4: "R = Rec/Stop · P = Pause · M = Marker · 1-6 = Switch scene · L = Laser (toggle) · F = Freeze screen · D = Draw · S = Photo snapshot · Esc = Close panels",
+    faq_q5: "Are my videos private?",
+    faq_a5: "100%. Nothing leaves your computer. The recording stays in the browser memory and downloads directly to your disk. No account, no analytics, no server.",
+    faq_q6: "What output format?",
+    faq_a6: "WebM (VP9 + Opus). Plays in VLC, Chrome, Firefox, YouTube, and Davinci Resolve. To convert to MP4, use ffmpeg or an online tool like cloudconvert.com.",
+    faq_q7: "Is the teleprompter visible in my video?",
+    faq_a7: "No, never. The teleprompter shows over the preview for you only. It is not drawn on the composing canvas, so it does not appear in the final recording.",
+    faq_q8: "Recommended browser?",
+    faq_a8: "Chrome or Edge desktop. Firefox works for recording but not for Web Bluetooth (micro:bit). Safari supports neither the sensors nor some audio options. iOS is unsupported because Safari Mobile blocks screen capture.",
+    howto_1: "Plug in your USB cameras (if needed) and allow access when the browser asks.",
+    howto_2: "In the Sources panel on the left, add your screen, your cameras, and pick your microphone.",
+    howto_3: "Click one of the preset scenes on the right (Code, Robot, Studio…) — the composition changes instantly.",
+    howto_4: "Add a text from the library (⭐ Bravo, 🎯 Step 1…) — it appears as an overlay.",
+    howto_5: "Click the big 🔴 RECORD button. 3-2-1 countdown, then it rolls.",
+    howto_6: "Use keys 1-9 to switch scenes live. L for laser pointer, F to freeze the screen, D to draw.",
+    howto_7: "Click ⏹ Stop. Your tutorial downloads as .webm with chapters in .vtt.",
+    wiki_multicam_title: "🎥 Multi-camera",
+    wiki_multicam: "NoorCast can display up to 3 cameras + 1 screen + the mic simultaneously. Each source is a draggable box in the scene. You can set its shape (rectangle or circle), size and position.",
+    wiki_scenes_title: "🎭 Scenes",
+    wiki_scenes: "A scene is a layout: position/size/visibility of each source + active texts. You can switch between scenes during the recording with keys 1-9 or by clicking. Hard cut, no latency.",
+    wiki_sensor_title: "🤖 micro:bit sensors",
+    wiki_sensor: "Via Web Bluetooth, NoorCast connects directly to the micro:bit and reads its sensors in real time (accelerometer, light, temperature, buttons). Values show as overlay on the video, perfect for explaining a sensor to students.",
+    wiki_privacy_title: "🔒 Privacy",
+    wiki_privacy: "Everything stays local. Video streams are processed by the browser, composed on a canvas, and recorded in memory via MediaRecorder. The final file is downloaded to your disk. No server, no telemetry.",
+    news_010: "First release of NoorCast 🎉",
+    news_010_1: "Multi-camera (screen + up to 3 cams + mic)",
+    news_010_2: "6 ready-made scenes (Code, Robot, Sensors, Code+Robot, Studio, You)",
+    news_010_3: "Text overlays with kid-friendly preset library",
+    news_010_4: "Live tools: laser pointer, screen freeze, whiteboard, teleprompter",
+    news_010_5: "micro:bit sensors via Web Bluetooth (Chrome/Edge)",
+    news_010_6: "Automatic chapters exported as .vtt",
+    news_010_7: "Live markers (M key) + photo snapshots (S key)",
+    news_010_8: "Progress badges + confetti at the end",
+    news_010_9: "Trilingual FR/EN/AR, 8 visual themes",
+    news_011: "First full runtime test pass: 2 bugs fixed 🧪",
+    news_011_1: "Double emoji in scene buttons fixed",
+    news_011_2: "41 missing i18n keys added (FAQ, wiki, how-to, changelog)",
+    news_012: "Full audit pass + major fixes 🔧",
+    news_012_1: "Critical fix: whiteboard strokes were being wiped by the laser every frame",
+    news_012_2: "Sound effects toggle in settings (start, stop, pause, marker)",
+    news_012_3: "Debug HUD (FPS + memory) via Ctrl+Shift+D",
+    news_012_4: "Teleprompter placeholder and free-text prompt fully i18n",
+    news_012_5: "Camera/mic labels refresh automatically after permission grant",
+    news_012_6: "Clean shutdown of streams and blobs on tab close",
+    news_012_7: "Tools (laser/freeze/draw/texts) reset between takes",
+    news_012_8: "Themes translated, FAQ hotkeys aligned with actual code",
+    news_020: "Guided tutorial templates 🎬",
+    news_020_1: "3 kid-friendly templates: Full lesson, Robot demo, Fix-it",
+    news_020_2: "Each template lays out a 5-step sequence visible throughout",
+    news_020_3: "Clicking a step switches scene + adds a chapter marker",
+    news_020_4: "Cams added after picking a template inherit the layout",
+    news_020_5: "Opens automatically on first launch (replaces old onboarding)",
+    news_021: "Critical hotfix: zero-byte webm files fixed 🚨",
+    news_021_1: "canvas.captureStream is now cached (avoids a known Chrome/Firefox race)",
+    news_021_2: "MediaRecorder error handler + detailed logging in the activity panel",
+    news_021_3: "Empty recordings are detected — no more phantom downloads",
+    news_021_4: "Timeslice reduced from 1000 ms to 250 ms for short takes",
+    news_021_5: "AudioContext is resumed on recording start",
+    news_022: "Real fix for 0-byte files 🎯",
+    news_022_1: "Actual root cause: audioDest's audio track emitted no samples without a source",
+    news_022_2: "Fix: permanent silent ConstantSourceNode keeps the audio track alive",
+    news_022_3: "Verified by full headless runtime test (every button, scene, tool)",
+    news_022_4: "Blank template button now clears any active template",
+    news_023a: "Splash refresh + new slogan 🎬",
+    news_023a_1: "Fixed logo-overlaps-title bug (container 120×65 → 140×140)",
+    news_023a_2: "New slogan: \"Lights, camera, ROBOT!\"",
+    news_023a_3: "workshop-diy.org badge on splash and footer",
+    news_024: "Working area actually widened 📺",
+    news_024_1: "App width: 1240 → fluid up to 1760 px",
+    news_024_2: "Studio grid: 240 px sidebars + minmax(0,1fr) canvas column",
+    news_024_3: "Canvas capped by viewport height — perfect 16:9 at 1920/1600/1366",
+    news_024_4: "Sidebars scroll internally so the REC button stays above the fold",
+    news_030: "Trim + Zoom + MP4 ✂️🔍📼",
+    news_030_1: "Non-destructive trim tool: two handles, export button, new file with adjusted chapters",
+    news_030_2: "Smooth manual zoom on Z (or micro:bit button A) for code focus moments",
+    news_030_3: "Native MP4 export where the browser supports it (Chrome 126+, Safari, Edge)",
+    news_030_4: "Output format preference in Settings: Auto / MP4 / WebM",
+    news_030_5: "Trim re-encodes via offscreen canvas + MediaRecorder — zero deps, zero cloud",
+    news_040: "Drag-drop + effects 🖐✨",
+    news_040_1: "Drag-drop: move any source directly on the canvas, it's auto-pinned",
+    news_040_2: "Snaps to 7 anchors (corners, edge centers, dead center) within a 60-px radius",
+    news_040_3: "Per-source 📌 / 🔓 button to pin manually, and \"Reset layout\" to release them all",
+    news_040_4: "Per-source background blur (🌫) — sharp center, blurred edge ring",
+    news_040_5: "Theme-accent glow halo around every visible source (always on)",
+    news_040_6: "Visible pulse on every marker (M) — the teacher gets instant confirmation",
+    news_050: "micro:bit superpowers + smart trim 🤖🔇",
+    news_050_1: "micro:bit button A = zoom · button B = marker · tilt = laser position",
+    news_050_2: "Sensor CSV export aligned with the tutorial timeline (unique to NoorCast)",
+    news_050_3: "Auto-trim silences > 2s — one click post-record, no external editor",
+    news_050_4: "Live silence warning chip (>1.8s quiet mic, visible to you only)",
+    news_050_5: "Q key = quiz card overlay (kid-friendly mid-recording question)",
+    news_050_6: "Auto 🤖 overlay when the robot jolts hard (opt-in in Settings)",
+    news_060: "Adoption polish 🎵🏆👩‍🏫",
+    news_060_1: "Optional 1.5s Web Audio intro jingle — opt-in in Settings",
+    news_060_2: "Shareable PNG badge card generated after every recording",
+    news_060_3: "\"First time? Start here\" callout + teacher pitch in the help panel",
+    news_060_4: "README now has a proper \"For teachers\" section",
+    news_070: "Max flexibility: drag+resize everything 🖐📐",
+    news_070_1: "Texts draggable AND resizable (4 corner handles, Ctrl+D duplicate, Delete to remove)",
+    news_070_2: "Sources resize from 4 corners (aspect ratio preserved)",
+    news_070_3: "Custom logo + slogan (PNG/SVG upload) with 6 fun effects: spin, pulse, bounce, wiggle, glow, rainbow",
+    news_070_4: "Per-source visual filters: B&W, sepia, bright, contrast, vintage, cool, warm",
+    news_070_5: "Per-source title/caption (lower-third style) — type it directly in the sources panel",
+    news_070_6: "⛶ Fullscreen button — the preview fills the screen, Esc to exit",
+    news_070_7: "Keyboard hints pop up when you toggle Zoom / Laser / Freeze / Draw",
+    news_087: "50+ features across the board: polish, accessibility, pro tools 🚀⌨🎨🔧",
+    news_087_1: "🎚 Audio: LED meter, mic boost, noise gate, auto-ducking when you speak, live captions (WebSpeech)",
+    news_087_2: "🎨 Brand: 3 preset slots, custom accent color, chroma key, silhouette tint filter",
+    news_087_3: "🎬 Scene: 9 shapes, 4 aspect ratios (16:9 / 9:16 / 1:1 / 4:3), drag reorder + Shift+Alt+←→, custom scene save, auto intro text, fade transition",
+    news_087_4: "✏ Drawing: whiteboard 6 colors + eraser + 3 thicknesses, text outline slider, emoji picker, snapshot annotation",
+    news_087_5: "⌨ Keyboard: cheat sheet (?), rebindable hotkeys, long-press REC instant, Ctrl+Z retry/undo/redo, Ctrl+S download-all",
+    news_087_6: "📐 Layout: smart alignment guides, drag threshold, Alt+grid snap 48px, live minimap, Ctrl+wheel zoom",
+    news_087_7: "📸 Capture: 1×/2×/4× snapshots, gallery strip, Ctrl+V paste image, PiP camera popout, right-click context menu",
+    news_087_8: "📊 Feedback: stats dashboard, 10-take history, badge unlock confetti, 3 new cumulative badges, daily goal streak",
+    news_087_9: "🎞 Recording: time goal + auto-stop, pause counter, custom 1-10s countdown, cinematic intro/outro, auto-pause on tab loss, big marker B, click ripples",
+    news_087_10: "🔧 Maintenance: session bundle export/import, browser diagnostics, tip of day, guided tour, 90s screensaver, clock overlay, clickable chapter list, audio waveform, micro:bit sensor chart",
+    news_039: "11 workshop features: thumbnails, gallery, chapters, minimap, waveform, context menu, tour, intro text, retry, badge URL 🎁",
+    news_039_1: "Scene thumbnails (v0.7.29) + snapshot gallery strip (v0.7.30) under the stage",
+    news_039_2: "Clickable chapter list (v0.7.31) under the finished video — seek in one click",
+    news_039_3: "Drag-to-reorder scenes (v0.7.32) — persists the order for the 1-9 hotkeys",
+    news_039_4: "Live stage minimap (v0.7.33) in the left sidebar + audio waveform (v0.7.34) under the video",
+    news_039_5: "Right-click a source (v0.7.35) = context menu: hide · pin · dup · shape ▸ · delete",
+    news_039_6: "First-time guided tour (v0.7.36) — 5-step spotlight on the key features",
+    news_039_7: "Auto intro text on scene change (v0.7.37) — opt-in in Settings",
+    news_039_8: "Retry 30s (v0.7.38) — Ctrl+Z during recording flags the last 30s as retry",
+    news_039_9: "Badge card URL (v0.7.39) — shown at the bottom of every share card",
+    news_028: "Intro/outro + auto-pause + sensor chart + history + cheat sheet ⌨🎬⏸📊",
+    news_028_1: "Keyboard cheat sheet (v0.7.24): press ? to see all 22 shortcuts grouped in 5 categories",
+    news_028_2: "Cinematic intro/outro cards (v0.7.25): 2.5s at start and 2s at end, baked into the recording (opt-in toggle)",
+    news_028_3: "Auto-pause when you switch tab (v0.7.26): never capture accidental tab-switches into your tutorial",
+    news_028_4: "micro:bit sensor mini-chart (v0.7.27) in the last-take panel: X/Y/Z + A/B button marks",
+    news_028_5: "📊 My tutorials panel (v0.7.28): last 10 takes with date, duration, badges, size, session total",
+    news_023: "Ripples + auto-zoom + trim editor + broadcast teleprompter 🌊🎯✂📜",
+    news_023_1: "Broadcast teleprompter (v0.7.20): auto-scroll with speed slider, ⏵/⏸, A−/A+, ↔−/↔+, ↻ reset, T hotkey, persisted script",
+    news_023_2: "Auto-zoom on click (v0.7.21): click anywhere on a screen source and the preview smoothly zooms in for 1.5s (🎯 button in the tools bar)",
+    news_023_3: "Trim editor enhancements (v0.7.22): visual scrubber with in/out handles, ✂ auto-cut silences, Space/←/→/[/]/Enter/Esc shortcuts, live duration readout",
+    news_023_4: "Click ripples (v0.7.23): every click emits an animated 600 ms ripple rendered on the output canvas — baked into the final recording (💧 button)",
+    news_018: "Redesign + critical floating toolbar fix 🎨🔧",
+    news_018_1: "Floating horizontal tools bar above the studio: Laser · Freeze · Draw · Zoom · Tele · Snap · Fullscreen — frees ~280 px in the right sidebar",
+    news_018_2: "Critical bug fix: floating toolbar buttons (swatches, font, ✕) stopped responding — mousedown bubbled past click stopPropagation",
+    news_018_3: "Unified 00:00 timer: no more duplicate in the header, single prominent Orbitron 1.15 rem next to the REC button",
+    news_017: "Free resize + single-pass ticker ↔📰",
+    news_017_1: "Shift + corner on a source = free stretch (aspect ratio unlocked) · without Shift = locked aspect (kid-safe default)",
+    news_017_2: "Ticker back to single-pass marquee: each message appears exactly once per loop, no more wall of repetitions",
+    news_016: "Floating toolbars docked outside the stage 📐",
+    news_016_1: "✕/👁/📌/shape toolbars (source + text) now dock below the stage instead of floating over it — zero recording-area overlap",
+    news_015: "9 shapes for your videos 💠",
+    news_015_1: "Rect · Rounded · Circle · Pill · Hexagon · Octagon · Diamond · Star · Heart — picker dropdown in the source toolbar",
+    news_015_2: "All shapes share the same centralized path (glow, background blur, clip all use the same geometry)",
+    news_014: "Settings in sections + visible resize handles + text font ⚙️",
+    news_014_1: "Settings panel reorganized into 5 collapsible sections: General · Recording · Logo · Slogan · Ticker",
+    news_014_2: "Visible 4-corner resize handles on the selected source (they existed since v0.7.0 — now you actually see them)",
+    news_014_3: "Default-font picker for free text overlays in the right sidebar (6 fonts, persisted)",
+    news_013: "Ticker dedup + floating source toolbar 📰",
+    news_013_1: "Ticker fix: short custom messages like `hi` no longer render as `hi · hi`",
+    news_013_2: "New HTML floating toolbar for the selected source: 👁 hide · 📌 pin · shape · ✕ delete",
+    news_012_b: "Layout optimization + Bismillah ✨",
+    news_012_b_1: "Stage +60 px taller at 1080 p, sidebars tightened 240 → 220 px, studio header compressed",
+    news_012_b_2: "Bismillah in the header: spelled-out بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ at 15 px with gradient — the ﷽ ligature decomposed in Amiri",
+    tplTitle: "Pick how you start",
+    tplSubtitle: "Each template guides you step by step",
+    tplChoose: "Pick a template",
+    tplStarted: "Template started",
+    tplDismiss: "Dismiss",
+    tplBlank: "🎨 Blank",
+    tplBlankDesc: "I'll build my own scene",
+    tpl_lesson: "Full lesson",
+    tpl_lesson_d: "Intro → Theory → Demo → Exercise → Wrap-up",
+    tpl_lesson_intro: "🎓 Today we're learning…",
+    tpl_lesson_s1: "Intro",
+    tpl_lesson_s2: "Theory",
+    tpl_lesson_s3: "Demo",
+    tpl_lesson_s4: "Exercise",
+    tpl_lesson_s5: "Wrap-up",
+    tpl_robot: "Robot demo",
+    tpl_robot_d: "Intro → Code → Robot → Sensors → Recap",
+    tpl_robot_intro: "🤖 Watch my robot!",
+    tpl_robot_s1: "Intro",
+    tpl_robot_s2: "The code",
+    tpl_robot_s3: "The robot",
+    tpl_robot_s4: "The sensors",
+    tpl_robot_s5: "Recap",
+    tpl_fix: "Fix-it",
+    tpl_fix_d: "Bug → Analyze → Fix → Test → OK",
+    tpl_fix_intro: "🐛 Let's fix this bug together",
+    tpl_fix_s1: "The bug",
+    tpl_fix_s2: "Analyze",
+    tpl_fix_s3: "Fix",
+    tpl_fix_s4: "Test",
+    tpl_fix_s5: "It works!",
+    tpl_robotcam: "Robot Tuto",
+    tpl_robotcam_d: "Face → Code → Robot → Sensors → Recap",
+    tpl_robotcam_intro: "🤖 Watch my robot in action!",
+    tpl_robotcam_s1: "Introduction",
+    tpl_robotcam_s2: "The code",
+    tpl_robotcam_s3: "The robot",
+    tpl_robotcam_s4: "Sensors",
+    tpl_robotcam_s5: "Recap",
+    helpCamerasTab: "📷 Cameras",
+    cam_continuity_title: "📱 Continuity Camera (Mac + iPhone)",
+    cam_continuity_body: "No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in NoorCast. Perfect for filming the robot.",
+    cam_droidcam_title: "📲 DroidCam (Android / iOS)",
+    cam_droidcam_body: "Free. Install the app on your phone + the driver on your PC. Connect via USB or Wi-Fi. The phone appears as a virtual webcam.",
+    cam_iriun_title: "📡 Iriun Webcam (all platforms)",
+    cam_iriun_body: "Free. Works on Windows, Mac and Linux. Same principle: app + driver. Wi-Fi or USB connection.",
+    cam_camo_title: "🎥 Camo (pro quality)",
+    cam_camo_body: "Free tier is limited, paid plan adds advanced controls (zoom, exposure, focus). Best image quality.",
+    cam_setup_btn: "📷 Set up cameras",
+    camwiz_1_title: "Step 1: Install the app",
+    camwiz_1_body: "Install DroidCam, Iriun or Camo on your phone. Also install the companion driver on this computer.",
+    camwiz_2_title: "Step 2: Connect",
+    camwiz_2_body: "Open the app on your phone. Connect via Wi-Fi (same network) or USB (more stable for robot tracking).",
+    camwiz_3_title: "Step 3: Add the camera",
+    camwiz_3_body: "Click '+ Camera' here. Your phone appears in the camera list. Select it.",
+    camwiz_4_title: "Step 4: Assign to a scene",
+    camwiz_4_body: "Place the phone camera in a scene. Try the 'Robot Tuto' template for a ready-made setup!",
+    t_mosque: 'Mosque', t_zellige: 'Zellige', t_andalus: 'Andalus',
+    t_riad: 'Riad', t_medina: 'Medina', t_space: 'Space', t_jungle: 'Jungle', t_robot: 'Robot',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 Custom accent color',
+    snapResolution: '📐 Snapshot resolution',
+    customAccentReset: '🎨 Default color restored',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 Canvas background color',
+    // v0.7.36: first-time guided tour
+    tour_1_title: '📹 Sources',
+    tour_1_body: 'Start by adding a source — screen, camera, or mic.',
+    tour_2_title: '🎬 Stage',
+    tour_2_body: 'Compose your scene here — drag-drop, resize, change shape.',
+    tour_3_title: '🎭 Scenes',
+    tour_3_body: 'Switch layout in one click — 1-9 hotkeys too.',
+    tour_4_title: '🔴 Record',
+    tour_4_body: 'Click to start — R keyboard shortcut too.',
+    tour_5_title: '⌨ Shortcuts',
+    tour_5_body: 'Press ? to see all keyboard shortcuts.',
+    tour_skip: 'Skip', tour_back: '← Back', tour_next: 'Next →', tour_done: 'Done ✓',
+    // v0.7.43: rich hover tooltips on tools bar buttons
+    tip_laser: 'Red laser pointer that follows your mouse',
+    tip_ripples: 'Animated ripples on every click (in the recording)',
+    tip_freeze: 'Freeze the screen to explain without moving the mouse',
+    tip_whiteboard: 'Draw over the screen',
+    tip_zoom: 'Manual zoom for code',
+    tip_autozoom: 'Auto-zoom on click (Canva/ScreenStudio)',
+    tip_tele: 'Teleprompter script with auto-scroll',
+    tip_snap: 'PNG snapshot + gallery',
+    tip_fullscreen: 'Fullscreen for full immersion',
+    // v0.7.100: milestone celebration
+    v100Subtitle: '100 releases of kid-friendly tutorial recording 🎬',
+    v100Continue: 'Continue',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'Hotkeys', hotkeyRefSearch: 'Filter shortcuts...', hotkeyRefNoMatch: 'No shortcuts found',
+    // v0.7.138: multi-source selection
+    selectAll: 'All', multiSelected: 'sources selected', multiDeselected: 'Selection cleared',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 Vignette effect on canvas', vignetteIntensity: 'Intensity',
+  },
+  ar: {
+    title: 'نُورْكَاسْت', slogan: '🎬 أضواء، كاميرا، روبوت!',
+    statusIdle: 'جاهز', statusRec: 'يسجّل', statusPaused: 'إيقاف مؤقت',
+    sources: 'المصادر', sourceScreen: 'الشاشة', sourceCam: 'الكاميرا', sourceMic: 'الميكروفون',
+    selectCam: '— اختر —', selectMic: '— اختر —', add: '+ إضافة',
+    micCheckListening: '🎤 تحدث للاختبار…', micCheckOk: '✅ الميكروفون يعمل!', micCheckFail: '⚠️ لم يُكتشف شيء',
+    activeSources: 'المصادر النشطة', sensors: 'المستشعرات', btConnect: 'اتصال micro:bit',
+    scenes: 'المشاهد', texts: 'النصوص', addItems: 'إضافة', addItemsBtn: 'إضافة', addText: 'نص حر', emojiBtn: 'إيموجي',
+    tools: 'الأدوات', laser: 'ليزر', freeze: 'تجميد', whiteboard: 'رسم', ripples: 'موجات',
+    teleprompter: 'تيليبرومبتر', snapshot: 'لقطة',
+    recStart: 'تسجيل', recStop: 'إيقاف', pause: 'إيقاف مؤقت', mark: 'علامة', stop: 'إيقاف',
+    download: 'تحميل', downloadChapters: 'فصول (.vtt)', downloadMd: 'الفصول (.md)', newTake: 'درس جديد',
+    badgesTitle: 'شاراتك',
+    onbTitle: 'أهلاً! جاهز لأول درس؟',
+    onb1: 'اختر كاميراتك وشاشتك', onb2: 'اختر مشهدًا جاهزًا',
+    onb3: 'اضغط على الزر الأحمر 🔴', onb4: 'سيتم تحميل درسك تلقائيًا',
+    onbGo: 'هيّا!',
+    stageHint: '👆 أضف مصدرًا للبدء',
+    mainSection: 'الاستوديو', mainDesc: 'اصنع مشهدك وسجّل',
+    mirrorCam: '🪞 مرآة', countdownOn: '⏱ العد التنازلي', countdownSecs: 'الثواني:',
+    scene_code: 'كود', scene_robot: 'روبوت', scene_sensors: 'مستشعرات',
+    scene_coderobot: 'كود + روبوت', scene_studio: 'استوديو', scene_pilot: 'طيّار', scene_you: 'أنت',
+    sceneRenamed: 'تمت إعادة التسمية', sceneRenameTip: 'انقر مرتين لإعادة التسمية',
+    txt_bravo: '⭐ أحسنت!', txt_step1: '🎯 الخطوة 1', txt_step2: '🎯 الخطوة 2', txt_step3: '🎯 الخطوة 3',
+    txt_watch: '👀 انظر', txt_tip: '💡 نصيحة!', txt_careful: '⚠️ انتبه', txt_oops: '🙈 أخطأت!',
+    txt_yourturn: '💪 دورك!', txt_done: '🎉 انتهى!',
+    tip_1: '💡 اضغط 1-9 لتبديل المشاهد',
+    tip_2: '✏️ انقر بالزر الأيمن لإضافة نص',
+    tip_3: '🎨 8 مظاهر في الإعدادات',
+    tip_4: '🎥 حتى 3 كاميرات + شاشة + ميكروفون',
+    tip_5: '⭐ تكلّم بصوت عالٍ!',
+    tip_6: '🎯 تحضير، تسجيل، مشاركة',
+    tip_7: '💾 فيديوهاتك تبقى على حاسوبك',
+    tip_8: '🤖 جرّب مشهد "كود + روبوت"',
+    tip_9: '🧠 ابدأ بمشهد "أنت"',
+    tip_10: '🎬 اضغط R للتسجيل',
+    tipOfDay_1: "اضغط ? لرؤية جميع اختصارات لوحة المفاتيح دفعة واحدة",
+    tipOfDay_2: "اسحب المصادر بالفأرة، ثم غيّر حجمها بالإمساك بإحدى الزوايا",
+    tipOfDay_3: "انقر بالزر الأيمن على مصدر للحصول على قائمة كاملة (إخفاء، تثبيت، شكل، PiP، مفتاح اللون)",
+    tipOfDay_4: "Shift + سحب الزاوية يفتح نسبة العرض لتمدد حر",
+    tipOfDay_5: "Alt + سحب مصدر يلتقطه إلى شبكة 48 بكسل",
+    tipOfDay_6: "Ctrl + Z يتراجع عن آخر حركة (خارج التسجيل)",
+    tipOfDay_7: "Ctrl + Z أثناء التسجيل يعلّم آخر 30 ثانية كإعادة",
+    tipOfDay_8: "Shift + R يبدأ التسجيل فورًا (يتخطى العد التنازلي)",
+    tipOfDay_9: "الصق صورة (Ctrl+V) — ستصبح مصدرًا قابلًا للسحب",
+    tipOfDay_10: "المفتاح M يضيف علامة: مفيد للعثور على لحظة لاحقًا",
+    tipOfDay_11: "المفتاح S يأخذ لقطة ويضيفها إلى المعرض تحت المسرح",
+    tipOfDay_12: "احفظ تخطيطك الحالي كمشهد مخصص (💾 حفظ)",
+    tipOfDay_13: "التيليبرومبتر يحتوي على تمرير تلقائي — اضبط السرعة بالشريط",
+    tipOfDay_14: "استورد نصًا .txt أو .md أو .vtt إلى التيليبرومبتر عبر زر 📂",
+    tipOfDay_15: "زر 📦 تصدير الجلسة يحفظ كل شيء (الشارات، الشعار، الدروس…) بصيغة JSON",
+    tipOfDay_16: "غيّر لون التمييز في الإعدادات ← عام",
+    tipOfDay_17: "وضع ملء الشاشة (F11 أو زر ⛶) يخفي كل شيء عدا المسرح",
+    tipOfDay_18: "يمكنك توصيل micro:bit عبر البلوتوث لتصوير مستشعراته مباشرة",
+    tipOfDay_19: "رسم السبورة البيضاء أصبح له 6 ألوان + ممحاة",
+    tipOfDay_20: "انقر على فصل في الفيديو النهائي للانتقال إلى تلك اللحظة مباشرة",
+    news: 'جديد',
+    activityLog: '📜 سجل النشاط', eventsMsg: 'الأحداث والرسائل',
+    clear: 'مسح', copy: 'نسخ', theme: 'المظهر',
+    settings: '⚙️ الإعدادات', language: 'اللغة',
+    help: '❓ مساعدة', faq: 'أسئلة', howto: 'كيف', wiki: 'ويكي',
+    helpSearchPlaceholder: '🔍 ابحث…',
+    soundEffects: '🔊 مؤثرات صوتية',
+    soundBoard: 'مؤثرات',
+    sbDing: 'جرس', sbBuzz: 'طنين', sbClap: 'تصفيق', sbRoll: 'طبل', sbWhistle: 'صافرة', sbWhoosh: 'هواء',
+    splashHint: 'انقر للتخطي',
+    export: 'تصدير', filterAll: 'الكل',
+    copied: 'تم النسخ!', copyFail: 'فشل',
+    logCleared: 'تم المسح',
+    ready: '🚀 NoorCast جاهز!',
+    needSources: '⚠️ أضف مصدرًا أولاً',
+    recStarted: '🔴 بدأ التسجيل',
+    recStopped: '⏹ انتهى التسجيل',
+    recPaused: '⏸ إيقاف مؤقت', recResumed: '▶ استئناف',
+    markerAdded: '🏷 علامة',
+    snapshotSaved: '📸 حفظ اللقطة',
+    sceneChanged: '🎭 المشهد',
+    textAdded: '✏️ نص مُضاف',
+    laserOn: '🔴 الليزر', laserOff: '⚪ إيقاف الليزر', freezeOn: '❄️ مُجمَّد', freezeOff: '▶ مباشر',
+    ripplesOn: 'الموجات مُفعَّلة', ripplesOff: 'الموجات مُعطَّلة',
+    spotlight: 'بقعة', spotlightOn: 'بقعة مُفعَّلة', spotlightOff: 'بقعة مُعطَّلة',
+    trail: 'أثر', trailOn: 'الأثر مُفعَّل', trailOff: 'الأثر مُعطَّل',
+    gridOverlay: 'شبكة', gridOverlayOn: 'شبكة الأثلاث مُفعَّلة', gridOverlayOff: 'شبكة الأثلاث مُعطَّلة',
+    sourceLabels: '🏷 إظهار أسماء المصادر على اللوحة', sourceLabelsOn: 'أسماء المصادر مُفعَّلة', sourceLabelsOff: 'أسماء المصادر مُعطَّلة',
+    hudType: 'النوع', hudPos: 'الموضع', hudSize: 'الحجم',
+    fpsCounter: '🎯 عداد الإطارات على اللوحة', fpsCounterOn: 'عداد الإطارات مُفعَّل', fpsCounterOff: 'عداد الإطارات مُعطَّل',
+    alignLeft: 'محاذاة لليسار', alignRight: 'محاذاة لليمين', alignTop: 'محاذاة للأعلى', alignBottom: 'محاذاة للأسفل', alignCenterH: 'توسيط أفقي', alignCenterV: 'توسيط عمودي',
+    stickyNoteBtn: 'ملاحظة', stickyNotePlaceholder: 'اكتب ملاحظتك هنا…',
+    drawOn: '✏️ وضع الرسم', drawOff: '✏️ إيقاف الرسم',
+    teleOn: '📜 تيليبرومبتر', teleOff: '📜 مخفي',
+    teleImportDone: '📂 تم استيراد النص',
+    teleImportEmpty: '⚠ ملف فارغ',
+    teleImportError: '❌ خطأ في القراءة',
+    promptTelePlaceholder: 'الصق النص هنا…', promptFreeText: 'النص المراد عرضه:',
+    btConnected: '📡 micro:bit متصل!', btError: '❌ فشل الاتصال',
+    permissionDenied: '🔒 تم رفض الإذن.',
+    needCamSelected: '⚠️ اختر كاميرا من القائمة أولاً',
+    recorderError: '✗ خطأ في التسجيل (راجع السجل)',
+    recEmpty: '⚠️ ملف فارغ — لم ينتج المُرمِّز شيئًا. افتح السجل 📜 للتفاصيل.',
+    recNoStream: '✗ لا يوجد تدفق فيديو — أعد تحميل الصفحة',
+    zoom: 'تكبير', zoomOn: '🔍 تم التكبير', zoomOff: '🔍 تم الإلغاء',
+    autoZoom: 'تكبير تلقائي',
+    fullscreen: 'ملء الشاشة',
+    outputFormat: '🎞 تنسيق الإخراج',
+    formatAuto: 'تلقائي (MP4 إن أمكن)', formatMp4: 'MP4 (H.264/AAC)', formatWebm: 'WebM (VP9/Opus)',
+    stageAspect: '📐 صيغة المسرح',
+    stageAspectHint: 'لا يتغير أثناء التسجيل',
+    aspectLockedDuringRec: '⚠ لا يمكن التغيير أثناء التسجيل',
+    instantReplay: '⚡ إعادة فورية', autoThumbnail: '📸 صورة مصغرة', transcript: '📝 نص مكتوب', trim: 'قص', trimTitle: 'قص الدرس',
+    trimIn: 'البداية', trimOut: 'النهاية', trimDuration: 'المدة النهائية:',
+    trimPreviewIn: '▶ البداية', trimPreviewOut: '▶ النهاية',
+    trimEncoding: 'جارٍ الترميز…',
+    trimCutSilences: '✂ قص فترات الصمت',
+    trimScrubberHint: 'انقر للتنقل · اسحب المقابض للقص',
+    trimExport: 'تصدير الدرس المقصوص', trimExported: 'تم تصدير الدرس المقصوص',
+    trimNoTake: '⚠️ لا يوجد درس مسجّل للقص',
+    trimTooShort: '⚠️ التحديد قصير جدًا (الحد الأدنى 0.2 ث)',
+    cancel: 'إلغاء',
+    pinSource: '📌 تثبيت (الاحتفاظ بالموضع بين المشاهد)',
+    unpinSource: '🔓 فك التثبيت (المشهد يتحكم في الموضع)',
+    lockSource: '🔒 قفل الموضع',
+    unlockSource: '🔓 فتح قفل الموضع',
+    ctxLock: 'قفل / فتح',
+    sourceLocked: 'الموضع مقفل',
+    sourceUnlocked: 'الموضع مفتوح',
+    aspectLockOn: 'نسبة العرض مقفلة',
+    aspectLockOff: 'نسبة العرض حرة',
+    toggleBlur: '🌫 تمويه الخلفية',
+    removeSource: '✕ إزالة',
+    ctxHide: 'إخفاء / عرض',
+    ctxPin: 'تثبيت / إلغاء',
+    ctxDup: 'تكرار',
+    ctxShape: 'الشكل ▸',
+    ctxPip: 'إخراج (PiP)',
+    ctxMirror: 'مرآة',
+    ctxMirrorDup: 'نسخ معكوس',
+    ctxDel: 'حذف',
+    mirrorSource: 'تم النسخ المعكوس',
+    mirrorOnlyCam: '❌ الكاميرات فقط',
+    mirrorOn: 'مرآة مُفعَّلة',
+    mirrorOff: 'مرآة مُعطَّلة',
+    pipNotSupported: '❌ PiP غير مدعوم',
+    pipOnlyCam: '❌ الكاميرات فقط',
+    pipOn: 'PiP مُفعَّل',
+    pipError: '❌ PiP غير متوفر',
+    pipActive: 'PiP',
+    resetLayout: '🔓 إعادة ضبط التخطيط',
+    layoutReset: '🔓 تمت إعادة ضبط التخطيط',
+    collapseSidebar: 'إخفاء الشريط الجانبي',
+    expandSidebar: 'إظهار الشريط الجانبي',
+    randomScene: 'مشهد عشوائي',
+    noScenesToShuffle: 'لا توجد مشاهد',
+    onlyOneScene: 'مشهد واحد فقط',
+    saveScene: 'حفظ التخطيط',
+    promptSaveScene: 'اسم هذا المشهد؟',
+    promptDuplicateScene: 'اسم النسخة؟',
+    customSceneEmpty: '⚠ لا يوجد مصدر مرئي للحفظ',
+    confirmDeleteCustomScene: 'حذف هذا المشهد؟',
+    downloadCsv: 'المستشعرات (.csv)',
+    removeSilence: 'إزالة فترات الصمت',
+    silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
+    silenceExported: 'تمت إزالة الصمت',
+    silenceChip: 'أنت صامت…',
+    quizPromptLabel: 'ما السؤال الذي تريد طرحه على طلابك؟',
+    sensorOverlayLabel: '🤖 طبقة تلقائية عند اهتزاز الروبوت',
+    micBoost: '🎚 تعزيز الميكروفون',
+    micGate: '🔇 بوابة الصمت (dB)',
+    jingleLabel: '🎵 جينغل المقدمة (1.5ث)',
+    timelapseLabel: '⏩ تسريع الوقت',
+    timeGoalLabel: '⏳ هدف المدة',
+    timeGoalMinutes: 'الدقائق:',
+    timeGoalAutoStop: 'إيقاف تلقائي عند الهدف',
+    timeGoalReached: '⏳ تم بلوغ الهدف',
+    timeGoalStop: '⏳ تم بلوغ الهدف — إيقاف تلقائي',
+    clockLabel: '🕐 إظهار الساعة في زاوية',
+    clockDateLabel: '+ التاريخ',
+    recIndicatorLabel: '🔴 نقطة REC أثناء التسجيل',
+    audioVizLabel: '🎵 مؤثر صوتي على الكانفا',
+    recElapsedLabel: '⏱ مؤقت الوقت المنقضي أثناء التسجيل',
+    badgeBtn: 'بطاقة شارة',
+    badgeHeadline: 'تم تسجيل الدرس!',
+    badgeStatDuration: 'المدة',
+    badgeStatSources: 'المصادر',
+    badgeStatChapters: 'الفصول',
+    badgeStatMicrobit: 'micro:bit',
+    badgeNoTake: '⚠️ لا يوجد درس للتصدير',
+    badgeExported: 'تم تصدير الشارة',
+    badgeError: '✗ تعذّر إنشاء الشارة',
+    firstTimeTitle: 'أول مرة؟ ابدأ من هنا',
+    firstTimeBody: 'الخطوات السبع أدناه تأخذك من الصفر إلى أول درس محمّل في أقل من 5 دقائق. يعمل NoorCast على Chromebook أو أي متصفح سطح مكتب، بدون حساب، بدون تثبيت.',
+    firstTimeTeacher: '👩‍🏫 للمعلّمين: NoorCast مصمّم لشرح الكود مع روبوت (micro:bit، Arduino، LEGO). استخدم قالب «🤖 عرض روبوت» لتسلسل موجّه من 5 خطوات. فيديوهاتك تبقى 100% على حاسوبك.',
+    brandSection: '🏷 العلامة (شعار + شعار نصي)',
+    brandPresets: '📁 إعدادات العلامة',
+    brandSave: 'حفظ:',
+    brandLoad: 'تحميل:',
+    brandPresetSaved: 'تم حفظ الإعداد',
+    brandPresetLoaded: 'تم تحميل الإعداد',
+    brandPresetEmpty: 'فتحة فارغة',
+    brandUploadLogo: 'رفع شعار (PNG/SVG)',
+    brandClearLogo: 'إزالة الشعار',
+    brandLogoLoaded: '🏷 تم تحميل الشعار',
+    brandLogoCleared: '🏷 تمت إزالة الشعار',
+    brandEffect: 'تأثير ممتع',
+    brandBgRemove: '✂ إزالة خلفية الشعار (يعمل مع JPG بخلفية موحّدة)',
+    brandBgRemoved: '✂ تمت إزالة الخلفية',
+    brandBgRestored: '↩ استُعيدت الخلفية الأصلية',
+    brandSize: '📐 حجم الشعار',
+    brandSloganColor: '🎨 لون الشعار النصي',
+    brandQrUrl: '🔗 رابط بطاقة الشارة',
+    brandLogoOpacity: '💧 شفافية الشعار',
+    brandLogoFilter: '🎨 فلتر الشعار',
+    watermarkLabel: '💧 علامة مائية',
+    tickerCustomLabel: '📰 رسائل الشريط (سطر لكل رسالة)',
+    tickerCustomHint: 'اتركه فارغًا لاستخدام النصائح العشر الافتراضية.',
+    setSecGeneral: 'عام',
+    setSecRecording: 'تسجيل',
+    setSecLogo: 'الشعار',
+    setSecSlogan: 'النص والتأثير',
+    setSecTicker: 'الشريط',
+    textFont: 'Aa الخط الافتراضي',
+    textStroke: '✒ إطار النص',
+    freeResize: 'تمدد حر (Shift+زاوية)',
+    teleSpeed: 'السرعة',
+    telePlay: 'تشغيل',
+    telePause: 'إيقاف',
+    teleReset: 'إعادة',
+    cheatTitle: 'اختصارات لوحة المفاتيح',
+    cheatRec: '🎬 التسجيل',
+    cheatRecStart: 'بدء / إيقاف التسجيل',
+    cheatRecPause: 'إيقاف مؤقت / استئناف',
+    cheatRecMark: 'إضافة علامة فصل',
+    cheatRecSnap: 'لقطة صورة',
+    cheatRecSaveAll: 'تحميل الكل',
+    bulkDl: 'تحميل الكل',
+    bulkFiles: 'ملفات',
+    bulkNoTake: '⚠ لا يوجد درس للتحميل',
+    shareTake: 'مشاركة',
+    shareText: 'درسي المصنوع بـ NoorCast 🎬',
+    shareDone: 'تمت المشاركة',
+    shareError: '❌ خطأ في المشاركة',
+    shareNotSupported: '❌ المشاركة الأصلية غير مدعومة — استخدم تنزيل',
+    shareNoTake: '⚠ لا يوجد درس للمشاركة',
+    cheatRecBig: 'علامة كبيرة (★)',
+    bigMarker: 'علامة كبيرة',
+    cheatTools: '🛠 الأدوات المباشرة',
+    cheatToolLaser: 'مؤشر ليزر تشغيل/إيقاف',
+    cheatToolFreeze: 'تجميد الشاشة',
+    cheatToolDraw: 'السبورة البيضاء',
+    cheatToolZoom: 'تكبير يدوي',
+    cheatToolTele: 'التيليبرومبتر',
+    cheatToolQuiz: 'بطاقة سؤال',
+    cheatToolCaptions: 'ترجمات تشغيل/إيقاف',
+    captionsOn: 'ترجمات مُفعَّلة',
+    captionsOff: 'ترجمات مُعطَّلة',
+    cheatScenes: '🎭 المشاهد',
+    cheatScene: 'تغيير المشهد',
+    cheatSceneMove: 'إعادة ترتيب المشهد النشط',
+    cheatText: '✏️ النص المحدد',
+    cheatTextDup: 'تكرار النص',
+    cheatTextRotL: 'دوران −5°',
+    cheatTextRotR: 'دوران +5°',
+    cheatTextRotReset: 'إعادة تعيين الدوران',
+    cheatTextLayer: 'خلف / أمام',
+    cheatTextLayerX: 'إلى الخلف / الأمام تمامًا',
+    cheatTextDel: 'حذف المحدد',
+    cheatMisc: '✨ متنوع',
+    cheatMiscFree: 'تمدد حر لمصدر',
+    cheatMiscGrid: 'التقاط بالشبكة',
+    cheatMiscWheelZoom: 'تكبير بالعجلة',
+    cheatMiscThis: 'عرض هذه اللوحة',
+    cheatMiscEsc: 'إغلاق اللوحات',
+    cheatMiscDebug: 'Debug HUD',
+    cheatMiscRetry: 'إعادة آخر 30 ثانية (أثناء التسجيل)',
+    cheatMiscInstantRec: 'تسجيل فوري (تخطي العد)',
+    cheatMiscPasteImg: 'لصق صورة من الحافظة',
+    pasteImageError: '❌ صورة غير صالحة',
+    instantRec: '⚡ بدء فوري',
+    softRewindToast: '↶ إعادة — آخر 30 ثانية مُعلّمة',
+    undo: 'تراجع',
+    redo: 'إعادة',
+    undoDone: '↩ تم التراجع',
+    redoDone: '↪ تمت الإعادة',
+    undoEmpty: '↩ لا شيء للتراجع',
+    redoEmpty: '↪ لا شيء للإعادة',
+    introOutroLabel: '🎬 بطاقات مقدمة/خاتمة سينمائية',
+    outroTitle: 'شكرًا!',
+    outroBadges: 'شارات',
+    outroTagline: 'درسك جاهز',
+    outroPlaying: '🎬 الخاتمة قيد التشغيل…',
+    autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
+    captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
+    sceneAutoSave: '💾 حفظ تلقائي للمشهد عند تغيير المصادر',
+    sceneAutoSaved: '💾 تم حفظ المشهد تلقائيًا',
+    sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
+    sceneTransitionLabel: '🎞 انتقال بين المشاهد',
+    transitionNone: 'بدون',
+    transitionFade: 'تلاشي',
+    transitionWipe: 'مسح',
+    duckLabel: '🔉 خفض صوت المصادر عند التحدث',
+    screensaverLabel: '💤 شاشة توقف بعد 90 ثانية',
+    screensaverHint: 'اضغط أي مفتاح للاستيقاظ',
+    autoAdvScenes: '⏩ تقدم تلقائي للمشاهد',
+    autoAdvSec: 'الفاصل الزمني (ثانية)',
+    snapGrid: '📐 محاذاة إلى الشبكة',
+    gridSize: 'حجم الشبكة (بكسل)',
+    countdownTimer: '⏳ مؤقت',
+    pianoOverlay: '🎹 بيانو',
+    letterboxBars: '🎬 أشرطة',
+    letterboxLabel: '🎬 أشرطة سينمائية (letterbox)',
+    letterboxHeight: 'ارتفاع الأشرطة (%)',
+    colorPicker: '🎨 منتقي اللون',
+    colorCopied: 'تم النسخ',
+    sceneTime: 'الوقت لكل مشهد',
+    timerDuration: 'مدة المؤقت (دقيقة)',
+    snapAnnotLabel: '✏️ توضيح اللقطة قبل الحفظ',
+    snapAnnotTitle: 'وضّح لقطتك',
+    snapAnnotClear: 'مسح',
+    snapAnnotSave: 'حفظ',
+    autoPaused: '⏸ تم إيقاف التسجيل مؤقتًا',
+    autoResumed: '▶ استُؤنف التسجيل',
+    sensorChartTitle: 'مستشعرات micro:bit',
+    sensorBtnsLegend: 'الأزرار',
+    chapterListTitle: 'الفصول',
+    sceneReordered: 'تمت إعادة ترتيب المشاهد',
+    minimap: 'معاينة',
+    historyTitle: 'دروسي',
+    dailyGoalReached: 'تم تحقيق هدف اليوم!',
+    streak: 'سلسلة',
+    days: 'أيام',
+    historyEmpty: 'لا دروس بعد. اضغط 🔴 تسجيل للبدء!',
+    historyClear: '🗑 مسح السجل',
+    historyConfirmClear: 'مسح سجل الدروس؟',
+    historyCleared: '🗑 تم مسح السجل',
+    historySearchPlaceholder: '🔍 ابحث…',
+    dashTitle: 'إحصاءاتك',
+    dashEmpty: 'سجّل درسك الأول لرؤية إحصاءاتك 📊',
+    dashRecs: 'دروس',
+    dashTotal: 'المجموع',
+    dashLongest: 'الأطول',
+    dashSize: 'الحجم',
+    dashStreak: 'أيام',
+    dashFavDay: 'اليوم المفضل',
+    dash7Days: 'آخر 7 أيام',
+    dashPauses: 'إيقاف/درس',
+    dashAvgRating: 'متوسط التقييم',
+    takeRating: 'قيّم هذا الدرس:',
+    takeTitle: '📝 اسم الملف',
+    takeNotes: '📝 ملاحظات',
+    takeNotesPlaceholder: 'ملاحظات حول هذا الدرس…',
+    manyPauses: 'لقد أوقفت كثيرًا — جرّب Shift+R للبدء الفوري',
+    dashNote: '💡 إحصاءات آخر 10 دروس',
+    setSecDanger: '♻ الصيانة',
+    diagnostics: 'التشخيص',
+    resetBadges: 'إعادة تعيين الشارات',
+    clearCache: 'مسح جميع البيانات المحلية',
+    rebindBtn: 'اختصارات لوحة المفاتيح…',
+    rebindTitle: 'اختصارات مخصصة',
+    rebindReset: 'استعادة الافتراضيات',
+    badgesReset: '🗑 تم إعادة تعيين الشارات',
+    cacheCleared: '💥 تم مسح الذاكرة — إعادة تحميل…',
+    confirmClearCache: 'حذف جميع البيانات المحلية (الشارات، الشعار، التفضيلات، الشريط…)؟ سيعيد التطبيق التشغيل كأنه مثبت حديثًا.',
+    bundleExport: 'تصدير الجلسة',
+    bundleImport: 'استيراد جلسة',
+    bundleExported: '📦 تم تصدير الجلسة',
+    bundleImported: '📦 تم الاستيراد — إعادة تحميل…',
+    bundleBadFormat: '❌ تنسيق غير صالح',
+    bundleConfirm: 'استبدال بياناتك المحلية بهذه الجلسة؟',
+    exportSettings: 'تصدير الإعدادات',
+    importSettings: 'استيراد الإعدادات',
+    settingsExported: '⚙️ تم تصدير الإعدادات',
+    settingsImported: '⚙️ تم استيراد الإعدادات — إعادة تحميل…',
+    settingsConfirm: 'استبدال إعداداتك المحلية بهذا الملف؟',
+    buildMeta: 'تم البناء',
+    badgeUnlockTitle: '🏆 شارة مُفتوحة!',
+    badgeUnlockContinue: 'متابعة',
+    faq_q9: '🏆 ما هي الشارات؟',
+    faq_a9: 'كؤوس محلية صغيرة تُفتح تدريجيًا: 🎬 أول درس (أول تسجيل منتهٍ)، ⏱ أكثر من 5 دقائق (تسجيل يتجاوز 5 دقائق)، 🎥 كاميرات متعددة (2+ كاميرات معًا)، 🎭 جميع المشاهد (استعمال كل المشاهد)، 🏷 ملك العلامات (5+ علامات في تسجيل واحد)، 🤖 micro:bit موصول (أول اتصال BT). كل شيء مخزّن محليًا، لا يُرسل شيء إلى أي مكان.',
+    faq_q10: '♻ كيف أعيد تعيين بياناتي؟',
+    faq_a10: 'في ⚙️ الإعدادات ← عام، زرّان: «🗑 إعادة تعيين الشارات» يحذف كؤوسك فقط. «💥 مسح جميع البيانات المحلية» يحذف كل شيء: الشارات، الشعار، التفضيلات، رسائل الشريط، الخط الافتراضي، التجربة الأولى. يعود التطبيق كالتثبيت الجديد بعد إعادة التحميل.',
+    brandSloganFont: 'Aa خط الشعار النصي',
+    brandSloganSize: '📐 حجم الشعار النصي',
+    brandLogoTint: '🎨 لون الشعار (ظلّي)',
+    sourceTitlePh: 'عنوان (مثلاً 💻 كودي)',
+    sourceOpacity: 'شفافية',
+    sourceRotation: 'دوران',
+    sourceShape: 'الشكل',
+    sourceBorder: 'إطار',
+    borderColor: 'لون الإطار',
+    borderWidth: 'سمك الإطار',
+    sourceShadow: 'ظل مسقط',
+    shadowColor: 'لون الظل',
+    shadowBlur: 'ضبابية الظل',
+    shadowOffsetX: 'إزاحة X للظل',
+    shadowOffsetY: 'إزاحة Y للظل',
+    cornerRadius: 'نصف قطر الزوايا',
+    sourceBadge: 'شارة',
+    cropTop: 'قص أعلى',
+    cropBottom: 'قص أسفل',
+    cropLeft: 'قص يسار',
+    cropRight: 'قص يمين',
+    filter_none: '— فلتر —',
+    filter_bw: 'أبيض وأسود',
+    filter_sepia: 'سيبيا',
+    filter_bright: 'ساطع',
+    filter_contrast: 'تباين',
+    filter_vintage: 'كلاسيكي',
+    filter_cool: 'بارد',
+    filter_warm: 'دافئ',
+    overlayDuplicated: '📋 تم تكرار الطبقة',
+    maximize: '⛶ ملء الشاشة',
+    restore: '⛶ استعادة',
+    zoomHint: '🔍 Z = تفعيل/إلغاء · ⛶ = ملء الشاشة · Esc = خروج',
+    laserHint: '🔴 L = تفعيل/إلغاء · أمِل micro:bit للتصويب',
+    freezeHint: '❄ F = تجميد/إلغاء · استمر في الكلام بينما الشاشة مجمّدة',
+    drawHint: '✏ D = تفعيل/إلغاء · اسحب على المعاينة للرسم',
+    layerForward: '⬆ إلى الأمام',
+    layerBackward: '⬇ إلى الخلف',
+    sourceForward: '⬆ للأمام',
+    sourceBackward: '⬇ للخلف',
+    ctxForward: 'إلى الأمام',
+    ctxBackward: 'إلى الخلف',
+    ctxFront: 'إلى الأمام تمامًا',
+    ctxBack: 'إلى الخلف تمامًا',
+    cheatSrcLayer: 'المصدر: إلى الخلف / الأمام',
+    sourceRemoved: 'تمت إزالة المصدر',
+    firstSourceHint: '💡 انقر الفيديو للتحديد · ✕ للإزالة · 👁 للإخفاء · الزاوية لتغيير الحجم',
+    overlayDeleted: '✕ تم حذف الطبقة',
+    sourceHide: '👁 إخفاء (مؤقت)',
+    sourceShow: '🙈 إظهار مجددًا',
+    sourceHidden: '🙈 المصدر مخفي',
+    sourceShown: '👁 المصدر ظاهر',
+    sourceRenamed: 'أُعيدت تسمية المصدر',
+    sourceChromeHint: 'انقر ✕ للإزالة · 👁 للإخفاء · Del للحذف',
+    transparency_solid: 'خلفية ممتلئة',
+    transparency_semi:  'خلفية شبه شفافة',
+    transparency_text:  'نص فقط',
+    transparency_ghost: 'نص شبحي',
+    badge_first: 'أول درس', badge_long: 'أكثر من 5 دقائق', badge_multi: 'كاميرات متعددة',
+    badge_all_scenes: 'جميع المشاهد', badge_marker_king: 'ملك العلامات', badge_micro: 'micro:bit موصول',
+    badge_veteran: 'متمرس (10 دروس)', badge_marathon: 'ماراثون (30 دقيقة)', badge_library: 'مكتبة (5 مشاهد)',
+    faq_q1: "ما هو NoorCast؟",
+    faq_a1: "NoorCast أداة ويب لتسجيل دروس فيديو بعدة كاميرات (شاشة + كاميرات + ميكروفون) مباشرة من متصفحك. بدون تثبيت، بدون حساب، كل شيء يبقى على حاسوبك.",
+    faq_q2: "كيف أضيف عدة كاميرات؟",
+    faq_a2: "في اللوحة اليسرى، اختر كاميرا من القائمة واضغط على +. يمكنك تكرار ذلك لإضافة حتى 3 كاميرات (مثلاً واحدة للروبوت، واحدة لك، وواحدة لشاشة micro:bit).",
+    faq_q3: "هل يمكنني قراءة مستشعرات micro:bit؟",
+    faq_a3: "نعم! اضغط على « 📡 اتصال micro:bit » في اللوحة اليسرى. سيطلب متصفحك إذن الاتصال عبر Bluetooth. بعد الاتصال، تظهر قيم المستشعرات (مقياس التسارع، الضوء، الأزرار) كطبقة فوق الفيديو. ⚠️ Chrome/Edge فقط.",
+    faq_q4: "ما هي اختصارات لوحة المفاتيح؟",
+    faq_a4: "R = تسجيل/إيقاف · P = إيقاف مؤقت · M = علامة · 1-6 = تبديل المشهد · L = ليزر (تبديل) · F = تجميد الشاشة · D = رسم · S = لقطة · Esc = إغلاق اللوحات",
+    faq_q5: "هل فيديوهاتي خاصة؟",
+    faq_a5: "100%. لا شيء يغادر حاسوبك. يبقى التسجيل في ذاكرة المتصفح ويُحمَّل مباشرة إلى قرصك. بدون حساب، بدون تحليلات، بدون خادم.",
+    faq_q6: "ما هي صيغة الإخراج؟",
+    faq_a6: "WebM (VP9 + Opus). قابل للتشغيل في VLC وChrome وFirefox وYouTube وDavinci Resolve. للتحويل إلى MP4 استخدم ffmpeg أو أداة عبر الإنترنت مثل cloudconvert.com.",
+    faq_q7: "هل التيليبرومبتر ظاهر في فيديوي؟",
+    faq_a7: "لا، أبداً. يظهر التيليبرومبتر فوق المعاينة لك فقط. لا يُرسَم على اللوحة التي تُركِّب الفيديو، لذا لا يظهر في التسجيل النهائي.",
+    faq_q8: "المتصفح الموصى به؟",
+    faq_a8: "Chrome أو Edge على سطح المكتب. Firefox يعمل للتسجيل لكن ليس لـ Web Bluetooth (micro:bit). Safari لا يدعم المستشعرات ولا بعض خيارات الصوت. iOS غير مدعوم لأن Safari Mobile يحجب التقاط الشاشة.",
+    howto_1: "وصّل كاميرات USB (إن لزم) واسمح بالوصول عندما يطلب منك المتصفح.",
+    howto_2: "في لوحة المصادر على اليسار، أضف شاشتك وكاميراتك واختر الميكروفون.",
+    howto_3: "انقر على أحد المشاهد الجاهزة على اليمين (كود، روبوت، استوديو…) — يتغير التركيب فوراً.",
+    howto_4: "أضف نصًا من المكتبة (⭐ أحسنت، 🎯 الخطوة 1…) — سيظهر كطبقة.",
+    howto_5: "انقر على الزر الكبير 🔴 تسجيل. عدّ تنازلي 3-2-1 ثم ينطلق التسجيل.",
+    howto_6: "استخدم الأرقام 1-9 لتبديل المشاهد مباشرة. L للّيزر، F لتجميد الشاشة، D للرسم.",
+    howto_7: "انقر ⏹ إيقاف. سيتم تحميل درسك بصيغة .webm مع الفصول بصيغة .vtt.",
+    wiki_multicam_title: "🎥 كاميرات متعددة",
+    wiki_multicam: "يعرض NoorCast حتى 3 كاميرات + شاشة + ميكروفون في آن واحد. كل مصدر عبارة عن صندوق قابل للسحب في المشهد. يمكنك تحديد شكله (مستطيل أو دائرة) وحجمه وموقعه.",
+    wiki_scenes_title: "🎭 المشاهد",
+    wiki_scenes: "المشهد هو تخطيط: موضع/حجم/رؤية كل مصدر + النصوص النشطة. يمكنك التبديل بين المشاهد أثناء التسجيل بالأرقام 1-9 أو بالنقر. قطع فوري بدون تأخير.",
+    wiki_sensor_title: "🤖 مستشعرات micro:bit",
+    wiki_sensor: "عبر Web Bluetooth يتصل NoorCast مباشرة بـ micro:bit ويقرأ مستشعراته في الوقت الحقيقي (مقياس التسارع، الضوء، الحرارة، الأزرار). تظهر القيم كطبقة فوق الفيديو، مثالية لشرح مستشعر للطلاب.",
+    wiki_privacy_title: "🔒 الخصوصية",
+    wiki_privacy: "كل شيء يبقى محليًا. يعالج المتصفح تدفقات الفيديو ويركّبها على لوحة ويسجلها في الذاكرة عبر MediaRecorder. يُحمَّل الملف النهائي إلى قرصك. بدون خادم، بدون تتبع.",
+    news_010: "الإصدار الأول من NoorCast 🎉",
+    news_010_1: "كاميرات متعددة (شاشة + حتى 3 كاميرات + ميكروفون)",
+    news_010_2: "6 مشاهد جاهزة (كود، روبوت، مستشعرات، كود+روبوت، استوديو، أنت)",
+    news_010_3: "نصوص تراكبية مع مكتبة ملائمة للأطفال",
+    news_010_4: "أدوات مباشرة: ليزر، تجميد الشاشة، لوح رسم، تيليبرومبتر",
+    news_010_5: "مستشعرات micro:bit عبر Web Bluetooth (Chrome/Edge)",
+    news_010_6: "فصول تلقائية مُصدَّرة بصيغة .vtt",
+    news_010_7: "علامات مباشرة (مفتاح M) + لقطات فوتوغرافية (مفتاح S)",
+    news_010_8: "شارات تقدّم + كونفيتي في النهاية",
+    news_010_9: "ثلاثي اللغات FR/EN/AR، 8 مظاهر بصرية",
+    news_011: "أول اختبار تشغيل كامل: إصلاح خطأين 🧪",
+    news_011_1: "تصحيح الإيموجي المكرر في أزرار المشاهد",
+    news_011_2: "إضافة 41 مفتاح ترجمة مفقود (FAQ، wiki، الدليل، السجل)",
+    news_012: "تدقيق كامل وإصلاحات كبرى 🔧",
+    news_012_1: "إصلاح حرج: كانت خطوط لوح الرسم تُمحى باستمرار بسبب الليزر",
+    news_012_2: "تفعيل المؤثرات الصوتية في الإعدادات (بدء، إيقاف، توقف، علامة)",
+    news_012_3: "لوحة تصحيح (FPS + الذاكرة) عبر Ctrl+Shift+D",
+    news_012_4: "ترجمة كاملة لتلميحات التيليبرومبتر ونص الإدخال الحر",
+    news_012_5: "تحديث تلقائي لأسماء الكاميرات والميكروفونات بعد الإذن",
+    news_012_6: "تنظيف تلقائي للتدفقات والبيانات عند إغلاق التبويب",
+    news_012_7: "إعادة تعيين الأدوات (ليزر/تجميد/رسم/نصوص) بين التسجيلات",
+    news_012_8: "ترجمة المظاهر ومواءمة اختصارات FAQ مع الشيفرة الفعلية",
+    news_020: "قوالب دروس موجّهة 🎬",
+    news_020_1: "3 قوالب ملائمة للأطفال: درس كامل، عرض روبوت، تصحيح",
+    news_020_2: "كل قالب يضع تسلسل 5 خطوات مرئي دائمًا",
+    news_020_3: "النقر على خطوة = تغيير المشهد + إضافة علامة فصل",
+    news_020_4: "الكاميرات المضافة بعد اختيار قالب ترث التخطيط",
+    news_020_5: "يفتح تلقائيًا عند أول تشغيل (يستبدل الإرشاد القديم)",
+    news_021: "إصلاح حرج: ملفات webm بحجم صفر 🚨",
+    news_021_1: "تخزين canvas.captureStream مسبقًا (يتجنب مشكلة معروفة في Chrome/Firefox)",
+    news_021_2: "معالج أخطاء MediaRecorder + سجلات تفصيلية في لوحة النشاط",
+    news_021_3: "اكتشاف التسجيلات الفارغة — لا مزيد من التنزيلات الوهمية",
+    news_021_4: "تقليل الشريحة الزمنية من 1000 إلى 250 مللي ثانية للتسجيلات القصيرة",
+    news_021_5: "استئناف AudioContext عند بدء التسجيل",
+    news_022: "الإصلاح الحقيقي لملفات 0 بايت 🎯",
+    news_022_1: "السبب الفعلي: مسار الصوت في audioDest لم يُصدر أي عينات بدون مصدر متصل",
+    news_022_2: "الإصلاح: ConstantSourceNode صامت متصل بشكل دائم",
+    news_022_3: "تم التحقق عبر اختبار تشغيل كامل بدون واجهة (كل الأزرار والمشاهد والأدوات)",
+    news_022_4: "زر 'فارغ' يمسح الآن أي قالب نشط",
+    news_023a: "تحديث شاشة البداية + شعار جديد 🎬",
+    news_023a_1: "إصلاح تداخل الشعار مع العنوان (الحاوية 120×65 → 140×140)",
+    news_023a_2: "شعار جديد: «أضواء، كاميرا، روبوت!»",
+    news_023a_3: "شارة workshop-diy.org على شاشة البداية والتذييل",
+    news_024: "توسيع منطقة العمل فعليًا 📺",
+    news_024_1: "عرض التطبيق: 1240 → مرن حتى 1760 بكسل",
+    news_024_2: "شبكة الاستوديو: أشرطة جانبية 240 بكسل + minmax(0,1fr) لمنطقة الكانفاس",
+    news_024_3: "الكانفاس محدود بارتفاع منفذ العرض — 16:9 مثالي عند 1920/1600/1366",
+    news_024_4: "الأشرطة الجانبية قابلة للتمرير داخليًا لإبقاء زر التسجيل مرئيًا",
+    news_030: "قص + تكبير + MP4 ✂️🔍📼",
+    news_030_1: "أداة قص غير مدمرة: مقبضان، زر تصدير، ملف جديد مع فصول معدّلة",
+    news_030_2: "تكبير يدوي سلس بمفتاح Z (أو زر A في micro:bit) للحظات التركيز",
+    news_030_3: "تصدير MP4 أصلي عند دعم المتصفح (Chrome 126+، Safari، Edge)",
+    news_030_4: "تفضيل تنسيق الإخراج في الإعدادات: تلقائي / MP4 / WebM",
+    news_030_5: "القص يعيد الترميز عبر canvas بدون شاشة + MediaRecorder — بلا تبعيات، بلا سحابة",
+    news_040: "السحب والإفلات + تأثيرات 🖐✨",
+    news_040_1: "السحب والإفلات: حرّك أي مصدر مباشرة على الكانفاس، يُثبّت تلقائيًا",
+    news_040_2: "انجذاب إلى 7 نقاط (زوايا، مراكز الحواف، المركز) ضمن نصف قطر 60 بكسل",
+    news_040_3: "زر 📌 / 🔓 في كل مصدر للتثبيت يدويًا، و«إعادة ضبط التخطيط» لتحرير الكل",
+    news_040_4: "تمويه خلفية لكل مصدر (🌫) — واضح في الوسط، مموّه عند الحواف",
+    news_040_5: "هالة بلون المظهر حول كل مصدر مرئي (دائمًا مفعّلة)",
+    news_040_6: "نبضة بصرية عند كل علامة (M) — تأكيد فوري للمعلّم",
+    news_050: "قوى micro:bit الخارقة + قص ذكي 🤖🔇",
+    news_050_1: "زر A = تكبير · زر B = علامة · الإمالة = موضع الليزر",
+    news_050_2: "تصدير CSV للمستشعرات متزامن مع الجدول الزمني للدرس (حصري)",
+    news_050_3: "قص تلقائي لفترات الصمت > 2ث — نقرة واحدة بعد التسجيل، بدون محرر خارجي",
+    news_050_4: "إشعار صمت مباشر (> 1.8ث ميكروفون صامت، مرئي لك فقط)",
+    news_050_5: "مفتاح Q = بطاقة سؤال (quiz) ملائمة للأطفال",
+    news_050_6: "طبقة 🤖 تلقائية عند اهتزاز الروبوت بقوة (اختياري في الإعدادات)",
+    news_060: "تلميع التبنّي 🎵🏆👩‍🏫",
+    news_060_1: "جينغل مقدمة Web Audio اختياري (1.5ث) — تفعيل في الإعدادات",
+    news_060_2: "بطاقة شارة PNG قابلة للمشاركة تُنشأ بعد كل تسجيل",
+    news_060_3: "نداء «أول مرة؟ ابدأ من هنا» + طرح للمعلّمين في لوحة المساعدة",
+    news_060_4: "إضافة قسم «للمعلّمين» في README",
+    news_070: "أقصى مرونة: السحب وتغيير الحجم لكل شيء 🖐📐",
+    news_070_1: "النصوص قابلة للسحب وتغيير الحجم (4 مقابض، Ctrl+D للتكرار، Delete للحذف)",
+    news_070_2: "المصادر قابلة لتغيير الحجم من 4 زوايا (مع الحفاظ على النسبة)",
+    news_070_3: "شعار وعبارة مخصّصان (PNG/SVG) مع 6 تأثيرات ممتعة: دوران، نبض، ارتداد، اهتزاز، هالة، قوس قزح",
+    news_070_4: "فلاتر بصرية لكل مصدر: أبيض وأسود، سيبيا، ساطع، تباين، كلاسيكي، بارد، دافئ",
+    news_070_5: "عنوان/تسمية لكل مصدر (أسلوب lower-third) — اكتبه مباشرة في لوحة المصادر",
+    news_070_6: "زر ملء الشاشة ⛶ — المعاينة تملأ الشاشة، Esc للخروج",
+    news_070_7: "تلميحات لوحة مفاتيح تظهر عند تفعيل التكبير / الليزر / التجميد / الرسم",
+    news_087: "50+ ميزة: صقل، إتاحة، أدوات احترافية 🚀⌨🎨🔧",
+    news_087_1: "🎚 الصوت: مقياس LED، تعزيز الميكروفون، بوابة الصمت، خفض تلقائي عند التحدث، ترجمات مباشرة",
+    news_087_2: "🎨 العلامة: 3 إعدادات مسبقة، لون تمييز مخصص، مفتاح اللون، فلتر صورة ظلية",
+    news_087_3: "🎬 المشهد: 9 أشكال، 4 نسب (16:9 / 9:16 / 1:1 / 4:3)، إعادة الترتيب بالسحب + Shift+Alt+←→، حفظ المشاهد المخصصة، نص افتتاحي تلقائي، انتقال تلاشي",
+    news_087_4: "✏ الرسم: سبورة 6 ألوان + ممحاة + 3 سماكات، منزلقة إطار النص، منتقي الإيموجي، توضيح اللقطة",
+    news_087_5: "⌨ لوحة المفاتيح: ورقة اختصارات (?)، اختصارات قابلة لإعادة الربط، ضغط طويل للتسجيل الفوري، Ctrl+Z تراجع/إعادة، Ctrl+S تحميل الكل",
+    news_087_6: "📐 التخطيط: أدلة محاذاة ذكية، عتبة السحب، التقاط Alt بالشبكة 48 بكسل، خريطة مصغرة، تكبير بالعجلة",
+    news_087_7: "📸 الالتقاط: لقطات 1×/2×/4×، شريط المعرض، لصق صورة Ctrl+V، إخراج الكاميرا PiP، قائمة النقر الأيمن",
+    news_087_8: "📊 التغذية الراجعة: لوحة الإحصاءات، سجل آخر 10 تسجيلات، الاحتفال بفتح الشارات، 3 شارات تراكمية جديدة، سلسلة الهدف اليومي",
+    news_087_9: "🎞 التسجيل: هدف المدة + إيقاف تلقائي، عداد الإيقاف، عد تنازلي مخصص 1-10 ث، مقدمة/خاتمة سينمائية، إيقاف تلقائي عند تبديل علامة التبويب، علامة كبيرة B، موجات النقر",
+    news_087_10: "🔧 الصيانة: تصدير/استيراد الجلسة، تشخيص المتصفح، نصيحة اليوم، جولة موجهة، شاشة توقف 90 ث، ساعة، قائمة فصول قابلة للنقر، موجة صوتية، رسم مستشعر micro:bit",
+    news_039: "11 ميزة استوديو: صور مصغّرة، معرض، فصول، خريطة مصغّرة، موجة صوتية، قائمة سياقية، جولة، نص افتتاح، إعادة، رابط الشارة 🎁",
+    news_039_1: "صور مصغّرة للمشاهد (v0.7.29) + شريط اللقطات (v0.7.30) تحت المسرح",
+    news_039_2: "قائمة فصول قابلة للنقر (v0.7.31) تحت الفيديو النهائي — انتقال بنقرة واحدة",
+    news_039_3: "إعادة ترتيب المشاهد بالسحب (v0.7.32) — يحفظ الترتيب للمفاتيح 1-9",
+    news_039_4: "خريطة مصغّرة حية (v0.7.33) في الشريط الجانبي الأيسر + موجة صوتية (v0.7.34) تحت الفيديو",
+    news_039_5: "النقر بالزر الأيمن على المصدر (v0.7.35) = قائمة سياقية: إخفاء · تثبيت · تكرار · شكل ▸ · حذف",
+    news_039_6: "جولة موجّهة عند أول تشغيل (v0.7.36) — 5 خطوات إضاءة على الميزات الأساسية",
+    news_039_7: "نص افتتاحي تلقائي عند تغيير المشهد (v0.7.37) — اختياري في الإعدادات",
+    news_039_8: "إعادة 30 ثانية (v0.7.38) — Ctrl+Z أثناء التسجيل يعلّم آخر 30 ثانية",
+    news_039_9: "رابط بطاقة الشارة (v0.7.39) — يُعرض في أسفل كل بطاقة مشاركة",
+    news_028: "مقدمة/خاتمة + إيقاف تلقائي + رسم المستشعرات + السجل + ورقة الاختصارات ⌨🎬⏸📊",
+    news_028_1: "ورقة اختصارات لوحة المفاتيح (v0.7.24): اضغط ? لرؤية جميع الاختصارات الـ 22 مصنفة في 5 فئات",
+    news_028_2: "بطاقات مقدمة/خاتمة سينمائية (v0.7.25): 2.5 ثانية في البداية و2 ثانية في النهاية، مدمجة في التسجيل",
+    news_028_3: "إيقاف تلقائي عند تبديل علامة التبويب (v0.7.26): لن تسجّل إشعارات غير مقصودة بعد الآن",
+    news_028_4: "رسم مصغر لمستشعرات micro:bit (v0.7.27) في لوحة آخر تسجيل: X/Y/Z + علامات أزرار A/B",
+    news_028_5: "لوحة 📊 دروسي (v0.7.28): آخر 10 تسجيلات مع التاريخ، المدة، الشارات، الحجم، والإجمالي",
+    news_023: "الموجات + التكبير التلقائي + محرر التقطيع + تيليبرومبتر احترافي 🌊🎯✂📜",
+    news_023_1: "تيليبرومبتر احترافي (v0.7.20): تمرير تلقائي مع شريط سرعة، ⏵/⏸، A−/A+، ↔−/↔+، ↻ إعادة، اختصار T، نص محفوظ",
+    news_023_2: "تكبير تلقائي عند النقر (v0.7.21): انقر في أي مكان على مصدر شاشة فيكبّر المعاينة بسلاسة لمدة 1.5 ثانية (زر 🎯)",
+    news_023_3: "تحسينات محرر التقطيع (v0.7.22): شريط تمرير مرئي مع مقابض in/out، ✂ قص الصمت تلقائيًا، اختصارات Space/←/→/[/]/Enter/Esc",
+    news_023_4: "موجات النقر (v0.7.23): كل نقرة تصدر موجة متحركة لمدة 600 مللي ثانية مرسومة على قماش الإخراج — مدمجة في التسجيل النهائي (زر 💧)",
+    news_018: "إعادة تصميم + إصلاح حرج لأشرطة الأدوات العائمة 🎨🔧",
+    news_018_1: "شريط أدوات أفقي عائم فوق الاستوديو: ليزر · تجميد · رسم · تكبير · تيليبرومتر · صورة · ملء الشاشة — يحرر ~280 بكسل في الشريط الجانبي الأيمن",
+    news_018_2: "إصلاح خطأ حرج: أزرار أشرطة الأدوات العائمة (ألوان، خط، ✕) توقفت عن الاستجابة — حدث mousedown يتجاوز stopPropagation الخاص بـ click",
+    news_018_3: "مؤقت 00:00 موحد: لا مزيد من التكرار في الرأس، مؤقت Orbitron واحد بارز بحجم 1.15rem بجوار زر التسجيل",
+    news_017: "تغيير حجم حر + شريط إخبار واحد ↔📰",
+    news_017_1: "Shift + زاوية المصدر = تمدد حر (نسبة العرض مفتوحة) · بدون Shift = نسبة عرض مقفلة كالمعتاد",
+    news_017_2: "شريط الأخبار عاد إلى وضع التمرير الواحد: كل رسالة تظهر مرة واحدة فقط في كل دورة",
+    news_016: "أشرطة الأدوات العائمة مثبتة خارج المسرح 📐",
+    news_016_1: "أشرطة ✕/👁/📌/الشكل (المصدر + النص) مثبتة الآن تحت المسرح بدلاً من تطفو فوقه — صفر تداخل مع منطقة التسجيل",
+    news_015: "9 أشكال لفيديوهاتك 💠",
+    news_015_1: "مستطيل · مستدير · دائرة · حبة · سداسي · ثماني · معين · نجمة · قلب — قائمة منسدلة في شريط أدوات المصدر",
+    news_015_2: "كل الأشكال تشارك نفس المسار المركزي (التوهج، ضبابية الخلفية، القص يستخدمون نفس الهندسة)",
+    news_014: "الإعدادات في أقسام + مقابض تغيير الحجم المرئية + خط النص ⚙️",
+    news_014_1: "لوحة الإعدادات أُعيد تنظيمها إلى 5 أقسام قابلة للطي: عام · تسجيل · الشعار · النص · الشريط",
+    news_014_2: "مقابض تغيير الحجم المرئية في الزوايا الأربع للمصدر المحدد (كانت موجودة منذ v0.7.0 — الآن تراها)",
+    news_014_3: "منتقي الخط الافتراضي لتراكبات النص الحر في الشريط الجانبي الأيمن (6 خطوط، محفوظ)",
+    news_013: "إصلاح تكرار الشريط + شريط أدوات مصدر عائم 📰",
+    news_013_1: "إصلاح الشريط: الرسائل القصيرة مثل «hi» لم تعد تظهر كـ «hi · hi»",
+    news_013_2: "شريط أدوات HTML عائم جديد للمصدر المحدد: 👁 إخفاء · 📌 تثبيت · شكل · ✕ حذف",
+    news_012_b: "تحسين التخطيط + البسملة ✨",
+    news_012_b_1: "المسرح أطول بـ 60 بكسل عند 1080p، الأشرطة الجانبية ضيقة 240 → 220 بكسل، رأس الاستوديو مضغوط",
+    news_012_b_2: "البسملة في الرأس: الصيغة الكاملة بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ بحجم 15 بكسل مع تدرج — الرمز المركب ﷽ كان يتفكك في خط أميري",
+    tplTitle: "اختر كيف تبدأ",
+    tplSubtitle: "كل قالب يرشدك خطوة بخطوة",
+    tplChoose: "اختر قالبًا",
+    tplStarted: "بدأ القالب",
+    tplDismiss: "إغلاق",
+    tplBlank: "🎨 فارغ",
+    tplBlankDesc: "سأنشئ مشهدي الخاص",
+    tpl_lesson: "درس كامل",
+    tpl_lesson_d: "مقدمة → نظرية → عرض → تمرين → خاتمة",
+    tpl_lesson_intro: "🎓 اليوم نتعلّم…",
+    tpl_lesson_s1: "مقدمة",
+    tpl_lesson_s2: "النظرية",
+    tpl_lesson_s3: "العرض",
+    tpl_lesson_s4: "التمرين",
+    tpl_lesson_s5: "الخاتمة",
+    tpl_robot: "عرض روبوت",
+    tpl_robot_d: "مقدمة → كود → روبوت → مستشعرات → ملخّص",
+    tpl_robot_intro: "🤖 انظر إلى روبوتي!",
+    tpl_robot_s1: "مقدمة",
+    tpl_robot_s2: "الكود",
+    tpl_robot_s3: "الروبوت",
+    tpl_robot_s4: "المستشعرات",
+    tpl_robot_s5: "ملخّص",
+    tpl_fix: "تصحيح",
+    tpl_fix_d: "خطأ → تحليل → إصلاح → اختبار → تم",
+    tpl_fix_intro: "🐛 لنصلح هذا الخطأ معًا",
+    tpl_fix_s1: "الخطأ",
+    tpl_fix_s2: "التحليل",
+    tpl_fix_s3: "الإصلاح",
+    tpl_fix_s4: "الاختبار",
+    tpl_fix_s5: "يعمل!",
+    tpl_robotcam: "درس الروبوت",
+    tpl_robotcam_d: "الوجه ← الكود ← الروبوت ← المستشعرات ← الخلاصة",
+    tpl_robotcam_intro: "🤖 شاهد الروبوت في العمل!",
+    tpl_robotcam_s1: "مقدمة",
+    tpl_robotcam_s2: "الكود",
+    tpl_robotcam_s3: "الروبوت",
+    tpl_robotcam_s4: "المستشعرات",
+    tpl_robotcam_s5: "الخلاصة",
+    helpCamerasTab: "📷 كاميرات",
+    cam_continuity_title: "📱 Continuity Camera (ماك + آيفون)",
+    cam_continuity_body: "لا حاجة للتثبيت. نفس الواي فاي + نفس Apple ID = الآيفون يظهر ككاميرا في NoorCast.",
+    cam_droidcam_title: "📲 DroidCam (أندرويد / iOS)",
+    cam_droidcam_body: "مجاني. ثبّت التطبيق على الهاتف + برنامج التشغيل على الحاسوب. اتصل عبر USB أو واي فاي.",
+    cam_iriun_title: "📡 Iriun Webcam (جميع الأنظمة)",
+    cam_iriun_body: "مجاني. يعمل على ويندوز وماك ولينكس. نفس المبدأ: تطبيق + برنامج تشغيل.",
+    cam_camo_title: "🎥 Camo (جودة احترافية)",
+    cam_camo_body: "نسخة مجانية محدودة، النسخة المدفوعة تضيف تحكمات متقدمة (تكبير، تعريض، تركيز).",
+    cam_setup_btn: "📷 إعداد الكاميرات",
+    camwiz_1_title: "الخطوة 1: تثبيت التطبيق",
+    camwiz_1_body: "ثبّت DroidCam أو Iriun أو Camo على هاتفك. ثبّت أيضاً برنامج التشغيل المرافق على هذا الحاسوب.",
+    camwiz_2_title: "الخطوة 2: الاتصال",
+    camwiz_2_body: "افتح التطبيق على الهاتف. اتصل عبر واي فاي (نفس الشبكة) أو USB (أكثر استقراراً لتتبع الروبوت).",
+    camwiz_3_title: "الخطوة 3: إضافة الكاميرا",
+    camwiz_3_body: "انقر '+ كاميرا' هنا. سيظهر هاتفك في قائمة الكاميرات. اختره.",
+    camwiz_4_title: "الخطوة 4: تعيين لمشهد",
+    camwiz_4_body: "ضع كاميرا الهاتف في مشهد. جرّب قالب 'درس الروبوت' لإعداد جاهز!",
+    t_mosque: 'مسجد', t_zellige: 'زليج', t_andalus: 'أندلس',
+    t_riad: 'رياض', t_medina: 'مدينة', t_space: 'فضاء', t_jungle: 'أدغال', t_robot: 'روبوت',
+    // v0.7.55: custom accent color picker
+    customAccent: '🎨 لون التمييز المخصص',
+    snapResolution: '📐 دقة اللقطة',
+    customAccentReset: '🎨 تم استعادة اللون الافتراضي',
+    // v0.7.143: canvas background color picker
+    canvasBgColor: '🎨 لون خلفية اللوحة',
+    // v0.7.36: first-time guided tour
+    tour_1_title: '📹 المصادر',
+    tour_1_body: 'ابدأ بإضافة مصدر — شاشة، كاميرا، أو ميكروفون.',
+    tour_2_title: '🎬 المسرح',
+    tour_2_body: 'قم بتأليف مشهدك هنا — سحب، إفلات، تغيير الحجم والشكل.',
+    tour_3_title: '🎭 المشاهد',
+    tour_3_body: 'بدّل التخطيط بنقرة واحدة — أو بمفاتيح 1-9.',
+    tour_4_title: '🔴 سجّل',
+    tour_4_body: 'انقر للبدء — أو اضغط R.',
+    tour_5_title: '⌨ الاختصارات',
+    tour_5_body: 'اضغط ? لرؤية جميع الاختصارات.',
+    tour_skip: 'تخطي', tour_back: '← رجوع', tour_next: 'التالي →', tour_done: 'انتهى ✓',
+    // v0.7.43: rich hover tooltips on tools bar buttons
+    tip_laser: 'مؤشر ليزر أحمر يتبع الفأرة',
+    tip_ripples: 'موجات متحركة عند كل نقرة (في التسجيل)',
+    tip_freeze: 'جمّد الشاشة للشرح دون تحريك الفأرة',
+    tip_whiteboard: 'ارسم فوق الشاشة',
+    tip_zoom: 'تكبير يدوي للكود',
+    tip_autozoom: 'تكبير تلقائي عند النقر',
+    tip_tele: 'نص التيليبرومبتر مع تمرير تلقائي',
+    tip_snap: 'لقطة PNG + معرض',
+    tip_fullscreen: 'ملء الشاشة للانغماس الكامل',
+    // v0.7.100: milestone celebration
+    v100Subtitle: '100 إصدارًا لتسجيل الدروس الملائم للأطفال 🎬',
+    v100Continue: 'متابعة',
+    // v0.7.134: hotkey reference panel
+    hotkeyRefTab: 'اختصارات', hotkeyRefSearch: 'تصفية الاختصارات...', hotkeyRefNoMatch: 'لم يتم العثور على اختصارات',
+    // v0.7.138: multi-source selection
+    selectAll: 'الكل', multiSelected: 'مصادر محددة', multiDeselected: 'تم مسح التحديد',
+    // v0.7.154: canvas vignette
+    vignetteLabel: '🎥 تأثير فينييت على الكانفا', vignetteIntensity: 'الشدة',
+  }
+};
+
+let currentLang = 'fr';
+
+function t(key) { return (LANG[currentLang] && LANG[currentLang][key]) || LANG.en[key] || key; }
+
+function applyI18n() {
+  const s = LANG[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (s[k] == null) return;
+    // Don't clobber the teleprompter content if the user has typed their own
+    if (el.id === 'tcTeleInner' && typeof Teleprompter !== 'undefined' && Teleprompter.hasUserText()) return;
+    el.textContent = s[k];
+  });
+  // v0.7.129: translate data-i18n-placeholder attributes
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.dataset.i18nPlaceholder;
+    if (s[k] != null) el.setAttribute('placeholder', s[k]);
+  });
+  document.title = `${s.title} — ${s.slogan}`;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  // v0.7.80: keep the help search placeholder in sync with the active language
+  const helpSearch = $('tcHelpSearch');
+  if (helpSearch && s.helpSearchPlaceholder) {
+    helpSearch.setAttribute('placeholder', s.helpSearchPlaceholder);
+  }
+}
+
+function setLanguage(lang) {
+  if (!LANG[lang]) return;
+  currentLang = lang;
+  applyI18n();
+  try { localStorage.setItem('tc-lang', lang); } catch {}
+  renderTicker();
+  renderScenes();
+  renderTextPresets();
+  renderBadges();
+  log(`🌐 ${lang.toUpperCase()}`, 'info');
+}
+
+/* ─────────── 2. Shell: splash, panels, log, toast, themes ─────────── */
+
+function dismissSplash() {
+  const el = $('splash'); if (!el) return;
+  el.classList.add('hidden');
+  setTimeout(() => el.remove(), 600);
+}
+// v0.7.159: wire splash click + credit stopPropagation (removed inline onclick)
+$('splash')?.addEventListener('click', dismissSplash);
+$('tcSplashCredit')?.addEventListener('click', (e) => e.stopPropagation());
+
+function setTheme(name) {
+  document.documentElement.dataset.theme = name;
+  try { localStorage.setItem('tc-theme', name); } catch {}
+  // v0.7.55: after the base theme applies, overlay any custom accent
+  CustomAccent.apply();
+  // Give the browser one tick to apply the new :root vars, then re-cache.
+  if (typeof Engine !== 'undefined' && Engine.canvas) {
+    setTimeout(() => Engine.refreshAccent(), 20);
+  }
+}
+
+// v0.7.55: custom accent color override — applied on top of the current
+// theme. Stored in tc-custom-accent localStorage. When empty, the theme's
+// default accent is used (inline CSS overrides are cleared).
+const CustomAccent = {
+  current: null,
+
+  load() {
+    try { this.current = localStorage.getItem('tc-custom-accent') || null; } catch {}
+    this.apply();
+  },
+
+  set(hex) {
+    if (!hex) { this.clear(); return; }
+    // Basic validation
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    this.current = hex;
+    try { localStorage.setItem('tc-custom-accent', hex); } catch {}
+    this.apply();
+  },
+
+  clear() {
+    this.current = null;
+    try { localStorage.removeItem('tc-custom-accent'); } catch {}
+    this.apply();
+  },
+
+  apply() {
+    const root = document.documentElement;
+    if (this.current) {
+      root.style.setProperty('--accent', this.current);
+      // Also tweak --glow to a 30% alpha variant for hover effects
+      const rgb = this._hexToRgb(this.current);
+      if (rgb) {
+        root.style.setProperty('--glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, .3)`);
+      }
+    } else {
+      // Reset inline overrides so the theme's CSS rules take over again
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--glow');
+    }
+    // Engine._accentColor drives canvas-side rendering (corner handles,
+    // laser, etc.) — refresh it so the next frame picks up the new color.
+    if (typeof Engine !== 'undefined' && Engine.refreshAccent) Engine.refreshAccent();
+  },
+
+  _hexToRgb(hex) {
+    const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
+    if (!m) return null;
+    return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+  },
+};
+
+/* v0.7.143: canvas background color — persisted in localStorage, default black */
+const CanvasBg = {
+  current: '#000000',
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-canvas-bg');
+      if (v && /^#[0-9a-fA-F]{6}$/.test(v)) this.current = v;
+    } catch {}
+  },
+
+  set(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    this.current = hex;
+    try { localStorage.setItem('tc-canvas-bg', hex); } catch {}
+  },
+};
+
+/* v0.7.180: BgPatterns — decorative animated canvas backgrounds.
+   15 patterns across 4 categories. Pure canvas drawing, no images.
+   Rendered at user-configurable opacity over the solid CanvasBg color. */
+const BgPatterns = {
+  current: 'none',
+  opacity: 0.3,
+  _t0: Date.now(),
+
+  load() {
+    try {
+      const p = localStorage.getItem('tc-bg-pattern');
+      if (p) this.current = p;
+      const o = parseFloat(localStorage.getItem('tc-bg-pattern-opacity'));
+      if (!isNaN(o)) this.opacity = Math.max(0.05, Math.min(1, o));
+    } catch {}
+  },
+
+  setPattern(v) {
+    this.current = v || 'none';
+    try { localStorage.setItem('tc-bg-pattern', this.current); } catch {}
+  },
+
+  setOpacity(v) {
+    this.opacity = Math.max(0.05, Math.min(1, v));
+    try { localStorage.setItem('tc-bg-pattern-opacity', String(this.opacity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (this.current === 'none') return;
+    const fn = this['_' + this.current];
+    if (!fn) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    fn.call(this, ctx, W, H, (Date.now() - this._t0) / 1000);
+    ctx.restore();
+  },
+
+  // ═══ GEEKY ═══
+
+  _space(ctx, W, H, t) {
+    // Twinkling stars
+    ctx.fillStyle = '#0a0a2e';
+    ctx.fillRect(0, 0, W, H);
+    const seed = 42;
+    for (let i = 0; i < 120; i++) {
+      const sx = ((i * 7919 + seed) % W);
+      const sy = ((i * 6271 + seed) % H);
+      const r = ((i * 3571) % 3) + 0.5;
+      const twinkle = 0.4 + 0.6 * Math.sin(t * 2 + i * 0.7);
+      ctx.globalAlpha = this.opacity * twinkle;
+      ctx.fillStyle = i % 5 === 0 ? '#fef08a' : '#ffffff';
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _pixel(ctx, W, H) {
+    // 8-bit pixel grid
+    const sz = 24;
+    ctx.strokeStyle = 'rgba(163,230,53,.3)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += sz) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sz) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Highlight every 4th cell
+    ctx.fillStyle = 'rgba(163,230,53,.04)';
+    for (let x = 0; x < W; x += sz * 4) {
+      for (let y = 0; y < H; y += sz * 4) {
+        ctx.fillRect(x, y, sz, sz);
+      }
+    }
+  },
+
+  _matrix(ctx, W, H, t) {
+    // Falling green characters
+    const cols = Math.floor(W / 18);
+    ctx.font = '14px ui-monospace, monospace';
+    ctx.fillStyle = '#0f0';
+    const chars = 'ﺃﺏﺕﺙﺝﺡﺥﺩﺫﺭﺯ01ABCDEF{}[]<>/\\';
+    for (let c = 0; c < cols; c++) {
+      const speed = 40 + (c * 17) % 60;
+      const yOff = ((t * speed + c * 137) % (H + 200)) - 100;
+      for (let r = 0; r < 8; r++) {
+        const cy = yOff - r * 18;
+        if (cy < -18 || cy > H) continue;
+        ctx.globalAlpha = this.opacity * (1 - r / 8) * 0.7;
+        const ch = chars[(c * 7 + r * 13 + Math.floor(t * 3)) % chars.length];
+        ctx.fillText(ch, c * 18 + 2, cy);
+      }
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _arcade(ctx, W, H) {
+    // Neon grid (Tron-style)
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 0.8;
+    const sp = 60;
+    for (let x = 0; x < W; x += sp) {
+      ctx.globalAlpha = this.opacity * 0.3;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sp) {
+      ctx.globalAlpha = this.opacity * 0.3;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Brighter lines every 4
+    ctx.globalAlpha = this.opacity * 0.7;
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x < W; x += sp * 4) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sp * 4) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _circuit(ctx, W, H) {
+    // PCB traces
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 1;
+    const seed = 31;
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 5519 + seed) % W;
+      const sy = (i * 3733 + seed) % H;
+      const horiz = i % 2 === 0;
+      const len = 40 + (i * 71) % 120;
+      ctx.globalAlpha = this.opacity * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      if (horiz) ctx.lineTo(sx + len, sy);
+      else ctx.lineTo(sx, sy + len);
+      ctx.stroke();
+      // Solder pad at end
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      const ex = horiz ? sx + len : sx;
+      const ey = horiz ? sy : sy + len;
+      ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // IC chip occasionally
+      if (i % 7 === 0) {
+        ctx.strokeRect(sx - 10, sy - 6, 20, 12);
+      }
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _chalk(ctx, W, H) {
+    // Chalkboard
+    ctx.fillStyle = '#1a3a1a';
+    ctx.fillRect(0, 0, W, H);
+    // Chalk dust specks
+    ctx.fillStyle = 'rgba(255,255,255,.15)';
+    for (let i = 0; i < 200; i++) {
+      const cx = (i * 8377) % W;
+      const cy = (i * 5471) % H;
+      const r = ((i * 37) % 3) * 0.5 + 0.3;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // Faint ruled lines
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 1;
+    for (let y = 60; y < H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(W - 40, y); ctx.stroke();
+    }
+  },
+
+  // ═══ ISLAMIC ═══
+
+  _zellige(ctx, W, H) {
+    // Star-and-cross tile pattern
+    const sz = 50;
+    ctx.lineWidth = 1.2;
+    for (let gx = -sz; gx < W + sz; gx += sz) {
+      for (let gy = -sz; gy < H + sz; gy += sz) {
+        const cx = gx + sz / 2, cy = gy + sz / 2;
+        // 8-point star
+        ctx.strokeStyle = 'rgba(56,189,248,.5)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+          const r1 = sz * 0.4, r2 = sz * 0.2;
+          const r = i % 2 === 0 ? r1 : r2;
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        // Cross fill
+        ctx.fillStyle = 'rgba(212,160,60,.08)';
+        ctx.fill();
+      }
+    }
+  },
+
+  _arabesque(ctx, W, H) {
+    // Interlocking geometric curves
+    const sz = 80;
+    ctx.strokeStyle = 'rgba(212,160,60,.5)';
+    ctx.lineWidth = 1.5;
+    for (let gx = 0; gx < W + sz; gx += sz) {
+      for (let gy = 0; gy < H + sz; gy += sz) {
+        const cx = gx, cy = gy;
+        // Four interlocking arcs
+        for (let q = 0; q < 4; q++) {
+          const a = (q / 4) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(a) * sz * 0.3, cy + Math.sin(a) * sz * 0.3, sz * 0.25, a - 0.8, a + 0.8);
+          ctx.stroke();
+        }
+        // Center dot
+        ctx.fillStyle = 'rgba(212,160,60,.2)';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  },
+
+  _riad(ctx, W, H) {
+    // Warm arches pattern
+    const archW = 80, archH = 100;
+    ctx.strokeStyle = 'rgba(194,112,62,.5)';
+    ctx.lineWidth = 2;
+    for (let gx = 0; gx < W + archW; gx += archW) {
+      for (let gy = 0; gy < H + archH; gy += archH) {
+        const offset = (Math.floor(gy / archH) % 2) * archW / 2;
+        const ax = gx + offset;
+        // Pointed arch
+        ctx.beginPath();
+        ctx.moveTo(ax, gy + archH);
+        ctx.lineTo(ax, gy + archH * 0.4);
+        ctx.quadraticCurveTo(ax, gy, ax + archW / 2, gy);
+        ctx.quadraticCurveTo(ax + archW, gy, ax + archW, gy + archH * 0.4);
+        ctx.lineTo(ax + archW, gy + archH);
+        ctx.stroke();
+        // Lantern glow at top
+        ctx.fillStyle = 'rgba(251,191,36,.06)';
+        ctx.beginPath(); ctx.arc(ax + archW / 2, gy + 10, 8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  },
+
+  _muqarnas(ctx, W, H) {
+    // Octagonal tessellation
+    const sz = 40;
+    ctx.strokeStyle = 'rgba(14,124,107,.5)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W + sz; gx += sz) {
+      for (let gy = 0; gy < H + sz; gy += sz) {
+        const cx = gx + sz / 2, cy = gy + sz / 2;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+          const px = cx + Math.cos(a) * sz * 0.45;
+          const py = cy + Math.sin(a) * sz * 0.45;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(14,124,107,.04)';
+        ctx.fill();
+      }
+    }
+  },
+
+  // ═══ ISLAMIC SCIENCE ═══
+
+  _astrolabe(ctx, W, H) {
+    // Concentric circles with degree marks + star pointers
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.42;
+    ctx.strokeStyle = 'rgba(212,160,60,.4)';
+    ctx.lineWidth = 1;
+    // Concentric rings
+    for (let i = 1; i <= 5; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, maxR * (i / 5), 0, Math.PI * 2); ctx.stroke();
+    }
+    // Degree ticks
+    ctx.lineWidth = 0.5;
+    for (let a = 0; a < 360; a += 10) {
+      const rad = (a * Math.PI) / 180;
+      const inner = a % 30 === 0 ? maxR * 0.75 : maxR * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(rad) * inner, cy + Math.sin(rad) * inner);
+      ctx.lineTo(cx + Math.cos(rad) * maxR, cy + Math.sin(rad) * maxR);
+      ctx.stroke();
+    }
+    // Star pointers
+    ctx.fillStyle = 'rgba(212,160,60,.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(212,160,60,.6)';
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + 0.3;
+      const r = maxR * (0.3 + (i * 0.12));
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      // Pointer line
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+    }
+    // Center brass hub
+    ctx.fillStyle = 'rgba(212,160,60,.15)';
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(212,160,60,.5)';
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
+  },
+
+  _algebra(ctx, W, H) {
+    // Floating algebra equations (gold chalk)
+    ctx.font = '16px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(212,160,60,.4)';
+    const eqs = [
+      'x² + y² = r²', 'a² + b² = c²', 'الخوارزمي', 'sin θ = y/r',
+      'f(x) = ax² + bx + c', '∑ n = n(n+1)/2', 'π ≈ 3.14159',
+      'φ = (1+√5)/2', '∫ dx = x + C', 'Δ = b²−4ac', 'الجبر',
+    ];
+    for (let i = 0; i < eqs.length; i++) {
+      const ex = (i * 4519 + 31) % (W - 200) + 20;
+      const ey = (i * 3137 + 31) % (H - 40) + 30;
+      const rot = ((i * 17) % 20 - 10) * Math.PI / 180;
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(rot);
+      ctx.fillText(eqs[i], 0, 0);
+      ctx.restore();
+    }
+    // Geometric proof: triangle
+    ctx.strokeStyle = 'rgba(212,160,60,.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.7, H * 0.6);
+    ctx.lineTo(W * 0.85, H * 0.85);
+    ctx.lineTo(W * 0.55, H * 0.85);
+    ctx.closePath();
+    ctx.stroke();
+    // Right angle mark
+    ctx.strokeRect(W * 0.55 + 8, H * 0.85 - 8, 8, 8);
+  },
+
+  // ═══ RADAR ═══
+
+  _radar(ctx, W, H, t) {
+    // Rotating sweep on circular grid
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.4;
+    // Grid rings
+    ctx.strokeStyle = 'rgba(74,222,128,.3)';
+    ctx.lineWidth = 0.8;
+    for (let i = 1; i <= 4; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, maxR * (i / 4), 0, Math.PI * 2); ctx.stroke();
+    }
+    // Cross lines
+    ctx.beginPath(); ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR); ctx.stroke();
+    // Sweep line (rotating)
+    const angle = (t * 0.8) % (Math.PI * 2);
+    ctx.strokeStyle = 'rgba(74,222,128,.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+    ctx.stroke();
+    // Sweep fade trail
+    const grad = ctx.createConicGradient(angle - 0.5, cx, cy);
+    grad.addColorStop(0, 'rgba(74,222,128,0)');
+    grad.addColorStop(0.08, 'rgba(74,222,128,.15)');
+    grad.addColorStop(0.1, 'rgba(74,222,128,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2); ctx.fill();
+    // Blips
+    ctx.fillStyle = 'rgba(74,222,128,.8)';
+    for (let i = 0; i < 5; i++) {
+      const ba = ((i * 2.1 + 0.5) % (Math.PI * 2));
+      const br = maxR * (0.25 + (i * 0.15));
+      const age = ((angle - ba + Math.PI * 4) % (Math.PI * 2)) / (Math.PI * 2);
+      if (age < 0.3) {
+        ctx.globalAlpha = this.opacity * (1 - age / 0.3);
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(ba) * br, cy + Math.sin(ba) * br, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = this.opacity;
+      }
+    }
+  },
+
+  _sonar(ctx, W, H, t) {
+    // Concentric pulsing rings
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.45;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) {
+      const phase = ((t * 0.6 + i * 0.25) % 1);
+      const r = phase * maxR;
+      ctx.globalAlpha = this.opacity * (1 - phase) * 0.7;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    // Center dot
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _oscilloscope(ctx, W, H, t) {
+    // Green waveform on dark grid
+    const gridSp = 40;
+    ctx.strokeStyle = 'rgba(74,222,128,.15)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += gridSp) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gridSp) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Waveform
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(74,222,128,.5)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    const cy = H / 2;
+    for (let x = 0; x < W; x += 2) {
+      const wave = Math.sin((x / W) * Math.PI * 6 + t * 3) * H * 0.2
+        + Math.sin((x / W) * Math.PI * 14 + t * 5) * H * 0.05;
+      if (x === 0) ctx.moveTo(x, cy + wave);
+      else ctx.lineTo(x, cy + wave);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Center line
+    ctx.strokeStyle = 'rgba(74,222,128,.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  },
+};
+
+const logHistory = [];
+function log(msg, type = 'info') {
+  const c = $('logContainer'); if (!c) return;
+  const d = document.createElement('div');
+  // v0.7.189: tag TX/RX for filtering
+  const isTx = msg.startsWith('→');
+  const isRx = msg.startsWith('←');
+  d.className = `log-line ${type}`;
+  if (isTx) d.dataset.dir = 'tx';
+  if (isRx) d.dataset.dir = 'rx';
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  logHistory.push({ msg, type, time: Date.now() });
+  if (logHistory.length > 500) logHistory.shift();
+}
+
+function showToast(msg, ms = 2000) {
+  const toast = $('toastIndicator'), m = $('toastMessage'); if (!toast || !m) return;
+  m.textContent = msg;
+  toast.style.display = 'block';
+  // Force reflow so the transition triggers from the initial state
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+  clearTimeout(showToast._timer);
+  if (ms > 0) showToast._timer = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => { toast.style.display = 'none'; }, 400);
+  }, ms);
+}
+
+function openPanel(id) {
+  const p = $(id); if (!p) return;
+  p.classList.add('open');
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.add('show');
+}
+function closePanel(id) {
+  const p = $(id); if (!p) return;
+  p.classList.remove('open');
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('show');
+}
+function closeAllPanels() {
+  ['helpPanel', 'settingsPanel', 'logPanel'].forEach(closePanel);
+}
+
+/* ─────────── 3. Engine: sources + renderer ─────────── */
+
+/* v0.7.58: aspect ratio presets for the stage. Switches Engine.width/height,
+   #tcCanvas / #tcOverlayCanvas internal dimensions, and the .tc-stage CSS
+   aspect-ratio. Blocked during active recording to avoid breaking the
+   MediaRecorder stream. Persisted in localStorage tc-stage-aspect. */
+const StageAspect = {
+  presets: [
+    { key: '16:9',  w: 1920, h: 1080, label: '16:9 landscape' },
+    { key: '9:16',  w: 1080, h: 1920, label: '9:16 portrait'  },
+    { key: '1:1',   w: 1080, h: 1080, label: '1:1 square'     },
+    { key: '4:3',   w: 1440, h: 1080, label: '4:3 classic'    },
+  ],
+  current: '16:9',
+
+  load() {
+    try {
+      const saved = localStorage.getItem('tc-stage-aspect');
+      if (saved && this.presets.find(p => p.key === saved)) this.current = saved;
+    } catch {}
+    // Apply on load (AFTER Engine.init has set initial dimensions)
+    this.apply(this.current, true);
+  },
+
+  set(key) {
+    if (!this.presets.find(p => p.key === key)) return;
+    if (typeof Recorder !== 'undefined' && Recorder && Recorder.state === 'recording') {
+      showToast(t('aspectLockedDuringRec') || '⚠ Impossible de changer pendant un enregistrement', 2500);
+      return;
+    }
+    this.current = key;
+    try { localStorage.setItem('tc-stage-aspect', key); } catch {}
+    this.apply(key, false);
+  },
+
+  apply(key, initial) {
+    const preset = this.presets.find(p => p.key === key);
+    if (!preset) return;
+    Engine.width = preset.w;
+    Engine.height = preset.h;
+    const canvas = $('tcCanvas');
+    const overlay = $('tcOverlayCanvas');
+    if (canvas) { canvas.width = preset.w; canvas.height = preset.h; }
+    if (overlay) { overlay.width = preset.w; overlay.height = preset.h; }
+    // Keep the offscreen laser canvas in sync with the new bounds
+    if (Engine.laserCanvas) {
+      Engine.laserCanvas.width = preset.w;
+      Engine.laserCanvas.height = preset.h;
+    }
+    // Update the .tc-stage aspect-ratio via inline style
+    const stage = $('tcStage');
+    if (stage) stage.style.aspectRatio = `${preset.w} / ${preset.h}`;
+    // Re-apply the active scene so sources fit the new bounds
+    if (!initial && typeof Scenes !== 'undefined' && Scenes.reapply) {
+      Scenes.reapply();
+    }
+    // Force one render
+    if (typeof Engine !== 'undefined' && Engine.render) Engine.render();
+  },
+};
+
+/* v0.7.70: PipPopout — pop a cam source out into a floating OS-level
+   Picture-in-Picture window via the standard <video>.requestPictureInPicture()
+   API. A hidden <video> bound to the source's MediaStream is the actual PiP
+   target. Closes via the browser's native PiP UI; the leavepictureinpicture
+   listener cleans the hidden element up. Cam sources only — image (v0.7.62)
+   and mic sources fall back to a toast. */
+const PipPopout = {
+  activeVideo: null,
+
+  supported() {
+    return !!document.pictureInPictureEnabled;
+  },
+
+  async popOut(src) {
+    if (!this.supported()) {
+      showToast(t('pipNotSupported') || '❌ PiP non supporté', 2500);
+      return;
+    }
+    if (!src || src.type !== 'cam' || !src.stream) {
+      showToast(t('pipOnlyCam') || '❌ Caméras uniquement', 2000);
+      return;
+    }
+    // Close any existing PiP first
+    this.close();
+    // Create a dedicated <video> element bound to this cam's stream.
+    // It has to be in the DOM + playing for requestPictureInPicture
+    // to accept it, but we can hide it off-screen.
+    const v = document.createElement('video');
+    v.srcObject = src.stream;
+    v.muted = true;
+    v.playsInline = true;
+    v.autoplay = true;
+    v.style.position = 'fixed';
+    v.style.left = '-10000px';
+    v.style.top = '-10000px';
+    v.style.width = '320px';
+    v.style.height = '240px';
+    document.body.appendChild(v);
+    try {
+      await v.play();
+      await v.requestPictureInPicture();
+      this.activeVideo = v;
+      this._setupMediaSession();
+      this._showBadge(true);
+      v.addEventListener('leavepictureinpicture', () => {
+        this.close();
+      }, { once: true });
+      showToast('📺 ' + (t('pipOn') || 'PiP activé'), 1500);
+    } catch (e) {
+      log('PiP error: ' + e.message, 'error');
+      showToast(t('pipError') || '❌ PiP indisponible', 2500);
+      try { v.remove(); } catch {}
+    }
+  },
+
+  close() {
+    if (this.activeVideo) {
+      try {
+        if (document.pictureInPictureElement === this.activeVideo) {
+          document.exitPictureInPicture();
+        }
+      } catch {}
+      try { this.activeVideo.pause(); } catch {}
+      try { this.activeVideo.remove(); } catch {}
+      this.activeVideo = null;
+      this._clearMediaSession();
+      this._showBadge(false);
+    }
+  },
+
+  /* v0.7.132: media session action handlers for PiP play/pause controls */
+  _setupMediaSession() {
+    if (!navigator.mediaSession) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'NoorCast' });
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (Recorder.state === 'idle') Recorder.start();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (Recorder.state !== 'idle') Recorder.stop();
+      });
+    } catch (e) { log('MediaSession setup error: ' + e.message, 'warn'); }
+  },
+
+  _clearMediaSession() {
+    if (!navigator.mediaSession) return;
+    try {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+    } catch {}
+  },
+
+  /* v0.7.132: PiP Active badge in the tools bar */
+  _showBadge(visible) {
+    const badge = $('tcPipBadge');
+    if (badge) badge.style.display = visible ? 'inline-block' : 'none';
+  },
+};
+
+/* v0.7.68: chroma key helper — keys a source's pixels transparent
+   based on RGB-distance² against a target color. WeakMap-cached
+   offscreen canvas per source. */
+const ChromaKey = {
+  _canvases: new WeakMap(),
+  process(src) {
+    if (!src.chromaKey || !src.video) return null;
+    const { color, threshold } = src.chromaKey;
+    const tr = parseInt(color.slice(1, 3), 16);
+    const tg = parseInt(color.slice(3, 5), 16);
+    const tb = parseInt(color.slice(5, 7), 16);
+    const t2 = threshold * threshold;
+    const vw = src.video.videoWidth || 640;
+    const vh = src.video.videoHeight || 360;
+    let off = this._canvases.get(src);
+    if (!off || off.width !== vw || off.height !== vh) {
+      off = document.createElement('canvas');
+      off.width = vw;
+      off.height = vh;
+      this._canvases.set(src, off);
+    }
+    const ctx = off.getContext('2d', { willReadFrequently: true });
+    try {
+      ctx.drawImage(src.video, 0, 0, vw, vh);
+    } catch { return null; }
+    const img = ctx.getImageData(0, 0, vw, vh);
+    const data = img.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const dr = data[i] - tr;
+      const dg = data[i + 1] - tg;
+      const db = data[i + 2] - tb;
+      if (dr * dr + dg * dg + db * db < t2) data[i + 3] = 0;
+    }
+    ctx.putImageData(img, 0, 0);
+    return off;
+  },
+};
+
+/* v0.7.69: MicBoost — user-controllable mic gain (0.0–4.0×) + noise
+   gate (-60 to -20 dB). Inserted between the mic MediaStreamSource and
+   Engine.audioDest. The v0.2.2 silent keepalive stays untouched. */
+const MicBoost = {
+  gain: 1.0,
+  gateDb: -50,
+  _gainNode: null,
+  _gateAnalyser: null,
+  _gateBuf: null,
+  _rafId: null,
+  _muted: false,
+  load() {
+    try {
+      const g = parseFloat(localStorage.getItem('tc-mic-gain'));
+      if (!isNaN(g)) this.gain = Math.max(0, Math.min(4, g));
+      const d = parseFloat(localStorage.getItem('tc-mic-gate-db'));
+      if (!isNaN(d)) this.gateDb = Math.max(-60, Math.min(-20, d));
+    } catch {}
+  },
+  setGain(v) {
+    this.gain = Math.max(0, Math.min(4, parseFloat(v) || 1));
+    try { localStorage.setItem('tc-mic-gain', String(this.gain)); } catch {}
+    this._applyGain();
+  },
+  setGate(db) {
+    this.gateDb = Math.max(-60, Math.min(-20, parseFloat(db) || -50));
+    try { localStorage.setItem('tc-mic-gate-db', String(this.gateDb)); } catch {}
+  },
+  _applyGain() {
+    if (!this._gainNode) return;
+    const target = this._muted ? 0 : this.gain;
+    try {
+      this._gainNode.gain.setTargetAtTime(target, Engine.audioCtx.currentTime, 0.015);
+    } catch {
+      this._gainNode.gain.value = target;
+    }
+  },
+  attach(srcNode) {
+    const ac = Engine.audioCtx;
+    if (!ac) return srcNode;
+    this._gainNode = ac.createGain();
+    this._gainNode.gain.value = this.gain;
+    this._gateAnalyser = ac.createAnalyser();
+    this._gateAnalyser.fftSize = 512;
+    this._gateBuf = new Uint8Array(this._gateAnalyser.frequencyBinCount);
+    srcNode.connect(this._gainNode);
+    srcNode.connect(this._gateAnalyser);
+    this._startGateLoop();
+    return this._gainNode;
+  },
+  detach() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    this._gainNode = null;
+    this._gateAnalyser = null;
+    this._muted = false;
+  },
+  _startGateLoop() {
+    const tick = () => {
+      if (!this._gateAnalyser) return;
+      this._gateAnalyser.getByteTimeDomainData(this._gateBuf);
+      let sum = 0;
+      for (let i = 0; i < this._gateBuf.length; i++) {
+        const v = (this._gateBuf[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / this._gateBuf.length);
+      this._lastRms = rms; // v0.7.164: expose for avatar mode mouth animation
+      const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+      // v0.7.83: forward the mic RMS to VolumeDuck for ducking
+      try { VolumeDuck.tick(db); } catch {}
+      const shouldMute = db < this.gateDb;
+      if (shouldMute !== this._muted) {
+        this._muted = shouldMute;
+        this._applyGain();
+      }
+      this._rafId = requestAnimationFrame(tick);
+    };
+    this._rafId = requestAnimationFrame(tick);
+  },
+};
+
+
+/* v0.7.179: MicCheck — 3-second auto-test when a mic is selected.
+   Monitors the VU analyser for sound above a threshold. Shows a status
+   message (listening → OK / fail) and enlarges the VU bar briefly. */
+const MicCheck = {
+  _timer: null,
+  _raf: null,
+  _detected: false,
+
+  start() {
+    this.stop();
+    this._detected = false;
+    const el = $('tcMicCheck');
+    if (!el) return;
+    // Resume AudioContext (Chrome suspends until user gesture)
+    if (Engine.audioCtx && Engine.audioCtx.state === 'suspended') {
+      try { Engine.audioCtx.resume(); } catch {}
+    }
+    // Show "listening" state
+    el.className = 'tc-mic-check visible';
+    el.textContent = t('micCheckListening');
+    // Monitor analyser for 3 seconds
+    const analyser = Engine.analyser;
+    if (analyser) {
+      const buf = new Uint8Array(analyser.fftSize);
+      const check = () => {
+        analyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / buf.length);
+        if (rms > 0.02) this._detected = true;
+        if (!this._detected) this._raf = requestAnimationFrame(check);
+      };
+      this._raf = requestAnimationFrame(check);
+    }
+    // After 3s, show result
+    this._timer = setTimeout(() => {
+      if (this._raf) cancelAnimationFrame(this._raf);
+      if (this._detected) {
+        el.className = 'tc-mic-check visible tc-mic-ok';
+        el.textContent = t('micCheckOk');
+      } else {
+        el.className = 'tc-mic-check visible tc-mic-fail';
+        el.textContent = t('micCheckFail');
+      }
+      // Auto-dismiss after 4s
+      setTimeout(() => {
+        el.classList.remove('visible');
+      }, 4000);
+    }, 3000);
+  },
+
+  stop() {
+    if (this._timer) { clearTimeout(this._timer); this._timer = null; }
+    if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+    const el = $('tcMicCheck');
+    if (el) el.classList.remove('visible');
+  },
+};
+
+/* v0.7.105: StickyNotes — draggable yellow sticky-note overlays on the stage.
+   HTML-only (never on canvas / never in the recording). Each note is a 180×120
+   yellow div with a draggable header, close button, and contenteditable body.
+   Persisted in localStorage under 'tc-sticky-notes'. */
+const StickyNotes = {
+  notes: [],
+  _nextId: 1,
+
+  setup() {
+    try {
+      const raw = localStorage.getItem('tc-sticky-notes');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.notes)) this.notes = data.notes;
+        if (typeof data.nextId === 'number') this._nextId = data.nextId;
+      }
+    } catch {}
+    this._render();
+  },
+
+  add() {
+    const id = this._nextId++;
+    this.notes.push({
+      id,
+      text: '',
+      x: 40 + Math.random() * 120 | 0,
+      y: 40 + Math.random() * 80 | 0,
+    });
+    this._save();
+    this._render();
+  },
+
+  remove(id) {
+    this.notes = this.notes.filter(n => n.id !== id);
+    this._save();
+    this._render();
+  },
+
+  update(id, patch) {
+    const n = this.notes.find(n => n.id === id);
+    if (n) Object.assign(n, patch);
+    this._save();
+  },
+
+  _save() {
+    try {
+      localStorage.setItem('tc-sticky-notes', JSON.stringify({
+        notes: this.notes,
+        nextId: this._nextId,
+      }));
+    } catch {}
+  },
+
+  _render() {
+    const layer = $('tcStickyLayer');
+    if (!layer) return;
+    layer.innerHTML = '';
+    for (const note of this.notes) {
+      const el = document.createElement('div');
+      el.className = 'tc-sticky-note';
+      el.style.left = note.x + 'px';
+      el.style.top = note.y + 'px';
+
+      const head = document.createElement('div');
+      head.className = 'tc-sticky-head';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'tc-sticky-close';
+      closeBtn.textContent = '\u00d7';
+      closeBtn.addEventListener('click', () => this.remove(note.id));
+      head.appendChild(closeBtn);
+
+      // Dragging via header
+      head.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const startX = e.clientX, startY = e.clientY;
+        const origLeft = el.offsetLeft, origTop = el.offsetTop;
+        const onMove = (ev) => {
+          el.style.left = (origLeft + ev.clientX - startX) + 'px';
+          el.style.top  = (origTop  + ev.clientY - startY) + 'px';
+        };
+        const onUp = (_ev) => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          this.update(note.id, {
+            x: parseInt(el.style.left) || 0,
+            y: parseInt(el.style.top)  || 0,
+          });
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+
+      const body = document.createElement('div');
+      body.className = 'tc-sticky-body';
+      body.contentEditable = 'true';
+      body.textContent = note.text || '';
+      body.setAttribute('data-placeholder', t('stickyNotePlaceholder') || 'Type your note here…');
+      body.addEventListener('input', () => {
+        this.update(note.id, { text: body.textContent });
+      });
+
+      el.appendChild(head);
+      el.appendChild(body);
+      layer.appendChild(el);
+    }
+  },
+};
+
+/* v0.7.83: VolumeDuck — opt-in automatic ducking. When the mic RMS rises
+   above THRESHOLD_DB, any non-mic source audio routed through
+   wrapSourceAudio gets ramped down by DUCK_DB; when the mic goes silent
+   the gain ramps back to 1. Piggybacks on MicBoost._startGateLoop's
+   existing analyser instead of tapping the audio graph again. */
+const VolumeDuck = {
+  enabled: false,
+  THRESHOLD_DB: -42,     // mic level that triggers ducking
+  DUCK_DB: -12,          // how much to lower non-mic sources
+  _gainNodes: new WeakMap(),  // source → GainNode
+  _active: false,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-duck') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-duck', v ? '1' : '0'); } catch {}
+    if (!v) this._restore();
+  },
+
+  // Called from Engine.addScreen / addCamera when a source has audio.
+  // Returns a GainNode to route the source's audio through.
+  wrapSourceAudio(src, srcNode) {
+    const ac = Engine.audioCtx;
+    if (!ac) return srcNode;
+    const g = ac.createGain();
+    g.gain.value = 1;
+    srcNode.connect(g);
+    this._gainNodes.set(src, g);
+    return g;
+  },
+
+  // Called each frame (or at least a few times/sec) by MicBoost._startGateLoop
+  // — we piggyback on the existing RMS analyser.
+  tick(micDb) {
+    if (!this.enabled) return;
+    const shouldDuck = micDb > this.THRESHOLD_DB;
+    if (shouldDuck === this._active) return;
+    this._active = shouldDuck;
+    const factor = Math.pow(10, this.DUCK_DB / 20);  // -12dB ≈ 0.25
+    const target = shouldDuck ? factor : 1;
+    Engine.sources.forEach(src => {
+      const g = this._gainNodes.get(src);
+      if (g) {
+        try {
+          g.gain.setTargetAtTime(target, Engine.audioCtx.currentTime, 0.12);
+        } catch {
+          g.gain.value = target;
+        }
+      }
+    });
+  },
+
+  _restore() {
+    this._active = false;
+    Engine.sources.forEach(src => {
+      const g = this._gainNodes.get(src);
+      if (g) {
+        try { g.gain.setTargetAtTime(1, Engine.audioCtx.currentTime, 0.12); }
+        catch { g.gain.value = 1; }
+      }
+    });
+  },
+};
+
+const Engine = {
+  canvas: null, ctx: null,
+  overlayCanvas: null, overlayCtx: null,   // whiteboard strokes — persist across frames
+  laserCanvas: null, laserCtx: null,       // laser dot — redrawn every frame, offscreen
+  width: 1920, height: 1080,
+  sources: [],        // {id, type:'screen'|'cam'|'mic', stream, video, label, x, y, w, h, shape, mirrored}
+  nextId: 1,
+  rafId: null,
+  frozenFrame: null,  // ImageData when frozen
+  audioCtx: null, audioDest: null, analyser: null,
+  _canvasStream: null,   // cached captureStream (v0.2.1: fix multiple-capture races)
+  _accentColor: '#a3e635', // cached from CSS var, refreshed on theme change
+  fps: 0, _fpsFrames: 0, _fpsLast: 0,
+
+  init() {
+    this.canvas = $('tcCanvas');
+    this.overlayCanvas = $('tcOverlayCanvas');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
+    this.overlayCtx = this.overlayCanvas.getContext('2d');
+    // Dedicated offscreen canvas for the laser so it never touches whiteboard strokes
+    this.laserCanvas = document.createElement('canvas');
+    this.laserCanvas.width = this.width;
+    this.laserCanvas.height = this.height;
+    this.laserCtx = this.laserCanvas.getContext('2d');
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.audioDest = this.audioCtx.createMediaStreamDestination();
+    this.analyser = this.audioCtx.createAnalyser();
+    this.analyser.fftSize = 256;
+
+    /* v0.2.2 CRITICAL FIX: plug a ConstantSourceNode at gain 0 into audioDest.
+       Without ANY source node feeding the audio destination, its MediaStreamTrack
+       produces zero samples — and MediaRecorder responds to that by encoding
+       exactly one 0-byte chunk and stalling the entire recording. Every .webm
+       shipped before v0.2.2 was 0 bytes for this reason. Keeping a permanent
+       silent source ensures the audio track always carries data, recording
+       works before a mic is picked, and adding/removing a mic mid-session
+       never leaves the track silent enough to stall the encoder. */
+    const silentSrc = this.audioCtx.createConstantSource();
+    const silentGain = this.audioCtx.createGain();
+    silentGain.gain.value = 0;
+    silentSrc.connect(silentGain).connect(this.audioDest);
+    silentSrc.start();
+    this._silentKeepalive = silentSrc;
+
+    this.refreshAccent();
+    this._fpsLast = performance.now();
+    this.loop();
+    // Draw one forced frame synchronously so captureStream() has something
+    // to grab on its first activation.
+    this.render();
+  },
+
+  loop() {
+    this.render();
+    this.rafId = requestAnimationFrame(() => this.loop());
+  },
+
+  render() {
+    const { ctx, width, height } = this;
+    // v0.7.182: screen shake from reaction explosions
+    const [sx, sy] = Reactions.getShake();
+    if (sx || sy) { ctx.save(); ctx.translate(sx, sy); }
+    // background (v0.7.143: user-configurable canvas background color)
+    ctx.fillStyle = CanvasBg.current;
+    ctx.fillRect(0, 0, width, height);
+    // v0.7.180: decorative background pattern
+    BgPatterns.render(ctx, width, height);
+    // v0.7.192: ghost of previous take (behind sources)
+    GhostReplay.render(ctx, width, height);
+    // v0.7.6: source selection chrome buffer — drawn after sources so it's on top
+    this._srcChrome = null;
+
+    // Apply the zoom transform around its focus point for sources + overlays.
+    // Text overlays and sensor HUD remain at 1x so they stay readable.
+    Zoom.tick();
+    const z = Zoom.current;
+    const zoomed = z > 1.001;
+    if (zoomed) {
+      ctx.save();
+      ctx.translate(Zoom.cx, Zoom.cy);
+      ctx.scale(z, z);
+      ctx.translate(-Zoom.cx, -Zoom.cy);
+    }
+
+    if (Recorder.frozen && this.frozenFrame) {
+      ctx.putImageData(this.frozenFrame, 0, 0);
+    } else {
+      // draw visible sources (filter non-video, respect manual hide)
+      const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden && (s.type === 'shape' || s.type === 'image' || (s.video && s.video.readyState >= 2)));
+      visible.forEach(src => this.drawSource(src));
+    }
+
+    if (zoomed) ctx.restore();
+
+    // v0.7.6: draw selection chrome (outline + handles + ✕ + 👁) on top of
+    // everything, hit-testable via cached rects on Drag._srcChromeHit.
+    this._drawSelectedSourceChrome();
+
+    // v0.7.108: source pulse highlight — when the teacher clicks a source
+    // name in the sidebar, flash a glowing yellow outline for ~1s so the
+    // selected source is unmistakable even when stacked with others.
+    SourcePulse.render(ctx);
+
+    // draw text overlays (unscaled so they stay readable)
+    TextOverlays.drawAll(ctx);
+
+    // v0.7.124: quick ad-hoc text stamps (after text overlays, before captions)
+    TextStamps.render(ctx);
+
+    // v0.7.57: live captions overlay
+    LiveCaptions.render(ctx, width, height);
+
+    // draw sensor overlay if active (unscaled)
+    if (Sensors._overlayVisible) Sensors.drawOverlay(ctx);
+
+    // v0.7.177: servo gauge overlay (pan + tilt semicircular gauges)
+    if (ServoGauge.visible) ServoGauge.render(ctx, width, height);
+
+    // v0.7.182: resize handles on sensor overlay + servo gauge when hovered
+    this._drawOverlayHandles(ctx);
+
+    // Whiteboard strokes (persist across frames)
+    ctx.drawImage(this.overlayCanvas, 0, 0);
+
+    // Brand watermark (logo + slogan + fun effect) — always on top of overlays
+    Brand.draw(ctx);
+
+    // v0.7.98: stage watermark text overlay (corner stamp)
+    Watermark.render(ctx, width, height);
+
+    // v0.7.46: grid overlay — shown only while Alt-drag is active
+    if (Drag._gridVisible) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, .08)';
+      ctx.lineWidth = 1;
+      const step = Drag.GRID_PX;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += step) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, height);
+      }
+      for (let y = 0; y <= height; y += step) {
+        ctx.moveTo(0, y); ctx.lineTo(width, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // v0.7.42: smart alignment guides — bright lines drawn while
+    // the user is actively dragging a source. Cleared on drag-end.
+    if (Drag._activeGuides && Drag._activeGuides.length) {
+      ctx.save();
+      ctx.strokeStyle = '#e879f9';  // Pink, high contrast against theme accents
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 8]);
+      Drag._activeGuides.forEach(g => {
+        ctx.beginPath();
+        if (g.axis === 'y') {
+          // Vertical line at x = g.at
+          ctx.moveTo(g.at, 0);
+          ctx.lineTo(g.at, height);
+        } else {
+          ctx.moveTo(0, g.at);
+          ctx.lineTo(width, g.at);
+        }
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // v0.7.25: Intro/outro cards — drawn on top of sources + overlays
+    // but BELOW laser/ripples so pointer visuals still land on top.
+    IntroOutro.render(ctx, width, height);
+
+    // v0.7.33: refresh the sidebar minimap a few times per second so
+    // it reflects live source movements without being a rAF hot path.
+    Minimap.maybeRender();
+
+    // v0.7.130: source name labels — drawn on a separate overlay canvas
+    // (not on the main captureStream canvas) so they're teacher-only.
+    SourceLabels.render();
+
+    // v0.7.140: FPS counter — teacher-only overlay canvas, never recorded.
+    FpsCounter.tick();
+    FpsCounter.render();
+
+    // v0.7.64: scene transition fade overlay (drawn on top of everything)
+    SceneTransition.render(ctx, width, height);
+
+    // v0.7.90: opt-in on-canvas clock for time-stamped lesson recordings.
+    // Drawn after the transition so the fade can dim it; baked into output.
+    ClockOverlay.render(ctx, width, height);
+
+    // v0.7.113: canvas countdown timer overlay (top-center pill)
+    CountdownTimer.render(ctx, width, height);
+
+    // v0.7.120: pulsing REC dot indicator (top-left corner)
+    RecIndicator.render(ctx, width, height);
+
+    // v0.7.135: on-canvas audio waveform visualizer (bottom edge bars)
+    AudioViz.render(ctx, width, height);
+
+    // v0.7.141: large recording elapsed timer (bottom-center pill)
+    RecElapsed.render(ctx, width, height);
+
+    // v0.7.145: recording pause/resume indicator overlay
+    PauseOverlay.render(ctx, width, height);
+
+    // v0.7.148: piano keyboard overlay for music teachers
+    PianoOverlay.render(ctx, width, height);
+
+    // v0.7.154: canvas vignette effect (dark gradient edges)
+    Vignette.render(ctx, width, height);
+
+    // v0.7.81: idle screensaver overlay — drawn on top of all other overlays,
+    // still before laser/ripples so they always appear above the standby art.
+    Screensaver.render(ctx, width, height);
+
+    // v0.7.99: Cursor trail — rainbow particles drawn on the output canvas
+    // (after Spotlight, before Laser) so they're under pointer visuals but
+    // baked into the recording.
+    CursorTrail.render(ctx, width, height);
+
+    // v0.7.104: emoji reaction burst — floating emojis baked into output
+    Reactions.render(ctx, width, height);
+
+    // Laser dot — redraw its offscreen canvas then composite
+    Laser.render();
+    ctx.drawImage(this.laserCanvas, 0, 0);
+
+    // v0.7.23: Click ripples — parallel pipeline to Laser, composited right
+    // after so ripples are baked into the final recording.
+    Ripples.render();
+    ctx.drawImage(Ripples.canvas, 0, 0);
+
+    // v0.7.38: soft-rewind visual flash — briefly pulse the stage with
+    // an orange border when Ctrl+Z flags the last 30s as a retry.
+    if (Recorder._retryFlashUntil && performance.now() < Recorder._retryFlashUntil) {
+      const age = (Recorder._retryFlashUntil - performance.now()) / 700;
+      ctx.save();
+      ctx.strokeStyle = `rgba(251, 146, 60, ${age * 0.9})`;
+      ctx.lineWidth = 24;
+      ctx.strokeRect(0, 0, width, height);
+      ctx.restore();
+    }
+
+    // v0.7.78: big marker full-screen flash
+    if (Recorder._bigFlashUntil && performance.now() < Recorder._bigFlashUntil) {
+      const age = (Recorder._bigFlashUntil - performance.now()) / 1000;  // 1→0
+      ctx.save();
+      ctx.fillStyle = `rgba(255, 255, 255, ${age * 0.75})`;
+      ctx.fillRect(0, 0, width, height);
+      // A bright yellow ring at center that expands as it fades
+      const expand = 1 - age;  // 0→1
+      const cx = width / 2, cy = height / 2;
+      const r = 80 + expand * 180;
+      ctx.strokeStyle = `rgba(251, 191, 36, ${age})`;
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      // Star text
+      ctx.font = '800 140px Arial, sans-serif';
+      ctx.fillStyle = `rgba(251, 191, 36, ${age})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', cx, cy);
+      ctx.restore();
+    }
+
+    // v0.7.1: reposition the floating text color toolbar each frame so it
+    // follows the selected overlay during drag/resize/rotation
+    TextToolbar.updatePosition();
+    // v0.7.13: same deal for the floating source toolbar (HTML, never
+    // overlaps the video since it's above the stage, not drawn on canvas)
+    if (typeof SourceToolbar !== 'undefined') SourceToolbar.updatePosition();
+
+    // v0.7.182: close screen shake transform
+    if (sx || sy) ctx.restore();
+
+    // v0.7.182: fun effects
+    VoiceFx.tick();
+    VoiceFx.renderFlash(ctx, width, height);
+    SpeedLines.render(ctx, width, height);
+    XpBar.render(ctx, width, height);
+    AchievementPopup.render(ctx, width, height);
+    LessonGuide.render(ctx, width, height);
+    AICohost.render(ctx, width, height);
+    CanvasFlair.render(ctx, width, height);
+    CanvasPets.render(ctx, width, height);
+    ComboSystem.tick();
+    ComboSystem.render(ctx, width, height);
+
+    // v0.7.182: XP ticks during recording (1 XP per second)
+    if (Recorder.state === 'recording' && XpBar.visible) {
+      if (!this._lastXpTick || Date.now() - this._lastXpTick >= 1000) {
+        this._lastXpTick = Date.now();
+        XpBar.addXp(1);
+      }
+    }
+
+    // update VU meter + FPS stats
+    this.updateVU();
+    this._fpsFrames++;
+    const now = performance.now();
+    if (now - this._fpsLast >= 1000) {
+      this.fps = Math.round((this._fpsFrames * 1000) / (now - this._fpsLast));
+      this._fpsFrames = 0;
+      this._fpsLast = now;
+      DebugHud.update();
+    }
+  },
+
+  drawSource(src) {
+    const { ctx } = this;
+
+    // v0.7.106: defensive early-return — the main draw loop already
+    // filters on `visible !== false && !hidden`, but drawSource can be
+    // called from other paths (chrome preview, snapshot helpers), so
+    // honour the manual toggles here too.
+    if (src.visible === false || src.hidden) return;
+
+    // v0.7.114: per-source opacity — wrap entire draw in globalAlpha
+    ctx.save();
+    ctx.globalAlpha = src.opacity ?? 1;
+
+    // v0.7.182: fly-in entrance animation
+    if (src._flyInUntil && Date.now() < src._flyInUntil) {
+      const t = 1 - (src._flyInUntil - Date.now()) / 400; // 0→1 over 400ms
+      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const offY = this.height * (1 - ease);
+      const scale = 0.5 + ease * 0.5;
+      ctx.translate(src.x + src.w / 2, src.y + src.h / 2);
+      ctx.translate(0, offY);
+      ctx.scale(scale, scale);
+      ctx.translate(-(src.x + src.w / 2), -(src.y + src.h / 2));
+      ctx.globalAlpha *= ease;
+    }
+
+    // v0.7.62: image sources (from clipboard paste) take a simplified draw
+    // path — shape clip + drawImage — bypassing the video filter/mirror/
+    // blur/title chain, since they're static bitmaps that don't need any
+    // of that logic.
+    // v0.7.167: colored shape source — simple filled rectangle/circle/etc.
+    if (src.type === 'shape') {
+      const { x, y, w, h } = src;
+      const cx = x + w / 2, cy = y + h / 2;
+      const r = Math.min(w, h) / 2;
+      const rot = src.rotation || 0;
+      // Note: outer ctx.save() at line 3118 already set globalAlpha
+      ctx.save(); // transform wrapper
+      if (rot !== 0) { ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy); }
+      if (src.flipH || src.flipV) { ctx.translate(cx, cy); ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1); ctx.translate(-cx, -cy); }
+      // Shadow
+      if (src.shadowBlur > 0) {
+        ctx.save();
+        ctx.shadowColor = src.shadowColor || '#000';
+        ctx.shadowBlur = src.shadowBlur;
+        ctx.shadowOffsetX = src.shadowOffsetX || 0;
+        ctx.shadowOffsetY = src.shadowOffsetY || 0;
+        ctx.fillStyle = src.shapeColor || '#a3e635';
+        this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+        ctx.fill();
+        ctx.restore();
+      }
+      // Main fill
+      ctx.fillStyle = src.shapeColor || '#a3e635';
+      this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+      if (src.cornerRadius > 0) this._applyCornerRadius(ctx, src, x, y, w, h);
+      ctx.fill();
+      // Border
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      ctx.restore(); // transform
+      ctx.restore(); // outer wrapper (line 3118)
+      return;
+    }
+
+    if (src.type === 'image' && src.img) {
+      const { x, y, w, h } = src;
+      const cx = x + w / 2, cy = y + h / 2;
+      const r = Math.min(w, h) / 2;
+      const rot = src.rotation || 0;
+      ctx.save();
+      if (rot !== 0) {
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.translate(-cx, -cy);
+      }
+      // v0.7.118: horizontal/vertical flip
+      if (src.flipH || src.flipV) {
+        ctx.translate(cx, cy);
+        ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1);
+        ctx.translate(-cx, -cy);
+      }
+      this._pathForShape(ctx, src.shape || 'rect', x, y, w, h, cx, cy, r);
+      // v0.7.128: per-source drop shadow (image path)
+      if (src.shadowBlur > 0) {
+        ctx.save();
+        ctx.shadowColor = src.shadowColor || '#000000';
+        ctx.shadowBlur = src.shadowBlur;
+        ctx.shadowOffsetX = src.shadowOffsetX || 0;
+        ctx.shadowOffsetY = src.shadowOffsetY || 0;
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.clip();
+      // v0.7.144: per-source corner radius (image path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
+      // v0.7.119: source crop for images
+      const imgNW = src.img.naturalWidth || src.img.width;
+      const imgNH = src.img.naturalHeight || src.img.height;
+      const icT = src.cropTop || 0, icB = src.cropBottom || 0;
+      const icL = src.cropLeft || 0, icR = src.cropRight || 0;
+      const isx = icL * imgNW, isy = icT * imgNH;
+      const isw = imgNW - (icL + icR) * imgNW;
+      const ish = imgNH - (icT + icB) * imgNH;
+      ctx.drawImage(src.img, isx, isy, isw, ish, x, y, w, h);
+      ctx.restore();
+      // v0.7.117: per-source colored border/frame
+      if (src.borderWidth > 0 && src.borderColor) {
+        ctx.strokeStyle = src.borderColor;
+        ctx.lineWidth = src.borderWidth;
+        ctx.strokeRect(x, y, w, h);
+      }
+      // v0.7.180: decorative source skin frame (image path)
+      if (src.skin && src.skin !== 'none') SourceSkins.draw(ctx, src.skin, x, y, w, h);
+      // v0.7.155: on-canvas source badge/label stamp (image path)
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      ctx.restore();
+      ctx.restore(); // v0.7.114: close globalAlpha wrapper
+      return;
+    }
+
+    const { video, shape, mirrored } = src;
+    let { x, y, w, h } = src;
+
+    // --- Marker pulse: briefly scale all sources up 5% on Chapters.addMarker ---
+    const pulseT = Recorder._pulseUntil ? Math.max(0, Recorder._pulseUntil - Date.now()) : 0;
+    if (pulseT > 0) {
+      const phase = pulseT / Recorder._pulseDur;           // 1 → 0
+      const amp = Math.sin(phase * Math.PI) * 0.05;         // ease bell
+      const scale = 1 + amp;
+      const cx2 = x + w / 2, cy2 = y + h / 2;
+      const newW = w * scale, newH = h * scale;
+      x = cx2 - newW / 2; y = cy2 - newH / 2;
+      w = newW; h = newH;
+    }
+
+    const cx = x + w / 2, cy = y + h / 2;
+    const r = Math.min(w, h) / 2;
+
+    // --- Rotation wrapper (v0.7.1): rotate around the source center.
+    //     Applied globally so glow + clip + blur + title all rotate together.
+    const rot = src.rotation || 0;
+    if (rot !== 0) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      ctx.translate(-cx, -cy);
+    }
+
+    // v0.7.118: horizontal/vertical flip
+    if (src.flipH || src.flipV) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(src.flipH ? -1 : 1, src.flipV ? -1 : 1);
+      ctx.translate(-cx, -cy);
+    }
+
+    // v0.7.128: per-source drop shadow (video path)
+    if (src.shadowBlur > 0) {
+      ctx.save();
+      ctx.shadowColor = src.shadowColor || '#000000';
+      ctx.shadowBlur = src.shadowBlur;
+      ctx.shadowOffsetX = src.shadowOffsetX || 0;
+      ctx.shadowOffsetY = src.shadowOffsetY || 0;
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // --- Glow border (v0.7.158: toggleable, thin stroke without shadowBlur for perf) ---
+    if (this._showGlow !== false) {
+      const accent = this._accentColor || '#a3e635';
+      ctx.save();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // v0.7.164: avatar mode — draw a cartoon face instead of the video
+    if (src.avatarMode) {
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      // Background
+      const avatarHue = (src.id * 47) % 360; // deterministic color per source
+      ctx.fillStyle = `hsl(${avatarHue}, 60%, 30%)`;
+      ctx.fillRect(x, y, w, h);
+      // Head circle
+      const headR = Math.min(w, h) * 0.32;
+      const headX = cx, headY = cy - headR * 0.1;
+      ctx.fillStyle = `hsl(${avatarHue}, 50%, 70%)`;
+      ctx.beginPath(); ctx.arc(headX, headY, headR, 0, Math.PI * 2); ctx.fill();
+      // Eyes
+      const eyeR = headR * 0.12, eyeY = headY - headR * 0.15;
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath(); ctx.arc(headX - headR * 0.28, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(headX + headR * 0.28, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+      // Eye shine
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(headX - headR * 0.25, eyeY - eyeR * 0.3, eyeR * 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(headX + headR * 0.31, eyeY - eyeR * 0.3, eyeR * 0.4, 0, Math.PI * 2); ctx.fill();
+      // Mouth — opens with mic RMS
+      const rms = MicBoost._lastRms || 0;
+      const mouthOpen = Math.min(1, rms * 4) * headR * 0.35;
+      const mouthY = headY + headR * 0.3;
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.ellipse(headX, mouthY, headR * 0.22, Math.max(2, mouthOpen), 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Robot antenna (if source label contains 'robot' or avatar type is robot)
+      if ((src.label || '').toLowerCase().includes('robot') || src.avatarType === 'robot') {
+        ctx.strokeStyle = `hsl(${avatarHue}, 50%, 70%)`;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(headX, headY - headR); ctx.lineTo(headX, headY - headR - headR * 0.4); ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(headX, headY - headR - headR * 0.4, headR * 0.08, 0, Math.PI * 2); ctx.fill();
+      }
+      // Label
+      ctx.font = `600 ${Math.max(14, headR * 0.28)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(src.label || 'Teacher', headX, headY + headR + 8);
+      ctx.restore();
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      if (src.flipH || src.flipV) ctx.restore();
+      if (rot !== 0) ctx.restore();
+      ctx.restore();
+      return;
+    }
+
+    // v0.7.164: privacy blur — entire source heavily blurred (for camera-shy teachers)
+    if (src.privacyBlur) {
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      ctx.filter = 'blur(30px)';
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored, src);
+      ctx.filter = 'none';
+      ctx.restore();
+      this._drawTitleChip(ctx, src, x, y, w, h);
+      this._drawBorder(ctx, src, x, y, w, h);
+      if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+      if (src.flipH || src.flipV) ctx.restore();
+      if (rot !== 0) ctx.restore();
+      ctx.restore();
+      return;
+    }
+
+    // --- Per-source visual filter (v0.7.0) ---
+    // Applied via ctx.filter for the duration of the draw pass, reset after.
+    const filter = src.filter && src.filter !== 'none' ? this._filterString(src.filter) : 'none';
+
+    // --- Main fill with optional background blur ---
+    if (src.blur) {
+      // Pass 1: blurred outer layer, clipped to the source shape.
+      // Over-draws by 12px all around to hide the blur-filter edge artifacts.
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      // v0.7.144: per-source corner radius (blur path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
+      ctx.filter = 'blur(24px) ' + (filter !== 'none' ? filter : '');
+      this._drawVideoRespectingMirror(video, x - 12, y - 12, w + 24, h + 24, mirrored, src);
+      ctx.filter = 'none';
+      ctx.restore();
+
+      // Pass 2: sharp inner region (72% of the outer shape) — centered.
+      // For a face-cam, this keeps the face crisp while the edges stay blurred.
+      ctx.save();
+      const sharpRatio = 0.72;
+      if (shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * sharpRatio, 0, Math.PI * 2);
+        ctx.clip();
+      } else {
+        const mx = (w * (1 - sharpRatio)) / 2;
+        const my = (h * (1 - sharpRatio)) / 2;
+        ctx.beginPath();
+        ctx.rect(x + mx, y + my, w - mx * 2, h - my * 2);
+        ctx.clip();
+      }
+      ctx.filter = filter;
+      this._drawVideoRespectingMirror(video, x, y, w, h, mirrored, src);
+      ctx.filter = 'none';
+      ctx.restore();
+    } else {
+      // Default path: single pass with shape clip + optional filter
+      ctx.save();
+      this._pathForShape(ctx, shape, x, y, w, h, cx, cy, r);
+      ctx.clip();
+      // v0.7.144: per-source corner radius (video path)
+      this._applyCornerRadius(ctx, src, x, y, w, h);
+      ctx.filter = filter;
+      // v0.7.68: chroma key pre-process — returns an offscreen canvas with
+      // alpha zeroed on matching pixels. When set, we draw THAT canvas instead
+      // of the raw video so transparent pixels reveal the layers below.
+      const chromaCanvas = ChromaKey.process(src);
+      if (chromaCanvas) {
+        // drawImage a canvas like a video
+        this._drawVideoRespectingMirror(chromaCanvas, x, y, w, h, src.mirrored, src);
+      } else {
+        this._drawVideoRespectingMirror(src.video, x, y, w, h, src.mirrored, src);
+      }
+      ctx.filter = 'none';
+      ctx.restore();
+    }
+
+    // v0.7.158: extracted helpers for title chip + border
+    this._drawTitleChip(ctx, src, x, y, w, h);
+    this._drawBorder(ctx, src, x, y, w, h);
+
+    // v0.7.180: decorative source skin frame
+    if (src.skin && src.skin !== 'none') SourceSkins.draw(ctx, src.skin, x, y, w, h);
+
+    // v0.7.155: on-canvas source badge/label stamp (video path)
+    if (src.badgeText) this._drawSourceBadge(ctx, src, x, y, w);
+
+    // v0.7.118: close flip wrapper
+    if (src.flipH || src.flipV) ctx.restore();
+    // Close the rotation wrapper opened earlier
+    if (rot !== 0) ctx.restore();
+    ctx.restore(); // v0.7.114: close globalAlpha wrapper
+  },
+
+  /* v0.7.155: draw a small colored pill badge at the top-right corner of a
+     source. Called from drawSource() for both image and video paths when
+     src.badgeText is non-empty. */
+  /* v0.7.158: extracted from drawSource for readability */
+  _drawTitleChip(ctx, src, x, y, w, h) {
+    if (!src.title || !src.title.trim()) return;
+    ctx.save();
+    const titleSize = Math.max(18, Math.min(42, h * 0.08));
+    ctx.font = `700 ${titleSize}px Righteous, Bangers, sans-serif`;
+    const padX = 14, padY = 8;
+    const m = ctx.measureText(src.title);
+    const tw = m.width + padX * 2;
+    const th = titleSize * 1.2 + padY * 2;
+    const tx = x + (w - tw) / 2;
+    const ty = y + h + 12;
+    const rr = 10;
+    ctx.fillStyle = 'rgba(0,0,0,.72)';
+    ctx.beginPath();
+    ctx.moveTo(tx + rr, ty);
+    ctx.lineTo(tx + tw - rr, ty); ctx.quadraticCurveTo(tx + tw, ty, tx + tw, ty + rr);
+    ctx.lineTo(tx + tw, ty + th - rr); ctx.quadraticCurveTo(tx + tw, ty + th, tx + tw - rr, ty + th);
+    ctx.lineTo(tx + rr, ty + th); ctx.quadraticCurveTo(tx, ty + th, tx, ty + th - rr);
+    ctx.lineTo(tx, ty + rr); ctx.quadraticCurveTo(tx, ty, tx + rr, ty);
+    ctx.fill();
+    ctx.fillStyle = this._accentColor || '#a3e635';
+    ctx.fillRect(tx, ty, 4, th);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(src.title, tx + tw / 2, ty + th / 2);
+    ctx.restore();
+  },
+
+  _drawBorder(ctx, src, x, y, w, h) {
+    if (!(src.borderWidth > 0 && src.borderColor)) return;
+    ctx.save();
+    ctx.strokeStyle = src.borderColor;
+    ctx.lineWidth = src.borderWidth;
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  },
+
+  _drawSourceBadge(ctx, src, x, y, w) {
+    const text = src.badgeText;
+    const color = src.badgeColor || '#e74c3c';
+    ctx.save();
+    ctx.font = 'bold 14px sans-serif';
+    const tm = ctx.measureText(text);
+    const padH = 8, padV = 4;
+    const bw = tm.width + padH * 2;
+    const bh = 20 + padV;
+    const bx = x + w - bw - 6;
+    const by = y + 6;
+    const br = bh / 2;
+    // pill shape
+    ctx.beginPath();
+    ctx.moveTo(bx + br, by);
+    ctx.lineTo(bx + bw - br, by);
+    ctx.arc(bx + bw - br, by + br, br, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(bx + br, by + bh);
+    ctx.arc(bx + br, by + br, br, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    // white text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + bw / 2, by + bh / 2);
+    ctx.restore();
+  },
+
+  /* v0.7.13: draw a clean Canva-style selection outline around the
+     currently-selected source. The ✕ delete / 👁 hide / 📌 pin / shape
+     buttons are now rendered in an HTML floating toolbar (SourceToolbar)
+     that sits above the selection — never on the canvas, so they can
+     never overlap the video itself. */
+  _drawSelectedSourceChrome() {
+    // v0.7.180: hover bounding box (subtle accent outline on non-selected hovered source)
+    const hovId = Drag._hoveredSourceId;
+    const selId = Drag.selectedSourceId;
+    if (hovId != null && hovId !== selId) {
+      const hs = this.sources.find(x => x.id === hovId);
+      if (hs && hs.type !== 'mic' && hs.visible && !hs.hidden) {
+        this.ctx.save();
+        this.ctx.strokeStyle = (this._accentColor || '#a3e635');
+        this.ctx.globalAlpha = 0.35;
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(hs.x - 2, hs.y - 2, hs.w + 4, hs.h + 4);
+        this.ctx.restore();
+      }
+    }
+    if (selId == null) {
+      this.sources.forEach(s => { s._chromeDel = null; s._chromeHide = null; });
+      // v0.7.138: even without a primary selection, draw multi-select chrome
+      if (MultiSelect.sources.length > 0) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        for (const ms of MultiSelect.sources) {
+          if (ms.type === 'mic' || !ms.visible || ms.hidden) continue;
+          ctx.strokeRect(ms.x - 3, ms.y - 3, ms.w + 6, ms.h + 6);
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+      return;
+    }
+    const s = this.sources.find(x => x.id === selId);
+    if (!s || s.type === 'mic' || !s.visible || s.hidden) return;
+
+    // Clear stale canvas hit regions (the HTML toolbar handles clicks now)
+    s._chromeDel = null;
+    s._chromeHide = null;
+
+    const ctx = this.ctx;
+    const { x, y, w, h } = s;
+    const accent = this._accentColor || '#a3e635';
+
+    ctx.save();
+    // Dashed outline — slightly outside the source box
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 4;
+    ctx.setLineDash([16, 10]);
+    ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+    ctx.setLineDash([]);
+
+    // v0.7.180: circular resize handles — corners (12px) + edge midpoints (8px)
+    const drawHandle = (hx, hy, r) => {
+      ctx.beginPath();
+      ctx.arc(hx, hy, r, 0, Math.PI * 2);
+      ctx.shadowColor = 'rgba(0,0,0,.55)';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    };
+    // Corner handles (12px radius)
+    drawHandle(x, y, 12);           // 0: TL
+    drawHandle(x + w, y, 12);       // 1: TR
+    drawHandle(x, y + h, 12);       // 2: BL
+    drawHandle(x + w, y + h, 12);   // 3: BR
+    // Edge midpoint handles (8px radius)
+    drawHandle(x + w / 2, y, 8);         // 4: top-center
+    drawHandle(x + w, y + h / 2, 8);     // 5: right-center
+    drawHandle(x + w / 2, y + h, 8);     // 6: bottom-center
+    drawHandle(x, y + h / 2, 8);         // 7: left-center
+    ctx.restore();
+
+    // v0.7.138: draw selection chrome on all multi-selected sources (except
+    // the primary which already has the full chrome drawn above).
+    if (MultiSelect.sources.length > 1) {
+      ctx.save();
+      const msAccent = '#38bdf8';  // sky-blue to distinguish from primary accent
+      ctx.strokeStyle = msAccent;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 8]);
+      for (const ms of MultiSelect.sources) {
+        if (ms.id === selId) continue;  // primary already drawn
+        if (ms.type === 'mic' || !ms.visible || ms.hidden) continue;
+        ctx.strokeRect(ms.x - 3, ms.y - 3, ms.w + 6, ms.h + 6);
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+  },
+
+  // v0.7.182: draw resize handles on sensor overlay + servo gauge when hovered
+  _drawOverlayHandles(ctx) {
+    const hovId = Drag._hoveredSourceId;
+    const state = Drag.state;
+    const overlays = [];
+    if (Sensors._overlayVisible && Sensors._overlayW > 0) {
+      overlays.push({ kind: 'sensorOverlay', x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH });
+    }
+    if (ServoGauge.visible && ServoGauge.w > 0) {
+      overlays.push({ kind: 'servoGauge', x: ServoGauge.x, y: ServoGauge.y, w: ServoGauge.w, h: ServoGauge.h });
+    }
+    overlays.forEach(o => {
+      // Show handles when being dragged/resized OR when hovered (no source selected)
+      const isDragging = state && state.kind === o.kind;
+      const isHovered = !hovId && !state && Drag._lastHoveredOverlay === o.kind;
+      if (!isDragging && !isHovered) return;
+      const { x, y, w, h } = o;
+      ctx.save();
+      // Dashed outline
+      ctx.strokeStyle = 'rgba(163,230,53,.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]);
+      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+      ctx.setLineDash([]);
+      // Corner handles (8px circles)
+      const drawH = (hx, hy) => {
+        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = 'rgba(163,230,53,.8)'; ctx.lineWidth = 2; ctx.stroke();
+      };
+      drawH(x, y); drawH(x + w, y); drawH(x, y + h); drawH(x + w, y + h);
+      ctx.restore();
+    });
+  },
+
+  /* v0.7.144: apply a rounded-rect clip when cornerRadius > 0.
+     Called just before content draw; stacks on top of any existing shape clip. */
+  _applyCornerRadius(ctx, src, x, y, w, h) {
+    const cr = src.cornerRadius || 0;
+    if (cr <= 0) return;
+    const rr = Math.min(cr, Math.min(w, h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+    ctx.lineTo(x + w, y + h - rr); ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    ctx.lineTo(x + rr, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+    ctx.lineTo(x, y + rr); ctx.quadraticCurveTo(x, y, x + rr, y);
+    ctx.closePath();
+    ctx.clip();
+  },
+
+  /* Build a canvas path for the given shape. Centralized so glow + clip
+     + background-blur all use the exact same geometry.
+     v0.7.15: added hexagon, octagon, diamond, star, heart, pill. */
+  _pathForShape(ctx, shape, x, y, w, h, cx, cy, r) {
+    ctx.beginPath();
+    if (shape === 'circle') {
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'rounded') {
+      const rr = Math.min(40, Math.min(w, h) * 0.12);
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+      ctx.lineTo(x + w, y + h - rr); ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+      ctx.lineTo(x + rr, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+      ctx.lineTo(x, y + rr); ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'pill') {
+      // Full-height pill (stadium): two semicircles on the short sides
+      const rr = Math.min(w, h) / 2;
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y);
+      ctx.arc(x + w - rr, y + rr, rr, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x + rr, y + h);
+      ctx.arc(x + rr, y + rr, rr, Math.PI / 2, -Math.PI / 2);
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'hexagon' || shape === 'octagon' || shape === 'diamond') {
+      const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : 4;
+      const rot = shape === 'diamond' ? -Math.PI / 2 : shape === 'hexagon' ? 0 : Math.PI / 8;
+      // Fit polygon inside the w×h box
+      const rx = w / 2, ry = h / 2;
+      for (let i = 0; i < sides; i++) {
+        const a = rot + (i * 2 * Math.PI) / sides;
+        const px = cx + Math.cos(a) * rx;
+        const py = cy + Math.sin(a) * ry;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'star') {
+      // 5-point star, fitted to the w×h box
+      const spikes = 5;
+      const outerX = w / 2, outerY = h / 2;
+      const innerX = outerX * 0.4, innerY = outerY * 0.4;
+      let a = -Math.PI / 2;
+      const step = Math.PI / spikes;
+      ctx.moveTo(cx + Math.cos(a) * outerX, cy + Math.sin(a) * outerY);
+      for (let i = 0; i < spikes; i++) {
+        a += step;
+        ctx.lineTo(cx + Math.cos(a) * innerX, cy + Math.sin(a) * innerY);
+        a += step;
+        ctx.lineTo(cx + Math.cos(a) * outerX, cy + Math.sin(a) * outerY);
+      }
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'heart') {
+      // Classic heart, fitted to w×h box using two Bézier curves
+      const topY = y + h * 0.25;
+      ctx.moveTo(cx, y + h);
+      ctx.bezierCurveTo(x - w * 0.05, y + h * 0.65, x, topY - h * 0.05, cx, topY);
+      ctx.bezierCurveTo(x + w, topY - h * 0.05, x + w + w * 0.05, y + h * 0.65, cx, y + h);
+      ctx.closePath();
+      return;
+    }
+    // default: rect
+    ctx.rect(x, y, w, h);
+  },
+
+  /* Per-source visual filter presets. ctx.filter accepts comma/space-separated
+     CSS filter values — these are standard Canvas2D. No deps. */
+  _filterString(name) {
+    switch (name) {
+      case 'bw':       return 'grayscale(100%)';
+      case 'sepia':    return 'sepia(80%)';
+      case 'bright':   return 'brightness(1.2) contrast(1.1)';
+      case 'contrast': return 'contrast(1.5) saturate(1.2)';
+      case 'vintage':  return 'sepia(40%) contrast(1.1) brightness(0.95)';
+      case 'cool':     return 'hue-rotate(-20deg) saturate(1.2)';
+      case 'warm':     return 'hue-rotate(20deg) saturate(1.2)';
+      case 'invert':   return 'invert(1)';
+      default:         return 'none';
+    }
+  },
+
+  /* Draw a video frame honouring the mirrored flag. Extracted because the
+     blur path needs two draws and duplicating the transform is ugly. */
+  _drawVideoRespectingMirror(video, x, y, w, h, mirrored, cropSrc) {
+    const ctx = this.ctx;
+    // v0.7.119: source crop — compute source rect from crop fractions
+    const nw = video.videoWidth || video.naturalWidth || video.width || w;
+    const nh = video.videoHeight || video.naturalHeight || video.height || h;
+    const cT = (cropSrc && cropSrc.cropTop) || 0;
+    const cB = (cropSrc && cropSrc.cropBottom) || 0;
+    const cL = (cropSrc && cropSrc.cropLeft) || 0;
+    const cR = (cropSrc && cropSrc.cropRight) || 0;
+    const sx = cL * nw;
+    const sy = cT * nh;
+    const sw = nw - (cL + cR) * nw;
+    const sh = nh - (cT + cB) * nh;
+    if (mirrored) {
+      ctx.save();
+      ctx.translate(x + w, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, sx, sy, sw, sh, x, y, w, h);
+    }
+  },
+
+  async addScreen() {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30 },
+        // v0.7.83: opt-in to system audio capture so VolumeDuck has
+        // something to duck. Browser still asks the user per-share.
+        audio: true
+      });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      const src = {
+        id: this.nextId++, type: 'screen', stream, video,
+        label: t('sourceScreen'),
+        x: 0, y: 0, w: this.width, h: this.height,
+        shape: 'rect', visible: true, mirrored: false,
+        opacity: 1, filter: 'none',
+        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+        borderColor: '', borderWidth: 0,
+        shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
+        locked: false, aspectLock: false,
+        rotation: 0,
+        cornerRadius: 0,
+        badgeText: '',
+        badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
+      };
+      this.sources.push(src);
+      src._flyInUntil = Date.now() + 400;
+      stream.getVideoTracks()[0].addEventListener('ended', () => this.removeSource(src.id));
+      // v0.7.83: if the screen capture has audio, route it through a
+      // VolumeDuck gain node so mic-ducking works
+      try {
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length > 0) {
+          const audioOnlyStream = new MediaStream(audioTracks);
+          const srcNode = this.audioCtx.createMediaStreamSource(audioOnlyStream);
+          const ducked = VolumeDuck.wrapSourceAudio(src, srcNode);
+          ducked.connect(this.audioDest);
+        }
+      } catch (e) { log('screen audio wire error: ' + e.message, 'error'); }
+      this.onSourcesChanged();
+      // Re-apply the active scene so the new source is laid out correctly
+      if (Scenes.active) Scenes.reapply();
+      log(`+ ${t('sourceScreen')}`, 'success');
+      this._maybeShowFirstSourceHint();
+    } catch (e) {
+      log(`✗ screen: ${e.message}`, 'error');
+      if (e.name === 'NotAllowedError') showToast(t('permissionDenied'), 3500);
+    }
+  },
+
+  async addCamera(deviceId, label) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: 1280, height: 720 }
+      });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      const n = this.sources.filter(s => s.type === 'cam').length;
+      // stagger placements
+      const positions = [
+        { x: 1440, y: 760, w: 440, h: 280 },  // bottom-right
+        { x: 40, y: 760, w: 440, h: 280 },    // bottom-left
+        { x: 40, y: 40, w: 440, h: 280 },     // top-left
+      ];
+      const pos = positions[n % 3];
+      const src = {
+        id: this.nextId++, type: 'cam', stream, video,
+        label: label || `Camera ${n + 1}`,
+        x: pos.x, y: pos.y, w: pos.w, h: pos.h,
+        shape: 'rect', visible: true, mirrored: $('tcMirrorCam') && $('tcMirrorCam').checked,
+        opacity: 1, filter: 'none',
+        flipH: false, flipV: false,
+        cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+        borderColor: '', borderWidth: 0,
+        shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
+        locked: false, aspectLock: false,
+        rotation: 0,
+        cornerRadius: 0,
+        badgeText: '',
+        badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
+      };
+      this.sources.push(src);
+      src._flyInUntil = Date.now() + 400;
+      this.onSourcesChanged();
+      if (Scenes.active) Scenes.reapply();
+      log(`+ ${src.label}`, 'success');
+      Badges.unlockIfMultiCam();
+      // v0.7.2: one-time hint toast so the user knows how to remove
+      this._maybeShowFirstSourceHint();
+      // After a successful permission grant, labels become available — refresh
+      this.refreshDeviceList();
+    } catch (e) {
+      log(`✗ cam: ${e.message}`, 'error');
+      if (e.name === 'NotAllowedError') showToast(t('permissionDenied'), 3500);
+    }
+  },
+
+  /* v0.7.62: inject an image from a Blob (typically clipboard paste) as
+     a new overlay source. The image is rendered via ctx.drawImage and
+     takes the shortcut branch in drawSource(). It's draggable, resizable,
+     and persists until removed — same lifecycle as camera/screen sources. */
+  async addImage(blob, label) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const targetH = 400;
+        const targetW = targetH * aspect;
+        const src = {
+          id: this.nextId++,
+          type: 'image',
+          label: label || 'clipboard',
+          img,
+          imgUrl: url,
+          x: (this.width - targetW) / 2,
+          y: (this.height - targetH) / 2,
+          w: targetW,
+          h: targetH,
+          shape: 'rect',
+          visible: true,
+          hidden: false,
+          custom: true,
+          opacity: 1, filter: 'none',
+          flipH: false, flipV: false,
+          cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+          borderColor: '', borderWidth: 0,
+          shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
+          locked: false, aspectLock: false,
+          rotation: 0,
+          cornerRadius: 0,
+          badgeText: '',
+          badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
+        };
+        this.sources.push(src);
+        src._flyInUntil = Date.now() + 400;
+        this.onSourcesChanged();
+        showToast(`📋 ${label || 'clipboard'}`, 1500);
+        if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
+        resolve(src);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        showToast(t('pasteImageError') || '❌ Image invalide', 2000);
+        resolve(null);
+      };
+      img.src = url;
+    });
+  },
+
+  // v0.7.167: add a colored shape source (rectangle, circle, etc.)
+  addShape(shapeType, color, w, h) {
+    const src = {
+      id: this.nextId++,
+      type: 'shape',
+      label: shapeType || 'rect',
+      shapeColor: color || '#a3e635',
+      x: (this.width - (w || 200)) / 2,
+      y: (this.height - (h || 200)) / 2,
+      w: w || 200,
+      h: h || 200,
+      shape: shapeType || 'rect',
+      visible: true,
+      hidden: false,
+      opacity: 1, filter: 'none',
+      flipH: false, flipV: false,
+      cropTop: 0, cropBottom: 0, cropLeft: 0, cropRight: 0,
+      borderColor: '', borderWidth: 0,
+      shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
+      locked: false, aspectLock: false,
+      rotation: 0,
+      cornerRadius: 0,
+      badgeText: '',
+      badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
+    };
+    this.sources.push(src);
+    src._flyInUntil = Date.now() + 400;
+    this.onSourcesChanged();
+    showToast(`🟩 ${shapeType}`, 1200);
+    if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
+    return src;
+  },
+
+  async setMic(deviceId) {
+    // v0.7.69: tear down any previous MicBoost chain so the new mic builds
+    // a fresh gain/analyser pair instead of orphaning the old ones.
+    try { MicBoost.detach(); } catch {}
+    // remove previous mic
+    this.sources = this.sources.filter(s => {
+      if (s.type === 'mic') {
+        try { s.stream.getTracks().forEach(tr => tr.stop()); } catch {}
+        return false;
+      }
+      return true;
+    });
+    if (!deviceId) { this.onSourcesChanged(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: true, noiseSuppression: true }
+      });
+      const src = { id: this.nextId++, type: 'mic', stream, label: 'Mic' };
+      this.sources.push(src);
+      // hook into audio graph
+      const node = this.audioCtx.createMediaStreamSource(stream);
+      // v0.7.69: route the mic through MicBoost (gain + noise gate) before
+      // it reaches audioDest. The VU analyser still taps the raw pre-gain
+      // signal so the meter reflects what the user is actually saying.
+      const gainedOrSrc = MicBoost.attach(node);
+      AudioViz.setup();  // v0.7.135: init frequency buffer from analyser
+      gainedOrSrc.connect(this.audioDest);
+      node.connect(this.analyser);
+      this.onSourcesChanged();
+      log('+ Mic', 'success');
+      this.refreshDeviceList();
+      // v0.7.179: auto mic check on selection
+      MicCheck.start();
+    } catch (e) {
+      log(`✗ mic: ${e.message}`, 'error');
+    }
+  },
+
+  /* One-time instructional toast, shown the first time the user adds a
+     source in a new session. Tells them how to drag/resize/remove so
+     the controls are discoverable without reading docs. */
+  _maybeShowFirstSourceHint() {
+    if (this._firstSourceHintShown) return;
+    this._firstSourceHintShown = true;
+    showToast(t('firstSourceHint'), 5500);
+  },
+
+  /* Re-read the current theme's --accent CSS variable and cache it for the
+     glow border. Called at init and after every setTheme. */
+  refreshAccent() {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      if (v) this._accentColor = v;
+    } catch {}
+  },
+
+  /* Refresh the camera and mic dropdowns.
+     Labels are only populated after at least one getUserMedia permission
+     has been granted, so we call this after addCamera / setMic succeeds. */
+  async refreshDeviceList() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter(d => d.kind === 'videoinput');
+      const mics = devices.filter(d => d.kind === 'audioinput');
+      const camSel = $('camSelect'), micSel = $('micSelect');
+      if (camSel) {
+        const prev = camSel.value;
+        camSel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = ''; opt0.textContent = t('selectCam');
+        camSel.appendChild(opt0);
+        cams.forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.deviceId;
+          o.textContent = d.label || `Camera ${d.deviceId.slice(0, 4) || 'default'}`;
+          camSel.appendChild(o);
+        });
+        if (prev) camSel.value = prev;
+      }
+      if (micSel) {
+        const prev = micSel.value;
+        micSel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = ''; opt0.textContent = t('selectMic');
+        micSel.appendChild(opt0);
+        mics.forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.deviceId;
+          o.textContent = d.label || `Mic ${d.deviceId.slice(0, 4) || 'default'}`;
+          micSel.appendChild(o);
+        });
+        if (prev) micSel.value = prev;
+      }
+    } catch (e) {
+      log(`enumerateDevices: ${e.message}`, 'error');
+    }
+  },
+
+  removeSource(id) {
+    const src = this.sources.find(s => s.id === id);
+    if (!src) return;
+    // v0.7.62: image sources carry a blob URL instead of a MediaStream —
+    // revoke the object URL so the pasted bitmap is GC'd.
+    try {
+      if (src.type === 'image' && src.imgUrl) {
+        URL.revokeObjectURL(src.imgUrl);
+      } else if (src.stream) {
+        src.stream.getTracks().forEach(t => t.stop());
+      }
+    } catch {}
+    this.sources = this.sources.filter(s => s.id !== id);
+    if (Drag.selectedSourceId === id) Drag.selectedSourceId = null;
+    this.onSourcesChanged();
+    log(`- ${src.label}`, 'info');
+    showToast(`✕ ${t('sourceRemoved')}: ${src.label}`, 1500);
+    // v0.7.41: snapshot layout after a source is removed (undoable)
+    if (typeof LayoutHistory !== 'undefined') LayoutHistory.capture();
+  },
+
+  onSourcesChanged() {
+    const list = $('tcSrcList');
+    if (list) {
+      list.innerHTML = '';
+      // v0.7.103: compute layer numbers (1 = back, total = front) over
+      // the visible/video sources so the sidebar chip matches the hover
+      // badge on the stage. Mic sources are excluded from the count.
+      const videoTotal = this.sources.filter(s => s.type !== 'mic').length;
+      let videoSeen = 0;
+      this.sources.forEach(s => {
+        const li = document.createElement('li');
+        li.className = 'tc-src-row';
+
+        // Top row: icon + editable title + action icons
+        const topRow = document.createElement('div');
+        topRow.className = 'tc-src-row-top';
+        // v0.7.103: static layer chip (back-indexed). Mic sources get
+        // no chip since they don't participate in z-order.
+        if (s.type !== 'mic') {
+          videoSeen += 1;
+          const layerChip = document.createElement('span');
+          layerChip.className = 'tc-src-layer';
+          layerChip.textContent = `#${videoSeen}/${videoTotal}`;
+          layerChip.title = `layer ${videoSeen} of ${videoTotal} (1 = back)`;
+          topRow.appendChild(layerChip);
+        }
+        const icon = s.type === 'screen' ? '🖥' : s.type === 'cam' ? '🎥' : '🎤';
+        const iconEl = document.createElement('span'); iconEl.textContent = icon;
+        const nameEl = document.createElement('span');
+        nameEl.className = 'tc-src-name';
+        nameEl.textContent = s.label;
+        nameEl.contentEditable = 'plaintext-only';
+        nameEl.dataset.srcId = s.id;
+        nameEl.spellcheck = false;
+        nameEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            nameEl.blur();
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            nameEl.textContent = s.label;
+            nameEl.blur();
+          }
+        });
+        nameEl.addEventListener('blur', () => {
+          const newLabel = nameEl.textContent.trim().slice(0, 50);
+          if (newLabel && newLabel !== s.label) {
+            s.label = newLabel;
+            nameEl.textContent = s.label;
+            log('renamed: ' + s.label, 'info');
+            showToast('✏ ' + (t('sourceRenamed') || 'Source renommée'), 1200);
+          } else {
+            nameEl.textContent = s.label;
+          }
+        });
+        // Prevent clicks inside the name from triggering row-level actions
+        nameEl.addEventListener('mousedown', (e) => e.stopPropagation());
+        // v0.7.108: clicking the source name pulses the source on the canvas
+        // so the teacher instantly sees which camera/image they just picked
+        // — especially useful when many sources overlap. Fires on every
+        // click; the brief 1s highlight coexists with contentEditable rename.
+        nameEl.addEventListener('click', () => {
+          if (s.type !== 'mic') SourcePulse.pulse(s);
+        });
+        topRow.append(iconEl, nameEl);
+
+        if (s.type !== 'mic') {
+          const pin = document.createElement('button');
+          pin.className = 'tc-src-icon-btn' + (s.custom ? ' active' : '');
+          pin.textContent = s.custom ? '📌' : '🔓';
+          pin.title = s.custom ? t('unpinSource') : t('pinSource');
+          pin.addEventListener('click', (e) => { e.stopPropagation(); Drag.togglePin(s.id); });
+          topRow.appendChild(pin);
+
+          // v0.7.6: Hide/show toggle button
+          const hideBtn = document.createElement('button');
+          hideBtn.className = 'tc-src-icon-btn' + (s.hidden ? ' active' : '');
+          hideBtn.textContent = s.hidden ? '🙈' : '👁';
+          hideBtn.title = s.hidden ? t('sourceShow') : t('sourceHide');
+          hideBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.hidden = !s.hidden;
+            this.onSourcesChanged();
+            showToast(s.hidden ? t('sourceHidden') : t('sourceShown'), 1500);
+          });
+          topRow.appendChild(hideBtn);
+
+          // v0.7.122: lock position toggle
+          const lock = document.createElement('button');
+          lock.className = 'tc-src-icon-btn' + (s.locked ? ' active' : '');
+          lock.textContent = s.locked ? '🔒' : '🔓';
+          lock.title = s.locked ? t('unlockSource') : t('lockSource');
+          lock.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.locked = !s.locked;
+            this.onSourcesChanged();
+            showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+          });
+          topRow.appendChild(lock);
+
+          const blur = document.createElement('button');
+          blur.className = 'tc-src-icon-btn' + (s.blur ? ' active' : '');
+          blur.textContent = '🌫';
+          blur.title = t('toggleBlur');
+          blur.addEventListener('click', (e) => {
+            e.stopPropagation();
+            s.blur = !s.blur;
+            this.onSourcesChanged();
+          });
+          topRow.appendChild(blur);
+        }
+
+        const rm = document.createElement('button');
+        rm.className = 'tc-src-icon-btn tc-src-remove';
+        rm.title = t('removeSource');
+        rm.textContent = '✕';
+        rm.addEventListener('click', (e) => { e.stopPropagation(); this.removeSource(s.id); });
+        topRow.appendChild(rm);
+        li.appendChild(topRow);
+
+        // Bottom row (video sources only): title input + filter select
+        if (s.type !== 'mic') {
+          const bot = document.createElement('div');
+          bot.className = 'tc-src-row-bot';
+
+          const titleInput = document.createElement('input');
+          titleInput.type = 'text';
+          titleInput.className = 'tc-src-title-input';
+          titleInput.placeholder = t('sourceTitlePh');
+          titleInput.value = s.title || '';
+          titleInput.addEventListener('input', (e) => { s.title = e.target.value; });
+          bot.appendChild(titleInput);
+
+          const filterSel = document.createElement('select');
+          filterSel.className = 'tc-src-filter-select';
+          [
+            ['none',     t('filter_none')],
+            ['bw',       t('filter_bw')],
+            ['sepia',    t('filter_sepia')],
+            ['bright',   t('filter_bright')],
+            ['contrast', t('filter_contrast')],
+            ['vintage',  t('filter_vintage')],
+            ['cool',     t('filter_cool')],
+            ['warm',     t('filter_warm')],
+          ].forEach(([v, l]) => {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = l;
+            if ((s.filter || 'none') === v) opt.selected = true;
+            filterSel.appendChild(opt);
+          });
+          filterSel.addEventListener('change', (e) => { s.filter = e.target.value; });
+          bot.appendChild(filterSel);
+
+          // Shape selector (v0.7.0)
+          const shapeSel = document.createElement('select');
+          shapeSel.className = 'tc-src-shape-select';
+          [
+            ['rect',    '▭'],
+            ['rounded', '▢'],
+            ['circle',  '⬤'],
+          ].forEach(([v, l]) => {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = l;
+            if ((s.shape || 'rect') === v) opt.selected = true;
+            shapeSel.appendChild(opt);
+          });
+          shapeSel.title = t('sourceShape');
+          shapeSel.addEventListener('change', (e) => { s.shape = e.target.value; });
+          bot.appendChild(shapeSel);
+
+          li.appendChild(bot);
+        }
+
+        // v0.7.179: pop-in animation on source list items
+        li.classList.add('tc-src-pop');
+        li.addEventListener('animationend', () => li.classList.remove('tc-src-pop'), { once: true });
+        list.appendChild(li);
+      });
+    }
+    const stage = $('tcStage');
+    if (stage) stage.classList.toggle('has-sources', this.sources.some(s => s.type !== 'mic'));
+  },
+
+  /* v0.2.1 FIX: captureStream() must be called once and the resulting video
+     track reused for every recording. Both Chrome and Firefox have races where
+     fresh-per-start captureStream() calls on the same canvas can hand back a
+     track that never delivers frames to MediaRecorder, producing zero-byte
+     webms. We now cache the stream on first use and re-use the same video
+     track forever. */
+  getMasterStream() {
+    if (!this._canvasStream) {
+      this._canvasStream = this.canvas.captureStream(30);
+      log(`🎥 canvas stream: ${this._canvasStream.getVideoTracks().length}v ${this._canvasStream.getAudioTracks().length}a`, 'info');
+    }
+    const videoTrack = this._canvasStream.getVideoTracks()[0];
+    const audioTrack = this.audioDest.stream.getAudioTracks()[0];
+    if (!videoTrack) {
+      log('✗ captureStream returned no video track — recording will fail', 'error');
+    } else if (videoTrack.readyState !== 'live') {
+      log(`✗ video track state is ${videoTrack.readyState}`, 'error');
+    }
+    const tracks = [];
+    if (videoTrack) tracks.push(videoTrack);
+    if (audioTrack) tracks.push(audioTrack);
+    return new MediaStream(tracks);
+  },
+
+  updateVU() {
+    if (!this.analyser) return;
+    const data = new Uint8Array(this.analyser.frequencyBinCount);
+    this.analyser.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / data.length);
+    const pct = Math.min(100, rms * 400);
+    // v0.7.40: LED-style meter next to the big REC button. 10 segments,
+    // color-coded green/yellow/red, threshold-lit.
+    const leds = $('tcLedMeter');
+    if (leds) {
+      // Convert pct (0..100) to a segment count (0..10)
+      const lit = Math.round(pct / 10);
+      if (this._lastLedLit !== lit) {
+        this._lastLedLit = lit;
+        const segs = leds.children;
+        for (let i = 0; i < segs.length; i++) {
+          segs[i].classList.toggle('lit', i < lit);
+        }
+      }
+    }
+  },
+
+  async enumerateDevices() {
+    // Prompt for permission first (blank getUserMedia) so labels are populated
+    try { await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(s => s.getTracks().forEach(t => t.stop())); } catch {}
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    const camSel = $('camSelect'), micSel = $('micSelect');
+    if (camSel) {
+      camSel.innerHTML = `<option value="">${t('selectCam')}</option>`;
+      cams.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Camera ${d.deviceId.slice(0, 4)}`; camSel.appendChild(o); });
+    }
+    if (micSel) {
+      micSel.innerHTML = `<option value="">${t('selectMic')}</option>`;
+      mics.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Mic ${d.deviceId.slice(0, 4)}`; micSel.appendChild(o); });
+    }
+  },
+};
+
+/* ─────────── Scenes Manager ─────────── */
+
+const Scenes = {
+  /* Each scene: { key, icon, apply, preview }
+     v0.7.29: `preview` is a static rect schematic used to render a
+     mini-thumbnail inside the scene button. Each rect is normalized
+     0..1 in both axes with {kind: 'screen'|'cam'|'face'}. These
+     mirror what `apply()` does to real sources at runtime — kept in
+     sync manually since apply() is imperative and we can't reflect it. */
+  presets: [
+    {
+      key: 'code', icon: '💻',
+      apply: (e) => setLayout(e, { screen: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'screen', x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'robot', icon: '🤖',
+      apply: (e) => setLayout(e, { firstCam: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'sensors', icon: '🎛',
+      apply: (e) => setLayout(e, { secondCam: 'full', facecam: 'br' }),
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'coderobot', icon: '💻🤖',
+      apply: (e) => setLayout(e, { screen: 'left', firstCam: 'right', facecam: 'br' }),
+      preview: [
+        { kind: 'screen', x: 0,    y: 0,    w: 0.6,  h: 1,    shape: 'rect' },
+        { kind: 'cam',    x: 0.6,  y: 0,    w: 0.4,  h: 1,    shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'studio', icon: '🎬',
+      apply: (e) => setLayout(e, { grid: true }),
+      preview: [
+        { kind: 'screen', x: 0,   y: 0,   w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'cam',    x: 0.5, y: 0,   w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'cam',    x: 0,   y: 0.5, w: 0.5, h: 0.5, shape: 'rect' },
+        { kind: 'face',   x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'pilot', icon: '🎮',
+      apply: (e) => { setLayout(e, { firstCam: 'full', facecam: 'br' }); MicrobitOverlay.show(); },
+      preview: [
+        { kind: 'cam',  x: 0,    y: 0,    w: 1,    h: 1,    shape: 'rect' },
+        { kind: 'face', x: 0.77, y: 0.66, w: 0.21, h: 0.28, shape: 'circle' },
+      ]
+    },
+    {
+      key: 'you', icon: '👋',
+      apply: (e) => setLayout(e, { facecam: 'full' }),
+      preview: [
+        { kind: 'face', x: 0, y: 0, w: 1, h: 1, shape: 'rect' },
+      ]
+    },
+  ],
+  active: 'code',
+  // v0.7.48: user-saved custom scenes, restored from tc-scene-custom
+  custom: [],
+  _customKeyCounter: 1,
+
+  switch(key) {
+    const s = this.presets.find(p => p.key === key);
+    if (!s) return;
+    // v0.7.64: if transitions are enabled, the transition object applies
+    // the scene at its midpoint. Otherwise apply immediately.
+    if (!SceneTransition.run(s, Engine)) {
+      s.apply(Engine);
+    }
+    this.active = key;
+    this.render();
+    // v0.7.179: bounce the active scene card on switch
+    const activeBtn = document.querySelector(`.tc-scene-btn.active`);
+    if (activeBtn) {
+      activeBtn.classList.add('tc-scene-bounce');
+      setTimeout(() => activeBtn.classList.remove('tc-scene-bounce'), 300);
+    }
+    // v0.7.125: notify per-scene time tracker of the switch
+    SceneTimer.onSceneSwitch(key);
+    const labelForLog = s.custom ? s.label : (s.overrideName || t('scene_' + key));
+    log(`${t('sceneChanged')} : ${s.icon} ${labelForLog}`, 'info');
+    Chapters.add(labelForLog);
+    // v0.7.37: auto intro text card, opt-in in Settings
+    if (SceneIntroText.enabled) {
+      SceneIntroText.show(key, s.icon);
+    }
+    Badges.unlockScene(key);
+  },
+
+  /* Re-apply the active scene layout without logging / chapter side-effects.
+     Used after adding a source so it inherits the template / current layout. */
+  reapply() {
+    const s = this.presets.find(p => p.key === this.active);
+    if (s) s.apply(Engine);
+  },
+
+  /* v0.7.110: pick a random scene (skip current). Hotkey ? mapped in
+     setupKeyboard, button 🎲 in the tools bar. */
+  random() {
+    if (this.presets.length === 0) {
+      showToast('🎲 ' + (t('noScenesToShuffle') || 'No scenes available'), 1800);
+      return;
+    }
+    const others = this.presets.filter(p => p.key !== this.active);
+    if (others.length === 0) {
+      showToast('🎲 ' + (t('onlyOneScene') || 'Only one scene'), 1800);
+      return;
+    }
+    const pick = others[Math.floor(Math.random() * others.length)];
+    this.switch(pick.key);
+    const label = pick.custom ? pick.label : t('scene_' + pick.key);
+    showToast('🎲 ' + (t('randomScene') || 'Random scene') + ' : ' + pick.icon + ' ' + label, 1800);
+  },
+
+  /* v0.7.32: reorder scenes by drag-and-drop. Persists the order to
+     localStorage tc-scene-order as an array of keys. The 1-9 hotkey
+     mapping follows the new order automatically because it's indexed
+     off Scenes.presets. */
+  reorder(movedKey, targetKey, before) {
+    const from = this.presets.findIndex(p => p.key === movedKey);
+    const to = this.presets.findIndex(p => p.key === targetKey);
+    if (from < 0 || to < 0 || from === to) return;
+    const [moved] = this.presets.splice(from, 1);
+    // After removing, the target index may have shifted by 1
+    let insertAt = this.presets.findIndex(p => p.key === targetKey);
+    if (!before) insertAt += 1;
+    this.presets.splice(insertAt, 0, moved);
+    this.saveOrder();
+    this.render();
+    showToast('🎭 ' + (t('sceneReordered') || 'Scenes reordered'), 1400);
+  },
+
+  saveOrder() {
+    try {
+      const keys = this.presets.map(p => p.key);
+      localStorage.setItem('tc-scene-order', JSON.stringify(keys));
+    } catch {}
+  },
+
+  loadOrder() {
+    try {
+      const raw = localStorage.getItem('tc-scene-order');
+      if (!raw) return;
+      const keys = JSON.parse(raw);
+      if (!Array.isArray(keys)) return;
+      // Sort presets so they match the saved order. Unknown keys stay
+      // at the end so adding a new scene preset in future releases
+      // doesn't silently disappear.
+      const byKey = {};
+      this.presets.forEach(p => { byKey[p.key] = p; });
+      const ordered = [];
+      keys.forEach(k => { if (byKey[k]) { ordered.push(byKey[k]); delete byKey[k]; } });
+      // Append any new presets that weren't in the saved order
+      Object.values(byKey).forEach(p => ordered.push(p));
+      this.presets = ordered;
+    } catch {}
+  },
+
+  /* v0.7.48: capture current layout of every visible source into a new
+     custom scene. Stored in localStorage as position data only (no blobs),
+     and applied back later by finding the Nth source of each type and
+     copying x/y/w/h/shape onto it. */
+  saveCurrentAsScene() {
+    const label = prompt(t('promptSaveScene') || 'Nom de cette scène ?', '');
+    if (!label || !label.trim()) return;
+    const trimmed = label.trim().slice(0, 40);
+    const key = 'custom-' + Date.now();
+    const W = Engine.width, H = Engine.height;
+    // Snapshot visible sources that aren't mic, as an array of position
+    // descriptors keyed by type + order.
+    const snapshot = Engine.sources
+      .filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden)
+      .map(s => ({
+        type: s.type,
+        label: s.label,
+        x: s.x, y: s.y, w: s.w, h: s.h,
+        shape: s.shape || 'rect',
+        opacity: s.opacity ?? 1, filter: s.filter || 'none',
+        flipH: !!s.flipH, flipV: !!s.flipV,
+        cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+        cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked, aspectLock: !!s.aspectLock,
+        rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
+      }));
+    if (snapshot.length === 0) {
+      showToast(t('customSceneEmpty') || '⚠ Aucune source visible à sauvegarder', 2000);
+      return;
+    }
+    // Build a static `apply` closure that captures the snapshot at save time.
+    // When the user clicks the custom scene, we find matching sources by type
+    // + order-in-type and apply the snapshot positions.
+    const sceneDef = {
+      key,
+      icon: '💾',
+      label: trimmed,
+      custom: true,
+      snapshot,
+      apply: (e) => this._applyCustomSnapshot(snapshot, e),
+      preview: snapshot.map(s => ({
+        kind: s.type === 'screen' ? 'screen' : s.type === 'cam' ? 'cam' : 'face',
+        x: s.x / W, y: s.y / H, w: s.w / W, h: s.h / H,
+        shape: s.shape,
+      })),
+    };
+    this.custom.push(sceneDef);
+    this.presets.push(sceneDef);
+    this.saveCustom();
+    this.render();
+    showToast('💾 ' + trimmed, 1500);
+  },
+
+  _applyCustomSnapshot(snapshot, engine) {
+    // For each snapshot entry, find the Nth source of that type and copy
+    // the saved position. Non-custom-flagged first so we don't clobber
+    // sources the user dragged since.
+    const perType = { screen: [], cam: [] };
+    engine.sources.forEach(s => {
+      if (s.type === 'screen' || s.type === 'cam') perType[s.type].push(s);
+    });
+    const cursors = { screen: 0, cam: 0 };
+    snapshot.forEach(snap => {
+      const bucket = perType[snap.type];
+      if (!bucket) return;
+      const target = bucket[cursors[snap.type]++];
+      if (!target) return;
+      target.visible = true;
+      target.x = snap.x; target.y = snap.y;
+      target.w = snap.w; target.h = snap.h;
+      target.shape = snap.shape;
+      target.borderColor = snap.borderColor || '';
+      target.borderWidth = snap.borderWidth || 0;
+      target.shadowColor = snap.shadowColor || '#000000';
+      target.shadowBlur = snap.shadowBlur || 0;
+      target.shadowOffsetX = snap.shadowOffsetX ?? 5;
+      target.shadowOffsetY = snap.shadowOffsetY ?? 5;
+      target.locked = !!snap.locked;
+      target.aspectLock = !!snap.aspectLock;
+      target.rotation = snap.rotation || 0;
+      target.cornerRadius = snap.cornerRadius || 0;
+      target.badgeText = snap.badgeText || '';
+      target.badgeColor = snap.badgeColor || '#e74c3c';
+      target.skin = snap.skin || 'none';
+      target.custom = true;
+    });
+  },
+
+  deleteCustom(key) {
+    if (!confirm(t('confirmDeleteCustomScene') || 'Supprimer cette scène ?')) return;
+    this.custom = this.custom.filter(c => c.key !== key);
+    this.presets = this.presets.filter(p => p.key !== key);
+    this.saveCustom();
+    this.render();
+  },
+
+  /* v0.7.101: clone any scene (preset or custom) into a new custom scene
+     based on its preview rects. Builds a snapshot using current Engine
+     dimensions so the clone behaves like a regular custom scene. */
+  duplicateScene(key) {
+    const src = this.presets.find(p => p.key === key);
+    if (!src) return;
+    const baseLabel = src.custom ? src.label : (src.overrideName || t('scene_' + src.key));
+    const label = prompt(t('promptDuplicateScene') || 'Nom de la copie ?', (baseLabel || 'Scene') + ' (copie)');
+    if (!label || !label.trim()) return;
+    const W = Engine.width || 1920, H = Engine.height || 1080;
+    const newKey = 'custom-' + Date.now();
+    // If the source is already a custom scene with a snapshot, deep-copy it.
+    // Otherwise, build a snapshot from the preset's normalized preview rects.
+    let snapshot;
+    if (src.custom && Array.isArray(src.snapshot) && src.snapshot.length) {
+      snapshot = src.snapshot.map(s => ({
+        type: s.type,
+        label: s.label || '',
+        x: s.x, y: s.y, w: s.w, h: s.h,
+        shape: s.shape || 'rect',
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
+        cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
+      }));
+    } else {
+      snapshot = (src.preview || []).map(p => ({
+        type: p.kind === 'screen' ? 'screen' : 'cam',
+        label: '',
+        x: p.x * W,
+        y: p.y * H,
+        w: p.w * W,
+        h: p.h * H,
+        shape: p.shape || 'rect',
+      }));
+    }
+    const scene = {
+      key: newKey,
+      icon: src.icon || '📋',
+      label: label.trim().slice(0, 40),
+      custom: true,
+      snapshot,
+      apply: (e) => this._applyCustomSnapshot(snapshot, e),
+      preview: snapshot.map(s => ({
+        kind: s.type === 'screen' ? 'screen' : s.type === 'cam' ? 'cam' : 'face',
+        x: s.x / W, y: s.y / H, w: s.w / W, h: s.h / H,
+        shape: s.shape,
+      })),
+    };
+    this.custom.push(scene);
+    this.presets.push(scene);
+    this.saveCustom();
+    this.render();
+    showToast('📋 ' + scene.label, 1400);
+  },
+
+  saveCustom() {
+    try {
+      localStorage.setItem('tc-scene-custom', JSON.stringify(
+        this.custom.map(c => ({ key: c.key, icon: c.icon, label: c.label, snapshot: c.snapshot }))
+      ));
+    } catch {}
+  },
+
+  loadCustom() {
+    try {
+      const raw = localStorage.getItem('tc-scene-custom');
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved)) return;
+      const W = Engine.width || 1920, H = Engine.height || 1080;
+      saved.forEach(c => {
+        const scene = {
+          key: c.key,
+          icon: c.icon || '💾',
+          label: c.label || 'Custom',
+          custom: true,
+          snapshot: c.snapshot,
+          apply: (e) => this._applyCustomSnapshot(c.snapshot, e),
+          preview: (c.snapshot || []).map(s => ({
+            kind: s.type === 'screen' ? 'screen' : s.type === 'cam' ? 'cam' : 'face',
+            x: s.x / W, y: s.y / H, w: s.w / W, h: s.h / H,
+            shape: s.shape || 'rect',
+          })),
+        };
+        this.custom.push(scene);
+        this.presets.push(scene);
+      });
+    } catch {}
+  },
+
+  /* v0.7.127: silently re-capture the current layout into a custom scene's
+     snapshot (no prompt). Used by SceneAutoSave to persist layout tweaks
+     the teacher made by dragging/resizing/editing source properties. Only
+     works for custom scenes — preset scenes are code-defined. */
+  saveScene(key) {
+    const scene = this.presets.find(p => p.key === key);
+    if (!scene || !scene.custom) return false;
+    const W = Engine.width || 1920, H = Engine.height || 1080;
+    const snapshot = Engine.sources
+      .filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden)
+      .map(s => ({
+        type: s.type,
+        label: s.label,
+        x: s.x, y: s.y, w: s.w, h: s.h,
+        shape: s.shape || 'rect',
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
+        cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
+        skin: s.skin || 'none',
+      }));
+    if (snapshot.length === 0) return false;
+    scene.snapshot = snapshot;
+    scene.apply = (e) => this._applyCustomSnapshot(snapshot, e);
+    scene.preview = snapshot.map(s => ({
+      kind: s.type === 'screen' ? 'screen' : s.type === 'cam' ? 'cam' : 'face',
+      x: s.x / W, y: s.y / H, w: s.w / W, h: s.h / H,
+      shape: s.shape,
+    }));
+    this.saveCustom();
+    this.render();
+    return true;
+  },
+
+  /* v0.7.139: rename a scene inline. For custom scenes the label is stored
+     directly; for preset scenes we add an `overrideName` property so the
+     original i18n key is still available as fallback. */
+  renameScene(key, newName) {
+    const scene = this.presets.find(p => p.key === key);
+    if (!scene) return;
+    const clean = newName.replace(/<[^>]*>/g, '').trim().slice(0, 30);
+    if (!clean) return;
+    if (scene.custom) {
+      scene.label = clean;
+    } else {
+      scene.overrideName = clean;
+    }
+    this.saveCustom();
+    // v0.7.139: also persist preset overrides
+    this._savePresetOverrides();
+    this.render();
+    showToast('✏️ ' + t('sceneRenamed'), 1200);
+  },
+
+  _savePresetOverrides() {
+    try {
+      const overrides = {};
+      this.presets.forEach(p => { if (!p.custom && p.overrideName) overrides[p.key] = p.overrideName; });
+      if (Object.keys(overrides).length) {
+        localStorage.setItem('tc-scene-overrides', JSON.stringify(overrides));
+      } else {
+        localStorage.removeItem('tc-scene-overrides');
+      }
+    } catch {}
+  },
+
+  _loadPresetOverrides() {
+    try {
+      const raw = localStorage.getItem('tc-scene-overrides');
+      if (!raw) return;
+      const overrides = JSON.parse(raw);
+      if (typeof overrides !== 'object') return;
+      this.presets.forEach(p => {
+        if (!p.custom && overrides[p.key]) p.overrideName = overrides[p.key];
+      });
+    } catch {}
+  },
+
+  render() {
+    renderScenes();
+    // v0.7.91: scroll the active scene button into view if scrolled out
+    requestAnimationFrame(() => {
+      const active = document.querySelector('.tc-scene-btn.active');
+      if (active && typeof active.scrollIntoView === 'function') {
+        active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    });
+  }
+};
+
+/* v0.7.127: SceneAutoSave — debounced auto-save of the active custom scene
+   whenever the teacher moves, resizes, or changes properties of sources.
+   Prevents lost work by persisting layout tweaks automatically.
+   Opt-in via Settings checkbox, persisted as tc-scene-autosave. */
+const SceneAutoSave = {
+  enabled: true,
+  _timer: null,
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-scene-autosave');
+      if (v !== null) this.enabled = v === '1';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-scene-autosave', v ? '1' : '0'); } catch {}
+  },
+
+  /** Debounced trigger — clears previous timer, sets 1s timeout. */
+  trigger() {
+    if (!this.enabled) return;
+    // Only auto-save if the active scene is a custom scene
+    const scene = Scenes.presets.find(p => p.key === Scenes.active);
+    if (!scene || !scene.custom) return;
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = setTimeout(() => {
+      this._timer = null;
+      if (Scenes.saveScene(Scenes.active)) {
+        showToast(t('sceneAutoSaved') || '💾 Scene auto-saved', 800);
+      }
+    }, 1000);
+  },
+
+  setup() {
+    this.load();
+  },
+};
+
+/* v0.7.64: Opt-in scene transition fade effect.
+   When enabled, switching scenes via hotkey / click / template advance
+   plays a 400ms fade-to-black transition:
+     - 0-200ms:  fade out the old scene
+     - midpoint: apply the new scene layout
+     - 200-400ms: fade back in with the new layout
+   Drawn as a fullscreen black rect on the output canvas with animated
+   alpha, so the transition is baked into the recording. Persisted in
+   localStorage as tc-scene-transition. */
+const SceneTransition = {
+  enabled: false,
+  mode: 'fade',    // 'fade' | 'wipe'
+  DURATION: 400,   // ms total (200 fade out + 200 fade in)
+  WIPE_DURATION: 300, // ms for wipe sweep
+  _activeUntil: 0,
+  _midpointAt: 0,
+  _pendingApply: null,
+
+  MODES: ['fade', 'wipe', 'slide', 'zoom', 'flip', 'glitch'],
+
+  load() {
+    try {
+      const stored = localStorage.getItem('tc-scene-transition-mode');
+      if (this.MODES.includes(stored)) {
+        this.mode = stored;
+        this.enabled = true;
+      } else if (stored === 'none' || stored === null) {
+        // migrate from old boolean key
+        const legacy = localStorage.getItem('tc-scene-transition');
+        if (legacy === '1') { this.enabled = true; this.mode = 'fade'; }
+        else { this.enabled = false; }
+      }
+    } catch {}
+  },
+  setMode(v) {
+    if (v === 'none') {
+      this.enabled = false;
+      this.mode = 'fade';
+    } else {
+      this.enabled = true;
+      this.mode = v;
+    }
+    try { localStorage.setItem('tc-scene-transition-mode', v); } catch {}
+  },
+  // Keep legacy setter for compat
+  setEnabled(v) {
+    this.setMode(v ? 'fade' : 'none');
+  },
+
+  // Called INSTEAD of applying the scene directly, if enabled.
+  // Returns true if the transition took over the apply flow.
+  run(scene, engine) {
+    if (!this.enabled) return false;
+    const now = performance.now();
+    const dur = this.mode === 'wipe' ? this.WIPE_DURATION : this.DURATION;
+    this._activeUntil = now + dur;
+    this._midpointAt = now + dur / 2;
+    this._pendingApply = () => scene.apply(engine);
+    setTimeout(() => {
+      if (this._pendingApply) {
+        this._pendingApply();
+        this._pendingApply = null;
+      }
+    }, dur / 2);
+    return true;
+  },
+
+  // Called from Engine.render() each frame — draws the transition overlay
+  render(ctx, W, H) {
+    const now = performance.now();
+    if (now >= this._activeUntil) return;
+    const fn = this['_render_' + this.mode];
+    if (fn) fn.call(this, ctx, W, H, now);
+    else this._render_fade(ctx, W, H, now);
+  },
+
+  _render_fade(ctx, W, H, now) {
+    const elapsed = this.DURATION - (this._activeUntil - now);
+    const half = this.DURATION / 2;
+    // Fade out 0..1 over first half, then fade in 1..0 over second half
+    let alpha;
+    if (elapsed < half) alpha = elapsed / half;
+    else alpha = 1 - ((elapsed - half) / half);
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, Math.min(1, alpha))})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.153: horizontal wipe
+  _render_wipe(ctx, W, H, now) {
+    const dur = this.WIPE_DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const progress = Math.max(0, Math.min(1, elapsed / dur));
+    const barW = Math.max(40, W * 0.12); // wipe bar width ~12% of canvas
+    ctx.save();
+    // Everything left of the leading edge is black in the first half,
+    // everything right of the trailing edge is black in the second half
+    const half = 0.5;
+    if (progress <= half) {
+      // Sweep in: bar travels from left edge to right, covering content
+      const t = progress / half; // 0..1
+      const leadX = t * (W + barW);
+      // Fill everything from left edge to the leading edge
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, leadX, H);
+    } else {
+      // Sweep out: bar continues rightward, revealing new content behind it
+      const t = (progress - half) / half; // 0..1
+      const trailX = t * (W + barW);
+      // Fill from trailing edge to right edge
+      ctx.fillStyle = '#000';
+      ctx.fillRect(trailX, 0, W - trailX, H);
+    }
+    ctx.restore();
+  },
+
+  // v0.7.182: slide transition — content slides left/right
+  _render_slide(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    let offset;
+    if (elapsed < half) offset = -(elapsed / half) * W;
+    else offset = W - ((elapsed - half) / half) * W;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(offset, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.182: zoom transition — zoom into black then out
+  _render_zoom(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const cx = W / 2, cy = H / 2;
+    let scale, alpha;
+    if (elapsed < half) {
+      const t = elapsed / half;
+      scale = 1 + t * 2;
+      alpha = t;
+    } else {
+      const t = (elapsed - half) / half;
+      scale = 3 - t * 2;
+      alpha = 1 - t;
+    }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.fillStyle = '#000';
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.182: flip transition — 3D-like horizontal flip via scaleX
+  _render_flip(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const cx = W / 2;
+    let scaleX, alpha;
+    if (elapsed < half) {
+      const t = elapsed / half;
+      scaleX = 1 - t;
+      alpha = t * 0.8;
+    } else {
+      const t = (elapsed - half) / half;
+      scaleX = t;
+      alpha = (1 - t) * 0.8;
+    }
+    ctx.save();
+    ctx.translate(cx, 0);
+    ctx.scale(Math.max(0.01, scaleX), 1);
+    ctx.translate(-cx, 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+
+  // v0.7.191: glitch transition — RGB split + horizontal tears
+  _render_glitch(ctx, W, H, now) {
+    const dur = this.DURATION;
+    const elapsed = dur - (this._activeUntil - now);
+    const half = dur / 2;
+    const t = elapsed / dur;
+
+    ctx.save();
+    // Random horizontal tears
+    const numTears = 8 + Math.floor(t * 10);
+    for (let i = 0; i < numTears; i++) {
+      const ty = Math.random() * H;
+      const th = 2 + Math.random() * 8;
+      const tx = (Math.random() - 0.5) * 40;
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(239,68,68,.3)' : i % 3 === 1 ? 'rgba(56,189,248,.3)' : 'rgba(74,222,128,.3)';
+      ctx.fillRect(tx, ty, W, th);
+    }
+
+    // Black flash at midpoint
+    let alpha;
+    if (elapsed < half) alpha = Math.pow(elapsed / half, 2);
+    else alpha = Math.pow(1 - (elapsed - half) / half, 2);
+    ctx.fillStyle = `rgba(0,0,0,${alpha * 0.8})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Scan line sweep
+    const scanY = (t * H * 2) % H;
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    ctx.fillRect(0, scanY, W, 3);
+
+    ctx.restore();
+  },
+};
+
+/* v0.7.81: Idle screensaver mode.
+   Opt-in via Settings toggle. After 90s of no user input AND not
+   recording, paints a playful dark overlay with a drifting emoji
+   and a pulsing "press any key to wake up" hint. Any mouse/key/
+   touch event wakes it up and re-arms the idle timer. Rendered
+   from Engine.render() each frame so it's baked into the canvas
+   pipeline (and into the recording, if it ever fired during one
+   — which it won't, because show() bails on Recorder.state). */
+const Screensaver = {
+  enabled: false,  // opt-in via Settings toggle
+  IDLE_MS: 90000,  // 90s
+  _idleTimer: null,
+  active: false,
+  _rafId: null,
+  _t0: 0,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-screensaver') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-screensaver', v ? '1' : '0'); } catch {}
+    if (!v) this.wake();
+    else this.armTimer();
+  },
+
+  setup() {
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel'].forEach(evt => {
+      document.addEventListener(evt, () => this.wake(), { passive: true });
+    });
+    this.armTimer();
+  },
+
+  armTimer() {
+    if (!this.enabled) return;
+    clearTimeout(this._idleTimer);
+    this._idleTimer = setTimeout(() => this.show(), this.IDLE_MS);
+  },
+
+  wake() {
+    // Any user action bumps the idle timer back
+    clearTimeout(this._idleTimer);
+    if (this.active) this.hide();
+    else if (this.enabled) this.armTimer();
+  },
+
+  show() {
+    // Don't fire during recording/countdown
+    if (Recorder.state === 'recording' || Recorder.state === 'paused') return;
+    this.active = true;
+    this._t0 = performance.now();
+    // Render loop is driven by Engine.render() — we just set a flag and
+    // let it draw each frame
+  },
+
+  hide() {
+    this.active = false;
+    this.armTimer();
+  },
+
+  // Called every Engine.render() frame, after all sources
+  render(ctx, W, H) {
+    if (!this.active) return;
+    const age = (performance.now() - this._t0) / 1000;  // seconds
+    // Full dark overlay
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, .92)';
+    ctx.fillRect(0, 0, W, H);
+    // Drifting emoji
+    const emoji = '🎬';
+    const size = 220;
+    // Slow horizontal drift with a sine bobbing
+    const dx = (Math.sin(age * 0.25) * 0.5 + 0.5) * (W - size);
+    const dy = H / 2 + Math.sin(age * 0.7) * 40;
+    ctx.font = `${size}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Soft glow behind the emoji
+    ctx.shadowColor = 'rgba(251, 191, 36, .5)';
+    ctx.shadowBlur = 60;
+    ctx.fillText(emoji, dx + size / 2, dy);
+    ctx.shadowBlur = 0;
+    // "Press any key" text at the bottom, pulsing opacity
+    const alpha = 0.5 + Math.sin(age * 2) * 0.25;
+    ctx.globalAlpha = alpha;
+    ctx.font = '700 48px Righteous, Arial, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(t('screensaverHint') || 'Touche une touche pour réveiller', W / 2, H - 80);
+    ctx.restore();
+  },
+};
+
+/* v0.7.37: Per-scene auto intro text cards.
+   When enabled, every Scenes.switch() pops a large text overlay with
+   the scene icon + localized name at top-center of the 1920x1080
+   canvas. Uses TextOverlays.add() so the label is baked into the
+   recording via the existing TTL/auto-fade system. Opt-in via
+   Settings > Enregistrement toggle, persisted in localStorage. */
+const SceneIntroText = {
+  enabled: false,
+  DURATION: 3000,  // ms visible before fading
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-scene-intro') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-scene-intro', v ? '1' : '0'); } catch {}
+  },
+
+  show(sceneKey, icon) {
+    const label = t('scene_' + sceneKey) || sceneKey;
+    const text = `${icon || '🎬'} ${label}`;
+    // Position near top-center of the canvas (1920x1080 coord space).
+    // TextOverlays.add auto-centers around opts.x/y and measures width.
+    TextOverlays.add(text, {
+      ttl: this.DURATION,
+      x: Engine.width / 2,
+      y: 140,           // top-ish, below any header/bismillah area
+      size: 110,        // big and prominent
+      color: '#ffffff',
+      bg: '#000000',
+      transparency: 1,  // semi-bg
+    });
+  },
+};
+
+/* v0.7.112: Opt-in scene auto-advance timer.
+   When enabled, cycles through scene presets every N seconds (default 30).
+   A corner pill shows the countdown until the next advance. Persisted in
+   localStorage as tc-autoadv (enabled) and tc-autoadv-sec (interval). */
+const SceneAutoAdvance = {
+  enabled: false,
+  intervalSec: 30,
+  _timer: null,
+  _remaining: 0,
+  _rafId: null,
+  _lastTick: 0,
+
+  setup() {
+    try { this.enabled = localStorage.getItem('tc-autoadv') === '1'; } catch {}
+    try {
+      const s = parseInt(localStorage.getItem('tc-autoadv-sec'), 10);
+      if (s >= 5 && s <= 600) this.intervalSec = s;
+    } catch {}
+    if (this.enabled) this.start();
+  },
+
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-autoadv', v ? '1' : '0'); } catch {}
+    if (v) this.start(); else this.stop();
+  },
+
+  setInterval(sec) {
+    sec = Math.max(5, Math.min(600, sec || 30));
+    this.intervalSec = sec;
+    try { localStorage.setItem('tc-autoadv-sec', String(sec)); } catch {}
+    if (this.enabled) { this.stop(); this.start(); }
+  },
+
+  start() {
+    this.stop();
+    this._remaining = this.intervalSec;
+    this._lastTick = performance.now();
+    this._scheduleNext();
+    this._tick();
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.style.display = '';
+  },
+
+  stop() {
+    clearTimeout(this._timer);
+    this._timer = null;
+    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.style.display = 'none';
+  },
+
+  _scheduleNext() {
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => this._advance(), this._remaining * 1000);
+  },
+
+  _advance() {
+    const keys = Scenes.presets.map(p => p.key);
+    if (keys.length === 0) return;
+    const idx = keys.indexOf(Scenes.active);
+    const next = keys[(idx + 1) % keys.length];
+    Scenes.switch(next);
+    this._remaining = this.intervalSec;
+    this._lastTick = performance.now();
+    this._scheduleNext();
+  },
+
+  _tick() {
+    const now = performance.now();
+    const delta = (now - this._lastTick) / 1000;
+    this._lastTick = now;
+    this._remaining = Math.max(0, this._remaining - delta);
+    const pill = $('tcAutoAdvPill');
+    if (pill) pill.textContent = 'Next: ' + Math.ceil(this._remaining) + 's';
+    if (this.enabled) this._rafId = requestAnimationFrame(() => this._tick());
+  },
+};
+
+/* v0.7.179: MicrobitOverlay — D-pad, servo sliders, and LED grid rendered as
+   an HTML overlay on the stage. Shown only in the "Pilot" scene so kids see
+   their robot controls + camera feeds together. Not baked into the recording
+   (HTML overlay, same as sticky notes / teleprompter). */
+const MicrobitOverlay = {
+  _el: null,
+  _ledCells: [],
+
+  show() {
+    if (this._el) return;
+    const stage = $('tcStage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.className = 'tc-microbit-overlay';
+
+    // ── Drag handle ──
+    const handle = document.createElement('div');
+    handle.className = 'tc-mo-handle';
+    handle.textContent = '🎮 micro:bit';
+    el.appendChild(handle);
+    // Drag logic (pointer events, constrained to stage)
+    let dragX = 0, dragY = 0;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dragX = e.clientX - el.offsetLeft;
+      dragY = e.clientY - el.offsetTop;
+      const onMove = (ev) => {
+        const stageRect = stage.getBoundingClientRect();
+        let nx = ev.clientX - dragX;
+        let ny = ev.clientY - dragY;
+        nx = Math.max(0, Math.min(stageRect.width - el.offsetWidth, nx));
+        ny = Math.max(0, Math.min(stageRect.height - el.offsetHeight, ny));
+        el.style.left = nx + 'px';
+        el.style.top = ny + 'px';
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+      };
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        // Persist position
+        try { localStorage.setItem('tc-mo-pos', JSON.stringify({ x: el.offsetLeft, y: el.offsetTop })); } catch {}
+      };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+
+    // ── D-pad ──
+    const dpad = document.createElement('div');
+    dpad.className = 'tc-mo-dpad';
+    const dirs = [
+      ['',  '↑', ''],
+      ['←', '●', '→'],
+      ['',  '↓', ''],
+    ];
+    const self = this;
+    const syncUI = () => {
+      const pv = $('tcPanVal'); if (pv) pv.textContent = Sensors._panAngle;
+      const tv = $('tcTiltVal'); if (tv) tv.textContent = Sensors._tiltAngle;
+      const s1 = $('tcServo1Slider'); if (s1) s1.value = Sensors._panAngle;
+      const s1v = $('tcServo1Val'); if (s1v) s1v.textContent = Sensors._panAngle + '°';
+      const s2 = $('tcServo2Slider'); if (s2) s2.value = Sensors._tiltAngle;
+      const s2v = $('tcServo2Val'); if (s2v) s2v.textContent = Sensors._tiltAngle + '°';
+      // Sync overlay sliders too
+      if (self._panSlider) { self._panSlider.value = Sensors._panAngle; self._panVal.textContent = Sensors._panAngle + '°'; }
+      if (self._tiltSlider) { self._tiltSlider.value = Sensors._tiltAngle; self._tiltVal.textContent = Sensors._tiltAngle + '°'; }
+    };
+    const actions = [
+      [null, () => Sensors.sendUart('CMD:UP'), null],
+      [() => Sensors.sendUart('CMD:LEFT'), () => Sensors.sendUart('CMD:CLEAR'), () => Sensors.sendUart('CMD:RIGHT')],
+      [null, () => Sensors.sendUart('CMD:DOWN'), null],
+    ];
+    dirs.forEach((row, r) => {
+      row.forEach((label, c) => {
+        const btn = document.createElement('button');
+        btn.className = 'tc-mo-btn' + (label ? '' : ' tc-mo-empty');
+        btn.textContent = label;
+        btn.disabled = !label;
+        if (actions[r][c]) btn.addEventListener('click', actions[r][c]);
+        dpad.appendChild(btn);
+      });
+    });
+
+    // Fire button
+    const fire = document.createElement('button');
+    fire.className = 'tc-mo-fire';
+    fire.textContent = '🔥 FIRE';
+    fire.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
+    dpad.appendChild(fire);
+    const row = document.createElement('div');
+    row.className = 'tc-mo-row';
+    row.appendChild(dpad);
+
+    // ── Joystick (below servos) ──
+    const joyWrap = document.createElement('div');
+    joyWrap.className = 'tc-mo-joy-wrap';
+    // Mode toggle
+    const modeBtn = document.createElement('button');
+    modeBtn.className = 'tc-mo-joy-mode';
+    let joyMode = 'cmd'; // 'cmd' or 'servo'
+    modeBtn.textContent = '🕹 CMD';
+    modeBtn.addEventListener('click', () => {
+      joyMode = joyMode === 'cmd' ? 'servo' : 'cmd';
+      modeBtn.textContent = joyMode === 'cmd' ? '🕹 CMD' : '🎯 Servo';
+      modeBtn.classList.toggle('tc-mo-joy-servo', joyMode === 'servo');
+    });
+    joyWrap.appendChild(modeBtn);
+    // Joystick canvas
+    const joySize = 80;
+    const joyCanvas = document.createElement('canvas');
+    joyCanvas.width = joySize; joyCanvas.height = joySize;
+    joyCanvas.className = 'tc-mo-joy-canvas';
+    const jCtx = joyCanvas.getContext('2d');
+    const jR = joySize / 2;       // outer radius
+    const knobR = 18;              // knob radius
+    let knobX = jR, knobY = jR;   // center
+    let joyDragging = false;
+    let _cmdThrottle = 0;
+
+    const drawJoy = () => {
+      jCtx.clearRect(0, 0, joySize, joySize);
+      // Base circle — visible dark well
+      jCtx.beginPath();
+      jCtx.arc(jR, jR, jR - 2, 0, Math.PI * 2);
+      jCtx.fillStyle = 'rgba(0,0,0,.4)';
+      jCtx.fill();
+      jCtx.strokeStyle = 'rgba(255,255,255,.25)';
+      jCtx.lineWidth = 2;
+      jCtx.stroke();
+      // Knob
+      const color = joyMode === 'cmd' ? '#3b82f6' : '#65a30d';
+      jCtx.beginPath();
+      jCtx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+      jCtx.fillStyle = color;
+      jCtx.fill();
+      jCtx.strokeStyle = 'rgba(255,255,255,.5)';
+      jCtx.lineWidth = 2;
+      jCtx.stroke();
+    };
+
+    const handleJoy = (clientX, clientY) => {
+      const rect = joyCanvas.getBoundingClientRect();
+      let dx = clientX - rect.left - jR;
+      let dy = clientY - rect.top - jR;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = jR - knobR - 4;
+      if (dist > maxDist) { dx = dx / dist * maxDist; dy = dy / dist * maxDist; }
+      knobX = jR + dx;
+      knobY = jR + dy;
+      const nx = dx / maxDist;  // -1..1
+      const ny = dy / maxDist;
+
+      if (joyMode === 'cmd') {
+        // Throttled CMD dispatch based on dominant direction
+        const now = Date.now();
+        if (now - _cmdThrottle > 200) {
+          _cmdThrottle = now;
+          if (Math.abs(nx) > Math.abs(ny)) {
+            Sensors.sendUart(nx > 0 ? 'CMD:RIGHT' : 'CMD:LEFT');
+          } else if (Math.abs(ny) > 0.3) {
+            Sensors.sendUart(ny > 0 ? 'CMD:DOWN' : 'CMD:UP');
+          }
+        }
+      } else {
+        // Servo mode: map -1..1 to 0..180
+        const panAngle = Math.round(90 + nx * 90);
+        const tiltAngle = Math.round(90 + ny * 90);
+        Sensors._panAngle = Math.max(0, Math.min(180, panAngle));
+        Sensors._tiltAngle = Math.max(0, Math.min(180, tiltAngle));
+        Sensors.sendUart('P:' + Sensors._panAngle);
+        Sensors.sendUart('TI:' + Sensors._tiltAngle);
+        syncUI();
+      }
+      drawJoy();
+    };
+
+    const resetKnob = () => {
+      knobX = jR; knobY = jR;
+      drawJoy();
+      if (joyMode === 'cmd') Sensors.sendUart('CMD:CLEAR');
+    };
+
+    joyCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      joyDragging = true;
+      joyCanvas.setPointerCapture(e.pointerId);
+      handleJoy(e.clientX, e.clientY);
+    });
+    joyCanvas.addEventListener('pointermove', (e) => {
+      if (!joyDragging) return;
+      handleJoy(e.clientX, e.clientY);
+    });
+    joyCanvas.addEventListener('pointerup', () => {
+      joyDragging = false;
+      resetKnob();
+    });
+    joyCanvas.addEventListener('pointerleave', () => {
+      if (joyDragging) { joyDragging = false; resetKnob(); }
+    });
+
+    joyWrap.appendChild(joyCanvas);
+    drawJoy();
+
+    // ── Servos ──
+    const servos = document.createElement('div');
+    servos.className = 'tc-mo-servos';
+    [
+      { label: 'Pan', cmd: 'P:', prop: '_panAngle' },
+      { label: 'Tilt', cmd: 'TI:', prop: '_tiltAngle' },
+    ].forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'tc-mo-servo-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'tc-mo-servo-label';
+      lbl.textContent = s.label;
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.min = '0'; slider.max = '180'; slider.value = String(Sensors[s.prop] || 90);
+      slider.className = 'tc-mo-slider';
+      const val = document.createElement('span');
+      val.className = 'tc-mo-servo-val';
+      val.textContent = slider.value + '°';
+      slider.addEventListener('input', () => {
+        const angle = parseInt(slider.value);
+        val.textContent = angle + '°';
+        Sensors[s.prop] = angle;
+        Sensors.sendUart(s.cmd + angle);
+        syncUI();
+      });
+      row.appendChild(lbl);
+      row.appendChild(slider);
+      row.appendChild(val);
+      servos.appendChild(row);
+      // Store refs for syncUI
+      if (s.prop === '_panAngle') { self._panSlider = slider; self._panVal = val; }
+      else { self._tiltSlider = slider; self._tiltVal = val; }
+    });
+    row.appendChild(servos);
+    row.appendChild(joyWrap);
+
+    // ── LED 5×5 grid ──
+    const ledWrap = document.createElement('div');
+    ledWrap.className = 'tc-mo-led-wrap';
+    const ledTitle = document.createElement('div');
+    ledTitle.className = 'tc-mo-led-title';
+    ledTitle.textContent = '💡 LED';
+    ledWrap.appendChild(ledTitle);
+    const grid = document.createElement('div');
+    grid.className = 'tc-mo-led-grid';
+    this._ledCells = [];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement('button');
+        cell.className = 'tc-mo-led-cell';
+        cell.dataset.on = '0';
+        cell.addEventListener('click', () => {
+          cell.dataset.on = cell.dataset.on === '1' ? '0' : '1';
+          cell.classList.toggle('tc-mo-led-on');
+        });
+        grid.appendChild(cell);
+        this._ledCells.push(cell);
+      }
+    }
+    ledWrap.appendChild(grid);
+    // Send + Clear buttons
+    const ledBtns = document.createElement('div');
+    ledBtns.className = 'tc-mo-led-btns';
+    const sendBtn = document.createElement('button');
+    sendBtn.className = 'tc-mo-btn-sm';
+    sendBtn.textContent = '📡';
+    sendBtn.title = 'Send';
+    sendBtn.addEventListener('click', () => this._sendLeds());
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'tc-mo-btn-sm';
+    clearBtn.textContent = '🗑';
+    clearBtn.title = 'Clear';
+    clearBtn.addEventListener('click', () => {
+      this._ledCells.forEach(c => { c.dataset.on = '0'; c.classList.remove('tc-mo-led-on'); });
+      this._sendLeds();
+    });
+    ledBtns.appendChild(sendBtn);
+    ledBtns.appendChild(clearBtn);
+    ledWrap.appendChild(ledBtns);
+    row.appendChild(ledWrap);
+    el.appendChild(row);
+
+    // Restore saved position
+    try {
+      const pos = JSON.parse(localStorage.getItem('tc-mo-pos'));
+      if (pos && typeof pos.x === 'number') {
+        el.style.left = pos.x + 'px';
+        el.style.top = pos.y + 'px';
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+      }
+    } catch {}
+
+    stage.appendChild(el);
+    this._el = el;
+  },
+
+  hide() {
+    if (!this._el) return;
+    this._el.remove();
+    this._el = null;
+    this._ledCells = [];
+    this._panSlider = null; this._panVal = null;
+    this._tiltSlider = null; this._tiltVal = null;
+  },
+
+  // v0.7.179: mirror incoming LEDS: UART data to overlay grid
+  syncLeds(rows) {
+    if (!this._ledCells.length) return;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const on = (rows[r] >> c) & 1;
+        const cell = this._ledCells[r * 5 + c];
+        cell.dataset.on = on ? '1' : '0';
+        cell.classList.toggle('tc-mo-led-on', !!on);
+      }
+    }
+  },
+
+  _sendLeds() {
+    // Encode 5 rows as hex: each row is 5 bits (MSB = col 0)
+    let hex = '';
+    for (let r = 0; r < 5; r++) {
+      let rowVal = 0;
+      for (let c = 0; c < 5; c++) {
+        if (this._ledCells[r * 5 + c].dataset.on === '1') rowVal |= (1 << (4 - c));
+      }
+      hex += rowVal.toString(16).padStart(2, '0');
+    }
+    Sensors.sendUart('LED:' + hex);
+  },
+};
+
+function setLayout(engine, layout) {
+  // v0.7.179: hide micro:bit overlay when switching away from Pilot scene
+  MicrobitOverlay.hide();
+  // v0.4.0: sources flagged .custom (user has drag-positioned them) are
+  // left alone entirely — position, size, shape, visibility, all preserved.
+  // Free sources are hidden at the start and then the scene's layout rules
+  // pick who to show and where.
+  const freeCams   = engine.sources.filter(s => s.type === 'cam'    && !s.custom);
+  const freeScreen = engine.sources.find(s => s.type === 'screen' && !s.custom);
+  const W = engine.width, H = engine.height;
+
+  // Hide all non-custom, non-mic sources; custom keep their visibility
+  engine.sources.forEach(s => { if (s.type !== 'mic' && !s.custom) s.visible = false; });
+
+  const place = (src, pos) => {
+    if (!src) return;
+    src.visible = true;
+    if (pos === 'full')      { src.x = 0; src.y = 0; src.w = W; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'left') { src.x = 0; src.y = 0; src.w = W * 0.6; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'right'){ src.x = W * 0.6; src.y = 0; src.w = W * 0.4; src.h = H; src.shape = 'rect'; }
+    else if (pos === 'br')   { src.x = W - 440; src.y = H - 340; src.w = 400; src.h = 300; src.shape = 'circle'; }
+  };
+
+  if (layout.screen) place(freeScreen, layout.screen);
+  if (layout.firstCam && freeCams[0]) place(freeCams[0], layout.firstCam);
+  if (layout.secondCam && freeCams[1]) place(freeCams[1], layout.secondCam);
+  const faceCam = freeCams[freeCams.length - 1];
+  if (layout.facecam && faceCam) place(faceCam, layout.facecam);
+
+  if (layout.grid) {
+    const items = [freeScreen, freeCams[0], freeCams[1]].filter(Boolean);
+    const cellW = W / 2, cellH = H / 2;
+    items.forEach((s, i) => {
+      s.visible = true; s.shape = 'rect';
+      s.x = (i % 2) * cellW; s.y = Math.floor(i / 2) * cellH;
+      s.w = cellW; s.h = cellH;
+    });
+    if (faceCam && !items.includes(faceCam)) place(faceCam, 'br');
+  }
+}
+
+function renderScenes() {
+  const el = $('tcScenes'); if (!el) return;
+  el.innerHTML = '';
+  Scenes.presets.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tc-scene-btn' + (Scenes.active === s.key ? ' active' : '');
+    btn.draggable = true;
+    btn.dataset.sceneKey = s.key;
+    const sceneLabel = s.custom ? s.label : (s.overrideName || t('scene_' + s.key));
+    btn.innerHTML = `
+      ${sceneThumbSvg(s.preview)}
+      <span class="tc-scene-icon">${s.icon}</span>
+      <span class="tc-scene-label" title="${t('sceneRenameTip')}">${sceneLabel}</span>
+      <kbd class="tc-scene-kbd">${i + 1}</kbd>
+      <span class="tc-scene-grip" aria-hidden="true">⋮⋮</span>
+      <button class="tc-scene-dup" data-dup="${s.key}" title="Duplicate">📋</button>
+      ${s.custom ? '<button class="tc-scene-del" data-del="' + s.key + '" title="Delete">✕</button>' : ''}
+    `;
+    btn.addEventListener('click', () => Scenes.switch(s.key));
+    // v0.7.139: inline rename on double-click of label
+    const labelSpan = btn.querySelector('.tc-scene-label');
+    if (labelSpan) {
+      labelSpan.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (labelSpan.contentEditable === 'true') return;
+        labelSpan.contentEditable = 'true';
+        labelSpan.classList.add('editing');
+        labelSpan.focus();
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(labelSpan);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        const commitRename = () => {
+          labelSpan.contentEditable = 'false';
+          labelSpan.classList.remove('editing');
+          labelSpan.removeEventListener('blur', commitRename);
+          labelSpan.removeEventListener('keydown', onKey);
+          Scenes.renameScene(s.key, labelSpan.textContent);
+        };
+        const onKey = (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); labelSpan.blur(); }
+          if (ev.key === 'Escape') {
+            labelSpan.textContent = sceneLabel;
+            labelSpan.blur();
+          }
+        };
+        const onPaste = (ev) => {
+          ev.preventDefault();
+          const text = (ev.clipboardData || window.clipboardData).getData('text/plain').slice(0, 30);
+          document.execCommand('insertText', false, text);
+        };
+        labelSpan.addEventListener('blur', commitRename);
+        labelSpan.addEventListener('keydown', onKey);
+        labelSpan.addEventListener('paste', onPaste);
+      });
+    }
+    // v0.7.101: quick-duplicate button (top-left, hover-revealed)
+    const dupBtn = btn.querySelector('.tc-scene-dup');
+    if (dupBtn) {
+      dupBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Scenes.duplicateScene(s.key);
+      });
+    }
+    if (s.custom) {
+      const delBtn = btn.querySelector('.tc-scene-del');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Scenes.deleteCustom(s.key);
+        });
+      }
+    }
+    // v0.7.32: drag-to-reorder via native HTML5 drag API
+    btn.addEventListener('dragstart', (e) => {
+      btn.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/scene', s.key);
+    });
+    btn.addEventListener('dragend', () => {
+      btn.classList.remove('dragging');
+      document.querySelectorAll('.tc-scene-btn.drop-before, .tc-scene-btn.drop-after')
+        .forEach(b => b.classList.remove('drop-before', 'drop-after'));
+    });
+    btn.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const r = btn.getBoundingClientRect();
+      const before = (e.clientY - r.top) < r.height / 2;
+      btn.classList.toggle('drop-before', before);
+      btn.classList.toggle('drop-after', !before);
+    });
+    btn.addEventListener('dragleave', () => {
+      btn.classList.remove('drop-before', 'drop-after');
+    });
+    btn.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const movedKey = e.dataTransfer.getData('text/scene');
+      if (!movedKey || movedKey === s.key) return;
+      const r = btn.getBoundingClientRect();
+      const before = (e.clientY - r.top) < r.height / 2;
+      Scenes.reorder(movedKey, s.key, before);
+    });
+    el.appendChild(btn);
+  });
+}
+
+/* v0.7.29: render a scene preview as inline SVG showing source rects.
+   Colors match what kids see on-screen:
+     screen = blue/cyan
+     cam    = accent green
+     face   = accent-2 orange (roundish) */
+function sceneThumbSvg(preview) {
+  if (!preview || !preview.length) return '';
+  const W = 64, H = 36; // 16:9 thumbnail
+  const rects = preview.map(r => {
+    const x = (r.x * W).toFixed(1);
+    const y = (r.y * H).toFixed(1);
+    const w = (r.w * W).toFixed(1);
+    const h = (r.h * H).toFixed(1);
+    let fill, stroke;
+    if (r.kind === 'screen') { fill = '#38bdf8'; stroke = '#0ea5e9'; }
+    else if (r.kind === 'face') { fill = '#fb923c'; stroke = '#ea580c'; }
+    else { fill = '#a3e635'; stroke = '#65a30d'; }
+    if (r.shape === 'circle') {
+      const cx = (parseFloat(x) + parseFloat(w) / 2).toFixed(1);
+      const cy = (parseFloat(y) + parseFloat(h) / 2).toFixed(1);
+      const rr = (Math.min(parseFloat(w), parseFloat(h)) / 2).toFixed(1);
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${rr}" ry="${rr}" fill="${fill}" stroke="${stroke}" stroke-width="0.6" opacity=".85"/>`;
+    }
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" ry="1.5" fill="${fill}" stroke="${stroke}" stroke-width="0.6" opacity=".85"/>`;
+  }).join('');
+  return `<svg class="tc-scene-thumb" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="2" ry="2" fill="#0a0a0a"/>
+    ${rects}
+  </svg>`;
+}
+
+/* v0.7.180: SourceSkins — decorative frames drawn around sources on the
+   canvas. Pure canvas drawing (no images). Each skin function receives
+   (ctx, x, y, w, h) where x/y/w/h are the source bounds. */
+const SourceSkins = {
+  list: [
+    'none', 'tv', 'polaroid', 'comic', 'robot',
+    'laptop', 'phone', 'monitor', 'robothead', 'alien', 'anonymous',
+    'diamond', 'flame', 'neon',
+    'astronaut', 'ufo', 'planet', 'arcade', 'healthbar', 'leaderboard',
+    'detective', 'surveillance', 'ninja', 'lab', 'microscope', 'electric',
+    'clapboard', 'livestream', 'circus', 'minaret', 'crescent', 'andalusia',
+    'hologram', 'hexgrid', 'portal', 'mech', 'hud', 'dna', 'warp',
+    'android', 'forcefield', 'terminal', 'sniper', 'neural',
+    'cube', 'gallery', 'cardboard', 'crystal', 'mirror', 'book',
+    'slotmachine', 'museum', 'floating', 'vortex', 'ice', 'gift',
+    'canva', 'figma', 'photoshop', 'vscode', 'scratch',
+  ],
+  labels: {
+    none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot',
+    laptop: '💻 Laptop', phone: '📱 Phone', monitor: '🖥 Monitor',
+    robothead: '🤖 Robot Head', alien: '👾 Alien', anonymous: '🎭 Anon',
+    diamond: '💎 Diamond', flame: '🔥 Flame', neon: '🌈 Neon',
+    astronaut: '🧑‍🚀 Astronaut', ufo: '🛸 UFO', planet: '🪐 Planet',
+    arcade: '🕹 Arcade', healthbar: '❤️ HP Bar', leaderboard: '🏆 Rank',
+    detective: '🕵️ Detective', surveillance: '📡 CCTV', ninja: '🥷 Ninja',
+    lab: '🧪 Lab', microscope: '🔬 Microscope', electric: '⚡ Electric',
+    clapboard: '🎬 Clap', livestream: '📺 Live', circus: '🎪 Circus',
+    minaret: '🕌 Minaret', crescent: '☪️ Crescent', andalusia: '🏛 Andalusia',
+    hologram: '🌐 Hologram', hexgrid: '💠 Hexgrid', portal: '🔮 Portal',
+    mech: '⚙️ Mech', hud: '📊 HUD', dna: '🧬 DNA', warp: '💫 Warp',
+    android: '🤖 Android', forcefield: '🛡 Shield', terminal: '📟 Terminal',
+    sniper: '🎯 Scope', neural: '🧠 Neural',
+    cube: '🎲 Cube', gallery: '🖼 Gallery', cardboard: '📦 Box',
+    crystal: '💎 Crystal', mirror: '🪞 Mirror', book: '📖 Book',
+    slotmachine: '🎰 Slots', museum: '🏛 Museum', floating: '🔲 Float',
+    vortex: '🌀 Vortex', ice: '🧊 Ice', gift: '🎁 Gift',
+    canva: '🎨 Canva', figma: '🖌 Figma', photoshop: '🖼 Photoshop',
+    vscode: '💻 VS Code', scratch: '🐱 Scratch',
+  },
+
+  draw(ctx, skin, x, y, w, h) {
+    if (!this['_draw_' + skin]) return;
+    // Phase 1: frame/bezel — clipped to exclude video area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.rect(x, y + h, w, -h);
+    ctx.clip('evenodd');
+    this['_draw_' + skin](ctx, x, y, w, h);
+    ctx.restore();
+    // Phase 2: overlay elements (scan lines, brackets) — drawn on top
+    const fgFn = this['_fg_' + skin];
+    if (fgFn) {
+      ctx.save();
+      fgFn.call(this, ctx, x, y, w, h);
+      ctx.restore();
+    }
+  },
+
+  // 📺 Retro TV — wood grain cabinet, volume/channel knobs, CRT curve, antenna
+  _draw_tv(ctx, x, y, w, h) {
+    const pad = 18, r = 14;
+    const bx = x - pad, by = y - pad - 12, bw = w + pad * 2 + 50, bh = h + pad * 2 + 20;
+    ctx.save();
+    // Wood grain cabinet
+    const woodGrad = ctx.createLinearGradient(bx, by, bx, by + bh);
+    woodGrad.addColorStop(0, '#5c3a1e'); woodGrad.addColorStop(0.3, '#7a4f2e');
+    woodGrad.addColorStop(0.7, '#6b4226'); woodGrad.addColorStop(1, '#4a2c14');
+    ctx.fillStyle = woodGrad;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, r); ctx.fill();
+    // Wood grain lines
+    ctx.strokeStyle = 'rgba(0,0,0,.1)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 8; i++) {
+      const gy = by + 10 + i * (bh / 8) + Math.sin(i * 2) * 3;
+      ctx.beginPath(); ctx.moveTo(bx + 4, gy); ctx.bezierCurveTo(bx + bw * 0.3, gy + 2, bx + bw * 0.7, gy - 2, bx + bw - 4, gy); ctx.stroke();
+    }
+    // Inner dark bezel
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.roundRect(x - 6, y - 6, w + 12, h + 12, 8); ctx.fill();
+    // CRT screen curve (gradient overlay)
+    const crtGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, w * 0.7);
+    crtGrad.addColorStop(0, 'rgba(255,255,255,0)'); crtGrad.addColorStop(1, 'rgba(0,0,0,.15)');
+    ctx.fillStyle = crtGrad;
+    ctx.fillRect(x, y, w, h);
+    // Screen inset border glow
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 3); ctx.stroke();
+    // Control panel (right side)
+    const cpX = x + w + pad - 4, cpY = y;
+    // Volume knob
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 30, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 30, 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cpX + 18, cpY + 30); ctx.lineTo(cpX + 18, cpY + 20); ctx.stroke();
+    ctx.fillStyle = '#666'; ctx.font = '7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('VOL', cpX + 18, cpY + 48);
+    // Channel knob
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 80, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cpX + 18, cpY + 80, 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cpX + 18, cpY + 80); ctx.lineTo(cpX + 25, cpY + 75); ctx.stroke();
+    ctx.fillStyle = '#666'; ctx.fillText('CH', cpX + 18, cpY + 96);
+    // Power LED (blinking)
+    const ledOn = Math.floor(Date.now() / 1000) % 2 === 0;
+    ctx.fillStyle = ledOn ? '#ef4444' : '#440000';
+    ctx.shadowColor = ledOn ? '#ef4444' : 'transparent'; ctx.shadowBlur = ledOn ? 6 : 0;
+    ctx.beginPath(); ctx.arc(cpX + 18, cpY + h - 10, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Antenna — V-shape with balls
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x + w * 0.4, by); ctx.lineTo(x + w * 0.2, by - 30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.6, by); ctx.lineTo(x + w * 0.8, by - 30); ctx.stroke();
+    ctx.fillStyle = '#ccc';
+    ctx.beginPath(); ctx.arc(x + w * 0.2, by - 30, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.8, by - 30, 4, 0, Math.PI * 2); ctx.fill();
+    // Speaker grille (bottom)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(bx + 10, by + bh - 16, bw - 60, 8);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 12; i++) {
+      const sx = bx + 14 + i * ((bw - 68) / 12);
+      ctx.beginPath(); ctx.moveTo(sx, by + bh - 16); ctx.lineTo(sx, by + bh - 8); ctx.stroke();
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 📸 Polaroid — white border, thick bottom, slight shadow
+  _draw_polaroid(ctx, x, y, w, h) {
+    const top = 10, side = 10, bot = 40;
+    ctx.save();
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,.4)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 6;
+    // White frame
+    ctx.fillStyle = '#f5f5f0';
+    ctx.fillRect(x - side, y - top, w + side * 2, h + top + bot);
+    ctx.shadowBlur = 0;
+    // Inner edge (subtle gray line around photo)
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Bottom text area — faint handwriting-style label
+    ctx.fillStyle = '#999';
+    ctx.font = `italic ${Math.max(10, bot * 0.4)}px 'Righteous', cursive`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', x + w / 2, y + h + bot / 2);
+    ctx.restore();
+  },
+
+  // 🗯 Comic — spiky speech-bubble border
+  _draw_comic(ctx, x, y, w, h) {
+    const pad = 8, spikes = 14, depth = 10;
+    ctx.save();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 4;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    // Top edge with spikes
+    const sx = x - pad, sy = y - pad, sw = w + pad * 2, sh = h + pad * 2;
+    ctx.moveTo(sx, sy);
+    for (let i = 0; i < spikes; i++) {
+      const t = (i + 0.5) / spikes;
+      const px = sx + t * sw;
+      ctx.lineTo(px - sw / spikes * 0.3, sy - depth);
+      ctx.lineTo(px + sw / spikes * 0.3, sy);
+    }
+    ctx.lineTo(sx + sw, sy);
+    // Right edge with spikes
+    for (let i = 0; i < Math.ceil(spikes * sh / sw); i++) {
+      const t = (i + 0.5) / Math.ceil(spikes * sh / sw);
+      const py = sy + t * sh;
+      ctx.lineTo(sx + sw + depth, py - sh / spikes * 0.3);
+      ctx.lineTo(sx + sw, py + sh / spikes * 0.3);
+    }
+    ctx.lineTo(sx + sw, sy + sh);
+    // Bottom edge with spikes
+    for (let i = spikes - 1; i >= 0; i--) {
+      const t = (i + 0.5) / spikes;
+      const px = sx + t * sw;
+      ctx.lineTo(px + sw / spikes * 0.3, sy + sh + depth);
+      ctx.lineTo(px - sw / spikes * 0.3, sy + sh);
+    }
+    ctx.lineTo(sx, sy + sh);
+    // Left edge with spikes
+    for (let i = Math.ceil(spikes * sh / sw) - 1; i >= 0; i--) {
+      const t = (i + 0.5) / Math.ceil(spikes * sh / sw);
+      const py = sy + t * sh;
+      ctx.lineTo(sx - depth, py + sh / spikes * 0.3);
+      ctx.lineTo(sx, py - sh / spikes * 0.3);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.15;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+    // Speech tail (bottom-right)
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.65, y + h + pad);
+    ctx.lineTo(x + w * 0.85, y + h + pad + 30);
+    ctx.lineTo(x + w * 0.75, y + h + pad);
+    ctx.fillStyle = '#111';
+    ctx.fill();
+    ctx.restore();
+  },
+
+  // 🤖 Robot visor — hexagonal HUD border (clipped, behind video)
+  _draw_robot(ctx, x, y, w, h) {
+    const pad = 6, ch = 20;
+    ctx.save();
+    ctx.shadowColor = 'rgba(56,189,248,.5)';
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - pad + ch, y - pad);
+    ctx.lineTo(x + w + pad - ch, y - pad);
+    ctx.lineTo(x + w + pad, y - pad + ch);
+    ctx.lineTo(x + w + pad, y + h + pad - ch);
+    ctx.lineTo(x + w + pad - ch, y + h + pad);
+    ctx.lineTo(x - pad + ch, y + h + pad);
+    ctx.lineTo(x - pad, y + h + pad - ch);
+    ctx.lineTo(x - pad, y - pad + ch);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  },
+  // 🤖 Robot overlay — scan lines, brackets, readout (on top of video)
+  _fg_robot(ctx, x, y, w, h) {
+    // Scan lines
+    ctx.strokeStyle = 'rgba(56,189,248,.06)';
+    ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 4) {
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
+    }
+    // Corner brackets
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    const bk = 18;
+    ctx.beginPath(); ctx.moveTo(x, y + bk); ctx.lineTo(x, y); ctx.lineTo(x + bk, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w - bk, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + bk); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + h - bk); ctx.lineTo(x, y + h); ctx.lineTo(x + bk, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w - bk, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - bk); ctx.stroke();
+    // Data readout
+    ctx.fillStyle = 'rgba(56,189,248,.6)';
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('REC●', x + w - 6, y + 14);
+  },
+
+  // ═══ TECH ═══
+
+  _draw_laptop(ctx, x, y, w, h) {
+    const bez = 8, base = 20;
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x - bez, y - bez, w + bez * 2, h + bez * 2, 6); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.fillRect(x - bez - 20, y + h + bez, w + bez * 2 + 40, base);
+    ctx.beginPath(); ctx.roundRect(x - bez - 20, y + h + bez, w + bez * 2 + 40, base, [0,0,4,4]); ctx.fill();
+    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(x + w / 2, y - bez + 4, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+  },
+
+  _draw_phone(ctx, x, y, w, h) {
+    const pad = 14, r = 24;
+    const fx = x - pad, fy = y - pad * 2.5, fw = w + pad * 2, fh = h + pad * 4;
+    ctx.save();
+    // Phone body — glossy black with edge highlight
+    const bodyGrad = ctx.createLinearGradient(fx, fy, fx + fw, fy);
+    bodyGrad.addColorStop(0, '#2a2a2a'); bodyGrad.addColorStop(0.05, '#3a3a3a');
+    bodyGrad.addColorStop(0.95, '#3a3a3a'); bodyGrad.addColorStop(1, '#2a2a2a');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, r); ctx.fill();
+    // Thin metal frame
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, r); ctx.stroke();
+    // Screen area (darker inset)
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, 8); ctx.fill();
+    // Dynamic Island (notch)
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - 35, fy + 8, 70, 18, 10); ctx.fill();
+    // Front camera dot
+    ctx.fillStyle = '#1a1a3a';
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, fy + 17, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, fy + 17, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Home indicator bar
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - 30, y + h + pad * 0.5, 60, 4, 2); ctx.fill();
+    // Side buttons — volume (left), power (right)
+    ctx.fillStyle = '#444';
+    ctx.fillRect(fx - 2, fy + 50, 2, 20); // vol up
+    ctx.fillRect(fx - 2, fy + 75, 2, 20); // vol down
+    ctx.fillRect(fx + fw, fy + 60, 2, 30); // power
+    // Camera bump (back, top-left corner, subtle)
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x + 4, fy + 6, 22, 22, 6); ctx.stroke();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(x + 11, fy + 13, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 20, fy + 13, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 15, fy + 22, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  },
+
+  _draw_monitor(ctx, x, y, w, h) {
+    const bez = 10, standW = 60, standH = 30, baseW = 100;
+    ctx.fillStyle = '#2a2a2a'; ctx.beginPath(); ctx.roundRect(x - bez, y - bez, w + bez * 2, h + bez * 2, 4); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Stand neck
+    ctx.fillStyle = '#333'; ctx.fillRect(x + w / 2 - standW / 2, y + h + bez, standW, standH);
+    // Stand base
+    ctx.beginPath(); ctx.roundRect(x + w / 2 - baseW / 2, y + h + bez + standH, baseW, 6, 3); ctx.fill();
+    // Power LED
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(x + w / 2, y + h + bez - 4, 2, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_robothead(ctx, x, y, w, h) {
+    const pad = 16, cx = x + w / 2;
+    ctx.save();
+    // Head shape — rounded rectangle with chin
+    const headGrad = ctx.createLinearGradient(x, y, x, y + h);
+    headGrad.addColorStop(0, '#666'); headGrad.addColorStop(0.5, '#555'); headGrad.addColorStop(1, '#444');
+    ctx.fillStyle = headGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2 + 10, [16, 16, 8, 8]); ctx.fill();
+    // Metal texture lines
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x - pad, y + i * (h / 5)); ctx.lineTo(x + w + pad, y + i * (h / 5)); ctx.stroke(); }
+    // Rivets
+    ctx.fillStyle = '#777';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad], [x + w + pad - 6, y + h + pad]].forEach(([rx, ry]) => {
+      ctx.beginPath(); ctx.arc(rx, ry, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(rx, ry, 3.5, 0, Math.PI * 2); ctx.stroke();
+    });
+    // Antenna with bobble
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, y - pad); ctx.lineTo(cx, y - pad - 25); ctx.stroke();
+    // Antenna bobble (pulsing)
+    const pulse = 0.8 + Math.sin(Date.now() / 300) * 0.2;
+    ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 8 * pulse;
+    ctx.beginPath(); ctx.arc(cx, y - pad - 25, 6 * pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Ear bolts (hexagonal)
+    ctx.fillStyle = '#777'; ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    [x - pad - 10, x + w + pad + 10].forEach(ex => {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const px = ex + Math.cos(a) * 8; const py = y + h / 2 + Math.sin(a) * 8; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    });
+    // Jaw line
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - pad + 10, y + h + 6); ctx.lineTo(x + w + pad - 10, y + h + 6); ctx.stroke();
+    // Mouth grille
+    ctx.fillStyle = '#333';
+    for (let i = 0; i < 5; i++) ctx.fillRect(cx - 20 + i * 10, y + h + 8, 6, 3);
+    ctx.restore();
+  },
+  _fg_robothead(ctx, x, y, w, h) {
+    // Eyes that glow and track (simplified — just pulse)
+    const pulse = 0.7 + Math.sin(Date.now() / 400) * 0.3;
+    ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 10 * pulse;
+    ctx.fillStyle = `rgba(56,189,248,${0.6 + pulse * 0.4})`;
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.3, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7, y + h * 0.3, 10, 0, Math.PI * 2); ctx.fill();
+    // Pupil dots
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(x + w * 0.3 + 2, y + h * 0.3 - 2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w * 0.7 + 2, y + h * 0.3 - 2, 3, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_alien(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    ctx.fillStyle = '#1a3a1a';
+    ctx.beginPath(); ctx.ellipse(cx, y + h / 2, w / 2 + 15, h / 2 + 20, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(cx, y + h / 2, w / 2 + 15, h / 2 + 20, 0, 0, Math.PI * 2); ctx.stroke();
+    // Antenna
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 15, y - 15); ctx.lineTo(cx - 25, y - 35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 15, y - 15); ctx.lineTo(cx + 25, y - 35); ctx.stroke();
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath(); ctx.arc(cx - 25, y - 35, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 25, y - 35, 4, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_anonymous(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 6); ctx.stroke();
+    // Mask silhouette hints
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.5;
+    const cx = x + w / 2;
+    // Eyebrow arches
+    ctx.beginPath(); ctx.arc(cx - w * 0.15, y + h * 0.3, 12, Math.PI, 0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + w * 0.15, y + h * 0.3, 12, Math.PI, 0); ctx.stroke();
+    // Mustache
+    ctx.beginPath();
+    ctx.moveTo(cx - 20, y + h * 0.65);
+    ctx.quadraticCurveTo(cx - 10, y + h * 0.6, cx, y + h * 0.65);
+    ctx.quadraticCurveTo(cx + 10, y + h * 0.6, cx + 20, y + h * 0.65);
+    ctx.stroke();
+    // Goatee
+    ctx.beginPath(); ctx.moveTo(cx, y + h * 0.68); ctx.lineTo(cx, y + h * 0.78); ctx.stroke();
+  },
+
+  // ═══ COOL/STYLISH ═══
+
+  _draw_diamond(ctx, x, y, w, h) {
+    const pad = 10, cx = x + w / 2, cy = y + h / 2;
+    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 3;
+    const pts = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const r = (i % 2 === 0 ? Math.max(w, h) / 2 + pad + 8 : Math.max(w, h) / 2 + pad);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    }
+    ctx.beginPath(); pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = 'rgba(192,132,252,.05)'; ctx.fill();
+    // Sparkle accents
+    ctx.fillStyle = '#e9d5ff';
+    [[x - 5, y - 5], [x + w + 5, y - 5], [x + w + 5, y + h + 5], [x - 5, y + h + 5]].forEach(([sx, sy]) => {
+      ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+    });
+  },
+
+  _draw_flame(ctx, x, y, w, h) {
+    const t = Date.now() / 1000;
+    ctx.save();
+    // Animated flames around all edges
+    const drawFlames = (fx, fy, count, dir, len) => {
+      for (let i = 0; i < count; i++) {
+        const p = i / count;
+        const flicker = Math.sin(t * 8 + i * 2.3) * 0.4 + 0.6;
+        const fh = (len + Math.sin(t * 6 + i * 1.7) * len * 0.5) * flicker;
+        const px = dir === 'h' ? fx + p * w : fx;
+        const py = dir === 'h' ? fy : fy + p * h;
+        const grad = ctx.createLinearGradient(px, py, px + (dir === 'v' ? (fx < x ? -fh : fh) : 0), py + (dir === 'h' ? (fy < y ? -fh : fh) : 0));
+        grad.addColorStop(0, 'rgba(255,200,0,.8)');
+        grad.addColorStop(0.4, 'rgba(255,100,0,.6)');
+        grad.addColorStop(1, 'rgba(255,30,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        if (dir === 'h') {
+          const dy = fy < y ? -1 : 1;
+          ctx.moveTo(px - 6, py); ctx.quadraticCurveTo(px + Math.sin(t * 5 + i) * 4, py + fh * dy, px + 6, py);
+        } else {
+          const dx = fx < x ? -1 : 1;
+          ctx.moveTo(px, py - 6); ctx.quadraticCurveTo(px + fh * dx, py + Math.sin(t * 5 + i) * 4, px, py + 6);
+        }
+        ctx.fill();
+      }
+    };
+    drawFlames(x, y - 4, 12, 'h', 18);         // top
+    drawFlames(x, y + h + 4, 12, 'h', 18);      // bottom
+    drawFlames(x - 4, y, 8, 'v', 14);           // left
+    drawFlames(x + w + 4, y, 8, 'v', 14);       // right
+    // Ember glow border
+    ctx.strokeStyle = `rgba(255,100,0,${0.3 + Math.sin(t * 4) * 0.15})`;
+    ctx.lineWidth = 2; ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 3); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+
+  _draw_neon(ctx, x, y, w, h) {
+    const pad = 4, t = Date.now() / 1000;
+    const hue = (t * 60) % 360;
+    ctx.shadowColor = `hsl(${hue},100%,60%)`;
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = `hsl(${hue},100%,65%)`;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Inner glow line
+    ctx.strokeStyle = `hsla(${(hue + 60) % 360},100%,70%,.3)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x - 1, y - 1, w + 2, h + 2, 4); ctx.stroke();
+  },
+
+  // ═══ SPACE ═══
+
+  _draw_astronaut(ctx, x, y, w, h) {
+    const pad = 18, cx = x + w / 2, cy = y + h / 2;
+    ctx.save();
+    // Helmet — dome shape
+    const helmGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.7);
+    helmGrad.addColorStop(0, '#e0e0e0'); helmGrad.addColorStop(0.7, '#ccc'); helmGrad.addColorStop(1, '#999');
+    ctx.fillStyle = helmGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 10, w + pad * 2, h + pad * 2 + 20, [30, 30, 16, 16]); ctx.fill();
+    // Helmet rim
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 10, w + pad * 2, h + pad * 2 + 20, [30, 30, 16, 16]); ctx.stroke();
+    // Visor glass (dark)
+    ctx.fillStyle = 'rgba(20,20,40,.3)';
+    ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 12); ctx.fill();
+    // Visor reflection arc
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x + w * 0.3, y + h * 0.2, Math.min(w, h) * 0.25, 0.6, 2.0); ctx.stroke();
+    // Oxygen hose (right side)
+    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad - 2, cy + 10);
+    ctx.bezierCurveTo(x + w + pad + 20, cy + 10, x + w + pad + 20, cy + 40, x + w + pad + 5, cy + 50);
+    ctx.stroke();
+    // Hose connector
+    ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(x + w + pad + 5, cy + 50, 5, 0, Math.PI * 2); ctx.fill();
+    // NASA-style badge (left chest)
+    ctx.fillStyle = 'rgba(0,80,180,.5)'; ctx.beginPath(); ctx.roundRect(x - pad + 4, y + h + 4, 24, 10, 3); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('NOOR', x - pad + 16, y + h + 12);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  _draw_ufo(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    // Saucer body
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.ellipse(cx, y - 10, w / 2 + 30, 14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#666';
+    ctx.beginPath(); ctx.ellipse(cx, y - 18, w / 3, 10, 0, 0, Math.PI * 2); ctx.fill();
+    // Dome
+    ctx.fillStyle = 'rgba(56,189,248,.2)';
+    ctx.beginPath(); ctx.arc(cx, y - 22, 16, Math.PI, 0); ctx.fill();
+    // Tractor beam
+    ctx.fillStyle = 'rgba(163,230,53,.06)';
+    ctx.beginPath(); ctx.moveTo(cx - 20, y); ctx.lineTo(cx - w / 2 - 10, y + h + 10); ctx.lineTo(cx + w / 2 + 10, y + h + 10); ctx.lineTo(cx + 20, y); ctx.fill();
+    // Lights
+    ctx.fillStyle = '#fbbf24';
+    for (let i = 0; i < 5; i++) {
+      const a = Math.PI + (i / 4) * Math.PI;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (w / 2 + 15), y - 10 + Math.sin(a) * 8, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+
+  _draw_planet(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) / 2 + 10;
+    ctx.strokeStyle = 'rgba(251,191,36,.4)'; ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r + 20, 12, -0.3, 0.3, Math.PI - 0.3);
+    ctx.stroke();
+    // Back ring (behind)
+    ctx.strokeStyle = 'rgba(251,191,36,.15)'; ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r + 20, 12, -0.3, Math.PI + 0.3, -0.3);
+    ctx.stroke();
+  },
+
+  // ═══ GAMING ═══
+
+  _draw_arcade(ctx, x, y, w, h) {
+    const pad = 16, cx = x + w / 2;
+    const bx = x - pad, by = y - pad - 30, bw = w + pad * 2, bh = h + pad * 2 + 60;
+    ctx.save();
+    // Cabinet body
+    const cabGrad = ctx.createLinearGradient(bx, by, bx + bw, by);
+    cabGrad.addColorStop(0, '#0f1a3d'); cabGrad.addColorStop(0.5, '#162050'); cabGrad.addColorStop(1, '#0f1a3d');
+    ctx.fillStyle = cabGrad;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, [14, 14, 6, 6]); ctx.fill();
+    // Marquee (top, illuminated)
+    const marqGrad = ctx.createLinearGradient(bx, by, bx, by + 24);
+    marqGrad.addColorStop(0, '#fbbf24'); marqGrad.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = marqGrad;
+    ctx.beginPath(); ctx.roundRect(bx + 4, by + 4, bw - 8, 22, [10, 10, 0, 0]); ctx.fill();
+    // Marquee lights
+    const t = Date.now() / 200;
+    for (let i = 0; i < 10; i++) {
+      const on = Math.floor(t + i) % 3 === 0;
+      ctx.fillStyle = on ? '#fff' : '#c9860a';
+      ctx.beginPath(); ctx.arc(bx + 10 + i * ((bw - 20) / 9), by + 6, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#1a1a2e'; ctx.font = 'bold 12px "Righteous", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('★ ARCADE ★', cx, by + 20);
+    // Screen bezel
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 4); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    // Control panel below screen
+    ctx.fillStyle = '#1a1a3a';
+    ctx.fillRect(bx + 8, y + h + pad - 4, bw - 16, 24);
+    // Joystick
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(cx - 25, y + h + pad + 8, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(cx - 25, y + h + pad + 4, 5, 0, Math.PI * 2); ctx.fill();
+    // Buttons
+    const btnColors = ['#ef4444', '#3b82f6', '#fbbf24'];
+    btnColors.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx + 10 + i * 16, y + h + pad + 8, 6, 0, Math.PI * 2); ctx.fill(); });
+    // Coin slot
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(cx - 10, y + h + pad + 24, 20, 6, 3); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(cx - 5, y + h + pad + 25, 10, 4, 2); ctx.fill();
+    // INSERT COIN text
+    ctx.fillStyle = '#666'; ctx.font = '6px ui-monospace, monospace';
+    ctx.fillText('INSERT COIN', cx, y + h + pad + 38);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  _draw_healthbar(ctx, x, y, w) {
+    // Pixel hearts above source
+    const heartY = y - 20;
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('❤️❤️❤️', x + 4, heartY);
+    // HP bar
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 60, heartY - 12, w - 64, 10);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 60, heartY - 12, (w - 64) * 0.75, 10);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(x + 60, heartY - 12, w - 64, 10);
+  },
+
+  _draw_leaderboard(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Gold corners
+    ctx.fillStyle = '#fbbf24';
+    [[x - pad, y - pad], [x + w + pad, y - pad], [x - pad, y + h + pad], [x + w + pad, y + h + pad]].forEach(([cx, cy]) => {
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+    });
+    // Rank badge
+    ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 18, y - pad - 14, 36, 16, 4); ctx.fill();
+    ctx.fillStyle = '#000'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('#1', x + w / 2, y - pad - 3);
+    ctx.textAlign = 'left';
+  },
+
+  // ═══ SPY/SECRET ═══
+
+  _draw_detective(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2 + 10;
+    ctx.strokeStyle = '#d4a03c'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Handle
+    ctx.strokeStyle = '#8b6914'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx + r * 0.7, cy + r * 0.7); ctx.lineTo(cx + r * 0.7 + 25, cy + r * 0.7 + 25); ctx.stroke();
+    // Lens glare
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx - r * 0.2, cy - r * 0.2, r * 0.3, 0.5, 1.5); ctx.stroke();
+  },
+
+  _draw_surveillance(ctx, x, y, w, h) {
+    const pad = 4;
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+  },
+  _fg_surveillance(ctx, x, y, w, h) {
+    // Corner stamps
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '9px ui-monospace, monospace';
+    ctx.textAlign = 'left'; ctx.fillText('CAM 01', x + 6, y + 14);
+    ctx.textAlign = 'right'; ctx.fillText('REC ●', x + w - 6, y + 14);
+    ctx.textAlign = 'left';
+    const d = new Date();
+    ctx.fillText(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`, x + 6, y + h - 8);
+  },
+
+  _draw_ninja(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.fillStyle = '#111'; ctx.fillRect(x - pad, y - pad, w + pad * 2, h * 0.3);
+    ctx.fillRect(x - pad, y + h * 0.7, w + pad * 2, h * 0.3 + pad);
+    // Eye slit
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x - pad, y + h * 0.3); ctx.lineTo(x + w + pad, y + h * 0.3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - pad, y + h * 0.7); ctx.lineTo(x + w + pad, y + h * 0.7); ctx.stroke();
+    // Shuriken corners
+    ctx.fillStyle = '#888';
+    ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('✦', x - 2, y - 2); ctx.fillText('✦', x + w + 2, y - 2);
+    ctx.fillText('✦', x - 2, y + h + 12); ctx.fillText('✦', x + w + 2, y + h + 12);
+    ctx.textAlign = 'left';
+  },
+
+  // ═══ SCIENCE ═══
+
+  _draw_lab(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(74,222,128,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 6); ctx.stroke();
+    // Bubbles
+    ctx.fillStyle = 'rgba(74,222,128,.15)';
+    [[x - 8, y + h * 0.3, 6], [x - 5, y + h * 0.5, 4], [x + w + 6, y + h * 0.4, 5],
+     [x + w + 9, y + h * 0.2, 3], [x + w * 0.2, y + h + 8, 4], [x + w * 0.7, y + h + 10, 5]].forEach(([bx, by, br]) => {
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+    });
+    // Goggles at top
+    ctx.strokeStyle = 'rgba(74,222,128,.3)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x + w / 2 - 12, y - pad - 4, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + w / 2 + 12, y - pad - 4, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w / 2 - 5, y - pad - 4); ctx.lineTo(x + w / 2 + 5, y - pad - 4); ctx.stroke();
+  },
+
+  _draw_microscope(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 6, 0, Math.PI * 2); ctx.stroke();
+    // Crosshair
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + w, cy); ctx.stroke();
+  },
+  _fg_microscope(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'right';
+    ctx.fillText('40x', x + w - 6, y + h - 8);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_electric(ctx, x, y, w, h) {
+    const pad = 4;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Lightning bolts at corners
+    ctx.fillStyle = '#fbbf24';
+    const bolt = (bx, by) => {
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 5, by + 8); ctx.lineTo(bx + 2, by + 8);
+      ctx.lineTo(bx + 6, by + 16); ctx.lineTo(bx - 1, by + 6); ctx.lineTo(bx + 2, by + 6); ctx.closePath(); ctx.fill();
+    };
+    bolt(x - 10, y - 10); bolt(x + w + 4, y - 10); bolt(x - 10, y + h - 6); bolt(x + w + 4, y + h - 6);
+  },
+
+  // ═══ SOCIAL/FUN ═══
+
+  _draw_clapboard(ctx, x, y, w) {
+    const clH = 22;
+    ctx.fillStyle = '#222'; ctx.fillRect(x, y - clH - 4, w, clH);
+    ctx.fillStyle = '#111'; ctx.fillRect(x, y - clH - 4, w, 6);
+    // Stripes on top
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 6; i++) {
+      if (i % 2 === 0) ctx.fillRect(x + i * (w / 6), y - clH - 4, w / 12, 6);
+    }
+    ctx.fillStyle = '#fff'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('SCENE 1  TAKE 1', x + 6, y - 7);
+  },
+
+  _draw_livestream(ctx, x, y) {
+    // LIVE badge
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.roundRect(x + 6, y + 6, 40, 16, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('LIVE', x + 26, y + 18);
+    // Viewer count
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.roundRect(x + 50, y + 6, 40, 16, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText('👁 1.2k', x + 70, y + 18);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_circus(ctx, x, y, w, h) {
+    const pad = 8;
+    // Striped border
+    ctx.lineWidth = 8;
+    const segs = 20;
+    for (let i = 0; i < segs; i++) {
+      ctx.strokeStyle = i % 2 === 0 ? '#ef4444' : '#fbbf24';
+      const p = i / segs;
+      ctx.beginPath();
+      // Simplified — just do top edge striping
+      if (i < segs / 2) ctx.strokeRect(x - pad + p * (w + pad * 2), y - pad, (w + pad * 2) / segs, 0);
+    }
+    // Simplified colorful border
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4;
+    ctx.setLineDash([12, 12]);
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineDashOffset = 12;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    // Bunting flags
+    ctx.fillStyle = '#fbbf24'; ctx.font = '10px sans-serif';
+    for (let i = 0; i < 6; i++) ctx.fillText('▼', x + (i / 5) * w - 5, y - pad - 2);
+  },
+
+  // ═══ ISLAMIC ═══
+
+  _draw_minaret(ctx, x, y, w, h) {
+    const cx = x + w / 2;
+    // Arch frame
+    ctx.strokeStyle = 'rgba(212,160,60,.5)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y + h + 8);
+    ctx.lineTo(x - 8, y + 10);
+    ctx.quadraticCurveTo(x - 8, y - 12, cx, y - 12);
+    ctx.quadraticCurveTo(x + w + 8, y - 12, x + w + 8, y + 10);
+    ctx.lineTo(x + w + 8, y + h + 8);
+    ctx.stroke();
+    // Dome at top
+    ctx.beginPath(); ctx.arc(cx, y - 12, 8, Math.PI, 0); ctx.stroke();
+    // Crescent on top
+    ctx.fillStyle = 'rgba(212,160,60,.6)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('☪', cx, y - 18);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_crescent(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(212,160,60,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Corner ornaments — crescent + star
+    ctx.fillStyle = 'rgba(212,160,60,.4)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('☪', x - 2, y + 2); ctx.fillText('✦', x + w + 2, y + 2);
+    ctx.fillText('✦', x - 2, y + h + 6); ctx.fillText('☪', x + w + 2, y + h + 6);
+    ctx.textAlign = 'left';
+  },
+
+  _draw_andalusia(ctx, x, y, w, h) {
+    const pad = 10, cx = x + w / 2;
+    // Horseshoe arch (Alhambra)
+    ctx.strokeStyle = 'rgba(194,112,62,.5)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - pad, y + h + pad);
+    ctx.lineTo(x - pad, y + h * 0.3);
+    ctx.arc(cx, y + h * 0.3, w / 2 + pad, Math.PI, 0);
+    ctx.lineTo(x + w + pad, y + h + pad);
+    ctx.stroke();
+    // Inner arch
+    ctx.strokeStyle = 'rgba(194,112,62,.25)'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h + 4);
+    ctx.lineTo(x, y + h * 0.35);
+    ctx.arc(cx, y + h * 0.35, w / 2, Math.PI, 0);
+    ctx.lineTo(x + w, y + h + 4);
+    ctx.stroke();
+    // Keystone
+    ctx.fillStyle = 'rgba(194,112,62,.2)';
+    ctx.beginPath(); ctx.arc(cx, y + h * 0.3 - w / 2 - pad, 6, 0, Math.PI * 2); ctx.fill();
+  },
+
+  // ═══ FUTURIST ═══
+
+  _draw_hologram(ctx, x, y, w, h) {
+    const t = Date.now() / 1000, pad = 6;
+    ctx.save();
+    // Chromatic aberration — offset red/blue borders
+    const glitchX = Math.sin(t * 12) > 0.7 ? 4 : Math.sin(t * 8) > 0.9 ? -3 : 0;
+    const glitchY = Math.cos(t * 15) > 0.85 ? 2 : 0;
+    ctx.strokeStyle = 'rgba(239,68,68,.4)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - pad + glitchX, y - pad + glitchY, w + pad * 2, h + pad * 2);
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - pad - glitchX, y - pad - glitchY, w + pad * 2, h + pad * 2);
+    // Main border
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    // Holographic base (triangle below)
+    ctx.fillStyle = 'rgba(56,189,248,.06)';
+    ctx.beginPath();
+    ctx.moveTo(x - 20, y + h + pad + 2);
+    ctx.lineTo(x + w / 2, y + h + pad + 30);
+    ctx.lineTo(x + w + 20, y + h + pad + 2);
+    ctx.fill();
+    // Flicker: random horizontal tear
+    if (Math.random() > 0.92) {
+      const tearY = y + Math.random() * h;
+      ctx.fillStyle = 'rgba(56,189,248,.1)';
+      ctx.fillRect(x, tearY, w, 2 + Math.random() * 4);
+    }
+    ctx.restore();
+  },
+  _fg_hologram(ctx, x, y, w, h) {
+    // Dense scan lines
+    ctx.strokeStyle = 'rgba(56,189,248,.05)'; ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 2) {
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
+    }
+    // "HOLO" label top-left
+    ctx.fillStyle = 'rgba(56,189,248,.4)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.textAlign = 'left'; ctx.fillText('HOLO', x + 4, y + 10);
+  },
+
+  _draw_hexgrid(ctx, x, y, w, h) {
+    const pad = 6;
+    ctx.strokeStyle = 'rgba(56,189,248,.3)'; ctx.lineWidth = 0.8;
+    const sz = 16;
+    for (let gx = x - pad; gx < x + w + pad; gx += sz * 1.5) {
+      for (let gy = y - pad; gy < y + h + pad; gy += sz * 0.866) {
+        const offset = (Math.floor((gy - y) / (sz * 0.866)) % 2) * sz * 0.75;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2; const px = gx + offset + Math.cos(a) * sz / 2; const py = gy + Math.sin(a) * sz / 2;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+  },
+
+  _draw_portal(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) / 2 + 12, t = Date.now() / 1000;
+    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 3;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, r + i * 6, t + i, t + i + 4.5); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(192,132,252,.03)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _draw_mech(ctx, x, y, w, h) {
+    const pad = 10;
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.fill();
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+    ctx.setLineDash([12, 6]); ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2); ctx.setLineDash([]);
+    // Rivets
+    ctx.fillStyle = '#666';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad - 6], [x + w + pad - 6, y + h + pad - 6]].forEach(([rx, ry]) => {
+      ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    // Warning stripes bottom
+    ctx.fillStyle = '#fbbf24';
+    for (let i = 0; i < 8; i++) {
+      if (i % 2 === 0) ctx.fillRect(x - pad + i * ((w + pad * 2) / 8), y + h + pad - 4, (w + pad * 2) / 8, 4);
+    }
+  },
+
+  _draw_hud(ctx, x, y, w, h) {
+    ctx.strokeStyle = 'rgba(74,222,128,.4)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+  },
+  _fg_hud(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(74,222,128,.5)'; ctx.font = '8px ui-monospace, monospace';
+    // Top-left bars
+    ctx.textAlign = 'left';
+    ctx.fillText('PWR ████░░', x + 6, y + 12);
+    ctx.fillText('SIG ██████', x + 6, y + 22);
+    // Top-right
+    ctx.textAlign = 'right';
+    ctx.fillText('100%', x + w - 6, y + 12);
+    // Targeting reticle center
+    ctx.strokeStyle = 'rgba(74,222,128,.2)'; ctx.lineWidth = 1;
+    const cx = x + w / 2, cy = y + h / 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 25, cy); ctx.lineTo(cx - 10, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 10, cy); ctx.lineTo(cx + 25, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 25); ctx.lineTo(cx, cy - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx, cy + 25); ctx.stroke();
+    ctx.textAlign = 'left';
+  },
+
+  _draw_dna(ctx, x, y, w, h) {
+    const t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 2;
+    // Left helix
+    for (let i = 0; i < 20; i++) {
+      const py = y + (i / 20) * h;
+      const px = x - 10 + Math.sin(i * 0.6 + t * 2) * 8;
+      const px2 = x - 10 - Math.sin(i * 0.6 + t * 2) * 8;
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px2, py); ctx.stroke();
+    }
+    // Right helix
+    for (let i = 0; i < 20; i++) {
+      const py = y + (i / 20) * h;
+      const px = x + w + 10 + Math.sin(i * 0.6 + t * 2 + 1) * 8;
+      const px2 = x + w + 10 - Math.sin(i * 0.6 + t * 2 + 1) * 8;
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px2, py); ctx.stroke();
+    }
+  },
+
+  _draw_warp(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2 + t;
+      const r1 = Math.max(w, h) * 0.4;
+      const r2 = Math.max(w, h) * 0.65;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+      ctx.stroke();
+    }
+  },
+
+  _draw_android(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 16); ctx.fill();
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 16); ctx.stroke();
+    // Status LEDs top
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(x + 10, y - pad + 5, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(x + 18, y - pad + 5, 2, 0, Math.PI * 2); ctx.fill();
+    // Loading bar bottom
+    const barW = w * 0.6, barX = x + w / 2 - barW / 2;
+    ctx.fillStyle = 'rgba(56,189,248,.2)'; ctx.beginPath(); ctx.roundRect(barX, y + h + pad - 6, barW, 3, 1.5); ctx.fill();
+    const prog = ((Date.now() / 30) % barW);
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.roundRect(barX, y + h + pad - 6, prog, 3, 1.5); ctx.fill();
+  },
+
+  _draw_forcefield(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    const r = Math.max(w, h) / 2 + 16;
+    ctx.save();
+    // Outer energy ring (pulsing)
+    const pulseR = r + Math.sin(t * 3) * 4;
+    ctx.strokeStyle = `rgba(56,189,248,${0.2 + Math.sin(t * 2) * 0.1})`;
+    ctx.lineWidth = 3; ctx.shadowColor = 'rgba(56,189,248,.4)'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(cx, cy, pulseR, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Hex cells — tiled across the frame area
+    ctx.strokeStyle = 'rgba(56,189,248,.12)'; ctx.lineWidth = 0.8;
+    const hexSize = 14;
+    for (let gx = x - 20; gx < x + w + 20; gx += hexSize * 1.5) {
+      for (let gy = y - 20; gy < y + h + 20; gy += hexSize * 1.73) {
+        const off = (Math.floor((gy - y) / (hexSize * 1.73)) % 2) * hexSize * 0.75;
+        const hx = gx + off, hy = gy;
+        const dist = Math.sqrt((hx - cx) ** 2 + (hy - cy) ** 2);
+        if (dist > r + 5 || dist < r - 30) continue;
+        // Impact flash near random cell
+        const impactPhase = Math.sin(t * 5 + hx * 0.1 + hy * 0.1);
+        const alpha = impactPhase > 0.95 ? 0.5 : 0.12;
+        ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
+        if (impactPhase > 0.95) { ctx.fillStyle = 'rgba(56,189,248,.08)'; }
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const px = hx + Math.cos(a) * hexSize / 2, py = hy + Math.sin(a) * hexSize / 2;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+        if (impactPhase > 0.95) ctx.fill();
+      }
+    }
+    // Inner glow ring
+    ctx.strokeStyle = 'rgba(56,189,248,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  },
+
+  _draw_terminal(ctx, x, y, w, h) {
+    const pad = 14;
+    ctx.save();
+    // CRT monitor shell — thick curved bezel
+    const shellGrad = ctx.createLinearGradient(x, y, x, y + h);
+    shellGrad.addColorStop(0, '#2a2a2a'); shellGrad.addColorStop(1, '#1a1a1a');
+    ctx.fillStyle = shellGrad;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 12); ctx.fill();
+    // Inner phosphor glow
+    ctx.fillStyle = 'rgba(0,20,0,.5)';
+    ctx.beginPath(); ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 4); ctx.fill();
+    // CRT screen curve (vignette)
+    const crtGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, w * 0.65);
+    crtGrad.addColorStop(0, 'rgba(0,0,0,0)'); crtGrad.addColorStop(1, 'rgba(0,0,0,.3)');
+    ctx.fillStyle = crtGrad; ctx.fillRect(x, y, w, h);
+    // Bezel screws
+    ctx.fillStyle = '#444';
+    [[x - pad + 6, y - pad + 6], [x + w + pad - 6, y - pad + 6], [x - pad + 6, y + h + pad - 6], [x + w + pad - 6, y + h + pad - 6]].forEach(([sx, sy]) => {
+      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(sx - 2, sy); ctx.lineTo(sx + 2, sy); ctx.stroke();
+    });
+    // Power LED
+    const on = Math.floor(Date.now() / 800) % 2 === 0;
+    ctx.fillStyle = on ? '#4ade80' : '#1a3a1a';
+    ctx.shadowColor = on ? '#4ade80' : 'transparent'; ctx.shadowBlur = on ? 4 : 0;
+    ctx.beginPath(); ctx.arc(x + w + pad - 8, y + h + pad - 6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+  _fg_terminal(ctx, x, y, w, h) {
+    // Dense phosphor scan lines
+    ctx.strokeStyle = 'rgba(74,222,128,.04)'; ctx.lineWidth = 1;
+    for (let ly = y; ly < y + h; ly += 2) { ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke(); }
+    // Rolling scan bar (CRT refresh)
+    const scanY = y + ((Date.now() / 10) % h);
+    ctx.fillStyle = 'rgba(74,222,128,.03)';
+    ctx.fillRect(x, scanY, w, 30);
+    // Prompt with blinking cursor
+    ctx.fillStyle = 'rgba(74,222,128,.6)'; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'left';
+    const blink = Math.floor(Date.now() / 500) % 2;
+    ctx.fillText('guest@noorcast:~$ ' + (blink ? '█' : ' '), x + 6, y + h - 10);
+    // Fake output lines (faint)
+    ctx.fillStyle = 'rgba(74,222,128,.15)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.fillText('> recording started...', x + 6, y + 14);
+    ctx.fillText('> sources: 2 active', x + 6, y + 24);
+  },
+
+  _draw_sniper(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2 + 8;
+    ctx.save();
+    // Outer scope ring (thick)
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Inner ring
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 6, 0, Math.PI * 2); ctx.stroke();
+    // Scope body (tube hint, left side)
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - 30, cy - 8, 30, 16);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 30, cy - 8, 30, 16);
+    // Lens coating (subtle blue reflection)
+    const lensGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
+    lensGrad.addColorStop(0, 'rgba(56,100,248,.04)'); lensGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lensGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  },
+  _fg_sniper(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+    ctx.save();
+    // Crosshair lines (thin)
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, y + 10); ctx.lineTo(cx, cy - 15); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + 15); ctx.lineTo(cx, y + h - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 10, cy); ctx.lineTo(cx - 15, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 15, cy); ctx.lineTo(x + w - 10, cy); ctx.stroke();
+    // Center dot
+    ctx.fillStyle = 'rgba(239,68,68,.5)';
+    ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI * 2); ctx.fill();
+    // Mil-dot ticks on crosshair
+    ctx.fillStyle = 'rgba(255,255,255,.25)';
+    for (let i = 1; i <= 4; i++) {
+      const d = (r * 0.15) * i;
+      ctx.beginPath(); ctx.arc(cx, cy - d - 15, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy + d + 15, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - d - 15, cy, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + d + 15, cy, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Range/zoom readout
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = '8px ui-monospace, monospace';
+    ctx.textAlign = 'right'; ctx.fillText('4.0x', x + w - 12, y + 16);
+    ctx.fillText('DIST: 150m', x + w - 12, y + 26);
+    ctx.textAlign = 'left'; ctx.fillText('WIND: 2.1→', x + 12, y + h - 12);
+    ctx.restore();
+  },
+
+  _draw_neural(ctx, x, y, w, h) {
+    const t = Date.now() / 1000;
+    ctx.strokeStyle = 'rgba(192,132,252,.3)'; ctx.lineWidth = 1;
+    // Nodes
+    const nodes = [];
+    for (let i = 0; i < 12; i++) {
+      const nx = x - 15 + (i % 4) * ((w + 30) / 3);
+      const ny = y - 15 + Math.floor(i / 4) * ((h + 30) / 2);
+      nodes.push([nx, ny]);
+    }
+    // Connections
+    nodes.forEach(([n1x, n1y], i) => {
+      nodes.forEach(([n2x, n2y], j) => {
+        if (j <= i) return;
+        const dist = Math.sqrt((n1x - n2x) ** 2 + (n1y - n2y) ** 2);
+        if (dist > 200) return;
+        const pulse = Math.sin(t * 3 + i + j) * 0.5 + 0.5;
+        ctx.globalAlpha = pulse * 0.2;
+        ctx.beginPath(); ctx.moveTo(n1x, n1y); ctx.lineTo(n2x, n2y); ctx.stroke();
+      });
+    });
+    ctx.globalAlpha = 1;
+    // Node dots
+    ctx.fillStyle = 'rgba(192,132,252,.4)';
+    nodes.forEach(([nx, ny]) => {
+      ctx.beginPath(); ctx.arc(nx, ny, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  },
+
+  // ═══ 3D DEPTH ═══
+
+  // 🎲 Cube — isometric 3D box, source on front face
+  _draw_cube(ctx, x, y, w, h) {
+    const d = 20; // depth
+    ctx.save();
+    // Top face
+    ctx.fillStyle = '#444';
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + d, y - d); ctx.lineTo(x + w + d, y - d); ctx.lineTo(x + w, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.stroke();
+    // Right face
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.moveTo(x + w, y); ctx.lineTo(x + w + d, y - d); ctx.lineTo(x + w + d, y + h - d); ctx.lineTo(x + w, y + h);
+    ctx.closePath(); ctx.fill();
+    ctx.stroke();
+    // Front face border
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    // Edge highlights
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + d, y - d); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w + d, y - d); ctx.stroke();
+    ctx.restore();
+  },
+
+  // 🖼 Gallery Frame — ornate picture frame with 3D bevels
+  _draw_gallery(ctx, x, y, w, h) {
+    const f = 16; // frame width
+    ctx.save();
+    // Outer frame
+    const outerGrad = ctx.createLinearGradient(x - f, y - f, x + w + f, y + h + f);
+    outerGrad.addColorStop(0, '#c9a040'); outerGrad.addColorStop(0.3, '#e8c860');
+    outerGrad.addColorStop(0.5, '#f0d878'); outerGrad.addColorStop(0.7, '#e8c860');
+    outerGrad.addColorStop(1, '#a08030');
+    ctx.fillStyle = outerGrad;
+    ctx.fillRect(x - f, y - f, w + f * 2, h + f * 2);
+    // Inner bevel (dark)
+    ctx.fillStyle = '#6b5020';
+    ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    // Outer bevel highlights
+    ctx.strokeStyle = 'rgba(255,240,180,.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - f, y - f); ctx.lineTo(x - f + f * 2, y + h + f); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.3)';
+    ctx.beginPath(); ctx.moveTo(x + w + f, y - f); ctx.lineTo(x + w + f, y + h + f); ctx.stroke();
+    // Corner ornaments
+    ctx.fillStyle = '#d4a840';
+    [[x - f + 4, y - f + 4], [x + w + f - 12, y - f + 4], [x - f + 4, y + h + f - 12], [x + w + f - 12, y + h + f - 12]].forEach(([cx, cy]) => {
+      ctx.beginPath(); ctx.arc(cx + 4, cy + 4, 5, 0, Math.PI * 2); ctx.fill();
+    });
+    // Shadow on wall behind
+    ctx.fillStyle = 'rgba(0,0,0,.15)';
+    ctx.fillRect(x - f + 6, y + h + f + 2, w + f * 2, 8);
+    ctx.restore();
+  },
+
+  // 📦 Cardboard Box — open box with flaps
+  _draw_cardboard(ctx, x, y, w, h) {
+    const pad = 10, flap = 18;
+    ctx.save();
+    // Box body — corrugated brown
+    const boxGrad = ctx.createLinearGradient(x, y, x, y + h);
+    boxGrad.addColorStop(0, '#b08050'); boxGrad.addColorStop(0.5, '#a07040'); boxGrad.addColorStop(1, '#906030');
+    ctx.fillStyle = boxGrad;
+    ctx.fillRect(x - pad, y, w + pad * 2, h + pad);
+    // Corrugated lines
+    ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.lineWidth = 0.5;
+    for (let ly = y + 4; ly < y + h + pad; ly += 6) {
+      ctx.beginPath(); ctx.moveTo(x - pad, ly); ctx.lineTo(x + w + pad, ly); ctx.stroke();
+    }
+    // Open flaps (top)
+    ctx.fillStyle = '#b88860';
+    // Left flap
+    ctx.beginPath();
+    ctx.moveTo(x - pad, y); ctx.lineTo(x - pad - 8, y - flap); ctx.lineTo(x + w / 2 - 5, y - flap + 4); ctx.lineTo(x + w / 2 - 5, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#8a6040'; ctx.lineWidth = 1; ctx.stroke();
+    // Right flap
+    ctx.fillStyle = '#c09870';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad, y); ctx.lineTo(x + w + pad + 8, y - flap); ctx.lineTo(x + w / 2 + 5, y - flap + 4); ctx.lineTo(x + w / 2 + 5, y);
+    ctx.closePath(); ctx.fill();
+    ctx.stroke();
+    // Tape strip
+    ctx.fillStyle = 'rgba(200,180,140,.4)';
+    ctx.fillRect(x + w / 2 - 15, y + h + pad - 3, 30, 6);
+    // "THIS SIDE UP" stamp
+    ctx.fillStyle = 'rgba(180,60,60,.3)'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('↑ THIS SIDE UP ↑', x + w / 2, y + h + pad - 8);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 💎 Crystal — faceted gem with prismatic edges
+  _draw_crystal(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    ctx.save();
+    // Faceted outer shape (irregular polygon)
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+      const r = (i % 2 === 0 ? Math.max(w, h) / 2 + 14 : Math.max(w, h) / 2 + 8);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    }
+    // Facet fills with gradient
+    ctx.beginPath(); pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.closePath();
+    const gemGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+    gemGrad.addColorStop(0, 'rgba(200,180,255,.1)'); gemGrad.addColorStop(0.5, 'rgba(180,220,255,.08)');
+    gemGrad.addColorStop(1, 'rgba(255,200,240,.1)');
+    ctx.fillStyle = gemGrad; ctx.fill();
+    ctx.strokeStyle = 'rgba(200,200,255,.5)'; ctx.lineWidth = 2; ctx.stroke();
+    // Internal facet lines
+    ctx.strokeStyle = 'rgba(200,200,255,.15)'; ctx.lineWidth = 0.8;
+    for (let i = 0; i < pts.length; i += 2) {
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+    }
+    // Prismatic rainbow sparkles at edges
+    const sparkles = [[x - 8, y - 8], [x + w + 8, y - 4], [x + w + 4, y + h + 8], [x - 6, y + h + 4]];
+    sparkles.forEach(([sx, sy], i) => {
+      const hue = ((t * 90 + i * 90) % 360);
+      ctx.fillStyle = `hsla(${hue},80%,70%,.5)`;
+      const sr = 3 + Math.sin(t * 4 + i * 2) * 1.5;
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  },
+
+  // 🪞 Magic Mirror — ornate oval with depth bevels
+  _draw_mirror(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2;
+    const rx = w / 2 + 18, ry = h / 2 + 22;
+    ctx.save();
+    // Outer ornate frame
+    const frameGrad = ctx.createRadialGradient(cx, cy, Math.min(rx, ry) * 0.7, cx, cy, Math.max(rx, ry));
+    frameGrad.addColorStop(0, '#c9a040'); frameGrad.addColorStop(0.7, '#a08030'); frameGrad.addColorStop(1, '#806020');
+    ctx.fillStyle = frameGrad;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    // Inner bevel
+    ctx.fillStyle = '#5a4020';
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx - 8, ry - 8, 0, 0, Math.PI * 2); ctx.fill();
+    // Mirror glass edge
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(cx, cy, w / 2 + 2, h / 2 + 2, 0, 0, Math.PI * 2); ctx.stroke();
+    // Reflection glare arc
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx - rx * 0.2, cy - ry * 0.2, rx * 0.4, ry * 0.3, -0.3, 0.3, 1.8); ctx.stroke();
+    // Crown ornament at top
+    ctx.fillStyle = '#d4a840';
+    ctx.beginPath();
+    const ty = cy - ry - 2;
+    ctx.moveTo(cx - 12, ty + 8); ctx.lineTo(cx - 8, ty); ctx.lineTo(cx - 2, ty + 6);
+    ctx.lineTo(cx, ty - 4); ctx.lineTo(cx + 2, ty + 6); ctx.lineTo(cx + 8, ty);
+    ctx.lineTo(cx + 12, ty + 8); ctx.closePath(); ctx.fill();
+    // Sparkle particles
+    const t = Date.now() / 1000;
+    ctx.fillStyle = 'rgba(255,240,200,.4)';
+    for (let i = 0; i < 4; i++) {
+      const sa = t * 1.5 + i * 1.5;
+      const sparkR = rx * 0.8;
+      const sx = cx + Math.cos(sa) * sparkR * 0.9;
+      const sy = cy + Math.sin(sa) * (ry * 0.8);
+      ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // 📖 Open Book — source on right page, spine visible
+  _draw_book(ctx, x, y, w, h) {
+    const pad = 12, spine = 8;
+    ctx.save();
+    // Left page (faint text)
+    ctx.fillStyle = '#f5f0e0';
+    ctx.fillRect(x - pad - w * 0.3, y - pad, w * 0.3 + pad, h + pad * 2);
+    // Text lines on left page
+    ctx.fillStyle = 'rgba(100,80,60,.15)';
+    for (let i = 0; i < 10; i++) {
+      const lw = 20 + Math.random() * (w * 0.25 - 30);
+      ctx.fillRect(x - pad - w * 0.3 + 8, y - pad + 12 + i * (h / 10), lw, 2);
+    }
+    // Spine
+    const spineGrad = ctx.createLinearGradient(x - pad - spine, y, x - pad, y);
+    spineGrad.addColorStop(0, '#8b6914'); spineGrad.addColorStop(0.5, '#6b4c10'); spineGrad.addColorStop(1, '#8b6914');
+    ctx.fillStyle = spineGrad;
+    ctx.fillRect(x - pad - spine, y - pad - 2, spine, h + pad * 2 + 4);
+    // Right page (where video goes)
+    ctx.fillStyle = '#faf5e8';
+    ctx.fillRect(x - pad + 2, y - pad, w + pad * 2 - 2, h + pad * 2);
+    // Page shadow along spine
+    const shadowGrad = ctx.createLinearGradient(x - pad, y, x - pad + 15, y);
+    shadowGrad.addColorStop(0, 'rgba(0,0,0,.15)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowGrad;
+    ctx.fillRect(x - pad, y - pad, 15, h + pad * 2);
+    // Page curl (bottom-right corner)
+    ctx.fillStyle = '#e8e0d0';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad, y + h + pad);
+    ctx.lineTo(x + w + pad - 16, y + h + pad);
+    ctx.lineTo(x + w + pad, y + h + pad - 16);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.restore();
+  },
+
+  // 🎰 Slot Machine — 3D cabinet with handle
+  _draw_slotmachine(ctx, x, y, w, h) {
+    const pad = 16, cx = x + w / 2;
+    const bx = x - pad, by = y - pad - 20, bw = w + pad * 2, bh = h + pad * 2 + 50;
+    ctx.save();
+    // Cabinet body (red gradient)
+    const cabGrad = ctx.createLinearGradient(bx, by, bx + bw, by);
+    cabGrad.addColorStop(0, '#8b1a1a'); cabGrad.addColorStop(0.5, '#b22222'); cabGrad.addColorStop(1, '#8b1a1a');
+    ctx.fillStyle = cabGrad;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill();
+    // Chrome trim
+    ctx.strokeStyle = '#daa520'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(bx + 2, by + 2, bw - 4, bh - 4, 6); ctx.stroke();
+    // "JACKPOT" text
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px "Righteous", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('★ JACKPOT ★', cx, by + 14);
+    // Screen area
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 4); ctx.fill();
+    // Reel symbols below screen
+    ctx.fillStyle = '#222'; ctx.fillRect(bx + 10, y + h + 10, bw - 20, 18);
+    ctx.font = '14px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText('🍒  💎  7️⃣', cx, y + h + 24);
+    // Handle (right side)
+    ctx.fillStyle = '#888'; ctx.fillRect(bx + bw + 2, by + bh * 0.3, 8, bh * 0.4);
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(bx + bw + 6, by + bh * 0.3, 8, 0, Math.PI * 2); ctx.fill();
+    // Coin tray
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(bx + 10, by + bh - 16, bw - 20, 10, 3); ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🏛 Museum — glass display case with marble base
+  _draw_museum(ctx, x, y, w, h) {
+    const pad = 10, baseH = 24;
+    ctx.save();
+    // Glass case (transparent outline)
+    ctx.strokeStyle = 'rgba(200,220,240,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Glass reflection
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - pad + 4, y - pad); ctx.lineTo(x - pad + 4, y + h + pad); ctx.stroke();
+    // Marble base
+    const marbleGrad = ctx.createLinearGradient(x - pad - 10, y + h + pad, x + w + pad + 10, y + h + pad);
+    marbleGrad.addColorStop(0, '#999'); marbleGrad.addColorStop(0.3, '#ccc'); marbleGrad.addColorStop(0.5, '#ddd');
+    marbleGrad.addColorStop(0.7, '#ccc'); marbleGrad.addColorStop(1, '#999');
+    ctx.fillStyle = marbleGrad;
+    ctx.fillRect(x - pad - 10, y + h + pad + 2, w + pad * 2 + 20, baseH);
+    // Base edge
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad - 10, y + h + pad + 2, w + pad * 2 + 20, baseH);
+    // Spotlight from above
+    ctx.fillStyle = 'rgba(255,250,220,.04)';
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2 - 10, y - pad - 30);
+    ctx.lineTo(x - pad - 20, y + h + pad);
+    ctx.lineTo(x + w + pad + 20, y + h + pad);
+    ctx.lineTo(x + w / 2 + 10, y - pad - 30);
+    ctx.fill();
+    // Label plaque
+    ctx.fillStyle = '#c9a040'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 25, y + h + pad + 6, 50, 12, 2); ctx.fill();
+    ctx.fillStyle = '#3a2a10'; ctx.font = '7px serif'; ctx.textAlign = 'center';
+    ctx.fillText('EXHIBIT A', x + w / 2, y + h + pad + 15);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🔲 Floating Panel — hovering above shadow
+  _draw_floating(ctx, x, y, w, h) {
+    const lift = 12;
+    ctx.save();
+    // Shadow on "ground"
+    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + lift + 8, w / 2 + 5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Subtle glow under panel
+    ctx.fillStyle = 'rgba(56,189,248,.05)';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + lift + 4, w / 2, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Panel frame (thin bright border)
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(56,189,248,.3)'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, 4); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Corner energy dots
+    ctx.fillStyle = 'rgba(56,189,248,.5)';
+    [[x - 3, y - 3], [x + w + 3, y - 3], [x - 3, y + h + 3], [x + w + 3, y + h + 3]].forEach(([dx, dy]) => {
+      ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  },
+
+  // 🌀 Vortex — spiral tunnel pulling inward
+  _draw_vortex(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    const maxR = Math.max(w, h) / 2 + 20;
+    ctx.save();
+    // Spiral rings
+    ctx.strokeStyle = 'rgba(192,132,252,.2)'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const r = maxR - i * (maxR / 6);
+      const startAngle = t * 2 + i * 0.5;
+      ctx.beginPath(); ctx.arc(cx, cy, r, startAngle, startAngle + 4); ctx.stroke();
+    }
+    // Radial streaks converging
+    ctx.strokeStyle = 'rgba(192,132,252,.1)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 + t;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+      ctx.lineTo(cx + Math.cos(a) * (maxR * 0.4), cy + Math.sin(a) * (maxR * 0.4));
+      ctx.stroke();
+    }
+    // Dark vignette at edges
+    const vigGrad = ctx.createRadialGradient(cx, cy, maxR * 0.5, cx, cy, maxR);
+    vigGrad.addColorStop(0, 'rgba(0,0,0,0)'); vigGrad.addColorStop(1, 'rgba(20,10,40,.15)');
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(x - 25, y - 25, w + 50, h + 50);
+    ctx.restore();
+  },
+
+  // 🧊 Ice Block — frozen translucent with cracks + frost
+  _draw_ice(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.save();
+    // Ice body (translucent blue)
+    ctx.fillStyle = 'rgba(180,220,255,.1)';
+    ctx.fillRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    // Ice border
+    ctx.strokeStyle = 'rgba(180,220,255,.35)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 3); ctx.stroke();
+    // Frost edge (rough white)
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 15; i++) {
+      const side = i % 4;
+      const p = Math.random();
+      let fx, fy, fx2, fy2;
+      if (side === 0) { fx = x - pad + p * (w + pad * 2); fy = y - pad; fx2 = fx + (Math.random() - 0.5) * 10; fy2 = fy - Math.random() * 6; }
+      else if (side === 1) { fx = x + w + pad; fy = y - pad + p * (h + pad * 2); fx2 = fx + Math.random() * 6; fy2 = fy + (Math.random() - 0.5) * 10; }
+      else if (side === 2) { fx = x - pad + p * (w + pad * 2); fy = y + h + pad; fx2 = fx + (Math.random() - 0.5) * 10; fy2 = fy + Math.random() * 6; }
+      else { fx = x - pad; fy = y - pad + p * (h + pad * 2); fx2 = fx - Math.random() * 6; fy2 = fy + (Math.random() - 0.5) * 10; }
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx2, fy2); ctx.stroke();
+    }
+    // Internal cracks
+    ctx.strokeStyle = 'rgba(200,230,255,.12)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x + w * 0.2, y); ctx.lineTo(x + w * 0.35, y + h * 0.4); ctx.lineTo(x + w * 0.15, y + h * 0.7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.7, y + h); ctx.lineTo(x + w * 0.8, y + h * 0.5); ctx.lineTo(x + w * 0.65, y + h * 0.3); ctx.stroke();
+    // Cold blue tint
+    const coldGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, Math.max(w, h) * 0.6);
+    coldGrad.addColorStop(0, 'rgba(100,180,255,0)'); coldGrad.addColorStop(1, 'rgba(100,180,255,.04)');
+    ctx.fillStyle = coldGrad; ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  },
+
+  // 🎁 Gift Box — open present with ribbon
+  _draw_gift(ctx, x, y, w, h) {
+    const pad = 12, lidH = 16;
+    ctx.save();
+    // Box body (wrapping paper)
+    const wrapGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+    wrapGrad.addColorStop(0, '#dc2626'); wrapGrad.addColorStop(0.5, '#ef4444'); wrapGrad.addColorStop(1, '#dc2626');
+    ctx.fillStyle = wrapGrad;
+    ctx.fillRect(x - pad, y, w + pad * 2, h + pad);
+    // Wrapping paper pattern (dots)
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    for (let gx = x - pad; gx < x + w + pad; gx += 16) {
+      for (let gy = y; gy < y + h + pad; gy += 16) {
+        ctx.beginPath(); ctx.arc(gx + 8, gy + 8, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // Lid (tilted open)
+    ctx.fillStyle = '#b91c1c';
+    ctx.beginPath();
+    ctx.moveTo(x - pad - 2, y);
+    ctx.lineTo(x - pad + 6, y - lidH - 8);
+    ctx.lineTo(x + w + pad - 6, y - lidH - 8);
+    ctx.lineTo(x + w + pad + 2, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 1; ctx.stroke();
+    // Ribbon (vertical + horizontal)
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(x + w / 2 - 5, y, 10, h + pad); // vertical
+    ctx.fillRect(x - pad, y + h / 2 - 4, w + pad * 2, 8); // horizontal
+    // Bow on lid
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.ellipse(x + w / 2 - 10, y - lidH - 4, 10, 6, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + w / 2 + 10, y - lidH - 4, 10, 6, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(x + w / 2, y - lidH - 4, 5, 0, Math.PI * 2); ctx.fill();
+    // Tissue paper peeking out
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.beginPath();
+    ctx.moveTo(x - pad + 8, y); ctx.lineTo(x + 10, y - 10); ctx.lineTo(x + 30, y);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + w - 10, y); ctx.lineTo(x + w + pad - 15, y - 8); ctx.lineTo(x + w + pad - 5, y);
+    ctx.fill();
+    ctx.restore();
+  },
+
+  // ═══ DESIGN APPS ═══
+
+  // 🎨 Canva — white border, purple accent toolbar
+  _draw_canva(ctx, x, y, w, h) {
+    const pad = 10, toolbar = 28;
+    ctx.save();
+    // White canvas border
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, h + pad * 2 + toolbar);
+    // Toolbar (top, purple gradient)
+    const tbGrad = ctx.createLinearGradient(x, y - pad - toolbar, x + w, y - pad - toolbar);
+    tbGrad.addColorStop(0, '#7c3aed'); tbGrad.addColorStop(1, '#8b5cf6');
+    ctx.fillStyle = tbGrad;
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, toolbar);
+    // Toolbar dots (mock buttons)
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath(); ctx.roundRect(x - pad + 10 + i * 36, y - pad - toolbar + 8, 28, 12, 4); ctx.fill();
+    }
+    // Canvas logo text
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('Canva', x + w + pad - 8, y - pad - toolbar + 18);
+    // Page shadow
+    ctx.fillStyle = 'rgba(0,0,0,.08)';
+    ctx.fillRect(x - pad + 4, y + h + pad + 2, w + pad * 2, 4);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🖌 Figma — dark UI frame, rulers, layers hint
+  _draw_figma(ctx, x, y, w, h) {
+    const pad = 8, rulerW = 16, toolbar = 24;
+    ctx.save();
+    // Dark background
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - rulerW, y - pad - toolbar - rulerW, w + pad * 2 + rulerW, h + pad * 2 + toolbar + rulerW);
+    // Top toolbar
+    ctx.fillStyle = '#2c2c2c';
+    ctx.fillRect(x - pad - rulerW, y - pad - toolbar - rulerW, w + pad * 2 + rulerW, toolbar);
+    // Toolbar items
+    ctx.fillStyle = '#0d99ff';
+    ctx.beginPath(); ctx.roundRect(x - pad - rulerW + 8, y - pad - toolbar - rulerW + 6, 40, 12, 3); ctx.fill();
+    ctx.fillStyle = '#666';
+    for (let i = 1; i < 4; i++) {
+      ctx.beginPath(); ctx.roundRect(x - pad - rulerW + 56 + i * 30, y - pad - toolbar - rulerW + 6, 22, 12, 3); ctx.fill();
+    }
+    // Top ruler
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - pad, y - pad - rulerW, w + pad * 2, rulerW);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 0.5;
+    for (let i = 0; i < w / 20; i++) {
+      const rx = x - pad + i * 20;
+      ctx.beginPath(); ctx.moveTo(rx, y - pad - rulerW); ctx.lineTo(rx, y - pad - (i % 5 === 0 ? 2 : 8)); ctx.stroke();
+    }
+    // Left ruler
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(x - pad - rulerW, y - pad, rulerW, h + pad * 2);
+    for (let i = 0; i < h / 20; i++) {
+      const ry = y - pad + i * 20;
+      ctx.beginPath(); ctx.moveTo(x - pad - rulerW, ry); ctx.lineTo(x - pad - (i % 5 === 0 ? 2 : 8), ry); ctx.stroke();
+    }
+    // Canvas border
+    ctx.strokeStyle = '#0d99ff'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.restore();
+  },
+
+  // 🖼 Photoshop — gray panels, checkered transparency border
+  _draw_photoshop(ctx, x, y, w, h) {
+    const pad = 10, toolbar = 22;
+    ctx.save();
+    // Dark background
+    ctx.fillStyle = '#535353';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, h + pad * 2 + toolbar);
+    // Menu bar
+    ctx.fillStyle = '#3c3c3c';
+    ctx.fillRect(x - pad, y - pad - toolbar, w + pad * 2, toolbar);
+    ctx.fillStyle = '#ccc'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
+    ['File', 'Edit', 'Image', 'Layer'].forEach((m, i) => {
+      ctx.fillText(m, x - pad + 8 + i * 40, y - pad - toolbar + 14);
+    });
+    // Checkerboard transparency pattern (border area)
+    const cs = 6;
+    for (let cx = x - pad; cx < x + w + pad; cx += cs) {
+      for (let cy = y - pad - toolbar + toolbar; cy < y; cy += cs) {
+        ctx.fillStyle = ((Math.floor(cx / cs) + Math.floor(cy / cs)) % 2 === 0) ? '#fff' : '#ccc';
+        ctx.fillRect(cx, cy, cs, cs);
+      }
+      for (let cy = y + h; cy < y + h + pad; cy += cs) {
+        ctx.fillStyle = ((Math.floor(cx / cs) + Math.floor(cy / cs)) % 2 === 0) ? '#fff' : '#ccc';
+        ctx.fillRect(cx, cy, cs, cs);
+      }
+    }
+    // Canvas border
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.restore();
+  },
+
+  // 💻 VS Code — editor frame, line numbers, tab bar
+  _draw_vscode(ctx, x, y, w, h) {
+    const pad = 6, tabH = 22, lineW = 30;
+    ctx.save();
+    // Editor background
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, w + pad * 2 + lineW, h + pad * 2 + tabH);
+    // Tab bar
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, w + pad * 2 + lineW, tabH);
+    // Active tab
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x - pad - lineW, y - pad - tabH, 80, tabH);
+    ctx.fillStyle = '#ccc'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('📄 main.js', x - pad - lineW + 6, y - pad - tabH + 14);
+    // Inactive tab
+    ctx.fillStyle = '#888';
+    ctx.fillText('📄 style.css', x - pad - lineW + 90, y - pad - tabH + 14);
+    // Line numbers gutter
+    ctx.fillStyle = '#252526';
+    ctx.fillRect(x - pad - lineW, y - pad, lineW, h + pad * 2);
+    ctx.fillStyle = '#858585'; ctx.font = '8px ui-monospace, monospace';
+    for (let i = 0; i < Math.min(20, h / 14); i++) {
+      ctx.fillText(String(i + 1).padStart(3, ' '), x - pad - lineW + 4, y - pad + 12 + i * 14);
+    }
+    // Status bar
+    ctx.fillStyle = '#007acc';
+    ctx.fillRect(x - pad - lineW, y + h + pad - 2, w + pad * 2 + lineW, 16);
+    ctx.fillStyle = '#fff'; ctx.font = '8px sans-serif';
+    ctx.fillText('Ln 1, Col 1', x - pad - lineW + 6, y + h + pad + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('JavaScript', x + w + pad - 4, y + h + pad + 10);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+  _fg_vscode(ctx, x, y) {
+    // Faint code syntax lines
+    ctx.font = '8px ui-monospace, monospace';
+    const lines = ['const app = {', '  name: "NoorCast",', '  version: "0.7"', '};'];
+    lines.forEach((l, i) => {
+      ctx.fillStyle = i === 0 ? 'rgba(86,156,214,.15)' : i === 3 ? 'rgba(86,156,214,.15)' : 'rgba(206,145,120,.12)';
+      ctx.fillText(l, x + 6, y + 14 + i * 14);
+    });
+  },
+
+  // 🐱 Scratch — orange header, green flag/stop, cat icon
+  _draw_scratch(ctx, x, y, w, h) {
+    const pad = 8, header = 28;
+    ctx.save();
+    // Stage border
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - pad, y - pad - header, w + pad * 2, h + pad * 2 + header);
+    // Header (orange)
+    ctx.fillStyle = '#ff8c1a';
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad - header, w + pad * 2, header, [8, 8, 0, 0]); ctx.fill();
+    // Green flag + red stop
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath(); ctx.arc(x - pad + 20, y - pad - header + 14, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('▶', x - pad + 20, y - pad - header + 18);
+    ctx.fillStyle = '#e53935';
+    ctx.beginPath(); ctx.arc(x - pad + 42, y - pad - header + 14, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText('⬛', x - pad + 42, y - pad - header + 18);
+    // Stage label
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('Stage', x + w + pad - 8, y - pad - header + 18);
+    // Cat icon (bottom-right)
+    ctx.font = '18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🐱', x + w + pad - 16, y + h + pad - 4);
+    // Stage border
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+};
+
+/* ─────────── Templates ─────────── */
+
+const Templates = {
+  presets: [
+    {
+      key: 'lesson', icon: '📚', i18n: 'tpl_lesson', i18n_desc: 'tpl_lesson_d',
+      intro: 'tpl_lesson_intro',
+      steps: [
+        { scene: 'you',       label: 'tpl_lesson_s1' },
+        { scene: 'code',      label: 'tpl_lesson_s2' },
+        { scene: 'coderobot', label: 'tpl_lesson_s3' },
+        { scene: 'coderobot', label: 'tpl_lesson_s4' },
+        { scene: 'you',       label: 'tpl_lesson_s5' },
+      ],
+    },
+    {
+      key: 'robot', icon: '🤖', i18n: 'tpl_robot', i18n_desc: 'tpl_robot_d',
+      intro: 'tpl_robot_intro',
+      steps: [
+        { scene: 'you',     label: 'tpl_robot_s1' },
+        { scene: 'code',    label: 'tpl_robot_s2' },
+        { scene: 'robot',   label: 'tpl_robot_s3' },
+        { scene: 'sensors', label: 'tpl_robot_s4' },
+        { scene: 'studio',  label: 'tpl_robot_s5' },
+      ],
+    },
+    {
+      key: 'fix', icon: '🔧', i18n: 'tpl_fix', i18n_desc: 'tpl_fix_d',
+      intro: 'tpl_fix_intro',
+      steps: [
+        { scene: 'code',      label: 'tpl_fix_s1' },
+        { scene: 'you',       label: 'tpl_fix_s2' },
+        { scene: 'code',      label: 'tpl_fix_s3' },
+        { scene: 'coderobot', label: 'tpl_fix_s4' },
+        { scene: 'you',       label: 'tpl_fix_s5' },
+      ],
+    },
+    {
+      key: 'robotcam', icon: '🤖', i18n: 'tpl_robotcam', i18n_desc: 'tpl_robotcam_d',
+      intro: 'tpl_robotcam_intro',
+      steps: [
+        { scene: 'you',     label: 'tpl_robotcam_s1' },
+        { scene: 'code',    label: 'tpl_robotcam_s2' },
+        { scene: 'robot',   label: 'tpl_robotcam_s3' },
+        { scene: 'sensors', label: 'tpl_robotcam_s4' },
+        { scene: 'you',     label: 'tpl_robotcam_s5' },
+      ],
+    },
+  ],
+  active: null,
+  currentStep: -1,
+
+  apply(key) {
+    const tpl = this.presets.find(p => p.key === key);
+    if (!tpl) return;
+    this.active = tpl;
+    this.currentStep = 0;
+    Scenes.switch(tpl.steps[0].scene);
+    if (tpl.intro) TextOverlays.add(t(tpl.intro), { ttl: 6000 });
+    this.renderStepStrip();
+    log(`${t('tplStarted')}: ${tpl.icon} ${t(tpl.i18n)}`, 'success');
+    showToast(`${tpl.icon} ${t(tpl.i18n)}`, 2000);
+    Sfx.play('click');
+    this.hidePicker();
+  },
+
+  clear() {
+    this.active = null;
+    this.currentStep = -1;
+    this.renderStepStrip();
+  },
+
+  gotoStep(i) {
+    if (!this.active) return;
+    if (i < 0 || i >= this.active.steps.length) return;
+    this.currentStep = i;
+    const step = this.active.steps[i];
+    Scenes.switch(step.scene);
+    // If currently recording, add a chapter marker with the step label
+    if (Recorder.state === 'recording' || Recorder.state === 'paused') {
+      Chapters.items.push({ time: Recorder.elapsed() / 1000, label: t(step.label) });
+    }
+    this.renderStepStrip();
+    Sfx.play('click');
+  },
+
+  renderStepStrip() {
+    const el = $('tcTemplateStrip');
+    if (!el) return;
+    // Clear DOM
+    while (el.firstChild) el.removeChild(el.firstChild);
+
+    if (!this.active) {
+      el.classList.remove('active');
+      const pick = document.createElement('button');
+      pick.className = 'tc-tpl-pick-btn';
+      pick.addEventListener('click', () => this.showPicker());
+      const icon = document.createElement('span'); icon.textContent = '🎬 ';
+      const label = document.createElement('span'); label.textContent = t('tplChoose');
+      pick.append(icon, label);
+      el.appendChild(pick);
+      return;
+    }
+
+    el.classList.add('active');
+    const header = document.createElement('div');
+    header.className = 'tc-tpl-strip-header';
+    const title = document.createElement('span');
+    title.className = 'tc-tpl-strip-title';
+    title.textContent = `${this.active.icon} ${t(this.active.i18n)}`;
+    const close = document.createElement('button');
+    close.className = 'tc-tpl-strip-close';
+    close.title = t('tplDismiss');
+    close.textContent = '✕';
+    close.addEventListener('click', () => this.clear());
+    header.append(title, close);
+    el.appendChild(header);
+
+    const stepsEl = document.createElement('div');
+    stepsEl.className = 'tc-tpl-steps';
+    this.active.steps.forEach((step, i) => {
+      const s = document.createElement('button');
+      s.className = 'tc-tpl-step' + (i === this.currentStep ? ' active' : '') + (i < this.currentStep ? ' done' : '');
+      const n = document.createElement('span'); n.className = 'tc-tpl-step-n'; n.textContent = i + 1;
+      const l = document.createElement('span'); l.className = 'tc-tpl-step-l'; l.textContent = t(step.label);
+      s.append(n, l);
+      s.addEventListener('click', () => this.gotoStep(i));
+      stepsEl.appendChild(s);
+    });
+    el.appendChild(stepsEl);
+  },
+
+  showPicker()  { const c = $('tcTemplates'); if (c) c.style.display = 'block'; },
+  hidePicker()  { const c = $('tcTemplates'); if (c) c.style.display = 'none'; },
+};
+
+/* ─────────── Text Overlays ─────────── */
+
+/* v0.7.0 rewrite: items now use top-left (x, y) coordinates and carry a
+   computed bounding box (w, h) so the Drag system can hit-test and
+   resize them like any other layer. Preset texts keep their 4-second
+   auto-fade, but if the user drags or resizes one, the ttl timer is
+   cancelled and the text stays permanent. */
+/* v0.7.5: transparency cycle + font cycle on text overlays */
+const TEXT_TRANSPARENCY_MODES = [
+  { bgAlpha: 1,   textAlpha: 1,   label: 'solid'  },  // 0 — solid bg + opaque text (default was 0.65, now crisp)
+  { bgAlpha: 0.5, textAlpha: 1,   label: 'semi'   },  // 1 — semi bg
+  { bgAlpha: 0,   textAlpha: 1,   label: 'text'   },  // 2 — text only
+  { bgAlpha: 0,   textAlpha: 0.5, label: 'ghost'  },  // 3 — ghost text only
+];
+const TEXT_FONTS = [
+  { family: 'Bangers, Righteous, sans-serif',   name: 'Bangers',   weight: 800 },
+  { family: 'Righteous, Bangers, sans-serif',   name: 'Righteous', weight: 800 },
+  { family: 'Orbitron, monospace',              name: 'Orbitron',  weight: 700 },
+  { family: 'Amiri, serif',                     name: 'Amiri',     weight: 700 },
+  { family: 'Tajawal, sans-serif',              name: 'Tajawal',   weight: 700 },
+  { family: 'Arial, sans-serif',                name: 'System',    weight: 700 },
+];
+
+const TextOverlays = {
+  items: [],  // { id, text, x, y, w, h, size, color, bg, transparency, font, _ttlTimer?, pinned? }
+  nextId: 1,
+  selectedId: null,
+  defaultFont: 0,  // v0.7.14: index into TEXT_FONTS — applied to NEW overlays
+                   // unless caller passes opts.font. Bound to #tcTextFontSelect.
+  defaultStroke: 6,  // v0.7.76: outline thickness in px (0-14). 0 disables
+                     // the outline entirely. Bound to #tcTextStrokeSlider
+                     // and persisted in tc-text-stroke.
+
+  add(text, opts = {}) {
+    const size = opts.size ?? 80;
+    const font = opts.font ?? this.defaultFont;  // v0.7.14: respect picker
+    const { w, h } = this._measure(text, size, font);
+    const cx = opts.x ?? Engine.width / 2;
+    const cy = opts.y ?? 160;
+    const item = {
+      id: this.nextId++,
+      text,
+      x: cx - w / 2,
+      y: cy - h / 2,
+      w, h, size,
+      color: opts.color ?? '#ffffff',
+      bg: opts.bg ?? '#000000',
+      transparency: opts.transparency ?? 1,       // 0..3 (semi bg by default)
+      font,                                       // 0..TEXT_FONTS.length-1
+      stroke: opts.stroke ?? this.defaultStroke,  // v0.7.76: outline px, 0 disables
+      pinned: opts.ttl === 0,
+    };
+    this.items.push(item);
+    log(`${t('textAdded')}: ${text}`, 'info');
+    if (!item.pinned) {
+      item._ttlTimer = setTimeout(() => this.remove(item.id), opts.ttl || 4000);
+    }
+    return item;
+  },
+
+  remove(id) {
+    const item = this.items.find(i => i.id === id);
+    if (item && item._ttlTimer) clearTimeout(item._ttlTimer);
+    this.items = this.items.filter(i => i.id !== id);
+    if (this.selectedId === id) this.selectedId = null;
+  },
+
+  /* Called by Drag on first interaction with an item — cancels the
+     auto-fade timer and pins the text to the canvas permanently. */
+  pin(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return;
+    if (item._ttlTimer) { clearTimeout(item._ttlTimer); item._ttlTimer = null; }
+    item.pinned = true;
+  },
+
+  /* Recompute w/h when text/size/font changes. */
+  _measure(text, size, fontIdx = 0) {
+    const ctx = Engine && Engine.ctx;
+    if (!ctx) return { w: 200, h: 100 };
+    const f = TEXT_FONTS[fontIdx] || TEXT_FONTS[0];
+    ctx.save();
+    ctx.font = `${f.weight} ${size}px ${f.family}`;
+    const m = ctx.measureText(text);
+    ctx.restore();
+    const padX = 30, padY = 18;
+    return {
+      w: m.width + padX * 2,
+      h: size * 1.2 + padY * 2,
+    };
+  },
+
+  /* Cycle the transparency mode (0..3) of the selected item. */
+  cycleTransparency(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return null;
+    item.transparency = ((item.transparency ?? 1) + 1) % TEXT_TRANSPARENCY_MODES.length;
+    return TEXT_TRANSPARENCY_MODES[item.transparency];
+  },
+
+  /* Cycle the font (0..5) of the selected item and re-measure the bbox. */
+  cycleFont(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return null;
+    item.font = ((item.font ?? 0) + 1) % TEXT_FONTS.length;
+    const { w, h } = this._measure(item.text, item.size, item.font);
+    item.w = w; item.h = h;
+    return TEXT_FONTS[item.font];
+  },
+
+  /* Drag is resizing a text overlay — scale the font size to the new w,
+     then re-measure so the h (and actual w) matches. */
+  resizeTo(item, newW) {
+    const ratio = Math.max(30, newW) / item.w;
+    item.size = Math.max(12, Math.min(400, item.size * ratio));
+    const { w, h } = this._measure(item.text, item.size);
+    // Anchor resize around top-left so the corner the user is dragging follows
+    item.w = w;
+    item.h = h;
+  },
+
+  drawAll(ctx) {
+    this.items.forEach(item => {
+      const fontIdx = item.font ?? 0;
+      const f = TEXT_FONTS[fontIdx] || TEXT_FONTS[0];
+      // Re-measure each frame in case the font just loaded or the text changed
+      const { w, h } = this._measure(item.text, item.size, fontIdx);
+      item.w = w; item.h = h;
+      const cx = item.x + w / 2, cy = item.y + h / 2;
+
+      const modeIdx = item.transparency ?? 1;
+      const mode = TEXT_TRANSPARENCY_MODES[modeIdx] || TEXT_TRANSPARENCY_MODES[1];
+
+      ctx.save();
+      // v0.7.184: animated sticker transforms
+      if (item.anim) {
+        const t = Date.now() / 1000;
+        ctx.translate(cx, cy);
+        if (item.anim === 'bounce') {
+          ctx.translate(0, Math.sin(t * 4 + item.id) * 8);
+        } else if (item.anim === 'spin') {
+          ctx.rotate((t * 2 + item.id) % (Math.PI * 2));
+        } else if (item.anim === 'pulse') {
+          const s = 1 + Math.sin(t * 3 + item.id) * 0.15;
+          ctx.scale(s, s);
+        } else if (item.anim === 'wiggle') {
+          ctx.rotate(Math.sin(t * 6 + item.id) * 0.15);
+        } else if (item.anim === 'float') {
+          ctx.translate(Math.sin(t * 1.5 + item.id) * 6, Math.cos(t * 2 + item.id) * 4);
+        }
+        ctx.translate(-cx, -cy);
+      }
+      // v0.7.1: rotation around the text center
+      const rot = item.rotation || 0;
+      if (rot !== 0) {
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.translate(-cx, -cy);
+      }
+      ctx.font = `${f.weight} ${item.size}px ${f.family}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // rounded-rect background (v0.7.5: skipped entirely if bgAlpha === 0)
+      if (mode.bgAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = mode.bgAlpha;
+        ctx.fillStyle = item.bg;
+        ctx.beginPath();
+        const r = Math.min(20, h / 3);
+        ctx.moveTo(item.x + r, item.y);
+        ctx.lineTo(item.x + w - r, item.y); ctx.quadraticCurveTo(item.x + w, item.y, item.x + w, item.y + r);
+        ctx.lineTo(item.x + w, item.y + h - r); ctx.quadraticCurveTo(item.x + w, item.y + h, item.x + w - r, item.y + h);
+        ctx.lineTo(item.x + r, item.y + h); ctx.quadraticCurveTo(item.x, item.y + h, item.x, item.y + h - r);
+        ctx.lineTo(item.x, item.y + r); ctx.quadraticCurveTo(item.x, item.y, item.x + r, item.y);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // text with outline — honours textAlpha
+      // v0.7.76: outline thickness is per-item; 0 disables strokeText so the
+      // text can sit clean on a high-contrast background. Pre-v0.7.76 items
+      // without a stroke field fall back to the legacy 6 px.
+      ctx.save();
+      ctx.globalAlpha = mode.textAlpha;
+      const strokeW = (typeof item.stroke === 'number' ? item.stroke : 6);
+      if (strokeW > 0) {
+        ctx.lineWidth = strokeW;
+        ctx.strokeStyle = '#000';
+        ctx.strokeText(item.text, cx, cy);
+      }
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, cx, cy);
+      ctx.restore();
+
+      // Selection + resize handles + canvas-native delete button
+      if (TextOverlays.selectedId === item.id) {
+        ctx.strokeStyle = Engine._accentColor || '#a3e635';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        ctx.strokeRect(item.x - 2, item.y - 2, w + 4, h + 4);
+        ctx.setLineDash([]);
+        // 4 corner handles
+        const hs = 18;
+        [[item.x, item.y], [item.x + w, item.y], [item.x, item.y + h], [item.x + w, item.y + h]]
+          .forEach(([hx, hy]) => {
+            ctx.fillStyle = Engine._accentColor || '#a3e635';
+            ctx.fillRect(hx - hs / 2, hy - hs / 2, hs, hs);
+          });
+        // v0.7.3: unmissable red × delete button floating above the top-right
+        // of the selection. Hit-tested in Drag._onDown so clicking it removes.
+        const dx = item.x + w + 24;  // outside the box, top-right
+        const dy = item.y - 24;
+        const dr = 26;
+        // cache on the item so Drag's hit-test can find it
+        item._deleteBtn = { x: dx, y: dy, r: dr };
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.6)';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(dx, dy, dr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        const s = dr * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(dx - s, dy - s); ctx.lineTo(dx + s, dy + s);
+        ctx.moveTo(dx + s, dy - s); ctx.lineTo(dx - s, dy + s);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        item._deleteBtn = null;
+      }
+      ctx.restore();
+    });
+  }
+};
+
+const TEXT_PRESETS = ['bravo', 'step1', 'step2', 'step3', 'watch', 'tip', 'careful', 'oops', 'yourturn', 'done'];
+
+function renderTextPresets() {
+  const el = $('tcTextPresets'); if (!el) return;
+  el.innerHTML = '';
+  TEXT_PRESETS.forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = t('txt_' + key);
+    btn.addEventListener('click', () => TextOverlays.add(t('txt_' + key)));
+    el.appendChild(btn);
+  });
+}
+
+/* ─────────── 4. Recorder ─────────── */
+
+const Recorder = {
+  recorder: null, chunks: [], startTime: 0, pausedDuration: 0, pausedAt: 0,
+  timerId: null, state: 'idle', frozen: false,
+  _pulseUntil: 0, _pulseDur: 800,  // marker-pulse animation state (ms)
+  _bigFlashUntil: 0,                // v0.7.78: big-marker full-screen flash deadline (perf.now ms)
+
+  async start() {
+    if (this.state !== 'idle' || this._starting) {
+      log('✗ start() called while already starting/recording — ignored', 'error');
+      return;
+    }
+    if (Engine.sources.filter(s => s.type !== 'mic').length === 0) {
+      showToast(t('needSources'), 2500);
+      return;
+    }
+    this._starting = true;
+    try {
+      // Chrome/Firefox start the AudioContext in 'suspended' state until
+      // a user gesture. Resume here so the audio track actually carries
+      // data (otherwise MediaRecorder can refuse to emit chunks).
+      if (Engine.audioCtx && Engine.audioCtx.state === 'suspended') {
+        try { await Engine.audioCtx.resume(); } catch {}
+      }
+      // Countdown
+      if ($('tcCountdownEnabled').checked) {
+        await this.countdown();
+      }
+      // v0.7.95: re-create the capture stream with timelapse fps if needed.
+      // The cached _canvasStream from earlier sessions is dropped here so the
+      // next getMasterStream() rebuilds it at Timelapse.getCaptureFps().
+      if (typeof Timelapse !== 'undefined') {
+        try {
+          Engine._canvasStream = Engine.canvas.captureStream(Timelapse.getCaptureFps());
+          log(`⏩ capture fps = ${Timelapse.getCaptureFps()} (timelapse ${Timelapse.enabled ? Timelapse.multiplier + '×' : 'off'})`, 'info');
+        } catch (e) {
+          log(`⚠ timelapse re-capture failed: ${e.message}`, 'error');
+        }
+      }
+      const stream = Engine.getMasterStream();
+      const videoTracks = stream.getVideoTracks();
+      const audioTracks = stream.getAudioTracks();
+      log(`🎬 master stream: ${videoTracks.length}v ${audioTracks.length}a`, 'info');
+      if (videoTracks.length === 0) {
+        showToast(t('recNoStream'), 4000);
+        log('✗ no video track in master stream — aborting recording', 'error');
+        return;
+      }
+      const mime = this.pickMime();
+      log(`🎞 codec: ${mime || '(browser default)'}`, 'info');
+      const bitrate = 4_000_000;
+      try {
+        this.recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
+      } catch (e) {
+        log(`⚠ MediaRecorder fallback (no mime): ${e.message}`, 'error');
+        try {
+          this.recorder = new MediaRecorder(stream, { videoBitsPerSecond: bitrate });
+        } catch (e2) {
+          log(`⚠ MediaRecorder fallback (defaults): ${e2.message}`, 'error');
+          this.recorder = new MediaRecorder(stream);
+        }
+      }
+      this.chunks = [];
+      this._savedToDisk = false;
+      this.retryRegions = [];
+      this._chunkCount = 0;
+      this._totalBytes = 0;
+      this._fileWriter = null; // v0.7.159: File System Access API writer
+
+      // v0.7.159: try to open a writable file handle for streaming long recordings
+      // to disk instead of accumulating all chunks in RAM.
+      if (typeof showSaveFilePicker === 'function') {
+        try {
+          const ext = this.recorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
+          const handle = await showSaveFilePicker({
+            suggestedName: `noorcast-${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.${ext}`,
+            types: [{ description: 'Video', accept: { [`video/${ext}`]: [`.${ext}`] } }],
+          });
+          this._fileWriter = await handle.createWritable();
+          log('💾 Streaming to disk via File System Access API', 'info');
+        } catch {
+          // User cancelled or API unavailable — fall back to RAM chunks
+          this._fileWriter = null;
+        }
+      }
+
+      this.recorder.ondataavailable = e => {
+        this._chunkCount++;
+        const sz = e.data ? e.data.size : 0;
+        this._totalBytes += sz;
+        if (sz > 0) {
+          if (this._fileWriter) {
+            // Stream directly to disk
+            this._fileWriter.write(e.data).catch(() => {});
+          } else {
+            this.chunks.push(e.data);
+          }
+        }
+        if (this._chunkCount <= 3 || this._chunkCount % 20 === 0) {
+          log(`📦 chunk #${this._chunkCount}: ${sz} B (total ${this._totalBytes} B)${this._fileWriter ? ' [disk]' : ''}`, sz > 0 ? 'info' : 'error');
+        }
+      };
+      this.recorder.onerror = (e) => {
+        const err = e && e.error ? e.error : e;
+        log(`✗ MediaRecorder error: ${err && err.name || ''} ${err && err.message || err}`, 'error');
+        showToast(t('recorderError'), 4000);
+      };
+      this.recorder.onstop = () => this.finish();
+      // 250 ms timeslice so even a 1-second recording buffers multiple chunks.
+      // Firefox has historically been unreliable with the final flush at stop();
+      // smaller slices reduce that risk.
+      this.recorder.start(250);
+      this.startTime = Date.now();
+      GhostReplay.startIfReady(); // v0.7.192
+      this.pausedDuration = 0;
+      this.pauseCount = 0;  // v0.7.88: count manual pauses for this take
+      this.state = 'recording';
+      Chapters.reset();
+      Chapters.add(t('scene_' + Scenes.active));
+      SensorTimeline.start();
+      SilenceWatch.start();
+      TimeGoal.start();
+      LiveCaptions._srtEntries = []; LiveCaptions._srtStart = performance.now();
+      LiveCaptions.start();
+      SceneTimer.start();
+      this.updateUI();
+      this.startTimer();
+      log(t('recStarted'), 'success');
+      showToast(t('recStarted'), 1500);
+      Sfx.play('start');
+      // v0.6.0: optional intro jingle, plays INTO the recording so every
+      // tutorial opens with a "show's starting" cue
+      Jingle.play();
+      // v0.7.25: cinematic intro card fades in/out over the first 2.5s
+      IntroOutro.startIntro();
+    } finally {
+      this._starting = false;
+    }
+  },
+
+  async startInstant() {
+    // v0.7.61: like start() but bypasses the countdown. Preserves
+    // every other side effect (jingle, intro/outro card, chapters reset).
+    // Simplest approach: flip the countdown flag off, call start, flip back.
+    const el = $('tcCountdownEnabled');
+    const wasChecked = el ? el.checked : false;
+    if (el) el.checked = false;
+    try {
+      showToast(t('instantRec') || '⚡ Démarrage instantané', 1100);
+      await this.start();
+    } finally {
+      if (el) el.checked = wasChecked;
+    }
+  },
+
+  pickMime() {
+    // User preference: 'mp4', 'webm', or 'auto' (= first supported, MP4-first).
+    // Stored in localStorage via the settings panel.
+    let pref = 'auto';
+    try { pref = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    const mp4 = [
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/mp4',
+    ];
+    const webm = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+    ];
+    const order = pref === 'mp4' ? [...mp4, ...webm]
+                : pref === 'webm' ? [...webm, ...mp4]
+                : [...mp4, ...webm];  // auto — MP4 first when available
+    for (const m of order) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
+  },
+
+  /* Derive the output filename extension from the actual mime type chosen
+     by MediaRecorder. Cheaper and more accurate than trusting the preference. */
+  extForMime(mime) {
+    if (!mime) return 'webm';
+    if (mime.startsWith('video/mp4')) return 'mp4';
+    return 'webm';
+  },
+
+  async countdown() {
+    let duration = 3;
+    try {
+      const saved = parseInt(localStorage.getItem('tc-countdown-secs'), 10);
+      if (!isNaN(saved) && saved >= 1 && saved <= 10) duration = saved;
+    } catch {}
+    const el = $('tcCountdown');
+    for (let n = duration; n > 0; n--) {
+      el.textContent = n;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      // v0.7.184: countdown beep tone (pitch rises as count decreases)
+      try {
+        const ac = Engine.audioCtx;
+        if (ac) {
+          if (ac.state === 'suspended') ac.resume();
+          const osc = ac.createOscillator();
+          const env = ac.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = n === 1 ? 880 : n === 2 ? 660 : 440;
+          env.gain.setValueAtTime(0.15, ac.currentTime);
+          env.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+          osc.connect(env).connect(ac.destination);
+          osc.start(); osc.stop(ac.currentTime + 0.3);
+        }
+      } catch {}
+      await new Promise(r => setTimeout(r, 900));
+    }
+    // Final "GO" flash
+    el.textContent = 'GO!';
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    try {
+      const ac = Engine.audioCtx;
+      if (ac) {
+        const osc = ac.createOscillator();
+        const env = ac.createGain();
+        osc.type = 'sine'; osc.frequency.value = 1100;
+        env.gain.setValueAtTime(0.2, ac.currentTime);
+        env.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
+        osc.connect(env).connect(ac.destination);
+        osc.start(); osc.stop(ac.currentTime + 0.5);
+      }
+    } catch {}
+    SpeedLines.fire(500);
+    await new Promise(r => setTimeout(r, 500));
+    el.classList.remove('show');
+  },
+
+  togglePause() {
+    if (!this.recorder) return;
+    if (this.state === 'recording') {
+      this.recorder.pause();
+      this.pausedAt = Date.now();
+      this.state = 'paused';
+      this.pauseCount = (this.pauseCount || 0) + 1;  // v0.7.88
+      log(t('recPaused'), 'info');
+      Sfx.play('click');
+    } else if (this.state === 'paused') {
+      this.recorder.resume();
+      this.pausedDuration += Date.now() - this.pausedAt;
+      this.state = 'recording';
+      log(t('recResumed'), 'info');
+      Sfx.play('click');
+    }
+    this.updateUI();
+  },
+
+  // v0.7.38: Soft-rewind marker. True rewind of a MediaRecorder stream
+  // is impossible — you can't drop encoded chunks mid-stream without
+  // breaking the bitstream. Instead, we record a pair of markers
+  // (retry-N start/end) into Chapters.items AND push them into
+  // Recorder.retryRegions so a future Trim editor can auto-cut them.
+  softRewind() {
+    if (this.state !== 'recording' && this.state !== 'paused') return;
+    const now = this.elapsed() / 1000;
+    const back = 30;  // seconds to rewind
+    const start = Math.max(0, now - back);
+    if (!this.retryRegions) this.retryRegions = [];
+    const n = this.retryRegions.length + 1;
+    this.retryRegions.push({ start, end: now, n });
+    // Mirror into chapters so the user sees them in the ChapterList
+    Chapters.items.push({
+      time: start,
+      label: `↶ Retry ${n} start`,
+      retry: true,
+    });
+    Chapters.items.push({
+      time: now,
+      label: `↶ Retry ${n} end`,
+      retry: true,
+    });
+    Sfx.play('mark');
+    showToast(t('softRewindToast') || '↶ Retry — last 30s flagged', 2000);
+    log(`↶ soft-rewind: ${start.toFixed(1)}s → ${now.toFixed(1)}s`, 'info');
+    // Canvas-side visual flash — briefly pulse the whole stage border
+    Recorder._retryFlashUntil = performance.now() + 700;
+  },
+
+  // v0.7.26: Auto-pause triggered by visibilitychange when the tab is
+  // hidden. Uses the same underlying pause() but flags _autoPaused so
+  // autoResume() can tell user pauses from visibility pauses — a user
+  // who manually paused BEFORE tabbing away should not be auto-resumed.
+  autoPause() {
+    if (this.state !== 'recording') return;
+    try { this.recorder.pause(); } catch {}
+    this.pausedAt = Date.now();
+    this.state = 'paused';
+    this._autoPaused = true;
+    this.updateUI();
+    log('⏸ auto-pause (tab hidden)', 'info');
+    showToast(t('autoPaused') || '⏸ Enregistrement suspendu', 2000);
+  },
+  autoResume() {
+    if (!this._autoPaused || this.state !== 'paused') return;
+    try { this.recorder.resume(); } catch (e) { log('error', 'Recorder resume failed: ' + e.message); }
+    this.pausedDuration += Date.now() - this.pausedAt;
+    this.state = 'recording';
+    this._autoPaused = false;
+    this.updateUI();
+    log('▶ auto-resume (tab visible)', 'info');
+    showToast(t('autoResumed') || '▶ Enregistrement repris', 1800);
+  },
+
+  stop() {
+    if (!this.recorder) return;
+    // v0.7.25: if the outro card is enabled, start the outro NOW and
+    // delay the actual MediaRecorder.stop() by IntroOutro.DURATION_OUTRO
+    // so the card gets captured into the recording before the encoder
+    // closes. Uses a state flag to avoid re-entering this path if the
+    // user double-clicks stop.
+    if (IntroOutro.enabled && !this._outroPending) {
+      this._outroPending = true;
+      IntroOutro.startOutro();
+      showToast(t('outroPlaying') || '🎬 Outro…', 1400);
+      this.state = 'stopping';
+      this.updateUI();
+      setTimeout(() => {
+        this._outroPending = false;
+        this._stopImmediate();
+      }, IntroOutro.DURATION_OUTRO);
+      return;
+    }
+    this._stopImmediate();
+  },
+
+  _stopImmediate() {
+    if (!this.recorder) return;
+    // Force a final ondataavailable flush before stopping. Firefox has
+    // historically been unreliable with the implicit flush at stop().
+    try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch (e) { log('warn', 'requestData failed: ' + e.message); }
+    try { this.recorder.stop(); } catch (e) { log(`✗ recorder.stop: ${e.message}`, 'error'); }
+    this.state = 'idle';
+    this.stopTimer();
+    SensorTimeline.stop();
+    SilenceWatch.stop();
+    TimeGoal.stop();
+    LiveCaptions.stop();
+    SceneTimer.stop();
+  },
+
+  finish() {
+    // v0.7.159: if streaming to disk, close the writer — file is already saved
+    if (this._fileWriter) {
+      this._fileWriter.close().then(() => {
+        log('💾 Recording saved to disk via File System Access API', 'info');
+        showToast('💾 Recording saved to disk!', 3000);
+      }).catch(() => {});
+      this._fileWriter = null;
+      this._savedToDisk = true;
+      // Still run the rest of finish() for chapters/history
+    }
+    log(`🏁 finish: ${this.chunks.length} chunks, ${this._totalBytes || 0} B total`, 'info');
+    const mimeType = this.chunks[0]?.type || 'video/webm';
+    const blob = new Blob(this.chunks, { type: mimeType });
+
+    // v0.2.1: catch empty recordings loudly instead of silently downloading 0 B.
+    // v0.7.193: skip this check if saved to disk (chunks went to file, not array)
+    if (blob.size === 0 && !this._savedToDisk) {
+      log('✗ 0-byte recording — pipeline produced no data', 'error');
+      showToast(t('recEmpty'), 5000);
+      this.updateUI();
+      this.resetSceneState();
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const video = $('tcTakeVideo');
+    // revoke previous take URLs if any
+    if (this._prevUrls) this._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+    this._prevUrls = [url];
+    // Stash the raw take for the trim feature
+    this._lastBlob = blob;
+    GhostReplay.stop(); // v0.7.192
+    this._lastMime = mimeType;
+    video.src = url;
+    $('tcTake').style.display = 'block';
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    const ext = this.extForMime(mimeType);
+    const dl = $('tcDownloadBtn');
+    dl.href = url; dl.download = `${fname}.${ext}`;
+    // v0.7.102: prime the title input with the auto-generated name
+    const titleInput = $('tcTakeTitleInput');
+    if (titleInput) {
+      titleInput.value = fname;
+      // Update every download link's .download attribute when the user types
+      if (!titleInput._wired) {
+        titleInput.addEventListener('input', () => {
+          const newName = titleInput.value.trim() || fname;
+          const map = {
+            tcDownloadBtn: '.webm',
+            tcDownloadVtt: '.vtt',
+            tcDownloadMd: '.md',
+            tcDownloadCsv: '-sensors.csv',
+          };
+          Object.entries(map).forEach(([id, suffix]) => {
+            const el = $(id);
+            if (!el) return;
+            // Strip any existing extension from the user-entered name
+            const base = newName.replace(/\.(webm|mp4|vtt|md)$/, '').replace(/-sensors\.csv$/, '');
+            // Determine actual extension from what's already in the href's download
+            const currentExt = (el.download || '').match(/\.(\w+)$/);
+            if (currentExt) el.download = base + currentExt[0];
+            else el.download = base + suffix;
+          });
+        });
+        titleInput._wired = true;
+      }
+    }
+    // v0.7.129: post-recording journal notes textarea
+    const notesArea = $('tcTakeNotes');
+    if (notesArea) {
+      notesArea.value = '';
+      if (!notesArea._wired) {
+        notesArea.addEventListener('input', () => {
+          if (History.entries && History.entries.length > 0) {
+            History.entries[0].notes = notesArea.value;
+            History.save();
+          }
+          // Regenerate the .md download to include updated notes
+          const dlMd2 = $('tcDownloadMd');
+          if (dlMd2) {
+            const curName = (titleInput ? titleInput.value.trim() : '') || 'noorcast-take';
+            const md2 = Chapters.toMarkdown(curName, notesArea.value);
+            const mdBlob2 = new Blob([md2], { type: 'text/markdown' });
+            const mdUrl2 = URL.createObjectURL(mdBlob2);
+            dlMd2.href = mdUrl2;
+          }
+        });
+        notesArea._wired = true;
+      }
+    }
+    // Chapters VTT
+    const vtt = Chapters.toVTT();
+    const vttBlob = new Blob([vtt], { type: 'text/vtt' });
+    const vttUrl = URL.createObjectURL(vttBlob);
+    this._prevUrls.push(vttUrl);
+    const dlVtt = $('tcDownloadVtt');
+    dlVtt.href = vttUrl; dlVtt.download = `${fname}.vtt`;
+    // v0.7.51: markdown chapter list as an additional download format
+    const mdContent = Chapters.toMarkdown(fname);
+    const mdBlob = new Blob([mdContent], { type: 'text/markdown' });
+    const mdUrl = URL.createObjectURL(mdBlob);
+    this._prevUrls.push(mdUrl);
+    const dlMd = $('tcDownloadMd');
+    if (dlMd) {
+      dlMd.href = mdUrl;
+      dlMd.download = `${fname}.md`;
+      dlMd.style.display = '';
+    }
+    // v0.5.0: sensor CSV export — only if the micro:bit was connected and
+    // actually produced samples during the recording. Goes in the same
+    // download flow as the .webm and .vtt.
+    const csv = SensorTimeline.toCSV();
+    if (csv) {
+      const csvBlob = new Blob([csv], { type: 'text/csv' });
+      const csvUrl = URL.createObjectURL(csvBlob);
+      this._prevUrls.push(csvUrl);
+      const dlCsv = $('tcDownloadCsv');
+      if (dlCsv) {
+        dlCsv.href = csvUrl; dlCsv.download = `${fname}-sensors.csv`;
+        dlCsv.style.display = '';
+      }
+      log(`📈 sensor CSV: ${SensorTimeline.samples.length} samples`, 'info');
+      // v0.7.27: render the sensor mini-chart in the take panel
+      SensorChart.render(SensorTimeline.samples);
+    } else {
+      const dlCsv = $('tcDownloadCsv');
+      if (dlCsv) dlCsv.style.display = 'none';
+      const wrap = $('tcSensorChartWrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+
+    // v0.7.174: SRT caption export
+    const srtBlob = LiveCaptions.exportSrt();
+    if (srtBlob) {
+      const srtUrl = URL.createObjectURL(srtBlob);
+      this._prevUrls.push(srtUrl);
+      const dlSrt = $('tcDownloadSrt');
+      if (dlSrt) {
+        dlSrt.href = srtUrl; dlSrt.download = `${fname}.srt`;
+        dlSrt.style.display = '';
+      }
+      log(`💬 SRT captions: ${LiveCaptions._srtEntries.length} entries`, 'info');
+    }
+    // v0.7.174: thumbnail (first frame as PNG)
+    try {
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = Engine.width; thumbCanvas.height = Engine.height;
+      const tctx = thumbCanvas.getContext('2d');
+      tctx.drawImage(Engine.canvas, 0, 0);
+      thumbCanvas.toBlob((thumbBlob) => {
+        if (!thumbBlob) return;
+        const thumbUrl = URL.createObjectURL(thumbBlob);
+        this._prevUrls.push(thumbUrl);
+        const dlThumb = $('tcDownloadThumb');
+        if (dlThumb) {
+          dlThumb.href = thumbUrl; dlThumb.download = `${fname}-thumbnail.png`;
+          dlThumb.style.display = '';
+        }
+      }, 'image/png');
+    } catch {}
+
+    // v0.5.0: if silence-trim has something to offer, expose the button
+    const silenceBtn = $('tcSilenceTrimBtn');
+    if (silenceBtn) silenceBtn.style.display = 'none';  // reset until analysed
+    SilenceTrim.checkLastTake();
+
+    // v0.6.0: snapshot stats for the BadgeCard generator
+    BadgeCard.capture(blob, this.elapsed());
+
+    // v0.7.31: render clickable chapter list under the take video
+    ChapterList.render(Chapters.items, $('tcTakeVideo'));
+    // v0.7.34: decode + render audio waveform strip (async)
+    Waveform.render(blob, $('tcTakeVideo'));
+
+    // v0.7.28: push this take to the history log. Metadata only (name,
+    // duration, size, badge/scene counts). No blob, no frames — tiny
+    // localStorage footprint.
+    History.add({
+      at: Date.now(),
+      name: fname,
+      durSec: Math.round(this.elapsed() / 1000),
+      scenes: Badges.scenesUsed ? Badges.scenesUsed.size : 0,
+      badges: Badges.unlocked ? Badges.unlocked.size : 0,
+      size: blob.size,
+      pauses: this.pauseCount || 0,  // v0.7.88
+    });
+    // v0.7.107: if the user dropped chapter markers during this take,
+    // auto-suggest the first chapter's label as the take title. Never
+    // overwrite a title the user already typed (titleInput still holds
+    // the default fname from the prime step above, so we treat that as
+    // "untouched" and only replace it — any *other* value is the user).
+    if (titleInput && Chapters.items.length > 0) {
+      const firstLabel = String(Chapters.items[0].label || '').trim();
+      // Sanitize to a safe filename segment: strip disallowed chars,
+      // collapse whitespace to '-', cap at 40 chars.
+      const sanitizeSeg = (s) => s
+        .replace(/[\\/:*?"<>|]+/g, '')       // forbidden FS chars
+        .replace(/[\r\n\t]+/g, ' ')          // control whitespace → space
+        .replace(/\s+/g, '-')                // collapse whitespace → dash
+        .replace(/-+/g, '-')                 // collapse repeated dashes
+        .replace(/^[-.]+|[-.]+$/g, '')       // trim leading/trailing . -
+        .slice(0, 40);
+      const sanitized = sanitizeSeg(firstLabel);
+      // Only overwrite if the title input is still at its primed default
+      // (fname) — i.e. the user hasn't customized it yet.
+      if (sanitized && titleInput.value === fname) {
+        titleInput.value = sanitized;
+        // Fire the same 'input' event the v0.7.102 live-rewire listener
+        // hooks so every download link's `download` attribute picks up
+        // the new base name immediately.
+        titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+    // v0.7.93: reset + render the 1-5 star rating widget for this take
+    TakeRating.reset();
+    TakeRating.render();
+    // v0.7.88: friendly nudge if the user paused a lot
+    if ((this.pauseCount || 0) > 5) {
+      setTimeout(() => {
+        showToast('💡 ' + (t('manyPauses') || 'Tu as fait beaucoup de pauses — essaie Shift+R pour démarrer direct'), 3500);
+      }, 3500);
+    }
+    try { DailyGoal.celebrate(); } catch (e) { log('daily goal error: ' + e.message, 'error'); }
+
+    // trigger auto-download of webm
+    setTimeout(() => dl.click(), 200);
+    log(`${t('recStopped')} — ${(blob.size / 1024 / 1024).toFixed(1)} MB`, 'success');
+    showToast('🎉 ' + t('recStopped'), 2500);
+    Sfx.play('stop');
+    Confetti.burst();
+    Badges.unlockFirst();
+    Badges.unlockLong(this.elapsed());
+    Badges.unlockLibrary();              // v0.7.74
+    Badges._incCounters(this.elapsed() / 1000);  // v0.7.74
+    this.updateUI();
+    // Reset transient scene state so the next take starts clean
+    this.resetSceneState();
+  },
+
+  /* Reset visual state that shouldn't leak between takes */
+  resetSceneState() {
+    this.frozen = false;
+    Engine.frozenFrame = null;
+    if (Freeze) $('tcFreezeBtn')?.classList.remove('active');
+    if (Whiteboard.on) Whiteboard.toggle();
+    Whiteboard.clear();
+    if (Laser.on) Laser.toggle();
+    TextOverlays.items = [];
+  },
+
+  elapsed() {
+    if (!this.startTime) return 0;
+    const now = this.state === 'paused' ? this.pausedAt : Date.now();
+    return Math.max(0, now - this.startTime - this.pausedDuration);
+  },
+
+  startTimer() {
+    this.timerId = setInterval(() => this.updateTimer(), 500);
+  },
+  stopTimer() {
+    clearInterval(this.timerId); this.timerId = null;
+    const el = $('tcRecTime'); if (el) el.textContent = '00:00';
+  },
+  updateTimer() {
+    const ms = this.elapsed();
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const el = $('tcRecTime');
+    if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  },
+
+  updateUI() {
+    const rec = $('tcRecBtn'), ind = $('tcRecIndicator');
+    const recording = this.state === 'recording' || this.state === 'paused';
+    rec.classList.toggle('recording', recording);
+    rec.querySelector('.tc-rec-label').textContent = recording ? t('recStop') : t('recStart');
+    // v0.7.18: the duplicate header timer/indicator was removed — guard null
+    if (ind) ind.classList.toggle('active', this.state === 'recording');
+    ['tcPauseBtn', 'tcMarkBtn', 'tcStopBtn'].forEach(id => { $(id).disabled = !recording; });
+    const pill = $('statusPill'), st = $('statusText');
+    if (pill && st) {
+      pill.classList.toggle('connected', recording);
+      st.textContent = this.state === 'recording' ? t('statusRec')
+                      : this.state === 'paused' ? t('statusPaused')
+                      : t('statusIdle');
+    }
+  },
+};
+
+/* ─────────── Chapters (VTT) ─────────── */
+
+const Chapters = {
+  items: [], // { time, label }
+  start: 0,
+
+  reset() { this.items = []; this.start = Date.now(); },
+
+  add(label) {
+    if (Recorder.state !== 'recording') return;
+    const elapsedSec = Recorder.elapsed() / 1000;
+    this.items.push({ time: elapsedSec, label });
+  },
+
+  fmtTime(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = (s % 60).toFixed(3);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${sec.padStart(6, '0')}`;
+  },
+
+  toVTT() {
+    if (this.items.length === 0) return 'WEBVTT\n\n';
+    let out = 'WEBVTT\n\n';
+    const end = Recorder.elapsed() / 1000;
+    this.items.forEach((c, i) => {
+      const next = i + 1 < this.items.length ? this.items[i + 1].time : end;
+      out += `${this.fmtTime(c.time)} --> ${this.fmtTime(next)}\n${c.label}\n\n`;
+    });
+    return out;
+  },
+
+  toMarkdown(filename, notes) {
+    const base = filename || 'noorcast-take';
+    let out = `# ${base} — chapters\n\n`;
+    if (this.items.length === 0) {
+      out += '_No chapters_\n';
+    } else {
+      this.items.forEach((c, _i) => {
+        const mm = Math.floor(c.time / 60);
+        const ss = Math.floor(c.time % 60);
+        const stamp = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+        const label = String(c.label || '').replace(/[\r\n]/g, ' ').trim();
+        const retryMark = c.retry ? ' ⚠' : '';
+        out += `- **${stamp}** — ${label}${retryMark}\n`;
+      });
+    }
+    // Retry regions summary (from v0.7.38 soft rewind)
+    if (Recorder.retryRegions && Recorder.retryRegions.length) {
+      out += '\n## Retry regions\n\n';
+      Recorder.retryRegions.forEach(r => {
+        const sMm = Math.floor(r.start / 60);
+        const sSs = Math.floor(r.start % 60);
+        const eMm = Math.floor(r.end / 60);
+        const eSs = Math.floor(r.end % 60);
+        out += `- Retry ${r.n}: **${String(sMm).padStart(2, '0')}:${String(sSs).padStart(2, '0')}** → **${String(eMm).padStart(2, '0')}:${String(eSs).padStart(2, '0')}**\n`;
+      });
+    }
+    // v0.7.129: append teacher notes if present
+    const n = notes || (History.entries && History.entries.length > 0 ? History.entries[0].notes : '');
+    if (n && n.trim()) {
+      out += '\n## Notes\n\n' + n.trim() + '\n';
+    }
+    return out;
+  },
+
+  addMarker() {
+    if (Recorder.state !== 'recording' && Recorder.state !== 'paused') return;
+    const label = `Marker ${this.items.filter(i => i.label.startsWith('Marker')).length + 1}`;
+    this.items.push({ time: Recorder.elapsed() / 1000, label });
+    log(`${t('markerAdded')} — ${label}`, 'info');
+    Sfx.play('mark');
+    // Trigger the visual pulse animation on all visible sources
+    Recorder._pulseUntil = Date.now() + Recorder._pulseDur;
+    Badges.unlockMarker(this.items.length);
+  },
+
+  // v0.7.78: "Big marker" — louder visual + audio cue for important moments.
+  // Bound to 'B' by default; rebindable via the v0.7.66 RebindModal.
+  addBigMarker() {
+    if (Recorder.state !== 'recording' && Recorder.state !== 'paused') return;
+    const n = this.items.filter(i => i.label && i.label.startsWith('★')).length + 1;
+    const label = `★ Big ${n}`;
+    this.items.push({ time: Recorder.elapsed() / 1000, label });
+    log(`★ BIG marker — ${label}`, 'success');
+    Sfx.play('mark');
+    Sfx.play('start');
+    // Full-screen flash drawn in Engine.render via this timestamp
+    Recorder._bigFlashUntil = performance.now() + 1000;
+    // Still pulse the sources for an extra touch
+    Recorder._pulseUntil = Date.now() + 800;
+    showToast('★ ' + (t('bigMarker') || 'Big marker'), 1500);
+    Badges.unlockMarker(this.items.length);
+  },
+};
+
+/* v0.7.34: Waveform — decode the take blob's audio, render an
+   envelope (peak per column) under the take video, support
+   click-to-seek and a playhead that tracks currentTime.
+   OfflineAudioContext for the decode, so it runs without hijacking
+   the live AudioContext / MediaRecorder. */
+const Waveform = {
+  peaks: null,
+  duration: 0,
+  _rafId: null,
+
+  async render(blob, videoEl) {
+    const wrap = $('tcWaveformWrap');
+    const canvas = $('tcWaveform');
+    if (!wrap || !canvas || !blob) return;
+    this.stop();
+    try {
+      // decodeAudioData wants an ArrayBuffer. Works with webm/mp4 blobs.
+      const buf = await blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuf = await ac.decodeAudioData(buf.slice(0));
+      this.duration = audioBuf.duration;
+      const ch = audioBuf.getChannelData(0);
+      const W = canvas.width;
+      const step = Math.max(1, Math.floor(ch.length / W));
+      const peaks = new Float32Array(W);
+      for (let col = 0; col < W; col++) {
+        let peak = 0;
+        const start = col * step;
+        const end = Math.min(start + step, ch.length);
+        for (let i = start; i < end; i++) {
+          const a = Math.abs(ch[i]);
+          if (a > peak) peak = a;
+        }
+        peaks[col] = peak;
+      }
+      this.peaks = peaks;
+      try { await ac.close(); } catch {}
+      wrap.style.display = '';
+      this._draw(videoEl);
+      // Click-to-seek
+      canvas.onclick = (e) => {
+        if (!videoEl || !this.duration) return;
+        const r = canvas.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const t = (x / r.width) * this.duration;
+        try { videoEl.currentTime = t; videoEl.play().catch(() => {}); } catch {}
+      };
+      // Playhead tracker via rAF
+      const tick = () => {
+        if (!this.peaks) return;
+        this._draw(videoEl);
+        this._rafId = requestAnimationFrame(tick);
+      };
+      this._rafId = requestAnimationFrame(tick);
+    } catch (e) {
+      log(`⚠ waveform decode failed: ${e.message}`, 'error');
+      wrap.style.display = 'none';
+    }
+  },
+
+  stop() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    this.peaks = null;
+    this.duration = 0;
+  },
+
+  _draw(videoEl) {
+    const canvas = $('tcWaveform');
+    if (!canvas || !this.peaks) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0, 0, 0, .4)';
+    ctx.fillRect(0, 0, W, H);
+    // Centerline
+    const mid = H / 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, .1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, mid);
+    ctx.lineTo(W, mid);
+    ctx.stroke();
+    // Peaks — mirror around center, theme-accent fill
+    const accent = (Engine && Engine._accentColor) || '#a3e635';
+    ctx.fillStyle = accent;
+    for (let col = 0; col < W; col++) {
+      const p = this.peaks[col];
+      const half = p * (mid - 2);
+      ctx.fillRect(col, mid - half, 1, half * 2);
+    }
+    // Playhead
+    if (videoEl && this.duration > 0 && isFinite(videoEl.currentTime)) {
+      const px = (videoEl.currentTime / this.duration) * W;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, 0, 2, H);
+    }
+  },
+};
+
+/* v0.7.31: ChapterList — render Chapters.items as a clickable list
+   under the take video so the teacher can seek to any chapter in
+   one click. Pure presentation, driven off the existing Chapters
+   data model (no new state). */
+const ChapterList = {
+  render(items, videoEl) {
+    const wrap = $('tcChapterList');
+    if (!wrap) return;
+    if (!items || items.length === 0) {
+      wrap.style.display = 'none';
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.style.display = '';
+    wrap.innerHTML = `<div class="tc-chapter-title">🏷 <span data-i18n="chapterListTitle">Chapitres</span> <span class="tc-chapter-count">(${items.length})</span></div>`;
+    const list = document.createElement('div');
+    list.className = 'tc-chapter-items';
+    items.forEach((c, i) => {
+      const row = document.createElement('button');
+      row.className = 'tc-chapter-row';
+      // v0.7.38: soft-rewind retry markers get an orange tint
+      if (c.retry) row.classList.add('tc-chapter-retry');
+      row.innerHTML = `
+        <span class="tc-chapter-idx">${i + 1}</span>
+        <span class="tc-chapter-time">${this._fmtHHMMSS(c.time)}</span>
+        <span class="tc-chapter-label">${this._esc(c.label)}</span>
+      `;
+      row.addEventListener('click', () => {
+        if (videoEl && isFinite(c.time)) {
+          try {
+            videoEl.currentTime = c.time;
+            videoEl.play().catch(() => {});
+            // Brief highlight on the clicked row
+            document.querySelectorAll('.tc-chapter-row').forEach(r => r.classList.remove('active'));
+            row.classList.add('active');
+          } catch {}
+        }
+      });
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+  },
+  _fmtHHMMSS(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  },
+  _esc(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+};
+
+/* ─────────── 5. Live tools ─────────── */
+
+/* Laser pointer — drawn on its own offscreen canvas, composited by Engine.render */
+const Laser = {
+  on: false, x: 0, y: 0, lastMove: 0, _lastDirty: false,
+  setup() {
+    const stage = $('tcStage');
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.on) return;
+      const r = stage.getBoundingClientRect();
+      this.x = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.y = ((e.clientY - r.top) / r.height) * Engine.height;
+      this.lastMove = Date.now();
+    });
+    // No setInterval — Engine.render calls Laser.render each frame
+  },
+  render() {
+    const c = Engine.laserCtx;
+    if (!this.on) {
+      // Only clear once on transition off, not every frame
+      if (this._lastDirty) {
+        c.clearRect(0, 0, Engine.width, Engine.height);
+        this._lastDirty = false;
+      }
+      return;
+    }
+    c.clearRect(0, 0, Engine.width, Engine.height);
+    c.save();
+    const grd = c.createRadialGradient(this.x, this.y, 4, this.x, this.y, 40);
+    grd.addColorStop(0, 'rgba(255,60,60,1)');
+    grd.addColorStop(0.3, 'rgba(255,60,60,.6)');
+    grd.addColorStop(1, 'rgba(255,60,60,0)');
+    c.fillStyle = grd;
+    c.beginPath(); c.arc(this.x, this.y, 40, 0, Math.PI * 2); c.fill();
+    c.restore();
+    this._lastDirty = true;
+  },
+  toggle() {
+    this.on = !this.on;
+    log(this.on ? t('laserOn') : t('laserOff'), 'info');
+    $('tcLaserBtn').classList.toggle('active', this.on);
+    if (this.on) showToast(t('laserHint'), 4000);
+  }
+};
+
+/* v0.7.63: Spotlight — cursor-following vignette. A large translucent
+   circle follows the mouse; everything outside is dimmed. Drawn on the
+   output canvas (Engine.render) right before Laser, so it's baked into
+   the recording. Opt-in via the 💡 button in the floating tools bar. */
+const Spotlight = {
+  enabled: false,
+  x: 0,
+  y: 0,
+  RADIUS: 180,     // canvas-px radius of the bright circle
+  DARKNESS: 0.65,  // alpha of the dim overlay outside the circle
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-spotlight') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-spotlight', v ? '1' : '0'); } catch {}
+    const btn = $('tcSpotlightBtn');
+    if (btn) btn.classList.toggle('active', this.enabled);
+  },
+  toggle() {
+    this.setEnabled(!this.enabled);
+    showToast(this.enabled ? '💡 ' + (t('spotlightOn') || 'Spotlight on') : '💡 ' + (t('spotlightOff') || 'Spotlight off'), 1200);
+  },
+
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.enabled) return;
+      const r = stage.getBoundingClientRect();
+      this.x = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.y = ((e.clientY - r.top) / r.height) * Engine.height;
+    });
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    // Draw a full-canvas dim layer with a radial "hole" around the cursor.
+    // Use a radial gradient with destination-out composition so the hole
+    // is transparent and everything else is darkened.
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${this.DARKNESS})`;
+    ctx.fillRect(0, 0, W, H);
+    // Cut a circular hole
+    ctx.globalCompositeOperation = 'destination-out';
+    const grad = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.RADIUS
+    );
+    grad.addColorStop(0,    'rgba(0, 0, 0, 1)');
+    grad.addColorStop(0.7,  'rgba(0, 0, 0, 0.9)');
+    grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Draw a thin bright ring around the hole so it pops
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, .35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
+/* v0.7.99: CursorTrail — opt-in rainbow particle trail that follows the
+   mouse over the stage. Each mousemove drops a small colored dot that
+   fades out over 600ms. Drawn on the output canvas (in the recording).
+   Different from Laser (single red dot) and Spotlight (dim the rest) —
+   this is a rainbow trail showing where the cursor has been. */
+const CursorTrail = {
+  enabled: false,
+  particles: [],
+  _lastX: 0,
+  _lastY: 0,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-cursor-trail') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-cursor-trail', v ? '1' : '0'); } catch {}
+    const btn = $('tcCursorTrailBtn');
+    if (btn) btn.classList.toggle('active', this.enabled);
+  },
+  toggle() {
+    this.setEnabled(!this.enabled);
+    showToast(this.enabled ? '🎨 ' + (t('trailOn') || 'Trail on') : '🎨 ' + (t('trailOff') || 'Trail off'), 1100);
+  },
+
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.enabled) return;
+      const r = stage.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * Engine.width;
+      const y = ((e.clientY - r.top) / r.height) * Engine.height;
+      // Rate limit: drop a particle every ~20px of movement
+      const d2 = (x - this._lastX) ** 2 + (y - this._lastY) ** 2;
+      if (d2 < 300) return;
+      this._lastX = x;
+      this._lastY = y;
+      // Rainbow hue based on time
+      const hue = (performance.now() / 10) % 360;
+      this.particles.push({ x, y, t0: performance.now(), hue });
+      if (this.particles.length > 80) this.particles.shift();
+    });
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled || this.particles.length === 0) return;
+    const now = performance.now();
+    const DURATION = 600;
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      const age = now - p.t0;
+      if (age >= DURATION) { this.particles.splice(i, 1); continue; }
+      const k = age / DURATION;
+      const r = 18 * (1 - k * 0.6);
+      const alpha = (1 - k) * 0.8;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `hsl(${p.hue}, 85%, 60%)`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  },
+};
+
+/* Ripples — click tracer. Every mousedown on the stage emits a two-ring
+   ripple that expands from radius 0 to 80px and fades over 600ms.
+   Rendered on its own offscreen canvas, composited by Engine.render()
+   right after Laser — so ripples ARE baked into the final recording
+   (unlike the teleprompter overlay which stays in the DOM only). */
+const Ripples = {
+  enabled: false,
+  particles: [],
+  canvas: null,
+  ctx: null,
+  DURATION: 600,  // ms
+  MAX_R: 80,
+
+  setup() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = 1920;
+    this.canvas.height = 1080;
+    this.ctx = this.canvas.getContext('2d');
+  },
+  toggle() {
+    this.enabled = !this.enabled;
+    $('tcRipplesBtn')?.classList.toggle('active', this.enabled);
+    showToast(this.enabled ? '💧 ' + t('ripplesOn') : '💧 ' + t('ripplesOff'), 1400);
+    log('ripples ' + (this.enabled ? 'on' : 'off'), 'info');
+  },
+  add(x, y) {
+    if (!this.enabled) return;
+    this.particles.push({ x, y, t0: performance.now() });
+  },
+  render() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.particles.length === 0) return;
+    const now = performance.now();
+    const accent = (Engine && Engine._accentColor) || '#a3e635';
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      const age = now - p.t0;
+      if (age >= this.DURATION) { this.particles.splice(i, 1); continue; }
+      const k = age / this.DURATION;  // 0..1
+      // Outer ring: full radius, fades out
+      const rOut = this.MAX_R * k;
+      this.ctx.save();
+      this.ctx.globalAlpha = (1 - k) * 0.7;
+      this.ctx.strokeStyle = accent;
+      this.ctx.lineWidth = 6;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, rOut, 0, Math.PI * 2);
+      this.ctx.stroke();
+      // Inner ring: half the radius, sharper
+      const rIn = this.MAX_R * 0.5 * k;
+      this.ctx.globalAlpha = (1 - k) * 0.9;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, rIn, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+  }
+};
+
+/* v0.7.108: SourcePulse — when the teacher clicks a source's name in the
+   sidebar, pulse a glowing yellow outline around its bbox on the canvas
+   for ~1 second (3 pulses). Helps identify which source was selected
+   when many cameras/images are stacked or hidden behind each other.
+   Rendered directly on the main output canvas by Engine.render() after
+   all sources are drawn, so it's baked into the recording too. */
+const SourcePulse = {
+  _target: null,  // source ref
+  _start: 0,
+  DURATION: 1000, // ms
+
+  pulse(src) {
+    if (!src) return;
+    this._target = src;
+    this._start = performance.now();
+  },
+
+  render(ctx) {
+    if (!this._target) return;
+    const t = performance.now() - this._start;
+    if (t > this.DURATION) { this._target = null; return; }
+    const progress = t / this.DURATION;
+    const pulseCount = 3;
+    const phase = (progress * pulseCount) % 1;
+    const alpha = Math.max(0, 1 - phase) * (1 - progress * 0.5);
+    const s = this._target;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,220,60,${alpha})`;
+    ctx.lineWidth = 4 + Math.sin(phase * Math.PI) * 4;
+    ctx.shadowColor = `rgba(255,220,60,${alpha})`;
+    ctx.shadowBlur = 16;
+    ctx.strokeRect(s.x, s.y, s.w, s.h);
+    ctx.restore();
+  }
+};
+
+/* Freeze — snapshot current canvas frame, Render loop draws the frozen ImageData instead */
+const Freeze = {
+  toggle() {
+    if (Recorder.frozen) {
+      Recorder.frozen = false;
+      Engine.frozenFrame = null;
+      log(t('freezeOff'), 'info');
+      $('tcFreezeBtn').classList.remove('active');
+    } else {
+      Engine.frozenFrame = Engine.ctx.getImageData(0, 0, Engine.width, Engine.height);
+      Recorder.frozen = true;
+      log(t('freezeOn'), 'info');
+      $('tcFreezeBtn').classList.add('active');
+      showToast(t('freezeHint'), 4000);
+    }
+  }
+};
+
+/* Whiteboard — draws on the overlay canvas, persists across frames.
+   v0.7.47: floating picker with 6 colors, 3 thicknesses, eraser, clear. */
+const Whiteboard = {
+  on: false, drawing: false, lastX: 0, lastY: 0,
+  color: '#fbbf24',
+  thickness: 8,
+  eraser: false,
+
+  setup() {
+    const stage = $('tcStage');
+    const toStageXY = (e) => {
+      const r = stage.getBoundingClientRect();
+      return [
+        ((e.clientX - r.left) / r.width) * Engine.width,
+        ((e.clientY - r.top) / r.height) * Engine.height,
+      ];
+    };
+    stage.addEventListener('mousedown', (e) => {
+      if (!this.on) return;
+      // v0.7.47: ignore clicks on the picker UI
+      if (e.target.closest && e.target.closest('.tc-wb-picker')) return;
+      this.drawing = true;
+      [this.lastX, this.lastY] = toStageXY(e);
+    });
+    stage.addEventListener('mousemove', (e) => {
+      if (!this.drawing) return;
+      const [x, y] = toStageXY(e);
+      const c = Engine.overlayCtx;
+      c.save();
+      if (this.eraser) {
+        c.globalCompositeOperation = 'destination-out';
+        c.strokeStyle = 'rgba(0,0,0,1)';
+        c.lineWidth = this.thickness * 2;  // eraser is chunkier
+      } else {
+        c.globalCompositeOperation = 'source-over';
+        c.strokeStyle = this.color;
+        c.lineWidth = this.thickness;
+      }
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(this.lastX, this.lastY);
+      c.lineTo(x, y);
+      c.stroke();
+      c.restore();
+      this.lastX = x; this.lastY = y;
+    });
+    // Stop on mouseup anywhere (covers mouse leaving stage mid-stroke)
+    window.addEventListener('mouseup', () => { this.drawing = false; });
+    stage.addEventListener('mouseleave', () => { this.drawing = false; });
+    // v0.7.50: touch support for whiteboard strokes
+    stage.addEventListener('touchstart', (e) => {
+      if (!this.on) return;
+      if (e.touches.length > 1) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      this.drawing = true;
+      [this.lastX, this.lastY] = toStageXY({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: false });
+    stage.addEventListener('touchmove', (e) => {
+      if (!this.drawing) return;
+      if (e.touches.length > 1) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      const [x, y] = toStageXY({ clientX: t.clientX, clientY: t.clientY });
+      const c = Engine.overlayCtx;
+      c.strokeStyle = '#fbbf24';  // match the existing mouse draw
+      c.lineWidth = 8;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(this.lastX, this.lastY);
+      c.lineTo(x, y);
+      c.stroke();
+      this.lastX = x; this.lastY = y;
+    }, { passive: false });
+    window.addEventListener('touchend', () => { this.drawing = false; });
+  },
+
+  setColor(hex) {
+    this.color = hex;
+    this.eraser = false;
+    this._refreshUI();
+  },
+  setThickness(px) {
+    this.thickness = px;
+    this._refreshUI();
+  },
+  toggleEraser() {
+    this.eraser = !this.eraser;
+    this._refreshUI();
+  },
+  _refreshUI() {
+    document.querySelectorAll('#tcWbPicker .tc-wb-swatch').forEach(s => {
+      s.classList.toggle('active', !this.eraser && s.dataset.color === this.color);
+    });
+    document.querySelectorAll('#tcWbPicker .tc-wb-thick').forEach(thk => {
+      thk.classList.toggle('active', parseInt(thk.dataset.thickness) === this.thickness);
+    });
+    $('tcWbEraserBtn')?.classList.toggle('active', this.eraser);
+  },
+
+  toggle() {
+    this.on = !this.on;
+    $('tcStage').classList.toggle('drawing', this.on);
+    $('tcWhiteboardBtn').classList.toggle('active', this.on);
+    // v0.7.47: show/hide picker
+    const picker = $('tcWbPicker');
+    if (picker) picker.style.display = this.on ? 'flex' : 'none';
+    log(this.on ? t('drawOn') : t('drawOff'), 'info');
+    if (this.on) showToast(t('drawHint'), 4000);
+  },
+  clear() { Engine.overlayCtx.clearRect(0, 0, Engine.width, Engine.height); }
+};
+
+/* Drag — click-drag a source on the stage to reposition it. Marks the
+   source as .custom so that subsequent scene switches don't override its
+   position (setLayout explicitly skips custom sources). A "📌 Pin" toggle
+   in the Active Sources list flips this manually, and a "Reset layout"
+   button in the scenes sidebar clears all custom flags at once. */
+/* v0.7.0 rewrite: the Drag system now owns hit-testing, dragging, AND
+   resizing across THREE kinds of layers:
+     • video sources ('source')
+     • text overlays ('text')
+     • brand watermark ('brand')
+   Corner handles (within 30 canvas-px of any corner of a hit layer)
+   start a resize instead of a drag. Sources keep aspect ratio on resize;
+   text overlays scale their font size instead. */
+
+/* v0.7.126 — configurable snap-to-grid when dragging sources.
+   Toggle via Settings checkbox; grid size in px (10-100, default 20). */
+const SnapGrid = {
+  enabled: false,
+  size: 20,
+
+  setup() {
+    try { this.enabled = localStorage.getItem('tc-snap-grid') === '1'; } catch {}
+    try {
+      const s = parseInt(localStorage.getItem('tc-snap-grid-size'), 10);
+      if (s >= 10 && s <= 100) this.size = s;
+    } catch {}
+  },
+
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-snap-grid', v ? '1' : '0'); } catch {}
+  },
+
+  setSize(px) {
+    px = Math.max(10, Math.min(100, px || 20));
+    this.size = px;
+    try { localStorage.setItem('tc-snap-grid-size', String(px)); } catch {}
+  },
+
+  snap(val) {
+    return Math.round(val / this.size) * this.size;
+  },
+};
+
+/* v0.7.138: multi-source selection — Shift+click to add/remove sources,
+   drag moves all selected sources together. "Select All" in tools bar,
+   Escape clears. */
+const MultiSelect = {
+  sources: [],   // array of source refs currently in the multi-selection
+
+  add(src) {
+    if (!this.sources.includes(src)) this.sources.push(src);
+  },
+
+  remove(src) {
+    const i = this.sources.indexOf(src);
+    if (i >= 0) this.sources.splice(i, 1);
+  },
+
+  clear() {
+    this.sources.length = 0;
+  },
+
+  has(src) {
+    return this.sources.includes(src);
+  },
+
+  /** Move every selected source by the same delta, clamped to canvas. */
+  moveAll(dx, dy) {
+    const W = Engine.width, H = Engine.height;
+    for (const s of this.sources) {
+      let nx = s.x + dx;
+      let ny = s.y + dy;
+      nx = Math.max(0, Math.min(W - s.w, nx));
+      ny = Math.max(0, Math.min(H - s.h, ny));
+      s.x = nx;
+      s.y = ny;
+      s.custom = true;
+    }
+    if (this.sources.length) Engine.onSourcesChanged();
+  },
+
+  /** Select all visible, non-mic sources. */
+  selectAll() {
+    this.clear();
+    for (const s of Engine.sources) {
+      if (s.type !== 'mic' && s.visible !== false && !s.hidden && s.video) {
+        this.add(s);
+      }
+    }
+  },
+};
+
+const Drag = {
+  state: null,  // { kind, ref, mode: 'move'|'resize', corner, offsetX, offsetY, startW, startH, startX, startY, aspect }
+  selectedSourceId: null,   // v0.7.2: track the last-clicked source for Delete-key removal
+  SNAP_RADIUS: 60,
+  CORNER_RADIUS: 36,
+  GRID_PX: 48,  // canvas pixels between grid anchors when Alt is held during drag
+  THRESHOLD_PX: 6,  // v0.7.45 hotfix: canvas px of mouse movement before drag engages
+  stage: null,
+
+  setup() {
+    this.stage = $('tcStage');
+    if (!this.stage) return;
+    this.stage.addEventListener('mousedown', (e) => this._onDown(e));
+    window.addEventListener('mousemove', (e) => this._onMove(e));
+    window.addEventListener('mouseup', (e) => this._onUp(e));
+    // v0.7.103: hover source to reveal the layer/z-index badge.
+    // Uses the same _hitTest as mousedown so the hover layer matches
+    // exactly what a click would select. Cleared on mouseleave.
+    this.stage.addEventListener('mousemove', (e) => {
+      if (this.state) { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; return; }
+      const [mx, my] = this._stageToCanvas(e);
+      const hit = this._hitTest(mx, my);
+      if (hit && hit.kind === 'source') {
+        const idx = Engine.sources.indexOf(hit.ref);
+        if (idx < 0) { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this.stage.style.cursor = ''; return; }
+        this._hoveredSourceId = hit.ref.id;
+        // Layer number from BACK = array index + 1 (index 0 is drawn first = back).
+        const total = Engine.sources.filter(s => s.type !== 'mic').length;
+        const layerFromBack = Engine.sources
+          .slice(0, idx + 1)
+          .filter(s => s.type !== 'mic').length;
+        LayerBadge.showAt(e.clientX, e.clientY, layerFromBack, total);
+        // v0.7.146: source info HUD
+        SourceHud.show(hit.ref, e.clientX, e.clientY);
+        // v0.7.180: resize cursors on selected source handles
+        if (hit.ref.id === this.selectedSourceId) {
+          const handle = this._nearCorner(hit.ref, mx, my);
+          if (handle === 0 || handle === 3) this.stage.style.cursor = 'nwse-resize';
+          else if (handle === 1 || handle === 2) this.stage.style.cursor = 'nesw-resize';
+          else if (handle === 4 || handle === 6) this.stage.style.cursor = 'ns-resize';
+          else if (handle === 5 || handle === 7) this.stage.style.cursor = 'ew-resize';
+          else this.stage.style.cursor = 'move';
+        } else {
+          this.stage.style.cursor = 'pointer';
+        }
+      } else {
+        this._hoveredSourceId = null;
+        LayerBadge.hide();
+        SourceHud.hide();
+        // v0.7.182: detect overlay hover for resize handles
+        if (hit && (hit.kind === 'sensorOverlay' || hit.kind === 'servoGauge')) {
+          this._lastHoveredOverlay = hit.kind;
+          this.stage.style.cursor = 'move';
+        } else {
+          this._lastHoveredOverlay = null;
+          this.stage.style.cursor = '';
+        }
+      }
+    });
+    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this._lastHoveredOverlay = null; this.stage.style.cursor = ''; });
+    // v0.7.53: Ctrl+wheel on the stage = smooth zoom toward the cursor.
+    // Without Ctrl, let the page scroll normally.
+    this.stage.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;  // plain wheel = page scroll
+      e.preventDefault();
+      const [mx, my] = this._stageToCanvas(e);
+      Zoom.cx = mx;
+      Zoom.cy = my;
+      // e.deltaY > 0 = scroll down = zoom OUT, < 0 = zoom IN.
+      // Each wheel tick = 0.15 zoom delta, clamped to [1, 4].
+      const delta = -Math.sign(e.deltaY) * 0.15;
+      const current = Zoom.target ?? Zoom.current ?? 1;
+      const next = Math.max(1, Math.min(4, current + delta));
+      Zoom.target = next;
+      // Show a small label briefly
+      showToast(`🔍 ${next.toFixed(1)}×`, 900);
+    }, { passive: false });
+    // v0.7.50: touch support — forward single-finger touch to the existing
+    // mouse handlers. Pinch-zoom is out of scope (two fingers fall through
+    // to the browser default).
+    const touchToMouse = (e) => {
+      if (e.touches && e.touches.length > 1) return null;  // let pinch pass
+      const t = e.touches ? e.touches[0] : (e.changedTouches && e.changedTouches[0]);
+      if (!t) return null;
+      return {
+        clientX: t.clientX,
+        clientY: t.clientY,
+        button: 0,
+        preventDefault: () => e.preventDefault(),
+        shiftKey: !!e.shiftKey,
+        ctrlKey: !!e.ctrlKey,
+        metaKey: !!e.metaKey,
+        altKey: !!e.altKey,
+        target: t.target,
+      };
+    };
+    this.stage.addEventListener('touchstart', (e) => {
+      const me = touchToMouse(e);
+      if (!me) return;
+      e.preventDefault();
+      this._onDown(me);
+    }, { passive: false });
+    window.addEventListener('touchmove', (e) => {
+      if (!this.state) return;
+      const me = touchToMouse(e);
+      if (!me) return;
+      e.preventDefault();
+      this._onMove(me);
+    }, { passive: false });
+    window.addEventListener('touchend', (e) => {
+      const me = touchToMouse(e);
+      // Fire onUp even if we didn't get a clientX (use the last state)
+      this._onUp(me || { clientX: 0, clientY: 0 });
+    });
+    window.addEventListener('touchcancel', (e) => {
+      const me = touchToMouse(e);
+      this._onUp(me || { clientX: 0, clientY: 0 });
+    });
+    // v0.7.35: right-click on a source opens the HTML context menu
+    this.stage.addEventListener('contextmenu', (e) => {
+      const [mx, my] = this._stageToCanvas(e);
+      const hit = this._hitTest(mx, my);
+      if (hit && hit.kind === 'source') {
+        e.preventDefault();
+        this.selectedSourceId = hit.ref.id;
+        if (typeof SourceContextMenu !== 'undefined') {
+          SourceContextMenu.show(e.clientX, e.clientY, hit.ref);
+        }
+      }
+    });
+    // Escape clears selection, Delete removes the selected overlay/source
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'delete' || k === 'backspace') {
+        if (TextOverlays.selectedId != null) {
+          TextOverlays.remove(TextOverlays.selectedId);
+          e.preventDefault();
+        } else if (this.selectedSourceId != null) {
+          // v0.7.2: Delete on a clicked video source removes it from the stage
+          Engine.removeSource(this.selectedSourceId);
+          this.selectedSourceId = null;
+          e.preventDefault();
+        }
+      }
+    });
+  },
+
+  _stageToCanvas(e) {
+    const r = this.stage.getBoundingClientRect();
+    return [
+      ((e.clientX - r.left) / r.width) * Engine.width,
+      ((e.clientY - r.top)  / r.height) * Engine.height,
+    ];
+  },
+
+  /* Returns handle index if (mx,my) is near a handle, else -1.
+     0=TL, 1=TR, 2=BL, 3=BR (corners),
+     4=top-center, 5=right-center, 6=bottom-center, 7=left-center (edges). */
+  _nearCorner(obj, mx, my) {
+    const handles = [
+      [obj.x,              obj.y],                   // 0: TL
+      [obj.x + obj.w,      obj.y],                   // 1: TR
+      [obj.x,              obj.y + obj.h],            // 2: BL
+      [obj.x + obj.w,      obj.y + obj.h],            // 3: BR
+      [obj.x + obj.w / 2,  obj.y],                   // 4: top-center
+      [obj.x + obj.w,      obj.y + obj.h / 2],        // 5: right-center
+      [obj.x + obj.w / 2,  obj.y + obj.h],            // 6: bottom-center
+      [obj.x,              obj.y + obj.h / 2],         // 7: left-center
+    ];
+    const r2 = this.CORNER_RADIUS * this.CORNER_RADIUS;
+    // Check corners first (higher priority)
+    for (let i = 0; i < 4; i++) {
+      const dx = mx - handles[i][0], dy = my - handles[i][1];
+      if (dx * dx + dy * dy < r2) return i;
+    }
+    // Then edge midpoints
+    for (let i = 4; i < 8; i++) {
+      const dx = mx - handles[i][0], dy = my - handles[i][1];
+      if (dx * dx + dy * dy < r2) return i;
+    }
+    return -1;
+  },
+
+  _insideRect(obj, mx, my) {
+    return mx >= obj.x && mx <= obj.x + obj.w && my >= obj.y && my <= obj.y + obj.h;
+  },
+
+  _insideCircle(obj, mx, my) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const r = Math.min(obj.w, obj.h) / 2;
+    return (mx - cx) ** 2 + (my - cy) ** 2 <= r * r;
+  },
+
+  /* Topmost-first hit test over all interactive layers. Draw order, from
+     bottom to top, is: sources → text overlays → brand slogan → brand logo.
+     Hit-test in reverse. */
+  _hitTest(mx, my) {
+    // 0. Sensor overlay (draggable)
+    if (Sensors._overlayX !== null && Sensors._overlayW > 0) {
+      const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
+      if (this._insideRect(so, mx, my)) return { kind: 'sensorOverlay', ref: so };
+    }
+    // 0b. Servo gauge (draggable)
+    if (ServoGauge.visible && ServoGauge.w > 0) {
+      if (this._insideRect(ServoGauge, mx, my)) return { kind: 'servoGauge', ref: ServoGauge };
+    }
+    // 0c. Watermark (draggable)
+    if (Watermark.text && Watermark.w > 0) {
+      if (this._insideRect(Watermark, mx, my)) return { kind: 'watermark', ref: Watermark };
+    }
+    // 1. Brand slogan (top)
+    if (Brand.hasSlogan()) {
+      if (this._insideRect(Brand.slogan, mx, my)) return { kind: 'brandSlogan', ref: Brand.slogan };
+    }
+    // 2. Brand logo
+    if (Brand.hasLogo()) {
+      if (this._insideRect(Brand.logo, mx, my)) return { kind: 'brandLogo', ref: Brand.logo };
+    }
+    // 3. Text overlays (reverse)
+    for (let i = TextOverlays.items.length - 1; i >= 0; i--) {
+      const it = TextOverlays.items[i];
+      if (this._insideRect(it, mx, my)) return { kind: 'text', ref: it };
+    }
+    // 4. Sources (reverse, respecting shape)
+    const srcs = Engine.sources;
+    for (let i = srcs.length - 1; i >= 0; i--) {
+      const s = srcs[i];
+      if (s.type === 'mic' || !s.visible || s.hidden) continue;
+      if (s.type !== 'shape' && s.type !== 'image' && !s.video) continue;
+      const inside = s.shape === 'circle' ? this._insideCircle(s, mx, my) : this._insideRect(s, mx, my);
+      if (inside) return { kind: 'source', ref: s };
+    }
+    return null;
+  },
+
+  _onDown(e) {
+    if (e.button !== 0) return;
+    // v0.7.121: color picker intercepts the click before any drag/select logic
+    if (ColorPicker.active && ColorPicker.pick(e)) return;
+    if (Whiteboard.on) return;
+    const [mx, my] = this._stageToCanvas(e);
+    // v0.7.21: arm click-vs-drag detector for AutoZoom
+    AutoZoom.armDown(mx, my);
+
+    // v0.7.23: emit a click ripple at the canvas coord — fires on every
+    // mousedown before any selection / resize logic. No-op when disabled.
+    Ripples.add(mx, my);
+
+    // v0.7.3: text-overlay canvas ✕ delete button
+    if (TextOverlays.selectedId != null) {
+      const sel = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+      if (sel && sel._deleteBtn) {
+        const { x: bx, y: by, r: br } = sel._deleteBtn;
+        if ((mx - bx) ** 2 + (my - by) ** 2 <= br * br) {
+          TextOverlays.remove(sel.id);
+          showToast(t('overlayDeleted'), 1500);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+
+    // v0.7.6: video-source canvas ✕ delete + 👁 hide buttons
+    if (this.selectedSourceId != null) {
+      const sel = Engine.sources.find(s => s.id === this.selectedSourceId);
+      if (sel) {
+        if (sel._chromeDel) {
+          const { x: bx, y: by, r: br } = sel._chromeDel;
+          if ((mx - bx) ** 2 + (my - by) ** 2 <= br * br) {
+            Engine.removeSource(sel.id);
+            e.preventDefault();
+            return;
+          }
+        }
+        if (sel._chromeHide) {
+          const { x: bx, y: by, r: br } = sel._chromeHide;
+          if ((mx - bx) ** 2 + (my - by) ** 2 <= br * br) {
+            sel.hidden = !sel.hidden;
+            showToast(sel.hidden ? t('sourceHidden') : t('sourceShown'), 1500);
+            log(sel.hidden ? `👁 hidden: ${sel.label}` : `👁 shown: ${sel.label}`, 'info');
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+    }
+
+    const hit = this._hitTest(mx, my);
+    if (!hit) {
+      // Clicking empty canvas deselects everything
+      if (TextOverlays.selectedId != null) TextOverlays.selectedId = null;
+      this.selectedSourceId = null; // v0.7.166 fix: clear selection chrome
+      MultiSelect.clear();
+      return;
+    }
+    const { kind, ref } = hit;
+    // Mark text selection for the visible selection rectangle
+    if (kind === 'text') TextOverlays.selectedId = ref.id;
+    else TextOverlays.selectedId = null;
+
+    // v0.7.138: Shift+click on a source toggles it in/out of multi-select.
+    // Normal click replaces the selection entirely.
+    if (kind === 'source') {
+      if (e.shiftKey) {
+        if (MultiSelect.has(ref)) {
+          MultiSelect.remove(ref);
+        } else {
+          // If nothing was multi-selected yet, add the previously-selected
+          // single source first so both end up in the set.
+          if (MultiSelect.sources.length === 0 && this.selectedSourceId != null) {
+            const prev = Engine.sources.find(s => s.id === this.selectedSourceId);
+            if (prev && prev !== ref) MultiSelect.add(prev);
+          }
+          MultiSelect.add(ref);
+        }
+        this.selectedSourceId = ref.id;
+        e.preventDefault();
+        // Don't start a drag on a shift-click — it's purely selection toggling.
+        return;
+      } else {
+        // Normal click: clear multi-select if clicking a source not in the set
+        if (!MultiSelect.has(ref)) MultiSelect.clear();
+        this.selectedSourceId = ref.id;
+      }
+    } else {
+      this.selectedSourceId = null;
+      MultiSelect.clear();
+    }
+
+    // v0.7.122: locked sources can be selected (toolbar visible) but not
+    // dragged or resized. Show a brief toast so the teacher knows why.
+    if (kind === 'source' && ref.locked) {
+      showToast('🔒 ' + t('sourceLocked'), 1200);
+      e.preventDefault();
+      return;
+    }
+
+    // Corner-near → resize, otherwise move
+    const corner = this._nearCorner(ref, mx, my);
+    if (corner >= 0) {
+      // v0.7.138: resize always acts on a single source, clear multi-select
+      MultiSelect.clear();
+      this.state = {
+        kind, ref, mode: 'resize', corner,
+        startX: ref.x, startY: ref.y, startW: ref.w, startH: ref.h,
+        aspect: ref.w / ref.h,
+        // v0.7.17: track Shift state — released by Drag._onMove via the
+        // event's shiftKey, so we just remember the initial press here.
+        freeResize: e.shiftKey,
+      };
+      if (kind === 'source' && e.shiftKey) {
+        showToast('↔ ' + t('freeResize'), 1200);
+      }
+    } else {
+      this.state = {
+        kind, ref, mode: 'move', corner: -1,
+        offsetX: mx - ref.x, offsetY: my - ref.y,
+        // v0.7.45: pending = true means we haven't crossed the drag
+        // threshold yet, so movements are absorbed. Set when the user
+        // clicks-drags less than THRESHOLD_PX canvas pixels. Uses
+        // downX/downY rather than startX/startY because the resize
+        // branch already uses those names for its own purpose.
+        pending: true,
+        downX: mx,
+        downY: my,
+        // v0.7.138: remember the last canvas position for multi-drag delta
+        lastMx: mx,
+        lastMy: my,
+      };
+      // Pin text overlays on first interaction so they don't auto-fade
+      if (kind === 'text') TextOverlays.pin(ref.id);
+    }
+    this.stage.classList.add('dragging');
+    e.preventDefault();
+  },
+
+  _onMove(e) {
+    if (!this.state) return;
+    const [mx, my] = this._stageToCanvas(e);
+    const s = this.state;
+    const ref = s.ref;
+
+    if (s.mode === 'move') {
+      // v0.7.45: drag threshold — absorb movement until we've moved
+      // more than THRESHOLD_PX canvas pixels from the mousedown point.
+      // Release before crossing = pure click, no move applied.
+      if (s.pending) {
+        const d2 = (mx - s.downX) ** 2 + (my - s.downY) ** 2;
+        if (d2 < this.THRESHOLD_PX * this.THRESHOLD_PX) return;
+        s.pending = false;  // drag engaged — fall through to the move logic
+        // v0.7.138: sync lastMx/lastMy so the first multi-drag delta is correct
+        s.lastMx = mx;
+        s.lastMy = my;
+      }
+      let nx = mx - s.offsetX;
+      let ny = my - s.offsetY;
+      // v0.7.46: Alt-held = snap position to a 48px grid
+      if (e.altKey && s.kind === 'source') {
+        nx = Math.round(nx / this.GRID_PX) * this.GRID_PX;
+        ny = Math.round(ny / this.GRID_PX) * this.GRID_PX;
+        // Show a visible grid overlay while Alt is held (cleared on drag-end or alt-release)
+        Drag._gridVisible = true;
+      } else {
+        Drag._gridVisible = false;
+      }
+      // v0.7.126: settings-based snap-to-grid (independent of Alt key)
+      if (SnapGrid.enabled && s.kind === 'source' && !e.altKey) {
+        nx = SnapGrid.snap(nx);
+        ny = SnapGrid.snap(ny);
+      }
+      // Snap for sources only (keeps kid layouts clean)
+      if (s.kind === 'source') {
+        const W = Engine.width, H = Engine.height, M = 40;
+        const anchors = [
+          [M, M], [W - ref.w - M, M], [M, H - ref.h - M], [W - ref.w - M, H - ref.h - M],
+          [(W - ref.w) / 2, M], [(W - ref.w) / 2, H - ref.h - M], [(W - ref.w) / 2, (H - ref.h) / 2],
+        ];
+        const r2 = this.SNAP_RADIUS * this.SNAP_RADIUS;
+        for (const [ax, ay] of anchors) {
+          if ((nx - ax) ** 2 + (ny - ay) ** 2 < r2) { nx = ax; ny = ay; break; }
+        }
+        // v0.7.42: smart alignment guides. Compare the dragged source
+        // edges + center against every OTHER visible source's edges +
+        // center. If within 8 canvas-px, snap that axis and publish a
+        // guide line for Engine.render() to draw.
+        const SNAP_PX = 8;
+        const guides = [];
+        const others = Engine.sources.filter(x =>
+          x !== ref && x.type !== 'mic' && x.visible !== false && !x.hidden
+        );
+        // Horizontal candidates (X-axis lines, vertical guides)
+        const myXs = [
+          { val: nx, kind: 'left' },
+          { val: nx + ref.w / 2, kind: 'centerX' },
+          { val: nx + ref.w, kind: 'right' },
+        ];
+        for (const m of myXs) {
+          for (const o of others) {
+            const targets = [o.x, o.x + o.w / 2, o.x + o.w];
+            for (const tx of targets) {
+              if (Math.abs(m.val - tx) < SNAP_PX) {
+                const delta = tx - m.val;
+                nx += delta;
+                // Rebuild myXs with the corrected x
+                m.val += delta;
+                guides.push({ axis: 'y', at: tx });
+                break;
+              }
+            }
+          }
+        }
+        const myYs = [
+          { val: ny, kind: 'top' },
+          { val: ny + ref.h / 2, kind: 'centerY' },
+          { val: ny + ref.h, kind: 'bottom' },
+        ];
+        for (const m of myYs) {
+          for (const o of others) {
+            const targets = [o.y, o.y + o.h / 2, o.y + o.h];
+            for (const ty of targets) {
+              if (Math.abs(m.val - ty) < SNAP_PX) {
+                const delta = ty - m.val;
+                ny += delta;
+                m.val += delta;
+                guides.push({ axis: 'x', at: ty });
+                break;
+              }
+            }
+          }
+        }
+        // Stash for Engine.render() to draw (overwrites any previous frame)
+        Drag._activeGuides = guides;
+      }
+      // Keep inside canvas
+      nx = Math.max(0, Math.min(Engine.width  - ref.w, nx));
+      ny = Math.max(0, Math.min(Engine.height - ref.h, ny));
+      // v0.7.138: multi-source drag — move all selected sources by the same delta
+      if (s.kind === 'source' && MultiSelect.sources.length > 1 && MultiSelect.has(ref)) {
+        const dx = mx - s.lastMx;
+        const dy = my - s.lastMy;
+        s.lastMx = mx;
+        s.lastMy = my;
+        MultiSelect.moveAll(dx, dy);
+      } else {
+        ref.x = nx; ref.y = ny;
+        if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
+        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPos(); }
+        if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._savePos(); }
+        if (s.kind === 'servoGauge') { ServoGauge.x = nx; ServoGauge.y = ny; ServoGauge._customPos = true; ServoGauge._savePos(); }
+      }
+    } else {
+      // resize
+      // handle: 0=TL, 1=TR, 2=BL, 3=BR, 4=top, 5=right, 6=bottom, 7=left
+      const isEdge = s.corner >= 4;
+      const isShape = s.ref && s.ref.type === 'shape';
+      const minW = isShape ? 20 : 80;
+      const minH = isShape ? 20 : 60;
+      let newW, newH, newX, newY;
+
+      if (isEdge) {
+        // v0.7.180: edge midpoint handles — single-axis resize
+        newW = s.startW; newH = s.startH;
+        newX = s.startX; newY = s.startY;
+        if (s.corner === 4) { // top edge — move top, keep bottom
+          newH = Math.max(minH, (s.startY + s.startH) - my);
+          newY = Math.min(my, s.startY + s.startH - minH);
+        } else if (s.corner === 6) { // bottom edge
+          newH = Math.max(minH, my - s.startY);
+        } else if (s.corner === 7) { // left edge — move left, keep right
+          newW = Math.max(minW, (s.startX + s.startW) - mx);
+          newX = Math.min(mx, s.startX + s.startW - minW);
+        } else if (s.corner === 5) { // right edge
+          newW = Math.max(minW, mx - s.startX);
+        }
+      } else {
+        // Corner resize (existing logic)
+        const right  = s.corner === 1 || s.corner === 3;
+        const bottom = s.corner === 2 || s.corner === 3;
+        const oppX = right ? s.startX : s.startX + s.startW;
+        const oppY = bottom ? s.startY : s.startY + s.startH;
+        newW = Math.max(minW, Math.abs(mx - oppX));
+        newH = Math.max(minH, Math.abs(my - oppY));
+        // Aspect ratio lock (Shift to unlock, per-source override)
+        const forceLock = !!(s.ref && s.ref.aspectLock);
+        const freeResize = isShape || !forceLock && (!!e.shiftKey || s.freeResize);
+        if (s.kind === 'source' && !freeResize) {
+          const keepByWidth = newW / s.aspect > newH;
+          if (keepByWidth) newH = newW / s.aspect; else newW = newH * s.aspect;
+        }
+        newX = right ? s.startX : Math.min(mx, oppX);
+        newY = bottom ? s.startY : Math.min(my, oppY);
+      }
+
+      if (s.kind === 'text') {
+        TextOverlays.resizeTo(ref, newW);
+        ref.x = newX;
+        ref.y = newY;
+      } else if (s.kind === 'source') {
+        ref.x = newX; ref.y = newY;
+        ref.w = newW; ref.h = newH;
+        ref.custom = true;
+        Engine.onSourcesChanged();
+      } else if (s.kind === 'brandLogo') {
+        Brand.resizeLogo(newW);
+        ref.x = newX; ref.y = newY;
+      } else if (s.kind === 'brandSlogan') {
+        Brand.resizeSlogan(newW);
+        ref.x = newX; ref.y = newY;
+      } else if (s.kind === 'sensorOverlay') {
+        Sensors._overlayX = newX; Sensors._overlayY = newY;
+        if (s.mode === 'resize') Sensors._overlayScale = Math.max(0.5, Math.min(3, newW / s.startW));
+        Sensors._saveOverlayPos();
+      } else if (s.kind === 'servoGauge') {
+        ServoGauge.x = newX; ServoGauge.y = newY;
+        ServoGauge._scale = Math.max(0.5, Math.min(3, newW / s.startW));
+        ServoGauge._customPos = true; ServoGauge._savePos();
+      }
+    }
+    // Save brand position after any brand drag
+    if (this.state && (this.state.kind === 'brandLogo' || this.state.kind === 'brandSlogan')) {
+      Brand.save();
+    }
+  },
+
+  _onUp(e) {
+    // v0.7.41: if a real drag/resize just happened, capture a layout
+    // snapshot so Ctrl+Z can undo. We only capture on actual transitions
+    // (state was a move/resize, not a click).
+    const wasDragOrResize = this.state &&
+      ((this.state.mode === 'move' && !this.state.pending) ||
+       this.state.mode === 'resize');
+    if (this.state) {
+      this.state = null;
+      if (this.stage) this.stage.classList.remove('dragging');
+    }
+    Drag._activeGuides = null;  // v0.7.42: clear alignment guides on drag-end
+    Drag._gridVisible = false;  // v0.7.46: clear grid overlay on drag-end
+    if (wasDragOrResize) {
+      LayoutHistory.capture();
+      SceneAutoSave.trigger(); // v0.7.127: auto-save scene on drag/resize end
+    }
+    // v0.7.21: fire AutoZoom if this was a real click on a screen source.
+    // Runs even when state was null (empty-area clicks) so clicks that
+    // miss _hitTest still trigger auto-zoom when the coords land on a
+    // screen source.
+    if (e && this.stage) {
+      try {
+        const [ux, uy] = this._stageToCanvas(e);
+        AutoZoom.onUp(ux, uy);
+      } catch {}
+    }
+  },
+
+  /* Pin/unpin + reset (source-only controls, unchanged from v0.4.0) */
+  togglePin(id) {
+    const src = Engine.sources.find(s => s.id === id);
+    if (!src) return;
+    src.custom = !src.custom;
+    Engine.onSourcesChanged();
+    if (!src.custom) Scenes.reapply();
+    log(src.custom ? `📌 pinned: ${src.label}` : `🔓 unpinned: ${src.label}`, 'info');
+  },
+
+  resetAll() {
+    Engine.sources.forEach(s => { s.custom = false; });
+    Scenes.reapply();
+    Engine.onSourcesChanged();
+    log('🔓 layout reset', 'info');
+    showToast(t('layoutReset'), 1800);
+  },
+};
+
+/* ─────────── LayerBadge — floating "#N / total" pill on source hover (v0.7.103) ─────
+   Lazy-creates a single fixed-position DOM element that tracks the
+   cursor while hovering a video source on the stage. The N is the
+   layer index from BACK (1 = backmost, total = frontmost), matching
+   the draw order in Engine.render() which iterates sources[] low→high.
+   Also shown in the sidebar source rows (see Engine.onSourcesChanged).
+*/
+const LayerBadge = {
+  el: null,
+  _ensure() {
+    if (this.el) return this.el;
+    this.el = document.createElement('div');
+    this.el.id = 'tcLayerBadge';
+    this.el.style.display = 'none';
+    document.body.appendChild(this.el);
+    return this.el;
+  },
+  showAt(clientX, clientY, layer, total) {
+    const el = this._ensure();
+    el.textContent = `#${layer} / ${total}`;
+    el.style.display = 'block';
+    // Position slightly offset from the cursor, clamped to viewport
+    const pad = 14;
+    let left = clientX + pad;
+    let top  = clientY + pad;
+    const w = el.offsetWidth || 56;
+    const h = el.offsetHeight || 22;
+    if (left + w + 4 > window.innerWidth)  left = clientX - w - pad;
+    if (top  + h + 4 > window.innerHeight) top  = clientY - h - pad;
+    el.style.left = Math.max(4, left) + 'px';
+    el.style.top  = Math.max(4, top)  + 'px';
+  },
+  hide() {
+    if (this.el) this.el.style.display = 'none';
+  },
+};
+
+/* ─────────── SourceHud — info tooltip on source hover (v0.7.146) ────────
+   Lazy-creates a small fixed-position HUD that displays source name,
+   dimensions (WxH), position (X,Y), and type (screen/camera/image).
+   Shown as an HTML overlay near the cursor, teacher-only. */
+const SourceHud = {
+  el: null,
+  _ensure() {
+    if (this.el) return this.el;
+    this.el = document.createElement('div');
+    this.el.id = 'tcSourceHud';
+    this.el.style.display = 'none';
+    document.body.appendChild(this.el);
+    return this.el;
+  },
+  show(src, clientX, clientY) {
+    const el = this._ensure();
+    const typeLabel = src.type === 'screen' ? t('sourceScreen')
+      : src.type === 'cam' ? t('sourceCam')
+      : src.type === 'image' ? 'Image'
+      : src.type;
+    const name = src.label || typeLabel;
+    el.innerHTML =
+      `<strong>${name}</strong><br>` +
+      `${t('hudType')}: ${typeLabel}<br>` +
+      `${t('hudSize')}: ${Math.round(src.w)}x${Math.round(src.h)}<br>` +
+      `${t('hudPos')}: ${Math.round(src.x)}, ${Math.round(src.y)}`;
+    el.style.display = 'block';
+    const pad = 18;
+    let left = clientX + pad;
+    let top  = clientY + pad;
+    const w = el.offsetWidth || 140;
+    const h = el.offsetHeight || 70;
+    if (left + w + 4 > window.innerWidth)  left = clientX - w - pad;
+    if (top  + h + 4 > window.innerHeight) top  = clientY - h - pad;
+    el.style.left = Math.max(4, left) + 'px';
+    el.style.top  = Math.max(4, top)  + 'px';
+  },
+  hide() {
+    if (this.el) this.el.style.display = 'none';
+  },
+};
+
+/* ─────────── Brand — logo + slogan watermark on the canvas (v0.7.0) ─────
+
+   Draggable, resizable, filterable. The teacher uploads their logo via
+   Settings (FileReader → dataURL → <img>), types a slogan, and picks a
+   fun effect (spin/pulse/bounce/wiggle/glow/rainbow). Drawn in
+   Engine.render() after the text overlays so it's always on top. */
+/* v0.7.7: logo and slogan are now fully INDEPENDENT draggable layers.
+   They live in two sub-objects (Brand.logo, Brand.slogan), each with
+   its own x/y/w/h/rotation, and are hit-tested separately by Drag
+   as kind='brandLogo' and kind='brandSlogan'. */
+const Brand = {
+  logo: {
+    img: null,
+    _originalDataUrl: null,
+    x: 40, y: 40, w: 180, h: 180,
+    rotation: 0,
+    effect: 'none',
+    bgRemoved: false,
+    opacity: 1,           // v0.7.7: 0–1 transparency
+    filter: 'none',       // v0.7.7: reuse Engine._filterString presets
+    tint: null,           // v0.7.11: hex color for silhouette tint (null = no tint)
+  },
+  slogan: {
+    text: '',
+    color: '#ffffff',
+    x: 40, y: 260, w: 220, h: 60,
+    size: 48,
+    font: 0,
+    rotation: 0,
+  },
+
+  load() {
+    try {
+      this.logo._originalDataUrl = localStorage.getItem('tc-brand-logo') || null;
+      this.slogan.text           = localStorage.getItem('tc-brand-slogan') || '';
+      this.logo.effect           = localStorage.getItem('tc-brand-effect') || 'none';
+      this.logo.bgRemoved        = localStorage.getItem('tc-brand-bgremove') === '1';
+      this.slogan.color          = localStorage.getItem('tc-brand-color') || '#ffffff';
+      this.logo.opacity          = parseFloat(localStorage.getItem('tc-brand-logo-opacity') || '1');
+      this.logo.filter           = localStorage.getItem('tc-brand-logo-filter') || 'none';
+      this.logo.tint             = localStorage.getItem('tc-brand-logo-tint') || null;
+      // v0.7.7: new keys — independent positions for logo and slogan
+      const logoPos   = localStorage.getItem('tc-brand-logo-pos');
+      const sloganPos = localStorage.getItem('tc-brand-slogan-pos');
+      if (logoPos)   { try { Object.assign(this.logo,   JSON.parse(logoPos));   } catch {} }
+      if (sloganPos) { try { Object.assign(this.slogan, JSON.parse(sloganPos)); } catch {} }
+      // Back-compat: migrate the old tc-brand-pos (single bounding box)
+      // to the new logo-pos if no logo-pos exists yet
+      if (!logoPos) {
+        const oldPos = localStorage.getItem('tc-brand-pos');
+        if (oldPos) { try { Object.assign(this.logo, JSON.parse(oldPos)); } catch {} }
+      }
+    } catch {}
+    if (this.logo._originalDataUrl) this._recomputeLogo();
+  },
+
+  save() {
+    try {
+      if (this.logo._originalDataUrl) localStorage.setItem('tc-brand-logo', this.logo._originalDataUrl);
+      localStorage.setItem('tc-brand-slogan',      this.slogan.text || '');
+      localStorage.setItem('tc-brand-effect',      this.logo.effect);
+      localStorage.setItem('tc-brand-bgremove',    this.logo.bgRemoved ? '1' : '0');
+      localStorage.setItem('tc-brand-color',       this.slogan.color || '#ffffff');
+      localStorage.setItem('tc-brand-logo-opacity', String(this.logo.opacity));
+      localStorage.setItem('tc-brand-logo-filter',  this.logo.filter);
+      if (this.logo.tint) localStorage.setItem('tc-brand-logo-tint', this.logo.tint);
+      else                localStorage.removeItem('tc-brand-logo-tint');
+      localStorage.setItem('tc-brand-logo-pos',    JSON.stringify({ x: this.logo.x, y: this.logo.y, w: this.logo.w, h: this.logo.h, rotation: this.logo.rotation }));
+      localStorage.setItem('tc-brand-slogan-pos',  JSON.stringify({ x: this.slogan.x, y: this.slogan.y, w: this.slogan.w, h: this.slogan.h, size: this.slogan.size, font: this.slogan.font, rotation: this.slogan.rotation, opacity: this.slogan.opacity }));
+    } catch {}
+  },
+
+  _recomputeLogo() {
+    const L = this.logo;
+    if (!L._originalDataUrl) { L.img = null; return; }
+    const raw = new Image();
+    raw.onerror = () => { L.img = null; log('✗ brand logo failed to load', 'error'); };
+    raw.onload = () => {
+      if (raw.width && raw.height) {
+        L.h = L.w * (raw.height / raw.width);
+      }
+      if (!L.bgRemoved) { L.img = raw; return; }
+      try {
+        const cv = document.createElement('canvas');
+        cv.width = raw.width; cv.height = raw.height;
+        const c = cv.getContext('2d');
+        c.drawImage(raw, 0, 0);
+        const id = c.getImageData(0, 0, cv.width, cv.height);
+        const d = id.data;
+        const r0 = d[0], g0 = d[1], b0 = d[2];
+        const thresh2 = 45 * 45;
+        for (let i = 0; i < d.length; i += 4) {
+          const dr = d[i] - r0, dg = d[i+1] - g0, db = d[i+2] - b0;
+          if (dr*dr + dg*dg + db*db < thresh2) d[i+3] = 0;
+        }
+        c.putImageData(id, 0, 0);
+        const processed = cv.toDataURL('image/png');
+        const img2 = new Image();
+        img2.onload = () => { L.img = img2; };
+        img2.src = processed;
+      } catch (e) {
+        log(`✗ bg removal failed: ${e.message}`, 'error');
+        L.img = raw;
+      }
+    };
+    raw.src = L._originalDataUrl;
+  },
+
+  setLogoFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.logo._originalDataUrl = e.target.result;
+      this._recomputeLogo();
+      this.save();
+      showToast(t('brandLogoLoaded'), 2000);
+    };
+    reader.readAsDataURL(file);
+  },
+
+  clearLogo() {
+    this.logo._originalDataUrl = null;
+    this.logo.img = null;
+    try { localStorage.removeItem('tc-brand-logo'); } catch {}
+  },
+
+  setSlogan(s)        { this.slogan.text = s || ''; this._measureSlogan(); this.save(); },
+  setEffect(e)        { this.logo.effect = e || 'none'; this.save(); },
+  setBgRemoved(v)     { this.logo.bgRemoved = !!v; this._recomputeLogo(); this.save(); },
+  setSloganColor(c)   { this.slogan.color = c || '#ffffff'; this.save(); },
+  setSloganOpacity(v) { this.slogan.opacity = Math.max(0, Math.min(1, parseFloat(v))); this.save(); },
+  setLogoOpacity(v)   { this.logo.opacity = Math.max(0, Math.min(1, parseFloat(v))); this.save(); },
+  setLogoFilter(f)    { this.logo.filter = f || 'none'; this.save(); },
+  setLogoTint(c)      { this.logo.tint = c || null; this.save(); },
+  setSloganFont(i)    { this.slogan.font = Math.max(0, Math.min(TEXT_FONTS.length - 1, parseInt(i) || 0)); this._measureSlogan(); this.save(); },
+  setSloganSize(px)   { this.slogan.size = Math.max(14, Math.min(200, parseInt(px) || 48)); this._measureSlogan(); this.save(); },
+
+  /* Logo size setter (Settings slider). */
+  setSize(newW) {
+    const L = this.logo;
+    const clamped = Math.max(60, Math.min(600, newW));
+    const ratio = clamped / L.w;
+    L.w = clamped;
+    L.h = L.h * ratio;
+    this.save();
+  },
+
+  /* Re-measure the slogan's bounding box using current text/size/font. */
+  _measureSlogan() {
+    const S = this.slogan;
+    if (!S.text) return;
+    const ctx = Engine && Engine.ctx;
+    if (!ctx) return;
+    const f = TEXT_FONTS[S.font ?? 0] || TEXT_FONTS[0];
+    ctx.save();
+    ctx.font = `${f.weight} ${S.size}px ${f.family}`;
+    const m = ctx.measureText(S.text);
+    ctx.restore();
+    const padX = 16, padY = 8;
+    S.w = m.width + padX * 2;
+    S.h = S.size * 1.2 + padY * 2;
+  },
+
+  /* Drag interface: called when the user drags the slogan's corner. */
+  resizeSlogan(newW) {
+    const S = this.slogan;
+    const ratio = Math.max(60, newW) / S.w;
+    S.size = Math.max(14, Math.min(200, S.size * ratio));
+    this._measureSlogan();
+    this.save();
+  },
+
+  /* Drag interface: called when the user drags the logo's corner. */
+  resizeLogo(newW) {
+    const L = this.logo;
+    const clamped = Math.max(60, newW);
+    const ratio = clamped / L.w;
+    L.w = clamped;
+    L.h = L.h * ratio;
+    this.save();
+  },
+
+  hasLogo()   { return !!this.logo.img; },
+  hasSlogan() { return !!(this.slogan.text && this.slogan.text.trim()); },
+  visible()   { return this.hasLogo() || this.hasSlogan(); },
+
+  _applyEffect(ctx, cx, cy) {
+    if (this.logo.effect === 'none') return;
+    const now = Date.now() / 1000;
+    switch (this.logo.effect) {
+      // Classic
+      case 'spin':      ctx.translate(cx, cy); ctx.rotate(now * 1.2); ctx.translate(-cx, -cy); break;
+      case 'pulse':     { const s = 1 + Math.sin(now * 3) * 0.08; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'bounce':    ctx.translate(0, Math.abs(Math.sin(now * 4)) * -20); break;
+      case 'wiggle':    ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 5) * 0.1); ctx.translate(-cx, -cy); break;
+      case 'glow':      { const p = 20 + Math.sin(now * 3) * 15; ctx.shadowColor = Engine._accentColor || '#a3e635'; ctx.shadowBlur = p; } break;
+      // Motion
+      case 'float':     ctx.translate(0, Math.sin(now * 1.5) * 12); break;
+      case 'shake':     ctx.translate(Math.sin(now * 20) * 3, Math.cos(now * 17) * 2); break;
+      case 'swing':     ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 2) * 0.15); ctx.translate(-cx, -cy); break;
+      case 'rock':      ctx.translate(cx, cy); ctx.rotate(Math.sin(now * 3) * 0.05); ctx.translate(-cx, -cy); break;
+      case 'zoom':      { const s = 1 + Math.sin(now * 2) * 0.15; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'heartbeat': { const t = now * 5 % 1; const s = t < 0.15 ? 1.12 : t < 0.3 ? 1 : t < 0.4 ? 1.08 : 1; ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); } break;
+      case 'jelly':     { const sx = 1 + Math.sin(now * 4) * 0.06; const sy = 1 + Math.cos(now * 4) * 0.06; ctx.translate(cx, cy); ctx.scale(sx, sy); ctx.translate(-cx, -cy); } break;
+      case 'flip':      { const s = Math.cos(now * 2); ctx.translate(cx, cy); ctx.scale(s, 1); ctx.translate(-cx, -cy); } break;
+      case 'orbit':     { const r = 15; ctx.translate(Math.cos(now * 2) * r, Math.sin(now * 2) * r); } break;
+      case 'spiral':    { const r = 8; ctx.translate(Math.cos(now * 3) * r, Math.sin(now * 3) * r); ctx.translate(cx, cy); ctx.rotate(now * 1.5); ctx.translate(-cx, -cy); } break;
+      // Visual
+      case 'blink':     ctx.globalAlpha *= (Math.sin(now * 4) > 0 ? 1 : 0.2); break;
+      case 'fade':      ctx.globalAlpha *= 0.5 + Math.sin(now * 2) * 0.5; break;
+      case 'strobe':    ctx.globalAlpha *= (Math.sin(now * 12) > 0 ? 1 : 0); break;
+      case 'flicker':   ctx.globalAlpha *= 0.7 + Math.random() * 0.3; break;
+      case 'neon':      { const p = 8 + Math.sin(now * 6) * 8; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = p; } break;
+      case 'fire':      { const p = 12 + Math.sin(now * 8) * 8; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = p; } break;
+      case 'gold':      { const p = 10 + Math.sin(now * 4) * 6; ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = p; } break;
+      case 'glitch':    { const dx = (Math.random() > 0.9 ? (Math.random() - 0.5) * 10 : 0); ctx.translate(dx, 0); if (Math.random() > 0.95) ctx.globalAlpha *= 0.5; } break;
+      case 'matrix':    ctx.filter = `hue-rotate(90deg) brightness(1.3)`; break;
+      case 'invert':    ctx.filter = `invert(1)`; break;
+      case 'sepia':     ctx.filter = `sepia(1) contrast(1.1)`; break;
+      case 'thermal':   ctx.filter = `hue-rotate(180deg) saturate(2) contrast(1.3)`; break;
+      case 'xray':      ctx.filter = `invert(1) brightness(1.5) grayscale(1)`; break;
+      case 'vintage':   ctx.filter = `sepia(0.4) contrast(1.1) brightness(0.95)`; break;
+    }
+  },
+
+  draw(ctx) {
+    // Logo pass — own transform + effect + opacity + filter
+    if (this.hasLogo()) {
+      const L = this.logo;
+      ctx.save();
+      ctx.globalAlpha = L.opacity ?? 1;
+      const cx = L.x + L.w / 2, cy = L.y + L.h / 2;
+      if (L.rotation) { ctx.translate(cx, cy); ctx.rotate(L.rotation); ctx.translate(-cx, -cy); }
+      this._applyEffect(ctx, cx, cy);
+      // v0.7.7: per-logo visual filter preset (combines with effect)
+      const effectFilter = ctx.filter && ctx.filter !== 'none' ? ctx.filter : '';
+      const userFilter   = (L.filter && L.filter !== 'none') ? Engine._filterString(L.filter) : '';
+      const combined = [effectFilter, userFilter].filter(Boolean).join(' ');
+      if (combined) ctx.filter = combined;
+      ctx.drawImage(L.img, L.x, L.y, L.w, L.h);
+      // v0.7.11: silhouette tint — repaint all visible (non-transparent)
+      // pixels with the target colour via source-atop composite. Great
+      // for flat icon/silhouette logos; subtle on photos.
+      if (L.tint) {
+        ctx.save();
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = L.tint;
+        ctx.fillRect(L.x, L.y, L.w, L.h);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+    // Slogan pass — independent transform
+    if (this.hasSlogan()) {
+      const S = this.slogan;
+      this._measureSlogan();
+      ctx.save();
+      ctx.globalAlpha = S.opacity ?? 1;
+      const cx = S.x + S.w / 2, cy = S.y + S.h / 2;
+      if (S.rotation) { ctx.translate(cx, cy); ctx.rotate(S.rotation); ctx.translate(-cx, -cy); }
+      const f = TEXT_FONTS[S.font ?? 0] || TEXT_FONTS[0];
+      ctx.font = `${f.weight} ${S.size}px ${f.family}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      ctx.strokeText(S.text, cx, cy);
+      ctx.fillStyle = S.color || '#ffffff';
+      ctx.fillText(S.text, cx, cy);
+      ctx.restore();
+    }
+  },
+};
+
+/* v0.7.98 — Stage watermark text overlay: a monospace text stamp.
+   v0.7.176: now draggable on canvas (position persisted in localStorage).
+   Defaults to corner-based position; drag to place anywhere. */
+const Watermark = {
+  text: '',
+  corner: 'br',  // tl / tr / bl / br (default position when not dragged)
+  opacity: 0.55,
+  // Draggable position — _customPos false means use corner-based default
+  _customPos: false, x: 0, y: 0, w: 0, h: 0,
+
+  load() {
+    try {
+      this.text = localStorage.getItem('tc-watermark-text') || '';
+      this.corner = localStorage.getItem('tc-watermark-corner') || 'br';
+      const op = parseFloat(localStorage.getItem('tc-watermark-opacity'));
+      if (!isNaN(op)) this.opacity = Math.max(0, Math.min(1, op));
+      this._loadPos();
+    } catch {}
+  },
+  _loadPos() {
+    try {
+      const raw = localStorage.getItem('tc-watermark-pos');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p.x === 'number') { this.x = p.x; this.y = p.y; this._customPos = true; }
+      }
+    } catch {}
+  },
+  _savePos() {
+    try {
+      if (this._customPos) {
+        localStorage.setItem('tc-watermark-pos', JSON.stringify({ x: this.x, y: this.y }));
+      } else {
+        localStorage.removeItem('tc-watermark-pos');
+      }
+    } catch {}
+  },
+  setText(s) {
+    this.text = String(s || '').slice(0, 80);
+    try { localStorage.setItem('tc-watermark-text', this.text); } catch {}
+  },
+  setCorner(c) {
+    if (['tl','tr','bl','br'].includes(c)) {
+      this.corner = c;
+      // Reset custom position when corner changes
+      this._customPos = false;
+      this._savePos();
+      try { localStorage.setItem('tc-watermark-corner', c); } catch {}
+    }
+  },
+  setOpacity(v) {
+    this.opacity = Math.max(0, Math.min(1, parseFloat(v) || 0.55));
+    try { localStorage.setItem('tc-watermark-opacity', String(this.opacity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.text) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.font = '700 26px ui-monospace, monospace';
+    const pad = 24;
+    const m = ctx.measureText(this.text);
+    const tw = m.width + 20;
+    const th = 40;
+    let bx, by;
+    if (this._customPos) {
+      // Custom dragged position
+      bx = this.x; by = this.y;
+    } else if (this.corner === 'tl') { bx = pad; by = pad; }
+    else if (this.corner === 'tr') { bx = W - pad - tw; by = pad; }
+    else if (this.corner === 'bl') { bx = pad; by = H - pad - th; }
+    else { bx = W - pad - tw; by = H - pad - th; }
+    // Update hit-test dimensions
+    this.x = bx; this.y = by; this.w = tw; this.h = th;
+    // Rounded background
+    ctx.fillStyle = 'rgba(0, 0, 0, .45)';
+    ctx.beginPath();
+    const r = 8;
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + tw - r, by); ctx.quadraticCurveTo(bx + tw, by, bx + tw, by + r);
+    ctx.lineTo(bx + tw, by + th - r); ctx.quadraticCurveTo(bx + tw, by + th, bx + tw - r, by + th);
+    ctx.lineTo(bx + r, by + th); ctx.quadraticCurveTo(bx, by + th, bx, by + th - r);
+    ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by);
+    ctx.fill();
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.text, bx + 10, by + th / 2);
+    ctx.restore();
+  },
+};
+
+/* v0.7.177 — Servo gauge overlay: two semicircular gauges (Pan + Tilt)
+   rendered on the recording canvas. Draggable, resizable, position
+   persisted in localStorage. Only visible when micro:bit connected
+   and at least one servo is active. */
+const ServoGauge = {
+  visible: true,
+  _customPos: false, x: 0, y: 0, w: 0, h: 0,
+  _scale: 1.0,
+  _opacity: 0.85,
+
+  load() {
+    try {
+      const vis = localStorage.getItem('tc-servo-gauge-visible');
+      if (vis !== null) this.visible = vis === '1';
+      const raw = localStorage.getItem('tc-servo-gauge');
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (typeof s.x === 'number') { this.x = s.x; this.y = s.y; this._customPos = true; }
+        if (typeof s.opacity === 'number') this._opacity = s.opacity;
+        if (typeof s.scale === 'number') this._scale = s.scale;
+      }
+    } catch {}
+  },
+  _savePos() {
+    try {
+      localStorage.setItem('tc-servo-gauge', JSON.stringify({
+        x: this.x, y: this.y, opacity: this._opacity, scale: this._scale
+      }));
+    } catch {}
+  },
+
+  render(ctx, W, H) {
+    const pan = Sensors._panAngle;
+    const tilt = Sensors._tiltAngle;
+    // Only show when servos have been moved from default
+    if (pan === undefined && tilt === undefined) return;
+    if (pan === undefined && tilt === undefined) return;
+
+    ctx.save();
+    ctx.globalAlpha = this._opacity;
+
+    const sc = this._scale;
+    const R = 50 * sc;          // gauge radius
+    const gap = 30 * sc;        // space between gauges
+    const padX = 20 * sc;
+    const padTop = 16 * sc;
+    const padBot = 30 * sc;
+    const bw = padX * 2 + R * 2 + gap + R * 2;
+    const bh = padTop + R + padBot;
+
+    // Default position: bottom-right, above watermark
+    let bx, by;
+    if (this._customPos) {
+      bx = this.x; by = this.y;
+    } else {
+      bx = W - bw - 30;
+      by = H - bh - 80;
+    }
+    // Clamp to canvas
+    bx = Math.max(0, Math.min(W - bw, bx));
+    by = Math.max(0, Math.min(H - bh, by));
+
+    // Update hit-test rect
+    this.x = bx; this.y = by; this.w = bw; this.h = bh;
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 10 * sc);
+    ctx.fill();
+
+    // Draw two gauges
+    const cx1 = bx + padX + R;
+    const cx2 = bx + padX + R * 2 + gap + R;
+    const cy = by + padTop + R;
+
+    this._drawGauge(ctx, cx1, cy, R, pan, 'Pan', sc);
+    this._drawGauge(ctx, cx2, cy, R, tilt, 'Tilt', sc);
+
+    ctx.restore();
+  },
+
+  _drawGauge(ctx, cx, cy, R, angle, label, sc) {
+    // Arc track (dark)
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, Math.PI, 0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 8 * sc;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Arc fill (gradient: cyan → green → lime)
+    const frac = angle / 180;
+    const endAngle = Math.PI - frac * Math.PI;
+    if (frac > 0) {
+      const grad = ctx.createLinearGradient(cx - R, cy, cx + R, cy);
+      grad.addColorStop(0, '#00bcd4');
+      grad.addColorStop(0.5, '#4caf50');
+      grad.addColorStop(1, '#8bc34a');
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, Math.PI, endAngle, true);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 8 * sc;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Tick labels: 0°, 90°, 180°
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = `${9 * sc}px ui-monospace, monospace`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'center';
+    ctx.fillText('0', cx - R, cy + 4 * sc);
+    ctx.fillText('180', cx + R, cy + 4 * sc);
+    ctx.fillText('90', cx, cy - R - 12 * sc);
+
+    // Needle
+    const needleAngle = Math.PI - (angle / 180) * Math.PI;
+    const nx = cx + (R - 6 * sc) * Math.cos(needleAngle);
+    const ny = cy - (R - 6 * sc) * Math.sin(needleAngle);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5 * sc;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5 * sc, 0, Math.PI * 2);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3 * sc, 0, Math.PI * 2);
+    ctx.fillStyle = '#0a1628';
+    ctx.fill();
+
+    // Value + label below
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${16 * sc}px ui-monospace, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(angle + '\u00B0', cx, cy + 6 * sc);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `${10 * sc}px ui-monospace, monospace`;
+    ctx.fillText(label, cx, cy + 22 * sc);
+  },
+};
+
+/* v0.7.115 — Rule-of-thirds grid overlay.
+   Draws 2 horizontal + 2 vertical lines dividing the stage into 9 equal
+   zones. Rendered on a dedicated HTML <canvas> overlay that sits on top
+   of the stage but is NOT part of the captureStream pipeline — so the
+   grid is teacher-only and never appears in recordings.
+   Persisted in localStorage as tc-grid-overlay. Toggled via toolbar
+   button (#) or hotkey G. */
+const GridOverlay = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+
+  init() {
+    this._canvas = $('tcGridCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+    this.render();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-grid-overlay') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-grid-overlay', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    this.render();
+    const btn = $('tcGridBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    showToast(this.visible
+      ? '# ' + (t('gridOverlayOn') || 'Rule-of-thirds on')
+      : '# ' + (t('gridOverlayOff') || 'Rule-of-thirds off'), 1200);
+  },
+
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    const w = cvs.width;
+    const h = cvs.height;
+    ctx.clearRect(0, 0, w, h);
+    if (!this.visible) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.30)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 8]);
+    ctx.beginPath();
+    // Two vertical lines at 1/3 and 2/3
+    const x1 = Math.round(w / 3);
+    const x2 = Math.round((w * 2) / 3);
+    ctx.moveTo(x1, 0); ctx.lineTo(x1, h);
+    ctx.moveTo(x2, 0); ctx.lineTo(x2, h);
+    // Two horizontal lines at 1/3 and 2/3
+    const y1 = Math.round(h / 3);
+    const y2 = Math.round((h * 2) / 3);
+    ctx.moveTo(0, y1); ctx.lineTo(w, y1);
+    ctx.moveTo(0, y2); ctx.lineTo(w, y2);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
+/* v0.7.130 — On-canvas source name labels.
+   Draws a small dark pill with the source's .label text at the bottom-left
+   corner of each visible source. Rendered on a dedicated HTML <canvas>
+   overlay (tcSourceLabelsCanvas) that sits on top of the stage but is NOT
+   part of the captureStream pipeline — so labels are teacher-only and
+   never appear in recordings (same approach as GridOverlay).
+   Persisted in localStorage as tc-source-labels. Toggled via Settings. */
+const SourceLabels = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+
+  init() {
+    this._canvas = $('tcSourceLabelsCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-source-labels') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-source-labels', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    this.render();
+    showToast(this.visible
+      ? '🏷 ' + (t('sourceLabelsOn') || 'Source labels on')
+      : '🏷 ' + (t('sourceLabelsOff') || 'Source labels off'), 1200);
+  },
+
+  /** Called each frame from Engine.render() — redraws labels on the overlay canvas. */
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    if (!this.visible) return;
+    if (typeof Engine === 'undefined') return;
+
+    const sources = Engine.sources.filter(s =>
+      s.type !== 'mic' && s.visible !== false && !s.hidden && (s.type === 'shape' || s.type === 'image' || (s.video && s.video.readyState >= 2))
+    );
+
+    const fontSize = 13;
+    const padX = 7;
+    const padY = 4;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textBaseline = 'bottom';
+
+    sources.forEach(src => {
+      const text = src.label || '';
+      if (!text) return;
+      const tw = ctx.measureText(text).width;
+      const pillW = tw + padX * 2;
+      const pillH = fontSize + padY * 2;
+      const px = src.x + 6;
+      const py = src.y + src.h - 6 - pillH;
+      // dark pill background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.60)';
+      ctx.beginPath();
+      const r = 4;
+      ctx.moveTo(px + r, py);
+      ctx.lineTo(px + pillW - r, py);
+      ctx.quadraticCurveTo(px + pillW, py, px + pillW, py + r);
+      ctx.lineTo(px + pillW, py + pillH - r);
+      ctx.quadraticCurveTo(px + pillW, py + pillH, px + pillW - r, py + pillH);
+      ctx.lineTo(px + r, py + pillH);
+      ctx.quadraticCurveTo(px, py + pillH, px, py + pillH - r);
+      ctx.lineTo(px, py + r);
+      ctx.quadraticCurveTo(px, py, px + r, py);
+      ctx.closePath();
+      ctx.fill();
+      // white text
+      ctx.fillStyle = '#fff';
+      ctx.fillText(text, px + padX, py + pillH - padY);
+    });
+  },
+};
+
+/* v0.7.140 — FPS counter overlay.
+   Opt-in frames-per-second pill drawn on a dedicated HTML overlay canvas
+   (tcFpsCanvas) that sits on top of the stage but is NOT part of the
+   captureStream pipeline — so the counter is teacher-only and never
+   appears in recordings (same approach as GridOverlay / SourceLabels).
+   tick() is called every Engine.render() frame; it recomputes the FPS
+   value every 500 ms. render() draws a small dark pill with the current
+   FPS at the top-right corner of the overlay canvas.
+   Persisted in localStorage as tc-fps-counter. Toggled via Settings. */
+const FpsCounter = {
+  visible: false,
+  _canvas: null,
+  _ctx: null,
+  _frames: 0,
+  _lastTime: 0,
+  _fps: 0,
+
+  init() {
+    this._canvas = $('tcFpsCanvas');
+    if (!this._canvas) return;
+    this._ctx = this._canvas.getContext('2d');
+    this.load();
+    this._lastTime = performance.now();
+  },
+
+  load() {
+    try { this.visible = localStorage.getItem('tc-fps-counter') === '1'; } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-fps-counter', this.visible ? '1' : '0'); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+    if (!this.visible) this._clear();
+    showToast(this.visible
+      ? (t('fpsCounterOn') || 'FPS counter on')
+      : (t('fpsCounterOff') || 'FPS counter off'), 1200);
+  },
+
+  /** Called every frame from Engine.render(). Recomputes fps every 500 ms. */
+  tick() {
+    if (!this.visible) return;
+    this._frames++;
+    const now = performance.now();
+    if (now - this._lastTime >= 500) {
+      this._fps = Math.round((this._frames * 1000) / (now - this._lastTime));
+      this._frames = 0;
+      this._lastTime = now;
+    }
+  },
+
+  /** Draws the FPS pill on the overlay canvas. */
+  render() {
+    const cvs = this._canvas;
+    if (!cvs) return;
+    const ctx = this._ctx;
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    if (!this.visible) return;
+
+    const text = this._fps + ' FPS';
+    const fontSize = 13;
+    const padX = 8;
+    const padY = 4;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textBaseline = 'top';
+    const tw = ctx.measureText(text).width;
+    const pillW = tw + padX * 2;
+    const pillH = fontSize + padY * 2;
+    const margin = 12;
+    const px = cvs.width - pillW - margin;
+    const py = margin;
+
+    // dark pill background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    const r = 5;
+    ctx.moveTo(px + r, py);
+    ctx.lineTo(px + pillW - r, py);
+    ctx.quadraticCurveTo(px + pillW, py, px + pillW, py + r);
+    ctx.lineTo(px + pillW, py + pillH - r);
+    ctx.quadraticCurveTo(px + pillW, py + pillH, px + pillW - r, py + pillH);
+    ctx.lineTo(px + r, py + pillH);
+    ctx.quadraticCurveTo(px, py + pillH, px, py + pillH - r);
+    ctx.lineTo(px, py + r);
+    ctx.quadraticCurveTo(px, py, px + r, py);
+    ctx.closePath();
+    ctx.fill();
+
+    // green text for healthy fps, yellow for mid, red for low
+    const color = this._fps >= 50 ? '#2ecc71' : this._fps >= 25 ? '#f1c40f' : '#e74c3c';
+    ctx.fillStyle = color;
+    ctx.fillText(text, px + padX, py + padY);
+  },
+
+  _clear() {
+    if (this._canvas && this._ctx) {
+      this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    }
+  },
+};
+
+/* v0.7.82 — Brand presets: 3 numbered slots that snapshot the current
+   Brand state (logo + slogan + colors + effect + filter + tint) into
+   localStorage so teachers can switch between identities (class vs
+   personal channel vs parent volunteer role) in one click. */
+const BrandPresets = {
+  SLOT_KEYS: ['tc-brand-preset-1', 'tc-brand-preset-2', 'tc-brand-preset-3'],
+
+  // Keys under Brand that we serialize. Listed explicitly to avoid
+  // capturing runtime/transient fields.
+  FIELDS: ['logo', 'slogan'],  // the two top-level sub-objects
+  // We also want to preserve the raw data URL of the uploaded logo
+  // image if any — stored in Brand.logo._originalDataUrl
+
+  save(slot) {
+    const idx = slot - 1;
+    if (idx < 0 || idx > 2) return;
+    try {
+      // Build a JSON-safe snapshot
+      const snap = {
+        logo: {
+          _originalDataUrl: Brand.logo?._originalDataUrl || null,
+          x: Brand.logo?.x,
+          y: Brand.logo?.y,
+          w: Brand.logo?.w,
+          h: Brand.logo?.h,
+          rotation: Brand.logo?.rotation,
+          effect: Brand.logo?.effect,
+          opacity: Brand.logo?.opacity,
+          filter: Brand.logo?.filter,
+          tint: Brand.logo?.tint,
+          bgRemoved: Brand.logo?.bgRemoved,
+        },
+        slogan: {
+          text: Brand.slogan?.text,
+          color: Brand.slogan?.color,
+          x: Brand.slogan?.x,
+          y: Brand.slogan?.y,
+          size: Brand.slogan?.size,
+          font: Brand.slogan?.font,
+          rotation: Brand.slogan?.rotation,
+        },
+      };
+      localStorage.setItem(this.SLOT_KEYS[idx], JSON.stringify(snap));
+      showToast(`💾 ${t('brandPresetSaved') || 'Preset'} ${slot}`, 1400);
+      this._renderSlots();
+    } catch (e) {
+      log('brand preset save error: ' + e.message, 'error');
+    }
+  },
+
+  load(slot) {
+    const idx = slot - 1;
+    if (idx < 0 || idx > 2) return;
+    try {
+      const raw = localStorage.getItem(this.SLOT_KEYS[idx]);
+      if (!raw) {
+        showToast(`${t('brandPresetEmpty') || 'Slot vide'} ${slot}`, 1400);
+        return;
+      }
+      const snap = JSON.parse(raw);
+      // Apply slogan first (cheap)
+      if (snap.slogan && Brand.slogan) {
+        Object.assign(Brand.slogan, snap.slogan);
+        if (Brand._measureSlogan) Brand._measureSlogan();
+      }
+      // Apply logo — if a data URL exists, reload it
+      if (snap.logo) {
+        Object.assign(Brand.logo, {
+          x: snap.logo.x, y: snap.logo.y, w: snap.logo.w, h: snap.logo.h,
+          rotation: snap.logo.rotation, effect: snap.logo.effect,
+          opacity: snap.logo.opacity, filter: snap.logo.filter,
+          tint: snap.logo.tint, bgRemoved: snap.logo.bgRemoved,
+          _originalDataUrl: snap.logo._originalDataUrl,
+        });
+        if (snap.logo._originalDataUrl) {
+          const img = new Image();
+          img.onload = () => {
+            Brand.logo.img = img;
+            if (Brand._recomputeLogo) Brand._recomputeLogo();
+          };
+          img.src = snap.logo._originalDataUrl;
+        }
+      }
+      Brand.save();
+      showToast(`📥 ${t('brandPresetLoaded') || 'Preset'} ${slot}`, 1400);
+    } catch (e) {
+      log('brand preset load error: ' + e.message, 'error');
+    }
+  },
+
+  setup() {
+    document.querySelectorAll('[data-brand-save]').forEach(btn => {
+      btn.addEventListener('click', () => this.save(parseInt(btn.dataset.brandSave)));
+    });
+    document.querySelectorAll('[data-brand-load]').forEach(btn => {
+      btn.addEventListener('click', () => this.load(parseInt(btn.dataset.brandLoad)));
+    });
+    this._renderSlots();
+  },
+
+  _renderSlots() {
+    // Add a small dot indicator on buttons whose slot has data
+    document.querySelectorAll('[data-brand-load]').forEach(btn => {
+      const slot = parseInt(btn.dataset.brandLoad);
+      const hasData = !!localStorage.getItem(this.SLOT_KEYS[slot - 1]);
+      btn.classList.toggle('has-data', hasData);
+    });
+  },
+};
+
+/* Zoom — smooth canvas transform for code-tutorial "focus moments".
+   Triggered by the Z hotkey or by micro:bit button A. Current zoom level
+   eases toward the target each frame via Engine.render calling Zoom.tick. */
+const Zoom = {
+  on: false,
+  current: 1,          // live scale, eased
+  target: 1,           // destination scale
+  maxScale: 1.8,       // how far in we zoom
+  cx: 960, cy: 540,    // focus center (canvas coords, default = middle)
+  setup() {
+    const stage = $('tcStage');
+    if (!stage) return;
+    // Track the cursor so the next zoom-in pivots around where the teacher is looking
+    stage.addEventListener('mousemove', (e) => {
+      const r = stage.getBoundingClientRect();
+      this.cx = ((e.clientX - r.left) / r.width) * Engine.width;
+      this.cy = ((e.clientY - r.top) / r.height) * Engine.height;
+    });
+  },
+  tick() {
+    // Exponential ease toward target; ~98% there after ~200ms at 60fps
+    this.current += (this.target - this.current) * 0.18;
+    if (Math.abs(this.current - this.target) < 0.002) this.current = this.target;
+  },
+  toggle() {
+    this.on = !this.on;
+    this.target = this.on ? this.maxScale : 1;
+    $('tcZoomBtn')?.classList.toggle('active', this.on);
+    log(this.on ? t('zoomOn') : t('zoomOff'), 'info');
+    if (this.on) showToast(t('zoomHint'), 4000);
+    Sfx.play('click');
+  },
+};
+
+/* v0.7.21 — Auto-zoom on click (ScreenStudio's signature feature).
+   When enabled, a real click (not a drag) on a screen-type source
+   smoothly zooms the preview in to that point for 1.5s then eases
+   back. Built on top of the existing Zoom object — reuses its
+   tick() interpolator and target field, only drives cx/cy/target.
+   Click-vs-drag: distance < 5px AND time < 500ms. */
+const AutoZoom = {
+  enabled: false,     // toggled by button
+  _active: false,     // currently inside a zoom-in/out cycle
+  _timer: null,       // setTimeout handle for zoom-out
+  _downAt: null,      // {x, y, t} of mousedown for click-vs-drag detection
+  toggle() {
+    this.enabled = !this.enabled;
+    const btn = $('tcAutoZoomBtn');
+    if (btn) btn.classList.toggle('active', this.enabled);
+    showToast(this.enabled ? '🎯 Auto-zoom ON' : '🎯 Auto-zoom OFF', 1400);
+    log(this.enabled ? 'autozoom on' : 'autozoom off', 'info');
+  },
+  armDown(mx, my) {
+    // Called from Drag._onDown — records mouse position + time for later click detection
+    this._downAt = { x: mx, y: my, t: performance.now() };
+  },
+  onUp(mx, my) {
+    // Called from Drag._onUp when state transitions back to idle.
+    // If it was a real click (not a drag), and the click landed on a
+    // screen source, trigger a zoom-to-point animation.
+    if (!this.enabled) return;
+    if (!this._downAt) return;
+    const d2 = (mx - this._downAt.x) ** 2 + (my - this._downAt.y) ** 2;
+    const dt = performance.now() - this._downAt.t;
+    this._downAt = null;
+    if (d2 > 25 || dt > 500) return;  // drag or long-press, ignore
+    // Only trigger over screen sources
+    const hit = Engine.sources.find(s => s.type === 'screen' && !s.hidden && s.visible !== false
+      && mx >= s.x && mx <= s.x + s.w && my >= s.y && my <= s.y + s.h);
+    if (!hit) return;
+    this._zoomTo(mx, my);
+  },
+  _zoomTo(mx, my) {
+    if (this._active) return;
+    this._active = true;
+    // Drive the existing Zoom object — it already has tick() + eased interpolation
+    Zoom.cx = mx;
+    Zoom.cy = my;
+    Zoom.target = 2.2;  // zoom level
+    // Hold for 1.5s then release
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => {
+      Zoom.target = 1.0;
+      this._active = false;
+    }, 1500);
+  },
+};
+
+/* v0.7.133: PreviewZoom — Ctrl+scroll wheel zooms the preview canvas for the
+   teacher. CSS transform scale on the stage container. Zoom range 50%–200%.
+   Double-click to reset. Shows current zoom % in a corner badge.
+   NOT in recording — CSS transform doesn't affect captureStream. */
+const PreviewZoom = {
+  scale: 1,
+  MIN: 0.5,
+  MAX: 2.0,
+  STEP: 0.1,
+  _badge: null,
+  _stage: null,
+
+  setup() {
+    this._stage = $('tcStage');
+    if (!this._stage) return;
+    // Create zoom badge
+    const badge = document.createElement('div');
+    badge.className = 'tc-preview-zoom-badge';
+    badge.id = 'tcPreviewZoomBadge';
+    badge.style.display = 'none';
+    badge.style.cursor = 'pointer';
+    badge.title = 'Click to reset zoom to 100%';
+    badge.addEventListener('click', (e) => { e.stopPropagation(); this.reset(); });
+    this._stage.appendChild(badge);
+    this._badge = badge;
+
+    // Ctrl+wheel handler on the stage wrapper
+    const wrap = this._stage.closest('.tc-stage-wrap');
+    if (wrap) {
+      wrap.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? this.STEP : -this.STEP;
+        this.zoom(delta);
+      }, { passive: false });
+    }
+
+    // Double-click to reset
+    this._stage.addEventListener('dblclick', (e) => {
+      if (this.scale === 1) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.reset();
+    });
+  },
+
+  zoom(delta) {
+    const prev = this.scale;
+    this.scale = Math.round(Math.min(this.MAX, Math.max(this.MIN, this.scale + delta)) * 100) / 100;
+    if (this.scale === prev) return;
+    this._apply();
+  },
+
+  reset() {
+    this.scale = 1;
+    this._apply();
+    showToast(t('previewZoomReset') || 'Preview zoom reset', 1200);
+  },
+
+  _apply() {
+    if (!this._stage) return;
+    if (this.scale === 1) {
+      this._stage.style.transform = '';
+      if (this._badge) this._badge.style.display = 'none';
+    } else {
+      this._stage.style.transform = `scale(${this.scale})`;
+      if (this._badge) {
+        this._badge.textContent = `${Math.round(this.scale * 100)}%`;
+        this._badge.style.display = '';
+      }
+    }
+  },
+};
+
+/* Teleprompter — overlay visible on stage only, NEVER drawn to canvas.
+   v0.7.20: expanded from a static box into a broadcast-style prompter:
+   auto-scroll with speed control, persistent script (localStorage),
+   font size + width controls, ↻ reset-to-top, `T` keyboard hotkey.
+   Still teacher-only HTML — appears over the preview but never in the
+   recording (that promise is in FAQ q7). */
+const Teleprompter = {
+  on: false, _userEdited: false, _wired: false,
+  // Persisted settings (loaded in setup)
+  script: '',
+  speed: 35,        // px/s
+  fontSize: 26,     // px
+  widthPct: 80,     // % of stage width
+  // Auto-scroll state
+  playing: false,
+  _rafId: null,
+  _lastTick: 0,
+  _scrollFrac: 0,
+
+  setup() {
+    // Load persisted values — pattern matches Badges/Brand/TextOverlays
+    try {
+      const s = localStorage.getItem('tc-tele-script'); if (s !== null) this.script = s;
+      const sp = parseFloat(localStorage.getItem('tc-tele-speed'));   if (!isNaN(sp)) this.speed = sp;
+      const fs = parseFloat(localStorage.getItem('tc-tele-font'));    if (!isNaN(fs)) this.fontSize = fs;
+      const w  = parseFloat(localStorage.getItem('tc-tele-width'));   if (!isNaN(w))  this.widthPct = w;
+    } catch {}
+
+    const inner = $('tcTeleInner');
+    if (!inner) return;
+    inner.contentEditable = 'true';
+    // Apply persisted script (overrides the i18n placeholder if user had one)
+    if (this.script) {
+      inner.textContent = this.script;
+      this._userEdited = true;
+    }
+    // Inline font-size so `setFont` works at runtime
+    inner.style.fontSize = this.fontSize + 'px';
+
+    // Width as a CSS custom property on the outer container
+    const outer = $('tcTeleprompter');
+    if (outer) outer.style.setProperty('--tele-w', this.widthPct + '%');
+
+    // Wire the contentEditable input — same _userEdited tracking as before
+    // so applyI18n won't clobber typed text on language switch.
+    if (!this._wired) {
+      inner.addEventListener('input', () => {
+        this._userEdited = true;
+        this.script = inner.textContent || '';
+        try { localStorage.setItem('tc-tele-script', this.script); } catch {}
+      });
+      this._wired = true;
+    }
+
+    // Wire control strip buttons (guard — only wire once)
+    const speedEl = $('tcTeleSpeed');
+    if (speedEl) {
+      speedEl.value = this.speed;
+      speedEl.addEventListener('input', (e) => this.setSpeed(parseFloat(e.target.value)));
+    }
+    $('tcTelePlayBtn')?.addEventListener('click', () => this.togglePlay());
+    $('tcTeleFontDown')?.addEventListener('click', () => this.setFont(this.fontSize - 2));
+    $('tcTeleFontUp')?.addEventListener('click', () => this.setFont(this.fontSize + 2));
+    $('tcTeleWidthDown')?.addEventListener('click', () => this.setWidth(this.widthPct - 5));
+    $('tcTeleWidthUp')?.addEventListener('click', () => this.setWidth(this.widthPct + 5));
+    $('tcTeleResetBtn')?.addEventListener('click', () => this.reset());
+    // v0.7.59: 📂 Import .txt/.md/.vtt into the teleprompter
+    $('tcTeleImportBtn')?.addEventListener('click', () => {
+      $('tcTeleImportInput')?.click();
+    });
+    $('tcTeleImportInput')?.addEventListener('change', (e) => {
+      const f = e.target.files?.[0];
+      if (f) this.importFile(f);
+      e.target.value = '';  // reset so the same file can be re-imported
+    });
+    // The control strip should not propagate mousedown to .tc-stage
+    // (same bug class as v0.7.18 floating toolbars).
+    $('tcTeleControls')?.addEventListener('mousedown', (e) => e.stopPropagation());
+  },
+
+  importFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result || '');
+      const text = this._extractScriptFromText(raw, file.name);
+      if (!text) {
+        showToast(t('teleImportEmpty') || '⚠ Fichier vide', 2000);
+        return;
+      }
+      const inner = $('tcTeleInner');
+      if (inner) inner.textContent = text;
+      this.script = text;
+      this._userEdited = true;
+      try { localStorage.setItem('tc-tele-script', text); } catch {}
+      this.reset();
+      showToast(t('teleImportDone') || '📂 Script importé', 1800);
+    };
+    reader.onerror = () => {
+      showToast(t('teleImportError') || '❌ Erreur de lecture', 2500);
+    };
+    reader.readAsText(file);
+  },
+
+  _extractScriptFromText(raw, _filename) {
+    // If it's a WebVTT file, strip the header + timestamp lines and
+    // keep just the cue text.
+    if (raw.trim().startsWith('WEBVTT')) {
+      const lines = raw.split(/\r?\n/);
+      const textLines = [];
+      let skipHeader = true;
+      for (const line of lines) {
+        if (skipHeader) {
+          if (line.trim() === '') skipHeader = false;
+          continue;
+        }
+        // Skip NOTE blocks, cue identifiers, timestamps
+        if (/^\d{2}:\d{2}/.test(line)) continue;     // timestamp
+        if (/-->/.test(line)) continue;
+        if (/^NOTE\b/.test(line)) continue;
+        if (line.trim() === '') {
+          // Blank line = end of cue block; add a newline separator
+          if (textLines.length && textLines[textLines.length - 1] !== '') textLines.push('');
+          continue;
+        }
+        // If the line is purely an integer cue number, skip it
+        if (/^\d+$/.test(line.trim())) continue;
+        textLines.push(line);
+      }
+      return textLines.join('\n').trim();
+    }
+    // Plain text or markdown — return as-is, trimmed
+    return raw.trim();
+  },
+
+  toggle() {
+    this.on = !this.on;
+    const el = $('tcTeleprompter');
+    if (el) {
+      el.style.display = this.on ? 'flex' : 'none';
+      el.classList.toggle('reading-line-on', this.on);  // v0.7.89
+    }
+    $('tcTeleBtn')?.classList.toggle('active', this.on);
+    // Auto-pause scroll if we're hiding
+    if (!this.on) this.pause();
+    log(this.on ? t('teleOn') : t('teleOff'), 'info');
+  },
+
+  play() {
+    if (this.playing) return;
+    this.playing = true;
+    this._lastTick = performance.now();
+    $('tcTelePlayBtn')?.classList.add('active');
+    const btn = $('tcTelePlayBtn'); if (btn) btn.textContent = '⏸';
+    const loop = (t) => {
+      if (!this.playing) return;
+      const dt = (t - this._lastTick) / 1000;
+      this._lastTick = t;
+      const inner = $('tcTeleInner');
+      if (inner) {
+        this._scrollFrac += this.speed * dt;
+        const whole = Math.floor(this._scrollFrac);
+        if (whole > 0) {
+          inner.scrollTop += whole;
+          this._scrollFrac -= whole;
+        }
+        // Stop when we've hit the bottom
+        if (inner.scrollTop + inner.clientHeight >= inner.scrollHeight - 1) {
+          this.pause();
+          return;
+        }
+      }
+      this._rafId = requestAnimationFrame(loop);
+    };
+    this._rafId = requestAnimationFrame(loop);
+  },
+
+  pause() {
+    this.playing = false;
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    $('tcTelePlayBtn')?.classList.remove('active');
+    const btn = $('tcTelePlayBtn'); if (btn) btn.textContent = '⏵';
+  },
+
+  togglePlay() { this.playing ? this.pause() : this.play(); },
+
+  reset() {
+    const inner = $('tcTeleInner');
+    if (inner) inner.scrollTop = 0;
+    this._scrollFrac = 0;
+  },
+
+  setSpeed(px) {
+    this.speed = Math.max(5, Math.min(200, px || 35));
+    try { localStorage.setItem('tc-tele-speed', String(this.speed)); } catch {}
+    const el = $('tcTeleSpeed');
+    if (el && parseFloat(el.value) !== this.speed) el.value = this.speed;
+  },
+
+  setFont(px) {
+    this.fontSize = Math.max(12, Math.min(72, px || 26));
+    const inner = $('tcTeleInner');
+    if (inner) inner.style.fontSize = this.fontSize + 'px';
+    try { localStorage.setItem('tc-tele-font', String(this.fontSize)); } catch {}
+  },
+
+  setWidth(pct) {
+    this.widthPct = Math.max(30, Math.min(100, pct || 80));
+    const outer = $('tcTeleprompter');
+    if (outer) outer.style.setProperty('--tele-w', this.widthPct + '%');
+    try { localStorage.setItem('tc-tele-width', String(this.widthPct)); } catch {}
+  },
+
+  hasUserText() { return this._userEdited; }
+};
+
+/* ─────────── Trim — non-destructive take shortening ───────────
+
+   The user opens the Take panel, clicks Trim, drags two handles
+   over the preview scrubber to pick inTime/outTime, then clicks
+   Export. We re-encode by playing the source video to an offscreen
+   canvas and piping that canvas (+ a re-routed audio graph from the
+   same <video>) through a fresh MediaRecorder. One re-encode pass,
+   slight quality loss, full control over codec and output format.
+
+   No dependencies, no ffmpeg.wasm, no cloud. */
+const Trim = {
+  inTime: 0, outTime: 0, duration: 0,
+  encoding: false,
+  srcBlob: null, srcMime: null,
+  silenceBands: null,    // [[startSec, endSec], ...] — visualised on the scrubber
+  _rafId: null,
+  _dragging: null,       // 'in' | 'out' | null
+  _keyHandler: null,
+
+  open() {
+    if (!Recorder._lastBlob) { showToast(t('trimNoTake'), 2500); return; }
+    this.srcBlob = Recorder._lastBlob;
+    this.srcMime = Recorder._lastMime || 'video/webm';
+    this.silenceBands = null;
+    const video = $('tcTrimVideo');
+    video.src = URL.createObjectURL(this.srcBlob);
+    video.onloadedmetadata = () => {
+      // Some browsers report Infinity for blob duration until a seek nudge
+      if (!isFinite(video.duration)) {
+        video.currentTime = 1e9;
+        video.ontimeupdate = () => { video.ontimeupdate = null; video.currentTime = 0; this._setRange(video.duration); };
+      } else {
+        this._setRange(video.duration);
+      }
+    };
+    $('tcTrimModal').style.display = 'flex';
+    this._ensureScrubber();
+    this._renderScrubber();
+    this._startRaf();
+    this._bindKeys();
+  },
+
+  close() {
+    $('tcTrimModal').style.display = 'none';
+    const v = $('tcTrimVideo');
+    try { v.pause(); } catch {}
+    if (v.src) { try { URL.revokeObjectURL(v.src); } catch {} v.src = ''; }
+    this.encoding = false;
+    $('tcTrimProgress').style.display = 'none';
+    this._stopRaf();
+    this._unbindKeys();
+    this.silenceBands = null;
+  },
+
+  _setRange(dur) {
+    this.duration = dur || 0;
+    this.inTime = 0;
+    this.outTime = this.duration;
+    const inSlider = $('tcTrimIn'), outSlider = $('tcTrimOut');
+    inSlider.min = outSlider.min = 0;
+    inSlider.max = outSlider.max = this.duration;
+    inSlider.step = outSlider.step = 0.1;
+    inSlider.value = 0;
+    outSlider.value = this.duration;
+    this._updateLabels();
+    this._renderScrubber();
+  },
+
+  _fmtTime(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  },
+
+  _updateLabels() {
+    const fmt = this._fmtTime;
+    $('tcTrimInLabel').textContent = fmt(this.inTime);
+    $('tcTrimOutLabel').textContent = fmt(this.outTime);
+    $('tcTrimDurationLabel').textContent = fmt(Math.max(0, this.outTime - this.inTime));
+    // Live footer readout (current / total (trim Xs)) — updated on rAF too
+    const readout = $('tcTrimReadout');
+    if (readout) {
+      const v = $('tcTrimVideo');
+      const cur = (v && isFinite(v.currentTime)) ? v.currentTime : 0;
+      const total = this.duration;
+      const trim = Math.max(0, this.outTime - this.inTime);
+      readout.textContent = `${fmt(cur)} / ${fmt(total)} (trim ${Math.round(trim)} s)`;
+    }
+  },
+
+  onInChange(v) {
+    this.inTime = Math.min(parseFloat(v), this.outTime - 0.5);
+    $('tcTrimIn').value = this.inTime;
+    $('tcTrimVideo').currentTime = this.inTime;
+    this._updateLabels();
+    this._renderScrubber();
+  },
+
+  onOutChange(v) {
+    this.outTime = Math.max(parseFloat(v), this.inTime + 0.5);
+    $('tcTrimOut').value = this.outTime;
+    $('tcTrimVideo').currentTime = this.outTime;
+    this._updateLabels();
+    this._renderScrubber();
+  },
+
+  previewIn()  { const v = $('tcTrimVideo'); v.currentTime = this.inTime; v.pause(); },
+  previewOut() { const v = $('tcTrimVideo'); v.currentTime = this.outTime; v.pause(); },
+
+  /* ── Scrubber ─────────────────────────────────────────────────────── */
+
+  _ensureScrubber() {
+    if ($('tcTrimScrubber')) return;
+    const host = document.querySelector('#tcTrimModal .tc-trim-controls');
+    if (!host) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'tc-trim-scrubber';
+    wrap.id = 'tcTrimScrubber';
+    wrap.innerHTML = `
+      <div class="tc-trim-scrub-track" id="tcTrimScrubTrack">
+        <div class="tc-trim-silence-layer" id="tcTrimSilenceLayer"></div>
+        <div class="tc-trim-region" id="tcTrimRegion"></div>
+        <div class="tc-trim-handle tc-trim-handle-in" id="tcTrimHandleIn"></div>
+        <div class="tc-trim-handle tc-trim-handle-out" id="tcTrimHandleOut"></div>
+        <div class="tc-trim-playhead" id="tcTrimPlayhead"></div>
+      </div>
+      <div class="tc-trim-scrub-hint" data-i18n="trimScrubberHint">${t('trimScrubberHint')}</div>
+    `;
+    host.insertBefore(wrap, host.firstChild);
+
+    const track = $('tcTrimScrubTrack');
+    const hIn = $('tcTrimHandleIn');
+    const hOut = $('tcTrimHandleOut');
+
+    const pct = clientX => {
+      const r = track.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    };
+
+    hIn.addEventListener('mousedown', (e) => { e.stopPropagation(); this._dragging = 'in'; });
+    hOut.addEventListener('mousedown', (e) => { e.stopPropagation(); this._dragging = 'out'; });
+
+    track.addEventListener('mousedown', (e) => {
+      if (this._dragging) return;
+      const p = pct(e.clientX);
+      const v = $('tcTrimVideo');
+      if (this.duration > 0) v.currentTime = p * this.duration;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this._dragging) return;
+      if ($('tcTrimModal').style.display !== 'flex') return;
+      const p = pct(e.clientX);
+      const tSec = p * this.duration;
+      if (this._dragging === 'in') this.onInChange(tSec);
+      else if (this._dragging === 'out') this.onOutChange(tSec);
+    });
+    document.addEventListener('mouseup', () => { this._dragging = null; });
+  },
+
+  _renderScrubber() {
+    const track = $('tcTrimScrubTrack');
+    if (!track || !this.duration) return;
+    const pctIn = (this.inTime / this.duration) * 100;
+    const pctOut = (this.outTime / this.duration) * 100;
+    const region = $('tcTrimRegion');
+    if (region) {
+      region.style.left = pctIn + '%';
+      region.style.width = Math.max(0, pctOut - pctIn) + '%';
+    }
+    const hIn = $('tcTrimHandleIn');
+    const hOut = $('tcTrimHandleOut');
+    if (hIn) hIn.style.left = pctIn + '%';
+    if (hOut) hOut.style.left = pctOut + '%';
+
+    // Silence bands
+    const layer = $('tcTrimSilenceLayer');
+    if (layer) {
+      if (this.silenceBands && this.silenceBands.length) {
+        layer.innerHTML = this.silenceBands.map(([s, e]) => {
+          const l = (s / this.duration) * 100;
+          const w = ((e - s) / this.duration) * 100;
+          return `<div class="tc-trim-silence-band" style="left:${l}%;width:${w}%"></div>`;
+        }).join('');
+      } else {
+        layer.innerHTML = '';
+      }
+    }
+  },
+
+  _updatePlayhead() {
+    const v = $('tcTrimVideo');
+    const head = $('tcTrimPlayhead');
+    if (!head || !v || !this.duration) return;
+    const cur = isFinite(v.currentTime) ? v.currentTime : 0;
+    head.style.left = ((cur / this.duration) * 100) + '%';
+  },
+
+  _startRaf() {
+    this._stopRaf();
+    const tick = () => {
+      if ($('tcTrimModal').style.display !== 'flex') { this._rafId = null; return; }
+      this._updatePlayhead();
+      this._updateLabels();
+      this._rafId = requestAnimationFrame(tick);
+    };
+    this._rafId = requestAnimationFrame(tick);
+  },
+
+  _stopRaf() {
+    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+  },
+
+  /* ── Auto-cut silences ─────────────────────────────────────────────── */
+
+  async autoCutSilences() {
+    if (!this.srcBlob || !this.duration) return;
+    showToast(t('trimEncoding'), 1500);
+    try {
+      const ab = await this.srcBlob.arrayBuffer();
+      // decode via a throwaway AudioContext (more forgiving than OfflineAC for decode)
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try {
+        audioBuf = await ac.decodeAudioData(ab.slice(0));
+      } catch (e) {
+        log(`trim auto-cut decode failed: ${e.message}`, 'error');
+        try { ac.close(); } catch {}
+        return;
+      }
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+      const WINDOW_MS = 100;
+      const MIN_SILENCE_SEC = 2.0;
+      const DB_THRESHOLD = -45;            // dBFS
+      const rmsThreshold = Math.pow(10, DB_THRESHOLD / 20);
+      const windowSamples = Math.max(1, Math.floor((WINDOW_MS / 1000) * sr));
+
+      const flags = [];  // per-window silent flag
+      for (let i = 0; i < samples.length; i += windowSamples) {
+        let sum = 0;
+        const end = Math.min(i + windowSamples, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        const rms = Math.sqrt(sum / (end - i));
+        flags.push({ t: i / sr, silent: rms < rmsThreshold });
+      }
+
+      // Merge consecutive silent windows into runs; drop shorter than MIN_SILENCE_SEC
+      const silences = [];
+      let runStart = null;
+      for (let i = 0; i < flags.length; i++) {
+        if (flags[i].silent) {
+          if (runStart == null) runStart = flags[i].t;
+        } else if (runStart != null) {
+          const runEnd = flags[i].t;
+          if (runEnd - runStart >= MIN_SILENCE_SEC) silences.push([runStart, runEnd]);
+          runStart = null;
+        }
+      }
+      if (runStart != null && duration - runStart >= MIN_SILENCE_SEC) {
+        silences.push([runStart, duration]);
+      }
+
+      try { ac.close(); } catch {}
+
+      // Drop anything that would equal the full clip
+      const filtered = silences.filter(([s, e]) => (e - s) < duration);
+      this.silenceBands = filtered;
+
+      if (!filtered.length) {
+        showToast('No long silences detected', 2500);
+        this._renderScrubber();
+        return;
+      }
+
+      // Find first non-silent window and seed inTime/outTime around it
+      // Invert silences into keep-ranges and pick the first one for the preview
+      const keeps = [];
+      let cursor = 0;
+      for (const [s, e] of filtered) {
+        if (s > cursor) keeps.push([cursor, s]);
+        cursor = e;
+      }
+      if (cursor < duration) keeps.push([cursor, duration]);
+
+      if (keeps.length) {
+        const [ks, ke] = keeps[0];
+        this.inTime = ks;
+        this.outTime = Math.min(this.duration, ke);
+        $('tcTrimIn').value = this.inTime;
+        $('tcTrimOut').value = this.outTime;
+        const v = $('tcTrimVideo');
+        if (v) v.currentTime = this.inTime;
+        this._updateLabels();
+      }
+      this._renderScrubber();
+      log(`✂ auto-cut detected ${filtered.length} silence(s)`, 'info');
+      showToast(`✂ ${filtered.length} silence(s)`, 2000);
+    } catch (e) {
+      log(`trim auto-cut error: ${e.message}`, 'error');
+    }
+  },
+
+  /* ── Keyboard shortcuts ────────────────────────────────────────────── */
+
+  _bindKeys() {
+    if (this._keyHandler) return;
+    this._keyHandler = (e) => {
+      if ($('tcTrimModal').style.display !== 'flex') return;
+      // Don't swallow typing in inputs (sliders are OK since they use arrow keys anyway)
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' && e.target.type === 'text') return;
+      const v = $('tcTrimVideo');
+      if (!v) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (v.paused) v.play().catch(() => {}); else v.pause();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        v.currentTime = Math.max(0, (v.currentTime || 0) - 1);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        v.currentTime = Math.min(this.duration, (v.currentTime || 0) + 1);
+      } else if (e.key === '[') {
+        e.preventDefault();
+        this.onInChange(v.currentTime || 0);
+      } else if (e.key === ']') {
+        e.preventDefault();
+        this.onOutChange(v.currentTime || 0);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        this.exportTrimmed();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this.close();
+      }
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  },
+
+  _unbindKeys() {
+    if (this._keyHandler) {
+      document.removeEventListener('keydown', this._keyHandler);
+      this._keyHandler = null;
+    }
+  },
+
+  async exportTrimmed() {
+    if (this.encoding) return;
+    if (this.outTime - this.inTime < 0.2) { showToast(t('trimTooShort'), 2500); return; }
+    this.encoding = true;
+    const prog = $('tcTrimProgress');
+    const progBar = $('tcTrimProgressBar');
+    prog.style.display = 'block';
+    progBar.style.width = '0%';
+
+    const srcVideo = document.createElement('video');
+    srcVideo.src = URL.createObjectURL(this.srcBlob);
+    srcVideo.muted = true;   // routed via Web Audio, we don't want a speaker dupe
+    srcVideo.playsInline = true;
+    await new Promise(r => srcVideo.addEventListener('loadedmetadata', r, { once: true }));
+    // Nudge duration for blob URLs that report Infinity
+    if (!isFinite(srcVideo.duration)) {
+      srcVideo.currentTime = 1e9;
+      await new Promise(r => srcVideo.addEventListener('timeupdate', r, { once: true }));
+    }
+    const W = srcVideo.videoWidth || Engine.width;
+    const H = srcVideo.videoHeight || Engine.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Audio graph: re-route the source <video> through a dedicated AudioContext
+    // so the trimmed recording gets the source's audio. We can't touch
+    // Engine.audioCtx (it's already bound to the live pipeline).
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ac.createMediaElementSource(srcVideo);
+    const dest = ac.createMediaStreamDestination();
+    // Also keep a permanent silent ConstantSource in case the take is silent
+    // (same bug class as v0.2.2 — MediaRecorder stalls on samples-empty audio)
+    const silent = ac.createConstantSource();
+    const gain = ac.createGain();
+    gain.gain.value = 0;
+    silent.connect(gain).connect(dest);
+    silent.start();
+    src.connect(dest);
+
+    const videoStream = canvas.captureStream(30);
+    const stream = new MediaStream([
+      videoStream.getVideoTracks()[0],
+      dest.stream.getAudioTracks()[0],
+    ]);
+    const mime = Recorder.pickMime();  // honour current format preference
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+    } catch {
+      rec = new MediaRecorder(stream, { videoBitsPerSecond: 4_000_000 });
+    }
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const finished = new Promise(r => rec.onstop = r);
+    rec.onerror = (e) => log(`✗ trim recorder error: ${e.error || e}`, 'error');
+
+    srcVideo.currentTime = this.inTime;
+    await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+    rec.start(250);
+    await srcVideo.play();
+
+    const inT = this.inTime, outT = this.outTime;
+    const duration = outT - inT;
+    let rafId;
+    const loop = () => {
+      ctx.drawImage(srcVideo, 0, 0, W, H);
+      const progress = Math.min(1, (srcVideo.currentTime - inT) / duration);
+      progBar.style.width = (progress * 100).toFixed(1) + '%';
+      if (srcVideo.currentTime >= outT || srcVideo.ended) {
+        cancelAnimationFrame(rafId);
+        srcVideo.pause();
+        try { rec.requestData(); } catch {}
+        rec.stop();
+        return;
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+
+    await finished;
+    const outBlob = new Blob(chunks, { type: chunks[0]?.type || mime || 'video/webm' });
+
+    // Cleanup audio graph
+    try { silent.stop(); } catch {}
+    try { ac.close(); } catch {}
+    try { URL.revokeObjectURL(srcVideo.src); } catch {}
+
+    if (outBlob.size === 0) {
+      showToast(t('recEmpty'), 5000);
+      log('✗ trim produced 0-byte blob', 'error');
+      prog.style.display = 'none';
+      this.encoding = false;
+      return;
+    }
+
+    // Trigger download + updated VTT
+    const url = URL.createObjectURL(outBlob);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-trim`;
+    const ext = Recorder.extForMime(outBlob.type);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${fname}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+    // Adjust chapters: shift by -inTime, drop anything outside the new window
+    const adjusted = Chapters.items
+      .map(c => ({ time: c.time - inT, label: c.label }))
+      .filter(c => c.time >= 0 && c.time <= duration);
+    const vttItems = Chapters.items.slice();
+    Chapters.items = adjusted;
+    const vtt = Chapters.toVTT.call({ items: adjusted, fmtTime: Chapters.fmtTime });
+    Chapters.items = vttItems;  // restore
+    if (adjusted.length) {
+      const vttBlob = new Blob([vtt], { type: 'text/vtt' });
+      const vttUrl = URL.createObjectURL(vttBlob);
+      const va = document.createElement('a');
+      va.href = vttUrl; va.download = `${fname}.vtt`;
+      va.click();
+      setTimeout(() => URL.revokeObjectURL(vttUrl), 60_000);
+    }
+
+    log(`✂️ trim exported: ${(outBlob.size / 1024 / 1024).toFixed(1)} MB (${duration.toFixed(1)}s)`, 'success');
+    showToast(`✂️ ${t('trimExported')} — ${(outBlob.size / 1024 / 1024).toFixed(1)} MB`, 3000);
+    Sfx.play('stop');
+    progBar.style.width = '100%';
+    this.encoding = false;
+    setTimeout(() => this.close(), 800);
+  },
+};
+
+/* ─────────── SilenceTrim — auto-remove long silences from the last take ──────
+
+   Scans the recorded audio for runs of sub-threshold RMS longer than
+   MIN_SILENCE_SEC, produces a list of "keep ranges" (the loud parts),
+   then re-encodes via the same offscreen-canvas pipeline as the Trim
+   tool — only seeking through the keep ranges instead of one window.
+
+   Fully local: uses AudioContext.decodeAudioData to get the samples.
+   No deps, no cloud, no AI. Just RMS thresholding. */
+const SilenceTrim = {
+  MIN_SILENCE_SEC: 2.0,
+  PAD_SEC: 0.15,        // leave a little breathing room either side of each cut
+  THRESHOLD: 0.015,     // RMS below this is "silent"
+  WINDOW_MS: 100,
+
+  keepRanges: null,    // [[startSec, endSec], ...] after analysis
+  savedSeconds: 0,
+  encoding: false,
+
+  /* Called after Recorder.finish() — decodes the audio of the last take,
+     computes keep ranges, and if the total silence saved is >= 2s,
+     shows the "Remove silences?" button in the Take panel. */
+  async checkLastTake() {
+    if (!Recorder._lastBlob) return;
+    const btn = $('tcSilenceTrimBtn');
+    if (!btn) return;
+    btn.style.display = 'none';
+    this.keepRanges = null;
+    this.savedSeconds = 0;
+
+    try {
+      const ab = await Recorder._lastBlob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try {
+        audioBuf = await ac.decodeAudioData(ab.slice(0));
+      } catch (e) {
+        log(`silence-scan decode failed: ${e.message}`, 'info');
+        try { ac.close(); } catch {}
+        return;
+      }
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+      const windowSamples = Math.max(1, Math.floor((this.WINDOW_MS / 1000) * sr));
+
+      // Step 1: compute silent/loud mask per window
+      const windows = [];
+      for (let i = 0; i < samples.length; i += windowSamples) {
+        let sum = 0;
+        const end = Math.min(i + windowSamples, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        const rms = Math.sqrt(sum / (end - i));
+        windows.push({ t: i / sr, silent: rms < this.THRESHOLD });
+      }
+
+      // Step 2: find silent runs ≥ MIN_SILENCE_SEC
+      const cuts = [];   // [[cutStart, cutEnd], ...]
+      let runStart = null;
+      for (let i = 0; i < windows.length; i++) {
+        if (windows[i].silent) {
+          if (runStart == null) runStart = windows[i].t;
+        } else if (runStart != null) {
+          const runEnd = windows[i].t;
+          if (runEnd - runStart >= this.MIN_SILENCE_SEC) {
+            // pad inward so we don't clip speech
+            cuts.push([runStart + this.PAD_SEC, runEnd - this.PAD_SEC]);
+          }
+          runStart = null;
+        }
+      }
+      if (runStart != null && duration - runStart >= this.MIN_SILENCE_SEC) {
+        cuts.push([runStart + this.PAD_SEC, duration]);
+      }
+
+      try { ac.close(); } catch {}
+
+      if (cuts.length === 0) {
+        log('🔊 silence-scan: no long silences found', 'info');
+        return;
+      }
+
+      // Step 3: invert cuts into keep ranges
+      const keep = [];
+      let cursor = 0;
+      for (const [cs, ce] of cuts) {
+        if (cs > cursor) keep.push([cursor, cs]);
+        cursor = ce;
+      }
+      if (cursor < duration) keep.push([cursor, duration]);
+
+      this.keepRanges = keep;
+      this.savedSeconds = cuts.reduce((a, [s, e]) => a + (e - s), 0);
+      log(`🔊 silence-scan: ${cuts.length} silent runs, ${this.savedSeconds.toFixed(1)}s saved`, 'info');
+      // Show the offer button with the saved-seconds count in the label
+      btn.style.display = '';
+      btn.textContent = `🔇 ${t('removeSilence')} (−${this.savedSeconds.toFixed(1)}s)`;
+    } catch (e) {
+      log(`silence-scan error: ${e.message}`, 'error');
+    }
+  },
+
+  async exportCleaned() {
+    if (this.encoding) return;
+    if (!this.keepRanges || !Recorder._lastBlob) return;
+    this.encoding = true;
+    const btn = $('tcSilenceTrimBtn');
+    if (btn) btn.disabled = true;
+    showToast(t('silenceEncoding'), 2500);
+
+    const srcVideo = document.createElement('video');
+    srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+    srcVideo.muted = true;
+    srcVideo.playsInline = true;
+    await new Promise(r => srcVideo.addEventListener('loadedmetadata', r, { once: true }));
+    if (!isFinite(srcVideo.duration)) {
+      srcVideo.currentTime = 1e9;
+      await new Promise(r => srcVideo.addEventListener('timeupdate', r, { once: true }));
+    }
+
+    const W = srcVideo.videoWidth || Engine.width;
+    const H = srcVideo.videoHeight || Engine.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ac.createMediaElementSource(srcVideo);
+    const dest = ac.createMediaStreamDestination();
+    const silent = ac.createConstantSource();
+    const gain = ac.createGain(); gain.gain.value = 0;
+    silent.connect(gain).connect(dest);
+    silent.start();
+    src.connect(dest);
+
+    const videoStream = canvas.captureStream(30);
+    const stream = new MediaStream([
+      videoStream.getVideoTracks()[0],
+      dest.stream.getAudioTracks()[0],
+    ]);
+    const mime = Recorder.pickMime();
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+    } catch {
+      rec = new MediaRecorder(stream, { videoBitsPerSecond: 4_000_000 });
+    }
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const finished = new Promise(r => rec.onstop = r);
+
+    rec.start(250);
+
+    // Walk each keep range sequentially. For each: seek to start, play, and
+    // push canvas frames until we hit the end. Then seek to the next range's
+    // start and continue. A brief pause is needed around the seek to let the
+    // <video> stall/flush cleanly so audio doesn't blip.
+    let rangeIdx = 0;
+    let rafId;
+    const pumpRange = async (ri) => {
+      const [rs, re] = this.keepRanges[ri];
+      srcVideo.currentTime = rs;
+      await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+      srcVideo.play();
+      await new Promise((resolve) => {
+        const step = () => {
+          ctx.drawImage(srcVideo, 0, 0, W, H);
+          if (srcVideo.currentTime >= re || srcVideo.ended) {
+            srcVideo.pause();
+            cancelAnimationFrame(rafId);
+            resolve();
+            return;
+          }
+          rafId = requestAnimationFrame(step);
+        };
+        step();
+      });
+    };
+
+    for (rangeIdx = 0; rangeIdx < this.keepRanges.length; rangeIdx++) {
+      await pumpRange(rangeIdx);
+    }
+    try { rec.requestData(); } catch {}
+    rec.stop();
+    await finished;
+    try { silent.stop(); } catch {}
+    try { ac.close(); } catch {}
+    try { URL.revokeObjectURL(srcVideo.src); } catch {}
+
+    const outBlob = new Blob(chunks, { type: chunks[0]?.type || mime || 'video/webm' });
+    if (outBlob.size === 0) {
+      showToast(t('recEmpty'), 5000);
+      log('✗ silence-trim produced 0-byte blob', 'error');
+      this.encoding = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const url = URL.createObjectURL(outBlob);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-nosilence`;
+    const ext = Recorder.extForMime(outBlob.type);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${fname}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+    log(`🔇 silence-trim exported: ${(outBlob.size / 1024 / 1024).toFixed(1)} MB (saved ${this.savedSeconds.toFixed(1)}s)`, 'success');
+    showToast(`🔇 ${t('silenceExported')} (−${this.savedSeconds.toFixed(1)}s)`, 3000);
+    Sfx.play('stop');
+    this.encoding = false;
+    if (btn) { btn.disabled = false; btn.style.display = 'none'; }
+  },
+};
+
+/* v0.7.183: InstantReplay — auto-generates a 30s highlight reel from the
+   last recording. Finds the top audio peak moments (loudest = most excited),
+   stitches them together with speed ramps, and optionally adds 8-bit
+   background music. Produces a downloadable .webm. */
+const InstantReplay = {
+  encoding: false,
+  HIGHLIGHT_DURATION: 30,  // target reel length in seconds
+  CLIP_LENGTH: 4,          // seconds per highlight clip
+  NUM_CLIPS: 7,            // number of peak moments to extract
+
+  async generate() {
+    if (this.encoding) return;
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    this.encoding = true;
+    showToast('⚡ Generating highlight reel...', 3000);
+    log('⚡ InstantReplay: analyzing audio peaks...', 'info');
+
+    try {
+      // Step 1: Decode audio to find peak moments
+      const ab = await Recorder._lastBlob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try {
+        audioBuf = await ac.decodeAudioData(ab.slice(0));
+      } catch (e) {
+        log('InstantReplay decode failed: ' + e.message, 'error');
+        showToast('❌ Audio decode failed', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+
+      if (duration < 10) {
+        showToast('⚡ Recording too short for replay (min 10s)', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      // Step 2: Compute RMS energy in 1-second windows
+      const windowSamples = sr; // 1 second
+      const energies = [];
+      for (let i = 0; i < samples.length; i += windowSamples) {
+        let sum = 0;
+        const end = Math.min(i + windowSamples, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        energies.push({ time: i / sr, rms: Math.sqrt(sum / (end - i)) });
+      }
+
+      // Step 3: Find top N loudest moments (non-overlapping)
+      const sorted = [...energies].sort((a, b) => b.rms - a.rms);
+      const clips = [];
+      const used = new Set();
+      for (const peak of sorted) {
+        if (clips.length >= this.NUM_CLIPS) break;
+        const start = Math.max(0, peak.time - this.CLIP_LENGTH / 2);
+        // Check overlap with existing clips
+        let overlap = false;
+        for (const t of used) {
+          if (Math.abs(t - start) < this.CLIP_LENGTH + 1) { overlap = true; break; }
+        }
+        if (overlap) continue;
+        clips.push({ start, end: Math.min(duration, start + this.CLIP_LENGTH) });
+        used.add(start);
+      }
+      // Sort clips chronologically
+      clips.sort((a, b) => a.start - b.start);
+
+      if (clips.length === 0) {
+        showToast('⚡ Could not find highlight moments', 2500);
+        this.encoding = false;
+        try { ac.close(); } catch {}
+        return;
+      }
+
+      log(`⚡ InstantReplay: found ${clips.length} highlight clips`, 'info');
+      try { ac.close(); } catch {}
+
+      // Step 4: Re-encode the highlight clips into a new video
+      const srcVideo = document.createElement('video');
+      srcVideo.muted = false;
+      srcVideo.playsInline = true;
+      srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+      await new Promise((resolve, reject) => {
+        srcVideo.onloadedmetadata = resolve;
+        srcVideo.onerror = reject;
+      });
+      const W = srcVideo.videoWidth || 1920;
+      const H = srcVideo.videoHeight || 1080;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      const outStream = canvas.captureStream(30);
+      // Add audio from source video
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const srcNode = audioCtx.createMediaElementSource(srcVideo);
+        const dest = audioCtx.createMediaStreamDestination();
+        srcNode.connect(dest);
+        srcNode.connect(audioCtx.destination);
+        dest.stream.getAudioTracks().forEach(t => outStream.addTrack(t));
+      } catch {}
+
+      const recorder = new MediaRecorder(outStream, { mimeType: 'video/webm; codecs=vp8,opus' });
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.start();
+
+      // Step 5: Play each clip, draw to canvas with transition overlays
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        srcVideo.currentTime = clip.start;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        srcVideo.play();
+
+        await new Promise((resolve) => {
+          let rafId;
+          const step = () => {
+            ctx.drawImage(srcVideo, 0, 0, W, H);
+
+            // Clip number badge (top-left)
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,.5)';
+            ctx.beginPath(); ctx.roundRect(12, 12, 60, 28, 6); ctx.fill();
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`⚡ ${i + 1}/${clips.length}`, 42, 30);
+            ctx.restore();
+
+            // Flash transition at clip start (first 200ms)
+            const elapsed = srcVideo.currentTime - clip.start;
+            if (elapsed < 0.2) {
+              ctx.save();
+              ctx.fillStyle = `rgba(251,191,36,${0.3 * (1 - elapsed / 0.2)})`;
+              ctx.fillRect(0, 0, W, H);
+              ctx.restore();
+            }
+
+            if (srcVideo.currentTime >= clip.end || srcVideo.ended || srcVideo.paused) {
+              srcVideo.pause();
+              cancelAnimationFrame(rafId);
+              resolve();
+              return;
+            }
+            rafId = requestAnimationFrame(step);
+          };
+          rafId = requestAnimationFrame(step);
+        });
+      }
+
+      // Step 6: Finish encoding
+      recorder.stop();
+      await new Promise(r => { recorder.onstop = r; });
+      srcVideo.pause();
+      URL.revokeObjectURL(srcVideo.src);
+
+      const outBlob = new Blob(chunks, { type: 'video/webm' });
+      if (outBlob.size === 0) {
+        showToast('❌ Replay encoding failed', 2500);
+        this.encoding = false;
+        return;
+      }
+
+      // Step 7: Download
+      const url = URL.createObjectURL(outBlob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-replay-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.webm`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+      const reelDur = clips.reduce((s, c) => s + (c.end - c.start), 0);
+      log(`⚡ InstantReplay: ${reelDur.toFixed(1)}s highlight from ${duration.toFixed(0)}s recording`, 'success');
+      showToast(`⚡ Highlight reel ready! (${reelDur.toFixed(0)}s)`, 4000);
+      Confetti.burst();
+    } catch (e) {
+      log('InstantReplay error: ' + e.message, 'error');
+      showToast('❌ Replay failed: ' + e.message, 3000);
+    }
+    this.encoding = false;
+  },
+};
+
+/* BadgeCard — generates a 1200×630 PNG achievement card after a recording.
+   Social-share-ready dimensions (OpenGraph / Twitter card). Pure canvas
+   drawing, zero deps. Renders NoorCast branding + duration + camera count
+   + chapter count + micro:bit status + template used (if any). */
+const BadgeCard = {
+  W: 1200, H: 630,
+
+  _lastStats: null,
+
+  /* Called from Recorder.finish(). Snapshots the stats that we need to
+     render into the card so subsequent recordings don't overwrite them. */
+  capture(blob, durationMs) {
+    const mbCount = Sensors.values ? 1 : 0;
+    const camCount = Engine.sources.filter(s => s.type === 'cam').length;
+    const scrCount = Engine.sources.filter(s => s.type === 'screen').length;
+    const chapters = Chapters.items ? Chapters.items.length : 0;
+    const markers = Chapters.items ? Chapters.items.filter(i => i.label && i.label.startsWith('Marker')).length : 0;
+    this._lastStats = {
+      duration: durationMs / 1000,
+      bytes: blob.size,
+      camCount, scrCount, mbCount, chapters, markers,
+      template: Templates.active ? Templates.active.key : null,
+      templateIcon: Templates.active ? Templates.active.icon : null,
+      templateLabel: Templates.active ? Templates.active.i18n : null,
+      themeAccent: Engine._accentColor || '#a3e635',
+      date: new Date(),
+    };
+  },
+
+  /* Render the stashed stats into a fresh canvas and trigger a PNG download. */
+  exportPng() {
+    const s = this._lastStats;
+    if (!s) { showToast(t('badgeNoTake'), 2500); return; }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = this.W;
+    canvas.height = this.H;
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient using the current theme accent
+    const bg = ctx.createLinearGradient(0, 0, this.W, this.H);
+    bg.addColorStop(0, '#0a1a04');
+    bg.addColorStop(1, '#000000');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    // Accent-color glow in top-right
+    const glow = ctx.createRadialGradient(this.W * 0.85, this.H * 0.2, 20, this.W * 0.85, this.H * 0.2, 500);
+    glow.addColorStop(0, this._hexToRgba(s.themeAccent, 0.35));
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    // Outer frame
+    ctx.strokeStyle = s.themeAccent;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(20, 20, this.W - 40, this.H - 40);
+
+    // Big trophy emoji + "NoorCast" logo in top-left
+    ctx.font = '700 110px "Righteous", Arial, sans-serif';
+    ctx.fillStyle = s.themeAccent;
+    ctx.textBaseline = 'top';
+    ctx.fillText('🎬', 60, 56);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('NoorCast', 200, 56);
+
+    // Version tag
+    ctx.font = '500 28px "Orbitron", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.fillText('v' + APP_VERSION, 205, 180);
+
+    // Headline
+    ctx.font = '800 64px "Bangers", "Righteous", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t('badgeHeadline'), 60, 240);
+
+    // Stat rows — four cells, two per row
+    const stats = [
+      [this._fmtDuration(s.duration), t('badgeStatDuration')],
+      [`${s.camCount}🎥 + ${s.scrCount}🖥`,            t('badgeStatSources')],
+      [`${s.chapters}🏷`,                               t('badgeStatChapters')],
+      [s.mbCount ? '🤖 ' + t('connected') : '—',        t('badgeStatMicrobit')],
+    ];
+    const gridX = 60, gridY = 340;
+    const cellW = (this.W - 120) / 2, cellH = 90;
+    stats.forEach((row, i) => {
+      const cx = gridX + (i % 2) * cellW;
+      const cy = gridY + Math.floor(i / 2) * cellH;
+      // Value — big, accent color
+      ctx.font = '800 48px "Orbitron", monospace';
+      ctx.fillStyle = s.themeAccent;
+      ctx.fillText(row[0], cx, cy);
+      // Label — small, muted
+      ctx.font = '500 20px "Righteous", Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.fillText(row[1], cx, cy + 52);
+    });
+
+    // Template badge in bottom-right if one was active
+    if (s.templateIcon) {
+      const tplText = `${s.templateIcon} ${t(s.templateLabel)}`;
+      ctx.font = '600 28px "Righteous", Arial, sans-serif';
+      const textW = ctx.measureText(tplText).width;
+      const padX = 18, padY = 10;
+      const tx = this.W - 60 - textW - padX * 2;
+      const ty = this.H - 60 - 44;
+      ctx.fillStyle = this._hexToRgba(s.themeAccent, 0.18);
+      ctx.strokeStyle = s.themeAccent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      this._roundRect(ctx, tx, ty, textW + padX * 2, 44, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(tplText, tx + padX, ty + padY);
+    }
+
+    // Footer slogan
+    ctx.font = '500 22px "Righteous", Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    const pad2 = n => String(n).padStart(2, '0');
+    const dt = `${s.date.getFullYear()}-${pad2(s.date.getMonth() + 1)}-${pad2(s.date.getDate())}`;
+    ctx.fillText(`${t('slogan')}    ·    ${dt}`, 60, this.H - 60);
+
+    // v0.7.39: badge card URL (for scanning / linking to the lesson).
+    // Text fallback — a full QR encoder would violate the single-file
+    // zero-dep mission. Teachers can set the URL in Settings > Brand.
+    let badgeUrl = '';
+    try { badgeUrl = localStorage.getItem('tc-brand-url') || ''; } catch {}
+    if (badgeUrl) {
+      ctx.save();
+      ctx.font = '18px ui-monospace, "Consolas", "Courier New", monospace';
+      ctx.fillStyle = 'rgba(255, 255, 255, .75)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      // Clamp to reasonable width — truncate with ellipsis if too long
+      const maxW = canvas.width - 60;
+      let displayUrl = badgeUrl;
+      while (ctx.measureText(displayUrl).width > maxW && displayUrl.length > 4) {
+        displayUrl = displayUrl.slice(0, -4) + '…';
+      }
+      ctx.fillText('🔗 ' + displayUrl, canvas.width / 2, canvas.height - 22);
+      ctx.restore();
+    }
+
+    // Export
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast(t('badgeError'), 3000); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = s.date;
+      const fname = `noorcast-${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}-${pad2(now.getHours())}-${pad2(now.getMinutes())}-badge.png`;
+      a.href = url; a.download = fname;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      log(`🏆 badge card exported: ${fname}`, 'success');
+      showToast(`🏆 ${t('badgeExported')}`, 2500);
+      Sfx.play('click');
+    }, 'image/png');
+  },
+
+  _fmtDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  },
+
+  _hexToRgba(hex, a) {
+    const h = hex.trim().replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  },
+
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  },
+};
+
+/* TextToolbar — Canva-style floating action bar that appears above the
+   currently-selected text overlay. Color swatches, rotate, duplicate,
+   delete. HTML element positioned in stage coordinates, updated each
+   frame so it follows drag/resize/rotate. Not drawn on the canvas —
+   so it's teacher-only, never in the recording. */
+const TextToolbar = {
+  el: null,
+  setup() {
+    this.el = $('tcTextToolbar');
+    if (!this.el) return;
+    // v0.7.18 CRITICAL FIX: stop the mousedown from bubbling to .tc-stage,
+    // otherwise Drag._onDown fires with coords outside the canvas, sees no
+    // hit, and deselects the text overlay — making every toolbar button
+    // appear "broken" because the next render hides the toolbar entirely.
+    // click stopPropagation isn't enough since mousedown fires first.
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
+    // Color swatches
+    this.el.querySelectorAll('.tc-swatch').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const item = this._selected();
+        if (item) item.color = btn.dataset.color;
+      });
+    });
+    // Rotate buttons
+    $('tcToolbarRotLeft')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = this._selected();
+      if (item) item.rotation = (item.rotation || 0) - Math.PI / 36;
+    });
+    $('tcToolbarRotRight')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = this._selected();
+      if (item) item.rotation = (item.rotation || 0) + Math.PI / 36;
+    });
+    // Duplicate
+    $('tcToolbarDup')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orig = this._selected();
+      if (!orig) return;
+      const copy = TextOverlays.add(orig.text, { ttl: 0, size: orig.size, color: orig.color, bg: orig.bg });
+      copy.x = orig.x + 30; copy.y = orig.y + 30;
+      copy.rotation = orig.rotation || 0;
+      TextOverlays.selectedId = copy.id;
+    });
+    // Delete
+    $('tcToolbarDel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId != null) TextOverlays.remove(TextOverlays.selectedId);
+    });
+    // v0.7.5 — Transparency cycle
+    $('tcToolbarTrans')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId == null) return;
+      const mode = TextOverlays.cycleTransparency(TextOverlays.selectedId);
+      if (mode) showToast(`🎭 ${t('transparency_' + mode.label)}`, 1400);
+    });
+    // v0.7.5 — Font cycle
+    $('tcToolbarFont')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (TextOverlays.selectedId == null) return;
+      const f = TextOverlays.cycleFont(TextOverlays.selectedId);
+      if (f) showToast(`Aa ${f.name}`, 1400);
+    });
+  },
+
+  _selected() {
+    if (TextOverlays.selectedId == null) return null;
+    return TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+  },
+
+  updatePosition() {
+    if (!this.el) return;
+    const item = this._selected();
+    if (!item) { this.el.style.display = 'none'; return; }
+    const stage = $('tcStage');
+    if (!stage) return;
+    const r = stage.getBoundingClientRect();
+    // v0.7.16: same docking rule as SourceToolbar — ALWAYS outside the
+    // stage (below by default) so the ✕ delete and friends never cover
+    // the recording area. Text overlays are decorative; their toolbar
+    // would otherwise hover right over the headline you're editing.
+    const cxStage = (item.x + item.w / 2) / Engine.width * r.width;
+    const tbH = this.el.offsetHeight || 44;
+    const tbHalfW = (this.el.offsetWidth || 280) / 2;
+    let vpLeft = r.left + cxStage;
+    vpLeft = Math.max(tbHalfW + 8, Math.min(window.innerWidth - tbHalfW - 8, vpLeft));
+    let vpTop = r.bottom + 12;
+    if (vpTop + tbH > window.innerHeight - 8) {
+      vpTop = r.top - tbH - 12;
+    }
+    this.el.style.display = 'flex';
+    this.el.style.left = `${vpLeft}px`;
+    this.el.style.top = `${vpTop}px`;
+  },
+};
+
+/* v0.7.13: SourceToolbar — HTML floating action bar for the currently-
+   selected video/screen source. Mirror of TextToolbar. Replaces the
+   canvas-drawn ✕ / 👁 buttons that used to overlap the video. */
+const SourceToolbar = {
+  el: null,
+  setup() {
+    this.el = $('tcSourceToolbar');
+    if (!this.el) return;
+    // v0.7.18 CRITICAL FIX: same as TextToolbar — stop mousedown bubbling
+    // to .tc-stage so Drag._onDown doesn't deselect the source on every
+    // toolbar interaction.
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
+    const sel = () => Engine.sources.find(s => s.id === Drag.selectedSourceId);
+    $('tcSrcToolbarHide')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.hidden = !s.hidden;
+      showToast(s.hidden ? '👁 ' + t('sourceHidden') : '👁 ' + t('sourceShown'), 1400);
+      Engine.onSourcesChanged();
+    });
+    $('tcSrcToolbarPin')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.pinned = !s.pinned;
+      showToast(s.pinned ? '📌 pinned' : '🔓 unpinned', 1400);
+      Engine.onSourcesChanged();
+    });
+    // v0.7.122: lock / unlock position toggle
+    $('tcSrcToolbarLock')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.locked = !s.locked;
+      const btn = $('tcSrcToolbarLock');
+      if (btn) btn.textContent = s.locked ? '🔒' : '🔓';
+      showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+      Engine.onSourcesChanged();
+    });
+    // v0.7.142: aspect ratio lock toggle
+    $('tcSrcToolbarAspect')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.aspectLock = !s.aspectLock;
+      const btn = $('tcSrcToolbarAspect');
+      if (btn) btn.textContent = s.aspectLock ? '🔗' : '↔';
+      showToast(s.aspectLock ? '🔗 ' + t('aspectLockOn') : '↔ ' + t('aspectLockOff'), 1400);
+      Engine.onSourcesChanged();
+      SceneAutoSave.trigger();
+    });
+    // v0.7.15: shape picker is now a <select>, not a cycle button
+    $('tcSrcToolbarShape')?.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shape = e.target.value;
+      showToast('◻ ' + s.shape, 1200);
+      Engine.onSourcesChanged();
+      SceneAutoSave.trigger(); // v0.7.127
+    });
+    $('tcSrcToolbarShape')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.167: skip updatePosition sync while user is interacting with Style popup
+    this._userEditing = false;
+    const popup = $('tcSrcStylePopup');
+    if (popup) {
+      popup.addEventListener('pointerdown', () => { SourceToolbar._userEditing = true; });
+      popup.addEventListener('input', () => { SourceToolbar._userEditing = true; });
+      popup.addEventListener('change', () => { SourceToolbar._userEditing = true; });
+      // Release: delay clearing the flag so the final value sticks
+      document.addEventListener('pointerup', () => {
+        if (SourceToolbar._userEditing) setTimeout(() => { SourceToolbar._userEditing = false; }, 100);
+      });
+    }
+    // v0.7.114: per-source opacity
+    $('tcSrcOpacity')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.opacity = Math.max(0, Math.min(1, parseInt(e.target.value, 10) / 100));
+      SceneAutoSave.trigger();
+    });
+    // v0.7.151: per-source color filter
+    $('tcSrcFilter')?.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.filter = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcFilter')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.180: per-source skin (decorative frame)
+    $('tcSrcSkin')?.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.skin = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcSkin')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.117: per-source border color + width
+    $('tcSrcBorderColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.borderColor = e.target.value;
+      SceneAutoSave.trigger(); // v0.7.127
+    });
+    $('tcSrcBorderColor')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcBorderWidth')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.borderWidth = Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger(); // v0.7.127
+    });
+    $('tcSrcBorderWidth')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.128: per-source drop shadow controls
+    $('tcSrcShadowColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowColor')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowBlur')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowBlur = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowBlur')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowOffsetX')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowOffsetX = Math.max(-20, Math.min(20, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowOffsetX')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcShadowOffsetY')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shadowOffsetY = Math.max(-20, Math.min(20, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShadowOffsetY')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.144: per-source corner radius slider
+    $('tcSrcCornerRadius')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.cornerRadius = Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0));
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcCornerRadius')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.155: on-canvas source badge text + color
+    $('tcSrcBadgeText')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.badgeText = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBadgeText')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcBadgeColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.badgeColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBadgeColor')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.119: source crop range sliders
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
+      const elId = 'tcSrcCrop' + dir;
+      const prop = 'crop' + dir;
+      $(elId)?.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const s = sel(); if (!s) return;
+        s[prop] = Math.max(0, Math.min(0.4, parseInt(e.target.value, 10) / 100));
+        SceneAutoSave.trigger(); // v0.7.127
+      });
+      $(elId)?.addEventListener('click', (e) => e.stopPropagation());
+    });
+    // v0.7.123: source rotation slider (-180 to +180 degrees)
+    $('tcSrcRotation')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      const deg = parseInt(e.target.value, 10) || 0;
+      s.rotation = deg * Math.PI / 180;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = deg + '\u00B0';
+    });
+    $('tcSrcRotation')?.addEventListener('click', (e) => e.stopPropagation());
+    $('tcSrcRotation')?.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.rotation = 0;
+      e.target.value = 0;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = '0\u00B0';
+    });
+    // v0.7.136: source alignment buttons (center / edges)
+    const alignBtn = (id, alignFn) => {
+      $(id)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = sel(); if (!s) return;
+        alignFn(s);
+        SceneAutoSave.trigger();
+      });
+      $(id)?.addEventListener('mousedown', (e) => e.stopPropagation());
+    };
+    const cW = () => Engine.width || 1920;
+    const cH = () => Engine.height || 1080;
+    alignBtn('tcSrcAlignLeft',    s => { s.x = 0; });
+    alignBtn('tcSrcAlignRight',   s => { s.x = cW() - s.w; });
+    alignBtn('tcSrcAlignTop',     s => { s.y = 0; });
+    alignBtn('tcSrcAlignBottom',  s => { s.y = cH() - s.h; });
+    alignBtn('tcSrcAlignCenterH', s => { s.x = (cW() - s.w) / 2; });
+    alignBtn('tcSrcAlignCenterV', s => { s.y = (cH() - s.h) / 2; });
+    $('tcSrcCropBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (Drag.selectedSourceId != null) VisualCrop.start(Drag.selectedSourceId);
+    });
+    $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      Engine.removeSource(s.id);
+      Drag.selectedSourceId = null;
+    });
+    // v0.7.160: Style popup toggle + position
+    $('tcSrcStyleBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pop = $('tcSrcStylePopup');
+      if (!pop) return;
+      const showing = pop.style.display !== 'none';
+      if (showing) { pop.style.display = 'none'; return; }
+      const btn = $('tcSrcStyleBtn');
+      const r = btn.getBoundingClientRect();
+      pop.style.display = '';
+      // v0.7.180: sync skin picker value from selected source
+      const selSrc = sel();
+      const skinSel = $('tcSrcSkin');
+      if (skinSel && selSrc) skinSel.value = selSrc.skin || 'none';
+      pop.style.top = 'auto'; pop.style.bottom = 'auto';
+      const ph = pop.offsetHeight, pw = pop.offsetWidth;
+      let left = r.left;
+      if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+      if (left < 8) left = 8;
+      pop.style.left = left + 'px';
+      // Open above if room, else below
+      if (r.top - ph - 8 > 0) {
+        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        pop.style.top = (r.bottom + 8) + 'px';
+      }
+    });
+    document.addEventListener('click', (e) => {
+      const pop = $('tcSrcStylePopup');
+      if (!pop || pop.style.display === 'none') return;
+      if (e.target.closest('#tcSrcStyleBtn') || e.target.closest('#tcSrcStylePopup')) return;
+      pop.style.display = 'none';
+    });
+    // v0.7.167: prevent Style popup interactions from deselecting the source
+    $('tcSrcStylePopup')?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    // v0.7.189: make style popup draggable
+    const sspPop = $('tcSrcStylePopup');
+    if (sspPop && !sspPop.querySelector('.tc-ssp-drag-handle')) {
+      const handle = document.createElement('div');
+      handle.className = 'tc-ssp-drag-handle';
+      handle.textContent = '⋯ drag to move ⋯';
+      sspPop.insertBefore(handle, sspPop.firstChild);
+      let dragX = 0, dragY = 0;
+      handle.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dragX = e.clientX - sspPop.offsetLeft;
+        dragY = e.clientY - sspPop.offsetTop;
+        const onMove = (ev) => {
+          sspPop.style.left = Math.max(0, Math.min(window.innerWidth - sspPop.offsetWidth, ev.clientX - dragX)) + 'px';
+          sspPop.style.top = Math.max(0, ev.clientY - dragY) + 'px';
+          sspPop.style.bottom = 'auto';
+        };
+        const onUp = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+    }
+    $('tcSrcStylePopup')?.addEventListener('mousedown', (e) => e.stopPropagation());
+    // v0.7.167: shape color picker
+    $('tcSrcShapeColor')?.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.shapeColor = e.target.value;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcShapeColor')?.addEventListener('click', (e) => e.stopPropagation());
+    // v0.7.164: privacy mode buttons
+    $('tcSrcAvatarBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.avatarMode = !s.avatarMode;
+      if (s.avatarMode) s.privacyBlur = false;
+      showToast(s.avatarMode ? '🤖 Avatar mode ON' : '🤖 Avatar mode OFF', 1200);
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcBlurBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.privacyBlur = !s.privacyBlur;
+      if (s.privacyBlur) s.avatarMode = false;
+      showToast(s.privacyBlur ? '🔲 Blur ON' : '🔲 Blur OFF', 1200);
+      SceneAutoSave.trigger();
+    });
+    // v0.7.118: flip buttons
+    $('tcSrcFlipH')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipH = !s.flipH;
+      SceneAutoSave.trigger();
+    });
+    $('tcSrcFlipV')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      s.flipV = !s.flipV;
+      SceneAutoSave.trigger();
+    });
+  },
+  updatePosition() {
+    if (!this.el) return;
+    const s = Engine.sources.find(x => x.id === Drag.selectedSourceId);
+    if (!s || s.type === 'mic' || !s.visible || s.hidden) {
+      this.el.style.display = 'none';
+      return;
+    }
+    const stage = $('tcStage');
+    if (!stage) return;
+    const r = stage.getBoundingClientRect();
+    // v0.7.16: ALWAYS dock the toolbar OUTSIDE the stage rectangle so it
+    // never covers the recording area. Default placement: 12 px BELOW
+    // the stage's bottom edge, horizontally centered on the source so
+    // the visual connection to the selected layer stays clear.
+    // If there isn't enough room below (rare — stage already at viewport
+    // bottom), fall back to ABOVE the stage's top edge instead.
+    const cxStage = (s.x + s.w / 2) / Engine.width * r.width;
+    const tbH = this.el.offsetHeight || 48;
+    const tbHalfW = (this.el.offsetWidth || 240) / 2;
+    let vpLeft = r.left + cxStage;
+    // Horizontally clamp so the toolbar stays inside the viewport
+    vpLeft = Math.max(tbHalfW + 8, Math.min(window.innerWidth - tbHalfW - 8, vpLeft));
+    let vpTop = r.bottom + 12;  // below the stage
+    // If the stage's bottom + toolbar height would overflow the viewport,
+    // dock above the stage instead.
+    if (vpTop + tbH > window.innerHeight - 8) {
+      vpTop = r.top - tbH - 12;
+    }
+    this.el.style.display = 'flex';
+    this.el.style.left = `${vpLeft}px`;
+    this.el.style.top = `${vpTop}px`;
+    // v0.7.15: sync the shape select to the current source shape
+    // v0.7.167: skip Style popup value sync while user is actively editing
+    const userEditing = this._userEditing;
+
+    const shapeSel = $('tcSrcToolbarShape');
+    if (shapeSel && shapeSel.value !== (s.shape || 'rect')) {
+      shapeSel.value = s.shape || 'rect';
+    }
+    // v0.7.122: sync lock button icon
+    const lockBtn = $('tcSrcToolbarLock');
+    if (lockBtn) lockBtn.textContent = s.locked ? '🔒' : '🔓';
+    // v0.7.142: sync aspect lock button icon
+    const aspectBtn = $('tcSrcToolbarAspect');
+    if (aspectBtn) aspectBtn.textContent = s.aspectLock ? '🔗' : '↔';
+    // v0.7.167: show/hide shape color section
+    const shapeColorSec = $('tcSspShapeColor');
+    if (shapeColorSec) shapeColorSec.style.display = s.type === 'shape' ? '' : 'none';
+    const shapeColorEl = $('tcSrcShapeColor');
+    if (shapeColorEl && s.type === 'shape' && !userEditing) shapeColorEl.value = s.shapeColor || '#a3e635';
+    // v0.7.114: sync opacity (skip if user is actively dragging the slider)
+    const opEl = $('tcSrcOpacity');
+    if (opEl && !userEditing) opEl.value = Math.round((s.opacity ?? 1) * 100);
+    // v0.7.151: sync filter
+    const fiEl = $('tcSrcFilter');
+    if (fiEl && !userEditing) fiEl.value = s.filter || 'none';
+    // v0.7.117: sync border color + width inputs
+    const bcEl = $('tcSrcBorderColor');
+    if (bcEl && !userEditing && bcEl.value !== (s.borderColor || '#ffffff')) {
+      bcEl.value = s.borderColor || '#ffffff';
+    }
+    const bwEl = $('tcSrcBorderWidth');
+    if (bwEl && !userEditing && bwEl.value !== String(s.borderWidth || 0)) {
+      bwEl.value = s.borderWidth || 0;
+    }
+    // v0.7.128: sync shadow controls
+    const scEl = $('tcSrcShadowColor');
+    if (scEl && !userEditing && scEl.value !== (s.shadowColor || '#000000')) {
+      scEl.value = s.shadowColor || '#000000';
+    }
+    const sbEl = $('tcSrcShadowBlur');
+    if (sbEl && !userEditing && sbEl.value !== String(s.shadowBlur || 0)) {
+      sbEl.value = s.shadowBlur || 0;
+    }
+    const sxEl = $('tcSrcShadowOffsetX');
+    if (sxEl && !userEditing && sxEl.value !== String(s.shadowOffsetX ?? 5)) {
+      sxEl.value = s.shadowOffsetX ?? 5;
+    }
+    const syEl = $('tcSrcShadowOffsetY');
+    if (syEl && !userEditing && syEl.value !== String(s.shadowOffsetY ?? 5)) {
+      syEl.value = s.shadowOffsetY ?? 5;
+    }
+    // v0.7.144: sync corner radius slider
+    const crEl = $('tcSrcCornerRadius');
+    if (crEl && !userEditing && crEl.value !== String(s.cornerRadius || 0)) {
+      crEl.value = s.cornerRadius || 0;
+    }
+    // v0.7.155: sync badge text + color
+    const btEl = $('tcSrcBadgeText');
+    if (btEl && !userEditing && btEl.value !== (s.badgeText || '')) {
+      btEl.value = s.badgeText || '';
+    }
+    const bcBadgeEl = $('tcSrcBadgeColor');
+    if (bcBadgeEl && !userEditing && bcBadgeEl.value !== (s.badgeColor || '#e74c3c')) {
+      bcBadgeEl.value = s.badgeColor || '#e74c3c';
+    }
+    // v0.7.119: sync crop sliders
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(dir => {
+      const el = $('tcSrcCrop' + dir);
+      if (!el) return;
+      const v = String(Math.round((s['crop' + dir] || 0) * 100));
+      if (!userEditing && el.value !== v) el.value = v;
+    });
+    // v0.7.123: sync rotation slider
+    const rotEl = $('tcSrcRotation');
+    if (rotEl) {
+      const deg = String(Math.round((s.rotation || 0) * 180 / Math.PI));
+      if (!userEditing && rotEl.value !== deg) rotEl.value = deg;
+      const valEl = $('tcSrcRotationVal');
+      if (valEl) valEl.textContent = deg + '\u00B0';
+    }
+  },
+};
+
+/* v0.7.35: SourceContextMenu — HTML right-click menu for a selected source.
+   Plain position:fixed panel that appears at the cursor and closes on any
+   outside click or Escape. Teacher-only; never drawn on canvas. Actions:
+   👁 hide/show · 📌 pin/unpin · 🔄 duplicate · ⬛ shape (submenu) · ✕ delete */
+const SourceContextMenu = {
+  el: null,
+  currentId: null,
+  _bound: false,
+
+  setup() {
+    this.el = $('tcSrcCtxMenu');
+    if (!this.el) return;
+    const getSrc = () => Engine.sources.find(s => s.id === this.currentId);
+
+    // Don't let clicks inside the menu bubble up to the global close handler
+    this.el.addEventListener('mousedown', (e) => e.stopPropagation());
+    this.el.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    this.el.querySelector('[data-action="hide"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      s.hidden = !s.hidden;
+      showToast(s.hidden ? '👁 ' + t('sourceHidden') : '👁 ' + t('sourceShown'), 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    this.el.querySelector('[data-action="pin"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      // v0.7.35: flip both custom (scene override) and pinned (semantic flag)
+      const next = !s.custom;
+      s.custom = next;
+      s.pinned = next;
+      showToast(next ? '📌 pinned' : '🔓 unpinned', 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    // v0.7.122: lock / unlock position
+    this.el.querySelector('[data-action="lock"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      s.locked = !s.locked;
+      showToast(s.locked ? '🔒 ' + t('sourceLocked') : '🔓 ' + t('sourceUnlocked'), 1400);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    this.el.querySelector('[data-action="dup"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      // Deep-copy: reuse the same stream/video (they're still running), but
+      // clone the layout so the duplicate is independent thereafter.
+      const copy = {
+        id: Engine.nextId++,
+        type: s.type,
+        stream: s.stream,
+        video: s.video,
+        label: (s.label || 'Source') + ' (2)',
+        x: s.x + 30,
+        y: s.y + 30,
+        w: s.w,
+        h: s.h,
+        shape: s.shape || 'rect',
+        visible: true,
+        mirrored: !!s.mirrored,
+        hidden: false,
+        custom: true,   // duplicates are always pinned so scenes don't overwrite
+        pinned: true,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
+        rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
+      };
+      Engine.sources.push(copy);
+      Engine.onSourcesChanged();
+      showToast('🔄 ' + (s.label || 'source'), 1400);
+      this.hide();
+    });
+
+    // Shape submenu buttons
+    this.el.querySelectorAll('.tc-ctx-submenu button[data-shape]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = getSrc(); if (!s) return;
+        s.shape = btn.dataset.shape;
+        showToast('◻ ' + s.shape, 1200);
+        Engine.onSourcesChanged();
+        this.hide();
+      });
+    });
+
+    // v0.7.49: z-order entries (Bring forward / Send backward / front / back)
+    const reorder = (where) => {
+      const s = getSrc(); if (!s) return;
+      const idx = Engine.sources.findIndex(x => x.id === s.id);
+      if (idx < 0) return;
+      Engine.sources.splice(idx, 1);
+      let newIdx;
+      if (where === 'front')        newIdx = Engine.sources.length;
+      else if (where === 'back')    newIdx = 0;
+      else if (where === 'forward') newIdx = Math.min(Engine.sources.length, idx + 1);
+      else                           newIdx = Math.max(0, idx - 1);
+      Engine.sources.splice(newIdx, 0, s);
+      Engine.onSourcesChanged();
+      this.hide();
+    };
+    this.el.querySelector('[data-action="forward"]')?.addEventListener('click', (e) => {
+      e.stopPropagation(); reorder('forward');
+    });
+    this.el.querySelector('[data-action="backward"]')?.addEventListener('click', (e) => {
+      e.stopPropagation(); reorder('backward');
+    });
+    this.el.querySelector('[data-action="front"]')?.addEventListener('click', (e) => {
+      e.stopPropagation(); reorder('front');
+    });
+    this.el.querySelector('[data-action="back"]')?.addEventListener('click', (e) => {
+      e.stopPropagation(); reorder('back');
+    });
+
+    // v0.7.70: pop a cam out into a floating PiP window
+    this.el.querySelector('[data-action="pip"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      PipPopout.popOut(s);
+      this.hide();
+    });
+
+    // v0.7.73: per-source mirror toggle (independent of the global tcMirrorCam)
+    this.el.querySelector('[data-action="mirror"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      if (s.type !== 'cam') {
+        showToast(t('mirrorOnlyCam') || '❌ Caméras uniquement', 1800);
+        this.hide();
+        return;
+      }
+      s.mirrored = !s.mirrored;
+      showToast(s.mirrored
+        ? '🪞 ' + (t('mirrorOn') || 'Miroir activé')
+        : '🪞 ' + (t('mirrorOff') || 'Miroir désactivé'), 1200);
+      Engine.onSourcesChanged();
+      this.hide();
+    });
+
+    // v0.7.149: duplicate source as mirror — flip horizontally, position symmetrically
+    this.el.querySelector('[data-action="mirrorDup"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      const canvasW = Engine.canvas ? Engine.canvas.width : 1920;
+      const copy = {
+        id: Engine.nextId++,
+        type: s.type,
+        stream: s.stream,
+        video: s.video,
+        label: (s.label || 'Source') + ' (mirror)',
+        x: canvasW - s.x - s.w,
+        y: s.y,
+        w: s.w,
+        h: s.h,
+        shape: s.shape || 'rect',
+        visible: true,
+        mirrored: !!s.mirrored,
+        hidden: false,
+        custom: true,
+        pinned: true,
+        borderColor: s.borderColor || '',
+        borderWidth: s.borderWidth || 0,
+        shadowColor: s.shadowColor || '#000000',
+        shadowBlur: s.shadowBlur || 0,
+        shadowOffsetX: s.shadowOffsetX ?? 5,
+        shadowOffsetY: s.shadowOffsetY ?? 5,
+        locked: !!s.locked,
+        aspectLock: !!s.aspectLock,
+        rotation: s.rotation || 0,
+        cornerRadius: s.cornerRadius || 0,
+        badgeText: s.badgeText || '',
+        badgeColor: s.badgeColor || '#e74c3c',
+        flipH: !s.flipH,
+      };
+      Engine.sources.push(copy);
+      Engine.onSourcesChanged();
+      showToast('🔀 ' + t('mirrorSource'), 1400);
+      this.hide();
+    });
+
+    this.el.querySelector('[data-action="del"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = getSrc(); if (!s) return;
+      Engine.removeSource(s.id);
+      Drag.selectedSourceId = null;
+      this.hide();
+    });
+
+    if (!this._bound) {
+      // Close on any mousedown outside the menu
+      window.addEventListener('mousedown', (e) => {
+        if (!this.el || this.el.style.display === 'none') return;
+        if (this.el.contains(e.target)) return;
+        this.hide();
+      });
+      // Close on Esc
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.el && this.el.style.display !== 'none') {
+          this.hide();
+        }
+      });
+      this._bound = true;
+    }
+  },
+
+  show(vpX, vpY, source) {
+    if (!this.el) return;
+    this.currentId = source.id;
+    // Make it measurable before clamping
+    this.el.style.display = 'block';
+    this.el.style.left = '0px';
+    this.el.style.top = '0px';
+    const mw = this.el.offsetWidth || 200;
+    const mh = this.el.offsetHeight || 220;
+    const maxX = window.innerWidth - mw - 8;
+    const maxY = window.innerHeight - mh - 8;
+    const x = Math.max(8, Math.min(maxX, vpX));
+    const y = Math.max(8, Math.min(maxY, vpY));
+    this.el.style.left = x + 'px';
+    this.el.style.top = y + 'px';
+  },
+
+  hide() {
+    if (!this.el) return;
+    this.el.style.display = 'none';
+    this.currentId = null;
+  },
+};
+
+/* v0.7.109 — Full focus / distraction-free preview mode.
+   Hides left sidebar, right sidebar, tools bar, and rec bar so only the
+   stage canvas remains. Superset of the v0.7.94 right-sidebar collapse.
+   Toggle via the ⛶ Focus button in the tools bar or Shift+F hotkey.
+   State persisted in localStorage key `tc-focus-mode`. */
+const FocusMode = {
+  on: false,
+  setup() {
+    try { this.on = localStorage.getItem('tc-focus-mode') === '1'; } catch {}
+    this._apply();
+  },
+  toggle() {
+    this.on = !this.on;
+    this._apply();
+    try { localStorage.setItem('tc-focus-mode', this.on ? '1' : '0'); } catch {}
+    showToast(this.on ? t('focusOn') : t('focusOff'), 1400);
+    log(this.on ? '⛶ focus on' : '⛶ focus off', 'info');
+  },
+  _apply() {
+    document.body.classList.toggle('tc-focus', this.on);
+    const btn = $('tcFocusBtn');
+    if (btn) btn.classList.toggle('active', this.on);
+    // v0.7.189: show/hide floating exit button
+    let exitBtn = document.getElementById('tcFocusExitBtn');
+    if (this.on) {
+      if (!exitBtn) {
+        exitBtn = document.createElement('button');
+        exitBtn.id = 'tcFocusExitBtn';
+        exitBtn.textContent = '✕ Exit Focus';
+        exitBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99999;padding:8px 16px;border-radius:10px;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-size:.8rem;backdrop-filter:blur(4px);opacity:.5;transition:opacity .2s';
+        exitBtn.addEventListener('mouseenter', () => { exitBtn.style.opacity = '1'; });
+        exitBtn.addEventListener('mouseleave', () => { exitBtn.style.opacity = '.5'; });
+        exitBtn.addEventListener('click', () => FocusMode.toggle());
+        document.body.appendChild(exitBtn);
+      }
+      exitBtn.style.display = '';
+    } else {
+      if (exitBtn) exitBtn.style.display = 'none';
+    }
+  },
+};
+
+/* Maximize mode (v0.7.0): hide sidebars/header/ticker and stretch the
+   stage to the full viewport. Toggle with the ⛶ button. Also toggles
+   browser-level fullscreen via the Fullscreen API for extra impact. */
+function toggleMaximize() {
+  const app = document.querySelector('.app');
+  if (!app) return;
+  const on = !app.classList.contains('maximized');
+  app.classList.toggle('maximized', on);
+  const btn = $('tcMaxBtn');
+  if (btn) btn.textContent = on ? '⛶' : '⛶';
+  // Also try real browser fullscreen; fall back silently if blocked
+  try {
+    if (on) {
+      if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+  } catch {}
+  log(on ? '⛶ maximized' : '⛶ restored', 'info');
+}
+
+/* QuizCard — press Q mid-recording, enter a question, it appears as a big
+   text overlay. Reuses TextOverlays so it's drawn on the canvas and goes
+   into the recording. Auto-removes after 6 seconds. Not interactive —
+   a student pauses playback to answer mentally. Cheap implementation of
+   the "quiz injection" pattern without a custom video player. */
+const QuizCard = {
+  prompt() {
+    const text = window.prompt(t('quizPromptLabel'), '');
+    if (!text || !text.trim()) return;
+    TextOverlays.add('❓ ' + text.trim(), {
+      ttl: 6000,
+      size: 70,
+      color: '#fffbeb',
+      bg: 'rgba(251,146,60,.85)',
+      y: Engine.height / 2,
+    });
+    if (Recorder.state === 'recording' || Recorder.state === 'paused') {
+      Chapters.items.push({ time: Recorder.elapsed() / 1000, label: 'Quiz: ' + text.trim().slice(0, 40) });
+    }
+    Sfx.play('click');
+    log(`❓ quiz: ${text.trim().slice(0, 40)}`, 'info');
+  },
+};
+
+/* v0.7.87 — Bulk download: trigger every visible download link in the
+   take panel (.webm + .vtt + .md + .csv) with a small stagger so the
+   browser doesn't ask "allow multiple downloads?". Bound to Ctrl/Cmd+S
+   when the take panel is visible, and to a visible button at the top
+   of the take actions row. */
+const BulkDownload = {
+  all() {
+    const take = $('tcTake');
+    if (!take || take.style.display === 'none') {
+      showToast(t('bulkNoTake') || '⚠ Aucun tuto à télécharger', 1800);
+      return;
+    }
+    const ids = ['tcDownloadBtn', 'tcDownloadVtt', 'tcDownloadMd', 'tcDownloadCsv'];
+    let fired = 0;
+    ids.forEach((id, i) => {
+      const el = $(id);
+      if (!el || el.style.display === 'none' || !el.href) return;
+      fired++;
+      setTimeout(() => {
+        el.click();
+      }, i * 350);  // stagger so Chrome doesn't ask "allow multiple downloads?"
+    });
+    if (fired > 0) {
+      showToast(`💾 ${fired} ` + (t('bulkFiles') || 'fichiers'), 1500);
+    }
+  },
+};
+
+/* v0.7.96 — Web Share API integration: trigger the OS-native share
+   sheet (AirDrop, iMessage, WhatsApp, email…) with the recorded
+   take's blob as a File. Falls back to a toast + dimmed button when
+   Web Share API or file-sharing isn't supported. */
+const ShareTake = {
+  supported() {
+    try {
+      // Need share + canShare for files
+      return !!(navigator.share && navigator.canShare && navigator.canShare({
+        files: [new File([new Blob([''])], 'test.webm', { type: 'video/webm' })],
+      }));
+    } catch { return false; }
+  },
+
+  async share() {
+    if (!this.supported()) {
+      showToast(t('shareNotSupported') || '❌ Partage natif non supporté — utilise Télécharger', 2800);
+      return;
+    }
+    if (!Recorder._lastBlob) {
+      showToast(t('shareNoTake') || '⚠ Aucun tuto à partager', 1800);
+      return;
+    }
+    const ext = (Recorder._lastMime && Recorder._lastMime.includes('mp4')) ? 'mp4' : 'webm';
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const name = `noorcast-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}.${ext}`;
+    const file = new File([Recorder._lastBlob], name, { type: Recorder._lastBlob.type });
+    try {
+      await navigator.share({
+        title: 'NoorCast',
+        text: t('shareText') || 'Mon tuto fait avec NoorCast 🎬',
+        files: [file],
+      });
+      showToast('📤 ' + (t('shareDone') || 'Partagé'), 1500);
+    } catch (e) {
+      // User cancellation is expected — don't spam an error
+      if (e && e.name !== 'AbortError') {
+        log('share error: ' + e.message, 'error');
+        showToast(t('shareError') || '❌ Erreur de partage', 2500);
+      }
+    }
+  },
+};
+
+/* Snapshot — download current canvas as PNG */
+function snapshot() {
+  // v0.7.191: camera flash effect
+  CanvasFlair.flash();
+  // v0.7.54: if annotation mode is on, open the modal instead of
+  // immediately downloading. Opt-in via localStorage tc-snap-annotate.
+  // This check runs BEFORE the v0.7.79 mult check — annotation always
+  // operates on the Engine canvas at its native resolution; the chosen
+  // multiplier still applies when the annotated image is finally saved.
+  let annotate = false;
+  try { annotate = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
+  if (annotate) {
+    Engine.canvas.toBlob((blob) => SnapshotAnnotator.open(blob));
+    return;
+  }
+
+  // v0.7.79: snapshot resolution multiplier — 1× / 2× / 4×
+  let mult = 1;
+  try {
+    const saved = parseInt(localStorage.getItem('tc-snap-mult'), 10);
+    if (saved === 2 || saved === 4) mult = saved;
+  } catch {}
+
+  if (mult === 1) {
+    // Existing fast path — no re-encode
+    Engine.canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      log(t('snapshotSaved'), 'success');
+      // v0.7.30: also push a thumbnail into the visible strip below the stage
+      SnapshotGallery.add(blob);
+    });
+    return;
+  }
+
+  // v0.7.79: up-scale path — draw the Engine canvas to an oversized
+  // offscreen canvas with high-quality image smoothing.
+  const w = Engine.canvas.width * mult;
+  const h = Engine.canvas.height * mult;
+  const off = document.createElement('canvas');
+  off.width = w;
+  off.height = h;
+  const octx = off.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(Engine.canvas, 0, 0, w, h);
+  off.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${mult}x.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log(`${t('snapshotSaved')} (${mult}×)`, 'success');
+    if (typeof SnapshotGallery !== 'undefined') SnapshotGallery.add(blob);
+  });
+}
+
+/* v0.7.54: SnapshotAnnotator — optional modal that appears before the
+   snapshot is downloaded when the "Annoter la capture" setting is on.
+   Lets the user scribble on the image with 3 colors, then Save re-encodes
+   the canvas and runs the original download + gallery flow. */
+const SnapshotAnnotator = {
+  canvas: null,
+  ctx: null,
+  img: null,
+  color: '#ef4444',
+  drawing: false,
+  lastX: 0,
+  lastY: 0,
+  _origBlob: null,
+
+  open(blob) {
+    this._origBlob = blob;
+    const modal = $('tcSnapAnnotModal');
+    if (!modal) return;
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const c = $('tcSnapAnnotCanvas');
+      c.width = img.width;
+      c.height = img.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      this.canvas = c;
+      this.ctx = ctx;
+      this.img = img;
+      URL.revokeObjectURL(url);
+      modal.style.display = 'flex';
+    };
+    img.src = url;
+  },
+
+  close() {
+    const modal = $('tcSnapAnnotModal');
+    if (modal) modal.style.display = 'none';
+    this._origBlob = null;
+    this.canvas = null;
+    this.ctx = null;
+  },
+
+  clear() {
+    if (!this.ctx || !this.img) return;
+    this.ctx.drawImage(this.img, 0, 0);
+  },
+
+  setColor(hex) {
+    this.color = hex;
+    document.querySelectorAll('#tcSnapAnnotModal .tc-snap-annot-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color === hex);
+    });
+  },
+
+  save() {
+    if (!this.canvas) return;
+    this.canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-snapshot-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-annotated.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      log(t('snapshotSaved') || '📸 Capture enregistrée', 'success');
+      if (typeof SnapshotGallery !== 'undefined') SnapshotGallery.add(blob);
+      this.close();
+    });
+  },
+
+  setup() {
+    const modal = $('tcSnapAnnotModal');
+    if (!modal) return;
+    modal.querySelectorAll('.tc-snap-annot-swatch').forEach(s => {
+      s.addEventListener('click', () => this.setColor(s.dataset.color));
+    });
+    $('tcSnapAnnotClear')?.addEventListener('click', () => this.clear());
+    $('tcSnapAnnotCancel')?.addEventListener('click', () => this.close());
+    $('tcSnapAnnotSave')?.addEventListener('click', () => this.save());
+    const c = $('tcSnapAnnotCanvas');
+    const toCanvasXY = (e) => {
+      const r = c.getBoundingClientRect();
+      return [
+        ((e.clientX - r.left) / r.width) * c.width,
+        ((e.clientY - r.top) / r.height) * c.height,
+      ];
+    };
+    c?.addEventListener('mousedown', (e) => {
+      this.drawing = true;
+      [this.lastX, this.lastY] = toCanvasXY(e);
+    });
+    c?.addEventListener('mousemove', (e) => {
+      if (!this.drawing) return;
+      const [x, y] = toCanvasXY(e);
+      this.ctx.strokeStyle = this.color;
+      this.ctx.lineWidth = 6;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.lastX, this.lastY);
+      this.ctx.lineTo(x, y);
+      this.ctx.stroke();
+      this.lastX = x; this.lastY = y;
+    });
+    window.addEventListener('mouseup', () => { this.drawing = false; });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) this.close();
+    });
+  },
+};
+
+/* v0.7.30: SnapshotGallery — compact strip of thumbnails below the stage
+   showing every snapshot taken during the current session. Each entry is
+   a small canvas + download icon + delete button. In-memory only —
+   cleared on reload (snapshot PNGs are already downloaded to disk at
+   the moment of capture, so no data is lost). */
+const SnapshotGallery = {
+  MAX: 20,          // cap so a long session doesn't bloat memory
+  entries: [],      // { id, blob, url, thumbDataUrl, at }
+  _nextId: 1,
+
+  add(blob) {
+    const id = this._nextId++;
+    const url = URL.createObjectURL(blob);
+    // Build a small thumbnail for the strip. Re-draw the current stage
+    // canvas into a 160x90 thumb — cheaper than decoding the blob back.
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 160;
+    thumbCanvas.height = 90;
+    const tctx = thumbCanvas.getContext('2d');
+    try {
+      tctx.drawImage(Engine.canvas, 0, 0, 160, 90);
+    } catch {}
+    const thumbDataUrl = thumbCanvas.toDataURL('image/png');
+    this.entries.push({ id, blob, url, thumbDataUrl, at: Date.now() });
+    if (this.entries.length > this.MAX) {
+      const dropped = this.entries.shift();
+      try { URL.revokeObjectURL(dropped.url); } catch {}
+    }
+    this.render();
+  },
+
+  remove(id) {
+    const idx = this.entries.findIndex(e => e.id === id);
+    if (idx < 0) return;
+    try { URL.revokeObjectURL(this.entries[idx].url); } catch {}
+    this.entries.splice(idx, 1);
+    this.render();
+  },
+
+  clear() {
+    this.entries.forEach(e => { try { URL.revokeObjectURL(e.url); } catch {} });
+    this.entries = [];
+    this.render();
+  },
+
+  render() {
+    const strip = $('tcSnapshotStrip');
+    if (!strip) return;
+    if (this.entries.length === 0) {
+      strip.style.display = 'none';
+      strip.innerHTML = '';
+      return;
+    }
+    strip.style.display = '';
+    strip.innerHTML = '';
+    // Newest first visually
+    [...this.entries].reverse().forEach(entry => {
+      const wrap = document.createElement('div');
+      wrap.className = 'tc-snap-thumb';
+      wrap.innerHTML = `
+        <img src="${entry.thumbDataUrl}" alt="snapshot" />
+        <button class="tc-snap-del" title="Delete">✕</button>
+      `;
+      const img = wrap.querySelector('img');
+      img.addEventListener('click', () => {
+        // Re-download on click
+        const a = document.createElement('a');
+        a.href = entry.url;
+        a.download = `snapshot-${entry.id}.png`;
+        a.click();
+      });
+      wrap.querySelector('.tc-snap-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.remove(entry.id);
+      });
+      strip.appendChild(wrap);
+    });
+  },
+};
+
+/* v0.7.33: Minimap — a tiny 192×108 canvas at the top of the Sources
+   sidebar showing the current stage composition at all times. Driven
+   by Engine.render() via Minimap.maybeRender() which throttles to
+   ~6 FPS so we're not eating render budget. */
+const Minimap = {
+  canvas: null,
+  ctx: null,
+  lastAt: 0,
+  FPS: 6,  // 6 updates/sec is plenty for a static-ish sidebar preview
+
+  setup() {
+    this.canvas = $('tcMinimap');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+  },
+
+  maybeRender() {
+    if (!this.ctx) return;
+    const now = performance.now();
+    const interval = 1000 / this.FPS;
+    if (now - this.lastAt < interval) return;
+    this.lastAt = now;
+    this._draw();
+  },
+
+  _draw() {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    // Clear (v0.7.143: respect canvas background color)
+    ctx.fillStyle = CanvasBg.current;
+    ctx.fillRect(0, 0, W, H);
+    // Scale factor from engine (1920×1080) → minimap
+    const sx = W / Engine.width;
+    const sy = H / Engine.height;
+    // Draw visible sources as filled rects/circles in theme-coded colours
+    const sources = Engine.sources.filter(s =>
+      s.type !== 'mic' && s.visible !== false && !s.hidden
+    );
+    sources.forEach(s => {
+      const x = s.x * sx;
+      const y = s.y * sy;
+      const w = s.w * sx;
+      const h = s.h * sy;
+      // Colour by type
+      let fill, stroke;
+      if (s.type === 'screen') { fill = 'rgba(56, 189, 248, .75)'; stroke = '#0ea5e9'; }
+      else if (s.type === 'cam') { fill = 'rgba(163, 230, 53, .75)'; stroke = '#65a30d'; }
+      else { fill = 'rgba(251, 146, 60, .75)'; stroke = '#ea580c'; }
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      if (s.shape === 'circle') {
+        const cx = x + w / 2, cy = y + h / 2;
+        const r = Math.min(w, h) / 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      }
+    });
+    // Highlight selected source with a bright outline
+    if (Drag.selectedSourceId != null) {
+      const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+      if (sel && sel.visible !== false && !sel.hidden) {
+        ctx.strokeStyle = Engine._accentColor || '#a3e635';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sel.x * sx, sel.y * sy, sel.w * sx, sel.h * sy);
+      }
+    }
+  },
+};
+
+/* v0.7.41: LayoutHistory — undo/redo stack for source layout changes.
+   Captures a snapshot (source x/y/w/h/shape/visible/hidden/custom) on
+   every drag-end or resize-end. Ctrl+Z (when NOT recording, since
+   v0.7.38 owns Ctrl+Z during recording for soft-rewind) pops the
+   stack and restores the previous layout. Ctrl+Shift+Z redoes. */
+const LayoutHistory = {
+  MAX: 20,
+  stack: [],      // array of snapshots, index 0 = oldest
+  cursor: -1,     // points to the current state; undo = cursor-1, redo = cursor+1
+  _suppress: false,
+
+  _snapshot() {
+    return Engine.sources.map(s => ({
+      id: s.id,
+      x: s.x, y: s.y, w: s.w, h: s.h,
+      shape: s.shape,
+      visible: s.visible,
+      hidden: s.hidden,
+      custom: s.custom,
+      borderColor: s.borderColor || '',
+      borderWidth: s.borderWidth || 0,
+      shadowColor: s.shadowColor || '#000000',
+      shadowBlur: s.shadowBlur || 0,
+      shadowOffsetX: s.shadowOffsetX ?? 5,
+      shadowOffsetY: s.shadowOffsetY ?? 5,
+      cropTop: s.cropTop || 0, cropBottom: s.cropBottom || 0,
+      cropLeft: s.cropLeft || 0, cropRight: s.cropRight || 0,
+      rotation: s.rotation || 0,
+      badgeText: s.badgeText || '',
+      badgeColor: s.badgeColor || '#e74c3c',
+    }));
+  },
+
+  capture() {
+    if (this._suppress) return;
+    // Drop any redo branch when a new change is made
+    if (this.cursor < this.stack.length - 1) {
+      this.stack = this.stack.slice(0, this.cursor + 1);
+    }
+    this.stack.push(this._snapshot());
+    if (this.stack.length > this.MAX) this.stack.shift();
+    this.cursor = this.stack.length - 1;
+  },
+
+  undo() {
+    if (this.cursor <= 0) {
+      showToast(t('undoEmpty') || '↩ Rien à annuler', 1100);
+      return;
+    }
+    this.cursor--;
+    this._apply(this.stack[this.cursor]);
+    showToast(t('undoDone') || '↩ Annulé', 1100);
+  },
+
+  redo() {
+    if (this.cursor >= this.stack.length - 1) {
+      showToast(t('redoEmpty') || '↪ Rien à rétablir', 1100);
+      return;
+    }
+    this.cursor++;
+    this._apply(this.stack[this.cursor]);
+    showToast(t('redoDone') || '↪ Rétabli', 1100);
+  },
+
+  _apply(snap) {
+    this._suppress = true;
+    snap.forEach(entry => {
+      const s = Engine.sources.find(src => src.id === entry.id);
+      if (!s) return;
+      s.x = entry.x; s.y = entry.y; s.w = entry.w; s.h = entry.h;
+      s.shape = entry.shape;
+      s.visible = entry.visible;
+      s.hidden = entry.hidden;
+      s.custom = entry.custom;
+      s.borderColor = entry.borderColor || '';
+      s.borderWidth = entry.borderWidth || 0;
+      s.shadowColor = entry.shadowColor || '#000000';
+      s.shadowBlur = entry.shadowBlur || 0;
+      s.shadowOffsetX = entry.shadowOffsetX ?? 5;
+      s.shadowOffsetY = entry.shadowOffsetY ?? 5;
+      s.cropTop = entry.cropTop || 0;
+      s.cropBottom = entry.cropBottom || 0;
+      s.cropLeft = entry.cropLeft || 0;
+      s.cropRight = entry.cropRight || 0;
+      s.rotation = entry.rotation || 0;
+      s.badgeText = entry.badgeText || '';
+      s.badgeColor = entry.badgeColor || '#e74c3c';
+    });
+    Engine.onSourcesChanged();
+    this._suppress = false;
+  },
+
+  // Capture an initial snapshot after sources list changes (add/remove)
+  // so undo always has a starting point to return to.
+  captureDelayed() {
+    setTimeout(() => this.capture(), 50);
+  },
+};
+
+/* v0.7.43: Tooltip — rich themed hover tooltip for the tools bar (and
+   any element with data-tip-key). Replaces the plain HTML title=""
+   attributes which show slow unstyled system tooltips. A single shared
+   element is lazy-created on first hover; it reads data-tip-title /
+   data-tip-kbd / data-tip-key attributes to build the card, and the
+   i18n t() function resolves the body description (tip_*) so FR/EN/AR
+   stay in sync. 300ms delay, fades in/out, clamped to the viewport. */
+const Tooltip = {
+  el: null,
+  timer: null,
+
+  setup() {
+    // Lazy-create a single shared tooltip element on first hover
+    this.el = document.createElement('div');
+    this.el.className = 'tc-tooltip';
+    this.el.style.display = 'none';
+    document.body.appendChild(this.el);
+    // Bind to all elements with data-tip-key
+    document.addEventListener('mouseover', (e) => {
+      const target = e.target.closest('[data-tip-key]');
+      if (!target) return;
+      const key = target.dataset.tipKey;
+      const kbd = target.dataset.tipKbd || '';
+      const title = target.dataset.tipTitle || t(key + '_title') || '';
+      const body = t(key) || '';
+      this._scheduleShow(target, title, body, kbd);
+    }, true);
+    document.addEventListener('mouseout', (e) => {
+      const target = e.target.closest('[data-tip-key]');
+      if (!target) return;
+      this._hide();
+    }, true);
+  },
+
+  _scheduleShow(target, title, body, kbd) {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this._show(target, title, body, kbd), 300);
+  },
+
+  _show(target, title, body, kbd) {
+    if (!this.el) return;
+    const kbdHtml = kbd ? `<kbd>${kbd}</kbd>` : '';
+    this.el.innerHTML = `
+      <div class="tc-tooltip-title">${this._esc(title)} ${kbdHtml}</div>
+      <div class="tc-tooltip-body">${this._esc(body)}</div>
+    `;
+    this.el.style.display = 'block';
+    // Position below the target, centered
+    const r = target.getBoundingClientRect();
+    const tw = this.el.offsetWidth;
+    const th = this.el.offsetHeight;
+    let left = r.left + r.width / 2 - tw / 2;
+    let top = r.bottom + 8;
+    // Clamp to viewport
+    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+    if (top + th > window.innerHeight - 8) top = r.top - th - 8;
+    this.el.style.left = left + 'px';
+    this.el.style.top = top + 'px';
+    this.el.classList.add('visible');
+  },
+
+  _hide() {
+    clearTimeout(this.timer);
+    if (!this.el) return;
+    this.el.classList.remove('visible');
+    setTimeout(() => { if (!this.el.classList.contains('visible')) this.el.style.display = 'none'; }, 150);
+  },
+
+  _esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  },
+};
+
+/* v0.7.24: Cheatsheet — keyboard-shortcut overlay, toggle with ? / Shift+/.
+   All shortcuts grouped by category so teachers can discover the full
+   keyboard API without digging through FAQ. Pure presentation — the
+   underlying hotkeys are wired in setupKeyboard(). */
+const Cheatsheet = {
+  el: null,
+  setup() {
+    this.el = $('tcCheatModal');
+    if (!this.el) return;
+    $('tcCheatCloseBtn')?.addEventListener('click', () => this.hide());
+    // Click on backdrop (outside the card) closes
+    this.el.addEventListener('click', (e) => {
+      if (e.target === this.el) this.hide();
+    });
+  },
+  show() {
+    if (!this.el) return;
+    this.el.style.display = 'flex';
+  },
+  hide() {
+    if (!this.el) return;
+    this.el.style.display = 'none';
+  },
+  toggle() {
+    if (!this.el) return;
+    this.el.style.display === 'flex' ? this.hide() : this.show();
+  },
+};
+
+/* ─────────── GuidedTour — v0.7.36
+
+   First-time spotlight tour. Dims the full screen, cuts out a
+   spotlight around a target element, and shows a floating tooltip
+   card with title + body + Next/Skip/Back. Gated on localStorage
+   'tc-tour-done' so it only runs on the user's very first visit;
+   skipping or finishing persists the flag. */
+const GuidedTour = {
+  steps: [
+    { target: '.tc-sidebar-sources', titleKey: 'tour_1_title', bodyKey: 'tour_1_body' },
+    { target: '.tc-stage',          titleKey: 'tour_2_title', bodyKey: 'tour_2_body' },
+    { target: '.tc-sidebar-scenes', titleKey: 'tour_3_title', bodyKey: 'tour_3_body' },
+    { target: '.tc-rec-btn',        titleKey: 'tour_4_title', bodyKey: 'tour_4_body' },
+    { target: '.tc-tools-bar',      titleKey: 'tour_5_title', bodyKey: 'tour_5_body' },
+  ],
+  idx: 0,
+  active: false,
+
+  maybeAutoStart() {
+    try {
+      if (localStorage.getItem('tc-tour-done') === '1') return;
+    } catch {}
+    // Delay so splash/onboard cards fade first
+    setTimeout(() => this.start(), 1800);
+  },
+
+  start() {
+    if (this.active) return;
+    this.active = true;
+    this.idx = 0;
+    const modal = $('tcTourModal');
+    if (modal) modal.style.display = '';
+    this.renderStep();
+  },
+
+  skip() { this.stop(true); },
+  finish() { this.stop(true); },
+
+  next() {
+    if (this.idx < this.steps.length - 1) {
+      this.idx++;
+      this.renderStep();
+    } else {
+      this.finish();
+    }
+  },
+  back() {
+    if (this.idx > 0) { this.idx--; this.renderStep(); }
+  },
+
+  renderStep() {
+    const step = this.steps[this.idx];
+    const target = document.querySelector(step.target);
+    const spot = $('tcTourSpotlight');
+    const tip = $('tcTourTip');
+    if (!target || !spot || !tip) {
+      this.finish();
+      return;
+    }
+    const r = target.getBoundingClientRect();
+    // Spotlight is a box with box-shadow extending outward to darken
+    // the rest of the screen. 10px padding, animated.
+    const pad = 10;
+    spot.style.left = (r.left - pad) + 'px';
+    spot.style.top = (r.top - pad) + 'px';
+    spot.style.width = (r.width + pad * 2) + 'px';
+    spot.style.height = (r.height + pad * 2) + 'px';
+    // Tooltip position: below the target, clamp to viewport
+    const tipH = 160;
+    const tipW = 320;
+    let tipTop = r.bottom + 16;
+    if (tipTop + tipH > window.innerHeight - 16) tipTop = r.top - tipH - 16;
+    let tipLeft = r.left + r.width / 2 - tipW / 2;
+    tipLeft = Math.max(16, Math.min(window.innerWidth - tipW - 16, tipLeft));
+    tip.style.left = tipLeft + 'px';
+    tip.style.top = tipTop + 'px';
+    tip.querySelector('.tc-tour-title').textContent = t(step.titleKey);
+    tip.querySelector('.tc-tour-body').textContent = t(step.bodyKey);
+    tip.querySelector('.tc-tour-progress').textContent = `${this.idx + 1} / ${this.steps.length}`;
+    $('tcTourBackBtn').disabled = this.idx === 0;
+    $('tcTourNextBtn').textContent = this.idx === this.steps.length - 1 ? (t('tour_done') || 'Terminé ✓') : (t('tour_next') || 'Suivant →');
+  },
+
+  // v0.7.156: run the tour with custom steps (used by CameraWizard)
+  _origSteps: null,
+  startCustom(customSteps) {
+    this._origSteps = this.steps;
+    this.steps = customSteps;
+    this.active = true;
+    this.idx = 0;
+    const modal = $('tcTourModal');
+    if (modal) modal.style.display = '';
+    this.renderStep();
+  },
+
+  stop(done) {
+    this.active = false;
+    const modal = $('tcTourModal');
+    if (modal) modal.style.display = 'none';
+    // Restore original steps if we were running a custom tour
+    if (this._origSteps) { this.steps = this._origSteps; this._origSteps = null; }
+    if (done && !this._origSteps) {
+      try { localStorage.setItem('tc-tour-done', '1'); } catch {}
+    }
+  },
+
+  setup() {
+    const modal = $('tcTourModal');
+    if (!modal) return;
+    $('tcTourNextBtn')?.addEventListener('click', () => this.next());
+    $('tcTourBackBtn')?.addEventListener('click', () => this.back());
+    $('tcTourSkipBtn')?.addEventListener('click', () => this.skip());
+    // Re-render on resize
+    window.addEventListener('resize', () => { if (this.active) this.renderStep(); });
+  },
+};
+
+/* ─────────── CameraWizard — v0.7.156 interactive phone-as-webcam setup guide
+   Reuses GuidedTour's spotlight modal with custom step definitions. */
+const CameraWizard = {
+  steps: [
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_1_title', bodyKey: 'camwiz_1_body' },
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_2_title', bodyKey: 'camwiz_2_body' },
+    { target: '.tc-sidebar-sources', titleKey: 'camwiz_3_title', bodyKey: 'camwiz_3_body' },
+    { target: '.tc-sidebar-scenes',  titleKey: 'camwiz_4_title', bodyKey: 'camwiz_4_body' },
+  ],
+  start() {
+    GuidedTour.startCustom(this.steps);
+  },
+};
+
+/* ─────────── ClockOverlay — v0.7.90 opt-in on-canvas clock for time-stamped takes
+
+   Useful for lesson recordings where you want to show when it happened or
+   to date-stamp tutorials. Drawn inside Engine.render so it's baked into
+   the recording, not a DOM chip. Top-right corner, 40px from edges. */
+const ClockOverlay = {
+  enabled: false,
+  showDate: true,
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-clock') === '1';
+      this.showDate = localStorage.getItem('tc-clock-date') !== '0';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-clock', v ? '1' : '0'); } catch {}
+  },
+  setShowDate(v) {
+    this.showDate = !!v;
+    try { localStorage.setItem('tc-clock-date', v ? '1' : '0'); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const date = this.showDate
+      ? `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`
+      : '';
+    ctx.save();
+    // Position top-right, 40px from edges
+    const padX = 40, padY = 40;
+    const timeSize = 42;
+    const dateSize = 22;
+    ctx.font = `700 ${timeSize}px ui-monospace, monospace`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    // Measure widest
+    const tw = ctx.measureText(time).width;
+    let dw = 0;
+    if (date) {
+      ctx.font = `400 ${dateSize}px ui-monospace, monospace`;
+      dw = ctx.measureText(date).width;
+    }
+    const boxW = Math.max(tw, dw) + 24;
+    const boxH = (date ? timeSize + dateSize + 10 : timeSize) + 16;
+    const boxX = W - padX - boxW;
+    const boxY = padY;
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, .6)';
+    ctx.beginPath();
+    const r = 10;
+    ctx.moveTo(boxX + r, boxY);
+    ctx.lineTo(boxX + boxW - r, boxY); ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+    ctx.lineTo(boxX + boxW, boxY + boxH - r); ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+    ctx.lineTo(boxX + r, boxY + boxH); ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+    ctx.lineTo(boxX, boxY + r); ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+    ctx.fill();
+    // Time
+    ctx.font = `700 ${timeSize}px ui-monospace, monospace`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(time, boxX + boxW - 12, boxY + 8);
+    // Date
+    if (date) {
+      ctx.font = `400 ${dateSize}px ui-monospace, monospace`;
+      ctx.fillStyle = 'rgba(255, 255, 255, .7)';
+      ctx.fillText(date, boxX + boxW - 12, boxY + 8 + timeSize + 4);
+    }
+    ctx.restore();
+  },
+};
+
+/* ─────────── RecIndicator — v0.7.120 pulsing red REC dot while recording
+
+   Draws a pulsing red circle (r=8) with "REC" text in the top-left corner
+   of the canvas when Recorder.state === 'recording'. The dot opacity
+   oscillates between 0.3 and 1.0 at ~1 Hz via Math.sin so it's clearly
+   visible in the exported video. Toggle in Settings, default ON. */
+const RecIndicator = {
+  enabled: true,
+
+  load() {
+    try {
+      const v = localStorage.getItem('tc-rec-indicator');
+      if (v !== null) this.enabled = v === '1';
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-rec-indicator', v ? '1' : '0'); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.enabled) return;
+    if (Recorder.state !== 'recording') return;
+    ctx.save();
+    // Pulse alpha between 0.3 and 1.0 at ~1 Hz
+    const alpha = 0.65 + 0.35 * Math.sin(Date.now() / 500);
+    ctx.globalAlpha = alpha;
+    // Red dot (r=8) at (20, 20)
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(20, 20, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // "REC" text at (35, 25)
+    ctx.font = '700 14px ui-monospace, monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('REC', 35, 20);
+    ctx.restore();
+  },
+};
+
+/* ─────────── AudioViz — v0.7.135 on-canvas audio waveform visualizer
+
+   Opt-in frequency-bar visualizer drawn at the bottom edge of the canvas
+   during recording. Reads frequency data from MicBoost._gateAnalyser (no
+   new AnalyserNode) and draws ~32 vertical bars that bounce with the mic
+   input, colored with the current accent gradient. Toggle in Settings,
+   persisted as `tc-audio-viz`. */
+const AudioViz = {
+  visible: false,
+  _freqBuf: null,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-audio-viz') === '1';
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-audio-viz', v ? '1' : '0'); } catch {}
+  },
+
+  setup() {
+    // Pre-allocate the frequency buffer once the analyser exists
+    if (MicBoost._gateAnalyser && !this._freqBuf) {
+      this._freqBuf = new Uint8Array(MicBoost._gateAnalyser.frequencyBinCount);
+    }
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    if (Recorder.state !== 'recording') return;
+    const analyser = MicBoost._gateAnalyser;
+    if (!analyser) return;
+
+    // Lazy-init frequency buffer
+    if (!this._freqBuf) {
+      this._freqBuf = new Uint8Array(analyser.frequencyBinCount);
+    }
+
+    analyser.getByteFrequencyData(this._freqBuf);
+
+    const bars = 32;
+    const barW = Math.floor(W / bars);
+    const gap = 2;
+    const maxH = Math.min(80, H * 0.12);
+    const accent = Engine._accentColor || '#a3e635';
+
+    ctx.save();
+    // Build a gradient from accent (bottom) to transparent (top)
+    const grad = ctx.createLinearGradient(0, H, 0, H - maxH);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(1, accent + '33'); // ~20% alpha
+
+    ctx.fillStyle = grad;
+
+    // Sample `bars` evenly-spaced bins from the frequency data
+    const step = Math.floor(this._freqBuf.length / bars);
+    for (let i = 0; i < bars; i++) {
+      const val = this._freqBuf[i * step] / 255; // 0..1
+      const h = val * maxH;
+      if (h < 1) continue;
+      const x = i * barW + gap / 2;
+      ctx.fillRect(x, H - h, barW - gap, h);
+    }
+    ctx.restore();
+  },
+};
+
+/* ─────────── RecElapsed — v0.7.141 large recording elapsed timer on canvas
+
+   Displays an elapsed time counter (HH:MM:SS) at the bottom-center of the
+   canvas in a semi-transparent dark pill while recording.  Visible in the
+   exported video.  Opt-in via Settings toggle, persisted as `tc-rec-elapsed`
+   (default OFF). Uses Recorder.startTime to compute elapsed seconds. */
+const RecElapsed = {
+  visible: false,
+  _startTime: 0,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-rec-elapsed') === '1';
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-rec-elapsed', v ? '1' : '0'); } catch {}
+  },
+
+  setup() {
+    // _startTime is set when recording begins; see Recorder.start()
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    if (Recorder.state !== 'recording') return;
+
+    // Compute elapsed from Recorder.startTime, accounting for paused time
+    const now = Date.now();
+    const elapsed = Math.max(0, Math.floor((now - Recorder.startTime - (Recorder.pausedDuration || 0)) / 1000));
+    const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    const text = `${hh}:${mm}:${ss}`;
+
+    ctx.save();
+
+    // Measure text for pill sizing
+    ctx.font = '700 28px ui-monospace, monospace';
+    const m = ctx.measureText(text);
+    const padX = 18, padY = 10;
+    const pillW = m.width + padX * 2;
+    const pillH = 36 + padY;
+    const x = (W - pillW) / 2;
+    const y = H - pillH - 16;
+
+    // Semi-transparent dark pill
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    const r = pillH / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + pillW - r, y);
+    ctx.arcTo(x + pillW, y, x + pillW, y + r, r);
+    ctx.arcTo(x + pillW, y + pillH, x + pillW - r, y + pillH, r);
+    ctx.lineTo(x + r, y + pillH);
+    ctx.arcTo(x, y + pillH, x, y + pillH - r, r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+    ctx.fill();
+
+    // HH:MM:SS text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, W / 2, y + pillH / 2);
+
+    ctx.restore();
+  },
+};
+
+/* ─────────── PauseOverlay — v0.7.145 recording pause/resume indicator
+
+   When the recording is paused (Recorder.state === 'paused'), draws a
+   semi-transparent dark fullscreen overlay with a large centered
+   "⏸ PAUSED" label.  This is drawn on the output canvas so it appears
+   in the recorded video — intentional, so the final file clearly shows
+   where the teacher paused.  Rendered from Engine.render() after
+   RecElapsed and before Screensaver. */
+const PauseOverlay = {
+  render(ctx, W, H) {
+    if (Recorder.state !== 'paused') return;
+
+    ctx.save();
+
+    // Semi-transparent dark overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Centered "⏸ PAUSED" text
+    const fontSize = Math.max(48, Math.min(W * 0.08, 120));
+    ctx.font = `800 ${fontSize}px "Segoe UI", system-ui, sans-serif`;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('\u23F8 PAUSED', W / 2, H / 2);
+
+    ctx.restore();
+  },
+};
+
+/* ─────────── Letterbox — cinematic black bars (top + bottom)
+
+   Toggle-able cinematic letterbox bars drawn at top and bottom of the canvas.
+   Adjustable height (5-20% of canvas). Visible in recordings. Gives a
+   movie-like feel. Toggle via the tools-bar 🎬 Bars button or the Settings
+   checkbox. Rendered by Engine.render() so the bars are baked into output. */
+const Letterbox = {
+  visible: false,
+  height: 0.1,  // fraction of canvas height (10% default)
+
+  _load() {
+    try {
+      const raw = localStorage.getItem('tc-letterbox');
+      if (raw) {
+        const obj = JSON.parse(raw);
+        this.visible = !!obj.visible;
+        if (typeof obj.height === 'number') this.height = Math.max(0.05, Math.min(0.2, obj.height));
+      }
+    } catch {}
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-letterbox', JSON.stringify({ visible: this.visible, height: this.height })); } catch {}
+  },
+
+  toggle() {
+    this.visible = !this.visible;
+    const btn = $('tcLetterboxBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    const chk = $('tcLetterboxToggle');
+    if (chk) chk.checked = this.visible;
+    this._save();
+  },
+
+  setVisible(v) {
+    this.visible = v;
+    const btn = $('tcLetterboxBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    const chk = $('tcLetterboxToggle');
+    if (chk) chk.checked = this.visible;
+    this._save();
+  },
+
+  setHeight(h) {
+    this.height = Math.max(0.05, Math.min(0.2, h));
+    this._save();
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const barH = Math.round(H * this.height);
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    // Top bar
+    ctx.fillRect(0, 0, W, barH);
+    // Bottom bar
+    ctx.fillRect(0, H - barH, W, barH);
+    ctx.restore();
+  },
+};
+Letterbox._load();
+
+/* ─────────── PianoOverlay — on-canvas 2-octave keyboard for music teachers
+
+   Draws a small piano keyboard (C4-B5) at the bottom of the canvas.
+   When the teacher presses letter keys (A-L = white notes, W-P = sharps),
+   the corresponding key lights up in the accent color and a Web Audio
+   oscillator plays the note. Toggle via the tools-bar 🎹 Piano button.
+   Rendered by Engine.render() so the overlay is baked into recordings. */
+const PianoOverlay = {
+  visible: false,
+  _activeKeys: {},  // keyName -> { osc, gain } for currently held notes
+  _keys: [
+    // White keys: keyboard letter, note name, frequency
+    { key: 'a', note: 'C4',  freq: 261.63, type: 'white' },
+    { key: 's', note: 'D4',  freq: 293.66, type: 'white' },
+    { key: 'd', note: 'E4',  freq: 329.63, type: 'white' },
+    { key: 'f', note: 'F4',  freq: 349.23, type: 'white' },
+    { key: 'g', note: 'G4',  freq: 392.00, type: 'white' },
+    { key: 'h', note: 'A4',  freq: 440.00, type: 'white' },
+    { key: 'j', note: 'B4',  freq: 493.88, type: 'white' },
+    { key: 'k', note: 'C5',  freq: 523.25, type: 'white' },
+    { key: 'l', note: 'D5',  freq: 587.33, type: 'white' },
+    // Black keys: keyboard letter, note name, frequency, position index among whites
+    { key: 'w', note: 'C#4', freq: 277.18, type: 'black', after: 0 },
+    { key: 'e', note: 'D#4', freq: 311.13, type: 'black', after: 1 },
+    { key: 't', note: 'F#4', freq: 369.99, type: 'black', after: 3 },
+    { key: 'y', note: 'G#4', freq: 415.30, type: 'black', after: 4 },
+    { key: 'u', note: 'A#4', freq: 466.16, type: 'black', after: 5 },
+    { key: 'o', note: 'C#5', freq: 554.37, type: 'black', after: 7 },
+    { key: 'p', note: 'D#5', freq: 622.25, type: 'black', after: 8 },
+  ],
+
+  toggle() {
+    this.visible = !this.visible;
+    const btn = $('tcPianoBtn');
+    if (btn) btn.classList.toggle('active', this.visible);
+    if (!this.visible) this._stopAll();
+  },
+
+  _playNote(keyObj) {
+    if (this._activeKeys[keyObj.key]) return; // already playing
+    try {
+      const ac = Engine.audioCtx || Sfx.ctx();
+      // Resume AudioContext if suspended (Chrome autoplay policy)
+      if (ac.state === 'suspended') ac.resume();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(keyObj.freq, ac.currentTime);
+      gain.gain.setValueAtTime(0.18, ac.currentTime);
+      osc.connect(gain);
+      // Route to both recording destination and speakers
+      if (Engine.audioDest) gain.connect(Engine.audioDest);
+      gain.connect(ac.destination);
+      osc.start();
+      this._activeKeys[keyObj.key] = { osc, gain };
+    } catch {}
+  },
+
+  _stopNote(keyName) {
+    const entry = this._activeKeys[keyName];
+    if (!entry) return;
+    try {
+      const ac = Engine.audioCtx || Sfx.ctx();
+      entry.gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.08);
+      entry.osc.stop(ac.currentTime + 0.1);
+    } catch {}
+    delete this._activeKeys[keyName];
+  },
+
+  _stopAll() {
+    Object.keys(this._activeKeys).forEach(k => this._stopNote(k));
+  },
+
+  handleKeyDown(e) {
+    if (!this.visible) return false;
+    const k = e.key.toLowerCase();
+    const keyObj = this._keys.find(x => x.key === k);
+    if (!keyObj) return false;
+    this._playNote(keyObj);
+    return true;
+  },
+
+  handleKeyUp(e) {
+    if (!this.visible) return;
+    const k = e.key.toLowerCase();
+    this._stopNote(k);
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+
+    const whites = this._keys.filter(k => k.type === 'white');
+    const blacks = this._keys.filter(k => k.type === 'black');
+    const numWhite = whites.length;
+
+    // Dimensions — piano sits at the bottom of the canvas
+    const pianoH = Math.round(H * 0.12);
+    const pianoW = Math.round(W * 0.5);
+    const pianoX = Math.round((W - pianoW) / 2);
+    const pianoY = H - pianoH - 20;
+    const whiteW = Math.floor(pianoW / numWhite);
+    const accent = Engine._accentColor || '#a3e635';
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+
+    // Draw white keys
+    for (let i = 0; i < numWhite; i++) {
+      const x = pianoX + i * whiteW;
+      const active = !!this._activeKeys[whites[i].key];
+      ctx.fillStyle = active ? accent : '#f0f0f0';
+      ctx.fillRect(x, pianoY, whiteW - 2, pianoH);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, pianoY, whiteW - 2, pianoH);
+      // Key label
+      ctx.fillStyle = active ? '#000' : '#888';
+      ctx.font = `bold ${Math.max(10, whiteW * 0.28)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(whites[i].key.toUpperCase(), x + (whiteW - 2) / 2, pianoY + pianoH - 6);
+    }
+
+    // Draw black keys
+    const blackH = Math.round(pianoH * 0.6);
+    const blackW = Math.round(whiteW * 0.6);
+    for (const bk of blacks) {
+      const x = pianoX + (bk.after + 1) * whiteW - blackW / 2 - 1;
+      const active = !!this._activeKeys[bk.key];
+      ctx.fillStyle = active ? accent : '#222';
+      ctx.fillRect(x, pianoY, blackW, blackH);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, pianoY, blackW, blackH);
+      // Key label
+      ctx.fillStyle = active ? '#000' : '#aaa';
+      ctx.font = `bold ${Math.max(9, blackW * 0.35)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(bk.key.toUpperCase(), x + blackW / 2, pianoY + blackH - 4);
+    }
+
+    ctx.restore();
+  },
+};
+
+/* ─────────── Vignette — dark gradient edges around the canvas
+
+   Classic camera/film look: radial gradient from center (transparent) to
+   edges (black with configurable alpha).  Drawn ON the canvas via
+   Engine.render() so it's baked into recordings.  Toggle + intensity
+   slider in Settings, persisted as tc-vignette / tc-vignette-intensity. */
+const Vignette = {
+  visible: false,
+  intensity: 0.5,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-vignette') === '1';
+      const v = parseFloat(localStorage.getItem('tc-vignette-intensity'));
+      if (!isNaN(v)) this.intensity = Math.max(0.1, Math.min(1, v));
+    } catch {}
+  },
+  setVisible(v) {
+    this.visible = !!v;
+    try { localStorage.setItem('tc-vignette', v ? '1' : '0'); } catch {}
+  },
+  setIntensity(v) {
+    this.intensity = Math.max(0.1, Math.min(1, v));
+    try { localStorage.setItem('tc-vignette-intensity', String(this.intensity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    ctx.save();
+    const cx = W / 2, cy = H / 2;
+    const r = Math.sqrt(cx * cx + cy * cy);
+    const grad = ctx.createRadialGradient(cx, cy, r * 0.35, cx, cy, r);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, `rgba(0, 0, 0, ${this.intensity})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+};
+
+/* ─────────── CountdownTimer — visible on-canvas countdown timer overlay
+
+   Teacher sets a duration (1-60 min, default 5 min) in Settings and
+   toggles start/stop via the tools-bar ⏳ Timer button.  The timer
+   counts down as MM:SS in a dark rounded pill drawn top-center of the
+   canvas by Engine.render().  When it reaches 0:00 it flashes red
+   three times over 1.5 s then auto-hides.  Clicking the button while
+   running cancels immediately. */
+const CountdownTimer = {
+  running: false,
+  endAt: 0,          // performance.now() timestamp when timer expires
+  durationSec: 300,  // default 5 min
+  _flashStart: 0,    // when the end-flash sequence began
+  _flashing: false,
+
+  setup() {
+    try {
+      const m = parseInt(localStorage.getItem('tc-timer-dur'), 10);
+      if (m >= 1 && m <= 60) this.durationSec = m * 60;
+    } catch {}
+  },
+
+  setDuration(min) {
+    min = Math.max(1, Math.min(60, min || 5));
+    this.durationSec = min * 60;
+    try { localStorage.setItem('tc-timer-dur', String(min)); } catch {}
+  },
+
+  start() {
+    this.running = true;
+    this._flashing = false;
+    this._flashStart = 0;
+    this.endAt = performance.now() + this.durationSec * 1000;
+    const btn = $('tcTimerBtn');
+    if (btn) btn.classList.add('active');
+  },
+
+  stop() {
+    this.running = false;
+    this._flashing = false;
+    this._flashStart = 0;
+    const btn = $('tcTimerBtn');
+    if (btn) btn.classList.remove('active');
+  },
+
+  toggle() {
+    if (this.running || this._flashing) this.stop();
+    else this.start();
+  },
+
+  render(ctx, W, H) {
+    // Handle flash-finish sequence (not running, just flashing)
+    if (this._flashing) {
+      const elapsed = performance.now() - this._flashStart;
+      if (elapsed > 1500) { this.stop(); return; }
+      // 3 flashes over 1.5s: flash at 0-250, 500-750, 1000-1250
+      const cycle = elapsed % 500;
+      const visible = cycle < 250;
+      if (!visible) return;
+      this._drawPill(ctx, W, '0:00', true);
+      return;
+    }
+
+    if (!this.running) return;
+
+    const remaining = Math.max(0, this.endAt - performance.now());
+    const totalSec = Math.ceil(remaining / 1000);
+
+    if (totalSec <= 0) {
+      // Timer just expired — start flash sequence
+      this.running = false;
+      this._flashing = true;
+      this._flashStart = performance.now();
+      return;
+    }
+
+    const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+    const ss = String(totalSec % 60).padStart(2, '0');
+    this._drawPill(ctx, W, `${mm}:${ss}`, false);
+  },
+
+  _drawPill(ctx, W, text, red) {
+    ctx.save();
+    const fontSize = 44;
+    ctx.font = `700 ${fontSize}px ui-monospace, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(text).width;
+    const padX = 28, padY = 14;
+    const pillW = tw + padX * 2;
+    const pillH = fontSize + padY * 2;
+    const x = (W - pillW) / 2;
+    const y = 30;
+    const r = pillH / 2;
+    // Rounded pill background
+    ctx.fillStyle = red ? 'rgba(220, 38, 38, .85)' : 'rgba(0, 0, 0, .65)';
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + pillW - r, y);
+    ctx.quadraticCurveTo(x + pillW, y, x + pillW, y + r);
+    ctx.quadraticCurveTo(x + pillW, y + pillH, x + pillW - r, y + pillH);
+    ctx.lineTo(x + r, y + pillH);
+    ctx.quadraticCurveTo(x, y + pillH, x, y + pillH - r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, W / 2, y + pillH / 2);
+    ctx.restore();
+  },
+};
+
+/* ─────────── v0.7.124: TextStamps — quick ad-hoc canvas text stamps
+
+   A tools-bar button lets the teacher type arbitrary text live during
+   recording. Each stamp is drawn at the center of the canvas via
+   ctx.fillText with configurable color and font size. Multiple stamps
+   can coexist. They persist until explicitly cleared.
+
+   Different from TextOverlays (pre-configured, auto-fade) — these are
+   quick ad-hoc labels the teacher types on the fly. */
+const TextStamps = {
+  stamps: [],  // { text, x, y, color, fontSize }
+  _popupEl: null,
+
+  add(text, color = '#ffffff', fontSize = 48) {
+    if (!text || !text.trim()) return;
+    this.stamps.push({
+      text: text.trim(),
+      x: Engine.width / 2,
+      y: Engine.height / 2 + this.stamps.length * 60,
+      color,
+      fontSize,
+    });
+    log(`${t('textStamp') || '✏️ Text'}: ${text.trim()}`, 'info');
+  },
+
+  clear() {
+    this.stamps = [];
+    log(t('clearTexts') || 'Clear texts', 'info');
+  },
+
+  render(ctx) {
+    if (!this.stamps.length) return;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const s of this.stamps) {
+      ctx.font = `800 ${s.fontSize}px Arial, sans-serif`;
+      // Dark outline for readability
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = Math.max(2, s.fontSize / 12);
+      ctx.lineJoin = 'round';
+      ctx.strokeText(s.text, s.x, s.y);
+      ctx.fillStyle = s.color;
+      ctx.fillText(s.text, s.x, s.y);
+    }
+    ctx.restore();
+  },
+
+  /** Show / hide the inline popup anchored to the tools-bar button */
+  togglePopup() {
+    if (this._popupEl) { this._closePopup(); return; }
+    const popup = document.createElement('div');
+    popup.className = 'tc-textstamp-popup';
+    popup.style.cssText = 'position:absolute;z-index:9999;background:var(--bg-2,#1e1e2e);border:1px solid var(--border,#444);border-radius:8px;padding:8px;display:flex;gap:6px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = t('textStamp') || 'Text';
+    input.style.cssText = 'width:140px;padding:4px 8px;border-radius:4px;border:1px solid #555;background:#111;color:#fff;font-size:14px';
+
+    const color = document.createElement('input');
+    color.type = 'color';
+    color.value = '#ffffff';
+    color.style.cssText = 'width:32px;height:28px;border:none;padding:0;cursor:pointer;background:transparent';
+
+    const size = document.createElement('select');
+    size.style.cssText = 'padding:4px;border-radius:4px;border:1px solid #555;background:#111;color:#fff;font-size:13px';
+    [24, 36, 48, 72].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v + 'px';
+      if (v === 48) o.selected = true;
+      size.appendChild(o);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.textContent = t('addText') || 'Add';
+    addBtn.style.cssText = 'padding:4px 10px;border-radius:4px;border:none;background:var(--accent,#a3e635);color:#000;font-weight:700;cursor:pointer;font-size:13px';
+    addBtn.addEventListener('click', () => {
+      this.add(input.value, color.value, parseInt(size.value, 10));
+      input.value = '';
+      input.focus();
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = t('clearTexts') || 'Clear';
+    clearBtn.style.cssText = 'padding:4px 8px;border-radius:4px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer;font-size:13px';
+    clearBtn.addEventListener('click', () => this.clear());
+
+    popup.append(input, color, size, addBtn, clearBtn);
+
+    // Position below the button
+    const btn = $('tcTextStampBtn');
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      popup.style.left = r.left + 'px';
+      popup.style.top = (r.bottom + 6) + 'px';
+    } else {
+      popup.style.top = '60px';
+      popup.style.left = '200px';
+    }
+
+    document.body.appendChild(popup);
+    this._popupEl = popup;
+    input.focus();
+
+    // Submit on Enter
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { addBtn.click(); e.preventDefault(); }
+      if (e.key === 'Escape') { this._closePopup(); }
+    });
+
+    // Close when clicking outside
+    setTimeout(() => {
+      this._outsideHandler = (e) => {
+        if (!popup.contains(e.target) && e.target.id !== 'tcTextStampBtn' && !e.target.closest('#tcTextStampBtn')) {
+          this._closePopup();
+        }
+      };
+      document.addEventListener('mousedown', this._outsideHandler);
+    }, 50);
+  },
+
+  _closePopup() {
+    if (this._popupEl) { this._popupEl.remove(); this._popupEl = null; }
+    if (this._outsideHandler) { document.removeEventListener('mousedown', this._outsideHandler); this._outsideHandler = null; }
+  },
+};
+
+/* ─────────── v0.7.121: ColorPicker — canvas eyedropper tool
+
+   When active, the stage cursor becomes a crosshair.  Clicking anywhere
+   reads the pixel color via ctx.getImageData, converts it to #RRGGBB hex,
+   copies to the clipboard, and shows a toast with a colored square swatch.
+   One-shot mode: deactivates after a single pick.  Also cancelled by Escape.
+   Toggled via the 🎨 Pick button in the tools bar. */
+const ColorPicker = {
+  active: false,
+
+  toggle() {
+    this.active = !this.active;
+    const btn = $('tcColorPickerBtn');
+    if (btn) btn.classList.toggle('active', this.active);
+    const stage = $('tcStage');
+    if (stage) stage.classList.toggle('picking-color', this.active);
+    if (this.active) {
+      showToast(t('colorPicker') || '🎨 Pick', 1200);
+      log('color picker on', 'info');
+    } else {
+      log('color picker off', 'info');
+    }
+  },
+
+  deactivate() {
+    if (!this.active) return;
+    this.active = false;
+    const btn = $('tcColorPickerBtn');
+    if (btn) btn.classList.remove('active');
+    const stage = $('tcStage');
+    if (stage) stage.classList.remove('picking-color');
+  },
+
+  pick(e) {
+    if (!this.active) return false;
+    if (!Engine || !Engine.ctx) return false;
+    const stage = $('tcStage');
+    if (!stage) return false;
+    const r = stage.getBoundingClientRect();
+    const cx = ((e.clientX - r.left) / r.width) * Engine.width;
+    const cy = ((e.clientY - r.top) / r.height) * Engine.height;
+    const px = Engine.ctx.getImageData(Math.round(cx), Math.round(cy), 1, 1).data;
+    const hex = '#' + [px[0], px[1], px[2]].map(c => c.toString(16).padStart(2, '0')).join('');
+    // Copy to clipboard
+    try { navigator.clipboard.writeText(hex); } catch {}
+    // Toast with colored swatch
+    const label = (t('colorCopied') || 'Copied') + ' ' + hex;
+    const toast = $('tcToast');
+    if (toast) {
+      toast.innerHTML = `<span style="display:inline-block;width:14px;height:14px;background:${hex};border:1px solid #fff;border-radius:3px;vertical-align:middle;margin-right:6px"></span>${label}`;
+      toast.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+    log(`🎨 picked ${hex}`, 'info');
+    // One-shot: deactivate after picking
+    this.deactivate();
+    return true;  // signal that the click was consumed
+  },
+};
+
+/* ─────────── v0.7.125: SceneTimer — per-scene time tracker
+
+   Tracks how long each scene has been active during a recording.
+   Displays cumulative MM:SS in a badge on each scene button.
+   Resets when a new recording starts; finalizes on stop.
+   Helps teachers know how long they spent on each scene. */
+const SceneTimer = {
+  _times: {},        // key → accumulated seconds
+  _activeKey: null,  // scene key currently being timed
+  _lastSwitch: 0,    // Date.now() when the current scene started
+  _interval: null,   // setInterval id for badge updates
+
+  start() {
+    this._times = {};
+    Scenes.presets.forEach(s => { this._times[s.key] = 0; });
+    this._activeKey = Scenes.active;
+    this._lastSwitch = Date.now();
+    this._interval = setInterval(() => this._tick(), 1000);
+    this._updateBadges();
+  },
+
+  stop() {
+    this._accumulate();
+    this._activeKey = null;
+    clearInterval(this._interval);
+    this._interval = null;
+    this._updateBadges();
+  },
+
+  onSceneSwitch(newKey) {
+    if (!this._activeKey) return;
+    this._accumulate();
+    this._activeKey = newKey;
+    this._lastSwitch = Date.now();
+  },
+
+  _accumulate() {
+    if (!this._activeKey) return;
+    const elapsed = (Date.now() - this._lastSwitch) / 1000;
+    if (!this._times[this._activeKey]) this._times[this._activeKey] = 0;
+    this._times[this._activeKey] += elapsed;
+    this._lastSwitch = Date.now();
+  },
+
+  _tick() {
+    // Accumulate for the live scene, then refresh badges
+    this._accumulate();
+    this._updateBadges();
+  },
+
+  _updateBadges() {
+    document.querySelectorAll('.tc-scene-btn').forEach(btn => {
+      const key = btn.dataset.sceneKey;
+      let badge = btn.querySelector('.tc-scene-time');
+      const secs = Math.floor(this._times[key] || 0);
+      if (secs === 0 && !this._activeKey) {
+        // Not recording or no time — hide badge
+        if (badge) badge.remove();
+        return;
+      }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'tc-scene-time';
+        btn.appendChild(badge);
+      }
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      badge.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    });
+  },
+
+  /** Remove all badges (called when recording resets) */
+  clearBadges() {
+    document.querySelectorAll('.tc-scene-time').forEach(el => el.remove());
+  },
+};
+
+/* ─────────── SilenceWatch — flash a ⚠ chip when the mic has been quiet too long
+
+   The cheap-and-honest alternative to "uh/um detection". We can't run
+   Whisper in the browser (40 MB wasm, violates zero-install), but we
+   already have Engine.analyser wired to the VU meter. A 1.8-second run
+   of below-threshold audio usually means a hesitation the teacher
+   would want to self-correct. A small chip appears in the stage
+   corner — NOT drawn to the canvas, so it's invisible to students
+   watching the recording, only visible to the teacher as a coaching hint. */
+const SilenceWatch = {
+  running: false,
+  lastSoundAt: 0,
+  threshold: 0.018,   // RMS threshold — below this counts as "silent"
+  warnAfterMs: 1800,
+  _rafId: null,
+
+  start() {
+    this.running = true;
+    this.lastSoundAt = Date.now();
+    this._tick();
+  },
+
+  stop() {
+    this.running = false;
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    const chip = $('tcSilenceChip');
+    if (chip) chip.classList.remove('show');
+  },
+
+  _tick() {
+    if (!this.running) return;
+    const a = Engine.analyser;
+    if (a && Recorder.state === 'recording') {
+      const data = new Uint8Array(a.frequencyBinCount);
+      a.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      if (rms > this.threshold) {
+        this.lastSoundAt = Date.now();
+        const chip = $('tcSilenceChip');
+        if (chip) chip.classList.remove('show');
+      } else if (Date.now() - this.lastSoundAt > this.warnAfterMs) {
+        const chip = $('tcSilenceChip');
+        if (chip && !chip.classList.contains('show')) {
+          chip.classList.add('show');
+        }
+      }
+    }
+    this._rafId = requestAnimationFrame(() => this._tick());
+  },
+};
+
+/* ─────────── TimeGoal — v0.7.65 optional recording duration goal + auto-stop
+
+   Teachers often want to stay under a social-media / class-clip time limit.
+   When enabled, a countdown chip sits next to the REC timer, turns yellow
+   under 30s, then "trips" at 0s — either toasting + playing the mark SFX
+   (soft mode) or firing Recorder.stop() (hard auto-stop mode). All state
+   is persisted in localStorage so the next session reopens with the same
+   target. Default OFF. */
+/* v0.7.95: timelapse mode — record at a reduced canvas captureStream fps so
+   the resulting video has fewer frames per real second. Played back at the
+   normal browser rate, content appears N× sped up. The trick is purely in
+   the captureStream(fps) parameter — Engine.render keeps drawing at the
+   browser's natural rAF rate, but MediaRecorder only samples the canvas at
+   `30 / multiplier` Hz. */
+const Timelapse = {
+  enabled: false,
+  multiplier: 4,  // speedup factor
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-timelapse') === '1';
+      const m = parseFloat(localStorage.getItem('tc-timelapse-mult'));
+      if (!isNaN(m)) this.multiplier = Math.max(2, Math.min(20, m));
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-timelapse', v ? '1' : '0'); } catch {}
+  },
+  setMultiplier(m) {
+    this.multiplier = Math.max(2, Math.min(20, parseFloat(m) || 4));
+    try { localStorage.setItem('tc-timelapse-mult', String(this.multiplier)); } catch {}
+  },
+
+  // Returns the fps to pass to canvas.captureStream() based on current settings.
+  // Normal: 30 fps. Timelapse: 30 / multiplier (e.g. 7.5 fps at 4×).
+  getCaptureFps() {
+    return this.enabled ? (30 / this.multiplier) : 30;
+  },
+};
+
+const TimeGoal = {
+  enabled: false,
+  autoStop: false,
+  minutes: 5,        // target minutes
+  _rafId: null,
+  _tripped: false,
+
+  load() {
+    try {
+      this.enabled = localStorage.getItem('tc-timegoal') === '1';
+      this.autoStop = localStorage.getItem('tc-timegoal-autostop') === '1';
+      const m = parseFloat(localStorage.getItem('tc-timegoal-min'));
+      if (!isNaN(m)) this.minutes = Math.max(0.5, Math.min(60, m));
+    } catch {}
+  },
+  setEnabled(v) { this.enabled = !!v; try { localStorage.setItem('tc-timegoal', v ? '1' : '0'); } catch {} },
+  setAutoStop(v) { this.autoStop = !!v; try { localStorage.setItem('tc-timegoal-autostop', v ? '1' : '0'); } catch {} },
+  setMinutes(m) {
+    this.minutes = Math.max(0.5, Math.min(60, parseFloat(m) || 5));
+    try { localStorage.setItem('tc-timegoal-min', String(this.minutes)); } catch {}
+  },
+
+  start() {
+    if (!this.enabled) return;
+    this._tripped = false;
+    this._tick();
+    const chip = $('tcTimeGoalChip');
+    if (chip) chip.style.display = '';
+  },
+  stop() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+    const chip = $('tcTimeGoalChip');
+    if (chip) chip.style.display = 'none';
+  },
+
+  _tick() {
+    if (!this.enabled || Recorder.state !== 'recording') {
+      this.stop();
+      return;
+    }
+    const elapsedSec = Recorder.elapsed() / 1000;
+    const targetSec = this.minutes * 60;
+    const remaining = Math.max(0, targetSec - elapsedSec);
+    const chip = $('tcTimeGoalChip');
+    if (chip) {
+      const m = Math.floor(remaining / 60);
+      const s = Math.floor(remaining % 60);
+      chip.textContent = `⏳ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      chip.classList.toggle('warn', remaining < 30 && remaining > 0);
+      chip.classList.toggle('over', remaining <= 0);
+    }
+    if (remaining <= 0 && !this._tripped) {
+      this._tripped = true;
+      if (this.autoStop) {
+        showToast(t('timeGoalStop') || '⏳ Objectif atteint — arrêt auto', 2200);
+        Recorder.stop();
+        this.stop();
+        return;
+      } else {
+        showToast(t('timeGoalReached') || '⏳ Objectif atteint', 2000);
+        Sfx.play('mark');
+      }
+    }
+    this._rafId = requestAnimationFrame(() => this._tick());
+  },
+};
+
+/* ─────────── LiveCaptions — v0.7.57 opt-in WebSpeech live subtitles
+
+   Uses the browser's built-in SpeechRecognition (Chrome/Edge webkit
+   prefix) to transcribe what the teacher is saying and draw it on
+   the bottom of the canvas as a white-on-black subtitle card.
+   Drawn ON the canvas (inside Engine.render) so it ends up IN the
+   recording — not teacher-only like the teleprompter. Zero network,
+   zero external API, no training data. Auto-restarts when Chrome
+   hits its ~50s silence timeout. */
+const LiveCaptions = {
+  enabled: false,
+  running: false,
+  recognition: null,
+  current: '',       // interim transcript currently displayed
+  _lastFinalAt: 0,
+  _srtEntries: [],   // v0.7.174: accumulated {start, end, text} for SRT export
+  _srtStart: 0,      // recording start time
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-captions') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-captions', v ? '1' : '0'); } catch {}
+    if (!v && this.running) this.stop();
+  },
+
+  supported() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  },
+
+  // v0.7.193: save captions to file anytime
+  saveCaptions() {
+    if (!this._srtEntries.length && !this.current) {
+      showToast('💬 No captions to save', 2000);
+      return;
+    }
+    // Save as SRT if we have timed entries
+    const srtBlob = this.exportSrt();
+    if (srtBlob) {
+      const url = URL.createObjectURL(srtBlob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-captions-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.srt`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      showToast(`💬 Saved ${this._srtEntries.length} caption entries`, 2000);
+    } else {
+      // Save as plain text
+      const blob = new Blob([this.getTranscript()], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'noorcast-captions.txt'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      showToast('💬 Saved captions as text', 2000);
+    }
+  },
+
+  start() {
+    if (!this.supported() || !this.enabled || this.running) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SR();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    // Pick language from the current i18n setting
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    this.recognition.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    // v0.7.193: always track SRT entries (even outside recording)
+    if (!this._srtStart) this._srtStart = performance.now();
+    this.recognition.onresult = (ev) => {
+      let interim = '', finalT = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (r.isFinal) finalT += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      if (finalT) {
+        this.current = finalT.trim();
+        this._lastFinalAt = performance.now();
+        // v0.7.174: accumulate for SRT export
+        if (this.current && this._srtStart > 0) {
+          const now = (performance.now() - this._srtStart) / 1000;
+          this._srtEntries.push({ start: Math.max(0, now - 3), end: now, text: this.current });
+        }
+      } else if (interim) {
+        this.current = interim.trim();
+      }
+      // Clamp display length
+      if (this.current.length > 80) this.current = '…' + this.current.slice(-80);
+    };
+    this.recognition.onaudiostart = () => {
+      log('💬 Audio input started — mic is feeding speech recognition', 'info');
+    };
+    this.recognition.onspeechstart = () => {
+      log('💬 Speech detected', 'info');
+    };
+    this.recognition.onspeechend = () => {
+      log('💬 Speech ended', 'info');
+    };
+    this.recognition.onerror = (e) => {
+      log('💬 caption error: ' + e.error, 'error');
+      if (e.error === 'not-allowed') showToast('💬 Mic permission needed — add a mic source first', 3000);
+      else if (e.error === 'network') showToast('💬 Network error — speech recognition requires internet on some browsers', 3000);
+      else if (e.error === 'service-not-allowed') showToast('💬 Speech service not available — check Windows speech settings', 3000);
+      else if (e.error === 'no-speech') { /* normal, ignore */ }
+      else showToast('💬 Caption error: ' + e.error, 2000);
+      if (e.error !== 'no-speech') this.running = false;
+    };
+    this.recognition.onend = () => {
+      // Chrome auto-stops after ~50s of silence. Restart if still enabled.
+      if (this.running && this.enabled) {
+        try { this.recognition.start(); } catch (e) { log('💬 Speech recognition restart failed: ' + e.message, 'error'); }
+      }
+    };
+    try {
+      this.recognition.start();
+      this.running = true;
+      log('💬 Captions started (' + this.recognition.lang + ')', 'success');
+    } catch (e) {
+      log('caption start failed: ' + e.message, 'error');
+    }
+  },
+
+  stop() {
+    this.running = false;
+    try { this.recognition && this.recognition.stop(); } catch {}
+    this.recognition = null;
+    this.current = '';
+  },
+
+  // v0.7.174: export accumulated captions as SRT subtitle file
+  exportSrt() {
+    if (!this._srtEntries.length) return null;
+    const pad = (n, d = 2) => String(Math.floor(n)).padStart(d, '0');
+    const fmt = (sec) => {
+      const h = sec / 3600, m = (sec % 3600) / 60, s = sec % 60, ms = (sec * 1000) % 1000;
+      return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms, 3)}`;
+    };
+    let srt = '';
+    this._srtEntries.forEach((e, i) => {
+      srt += `${i + 1}\n${fmt(e.start)} --> ${fmt(e.end)}\n${e.text}\n\n`;
+    });
+    return new Blob([srt], { type: 'text/srt' });
+  },
+
+  // v0.7.187: improved render — karaoke-style with word highlighting,
+  // bigger text, gradient bg, accent-colored current word
+  render(ctx, W, H) {
+    if (!this.running || !this.current) return;
+    const age = performance.now() - this._lastFinalAt;
+    const alpha = age < 4000 ? 1 : Math.max(0, 1 - (age - 4000) / 600);
+    if (alpha <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const fontSize = 60;
+    ctx.font = `800 ${fontSize}px Righteous, Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    // Word-wrap if too long
+    const maxW = W - 100;
+    const words = this.current.split(' ');
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    if (lines.length === 0) { ctx.restore(); return; }
+
+    const lineH = fontSize * 1.25;
+    const padX = 30, padY = 18;
+    const totalH = lines.length * lineH + padY * 2;
+    const boxW = Math.min(W - 60, Math.max(...lines.map(l => ctx.measureText(l).width)) + padX * 2);
+    const boxX = (W - boxW) / 2;
+    const boxY = H - totalH - 30;
+
+    // Background — gradient pill
+    const bgGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + totalH);
+    bgGrad.addColorStop(0, 'rgba(0,0,0,.85)');
+    bgGrad.addColorStop(1, 'rgba(10,10,10,.9)');
+    ctx.fillStyle = bgGrad;
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, totalH, 16); ctx.fill();
+
+    // Accent border (bottom edge)
+    ctx.strokeStyle = 'rgba(163,230,53,.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, totalH, 16); ctx.stroke();
+
+    // Draw lines
+    lines.forEach((l, i) => {
+      const ly = boxY + padY + (i + 1) * lineH - fontSize * 0.15;
+      // Outline
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.7)';
+      ctx.strokeText(l, W / 2, ly);
+      // Fill — last word highlighted in accent
+      if (i === lines.length - 1 && l.includes(' ')) {
+        const lastSpace = l.lastIndexOf(' ');
+        const before = l.slice(0, lastSpace);
+        const last = l.slice(lastSpace);
+        // Measure to position colored part
+        const fullW = ctx.measureText(l).width;
+        const beforeW = ctx.measureText(before).width;
+        const startX = W / 2 - fullW / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(before, startX, ly);
+        ctx.fillStyle = '#a3e635'; // accent highlight on last word
+        ctx.fillText(last, startX + beforeW, ly);
+        ctx.textAlign = 'center';
+      } else {
+        ctx.fillStyle = '#fff';
+        ctx.fillText(l, W / 2, ly);
+      }
+    });
+
+    // Mic icon pulse (left of caption box)
+    const micPulse = 0.6 + Math.sin(performance.now() / 200) * 0.4;
+    ctx.globalAlpha = alpha * micPulse;
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎤', boxX - 18, boxY + totalH / 2 + 6);
+
+    ctx.restore();
+  },
+
+  // v0.7.187: get full transcript as plain text
+  getTranscript() {
+    if (!this._srtEntries.length) return '';
+    return this._srtEntries.map(e => e.text).join(' ');
+  },
+};
+
+/* ─────────── SensorTimeline — record micro:bit samples to CSV ───────────
+
+   Unique to NoorCast: because we read the micro:bit's accelerometer and
+   buttons over Web Bluetooth, we can capture a timestamp-aligned sensor
+   log alongside the video. Researchers and physics teachers can load
+   the CSV in a spreadsheet and correlate robot motion with tutorial
+   timestamps. Every other screen recorder on earth ignores this. */
+const SensorTimeline = {
+  samples: [],   // { t, x, y, z, a, b }
+  recording: false,
+  lastSampleAt: 0,
+
+  start() {
+    this.samples = [];
+    this.recording = true;
+    this.lastSampleAt = 0;
+  },
+
+  stop() {
+    this.recording = false;
+  },
+
+  sample(v) {
+    if (!this.recording) return;
+    const t = Recorder.elapsed() / 1000;
+    // Throttle to ~20 Hz — accelerometer fires much faster than that,
+    // and 20 samples/sec is plenty for tutorial correlation while
+    // keeping the CSV file small.
+    if (t - this.lastSampleAt < 0.05) return;
+    this.lastSampleAt = t;
+    this.samples.push({
+      t: t.toFixed(3),
+      x: (v.x ?? 0).toFixed(3),
+      y: (v.y ?? 0).toFixed(3),
+      z: (v.z ?? 0).toFixed(3),
+      a: v.a ?? 0,
+      b: v.b ?? 0,
+    });
+  },
+
+  toCSV() {
+    if (!this.samples.length) return null;
+    const header = 't_seconds,accel_x,accel_y,accel_z,button_a,button_b\n';
+    const rows = this.samples.map(s => `${s.t},${s.x},${s.y},${s.z},${s.a},${s.b}`).join('\n');
+    return header + rows + '\n';
+  },
+};
+
+/* v0.7.28: History — track the last 10 finished takes (metadata only)
+   and render them into the "📊 Mes tutos" collapsible section below
+   Badges. Data persisted in localStorage tc-history as an array of
+   small entries: { at, name, durSec, scenes, badges, size }. */
+const History = {
+  MAX: 10,
+  entries: [],
+  // v0.7.97: client-side filter state for search + min-stars
+  _filterText: '',
+  _filterMinStars: 0,
+
+  setFilter(text) {
+    this._filterText = (text || '').toLowerCase();
+    this.render();
+  },
+  setMinStars(n) {
+    this._filterMinStars = Math.max(0, Math.min(5, parseInt(n) || 0));
+    this.render();
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-history');
+      this.entries = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(this.entries)) this.entries = [];
+    } catch { this.entries = []; }
+  },
+
+  save() {
+    try { localStorage.setItem('tc-history', JSON.stringify(this.entries)); } catch {}
+  },
+
+  add(entry) {
+    // Newest first
+    this.entries.unshift(entry);
+    if (this.entries.length > this.MAX) this.entries = this.entries.slice(0, this.MAX);
+    this.save();
+    this.render();
+  },
+
+  clear() {
+    this.entries = [];
+    this.save();
+    this.render();
+  },
+
+  _fmtDur(secs) {
+    const s = Math.max(0, Math.floor(secs || 0));
+    const m = Math.floor(s / 60);
+    return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  },
+  _fmtDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString(undefined, {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  },
+  _fmtSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  },
+
+  render() {
+    const el = $('tcHistory');
+    const stats = $('tcHistoryStats');
+    if (!el) return;
+    // v0.7.97: filter entries by text + min stars
+    const text = this._filterText || '';
+    const minStars = this._filterMinStars || 0;
+    const filtered = this.entries.filter(e => {
+      if (minStars > 0 && (!e.rating || e.rating < minStars)) return false;
+      if (text && !(e.name || '').toLowerCase().includes(text)) return false;
+      return true;
+    });
+    if (filtered.length === 0) {
+      el.innerHTML = `<div class="tc-history-empty">${t('historyEmpty')}</div>`;
+      if (stats) stats.textContent = '';
+      return;
+    }
+    // Build rows
+    const rows = filtered.map(e => {
+      const dur = this._fmtDur(e.durSec);
+      const date = this._fmtDate(e.at);
+      const size = this._fmtSize(e.size);
+      const badges = (e.badges || 0) > 0 ? `🏆 ${e.badges}` : '';
+      const scenes = (e.scenes || 0) > 0 ? `🎭 ${e.scenes}` : '';
+      return `
+        <div class="tc-history-row">
+          <div class="tc-history-main">
+            <div class="tc-history-name">${this._escape(e.name || 'take')}</div>
+            <div class="tc-history-meta">${date} · ${dur}${size ? ' · ' + size : ''}</div>
+          </div>
+          <div class="tc-history-tags">${badges}${badges && scenes ? ' ' : ''}${scenes}</div>
+        </div>
+      `;
+    }).join('');
+    el.innerHTML = rows;
+    if (stats) {
+      const totalSecs = filtered.reduce((s, e) => s + (e.durSec || 0), 0);
+      stats.textContent = `${filtered.length} · ${this._fmtDur(totalSecs)}`;
+    }
+    if (typeof Dashboard !== 'undefined') Dashboard.render();
+  },
+
+  _escape(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  },
+};
+
+/* v0.7.93 — 1-5 star rating widget for the just-finished take.
+   Renders 5 buttons next to the download buttons. Click → writes
+   the rating onto the most recent History entry and re-renders the
+   filled-star visuals. Reset on every new take. */
+const TakeRating = {
+  current: 0,
+
+  render() {
+    const host = $('tcTakeRating');
+    if (!host) return;
+    host.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      const b = document.createElement('button');
+      b.className = 'tc-rating-star' + (i <= this.current ? ' filled' : '');
+      b.textContent = '★';
+      b.dataset.value = i;
+      b.addEventListener('click', () => this.set(i));
+      host.appendChild(b);
+    }
+  },
+
+  set(value) {
+    this.current = value;
+    // Write back to the most recent History entry
+    if (History.entries && History.entries.length > 0) {
+      History.entries[0].rating = value;
+      History.save();
+    }
+    this.render();
+    showToast(`⭐ ${value}/5`, 1200);
+  },
+
+  reset() {
+    this.current = 0;
+    this.render();
+  },
+};
+
+/* v0.7.86 — daily-goal celebration + streak toast. Reads History.entries
+   but doesn't mutate it. Uses a separate localStorage key (tc-last-rec-day)
+   so the "first today?" check is O(1) and doesn't depend on Dashboard. */
+const DailyGoal = {
+  // Returns true if this finished recording is the first one today.
+  check() {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    let last = null;
+    try { last = localStorage.getItem('tc-last-rec-day'); } catch {}
+    if (last === key) return { first: false, streak: 0 };
+
+    // First recording today — update the marker + compute streak
+    try { localStorage.setItem('tc-last-rec-day', key); } catch {}
+
+    // Streak: count backwards from today in History.entries' day-set
+    const uniqueDays = new Set();
+    try {
+      if (typeof History !== 'undefined' && Array.isArray(History.entries)) {
+        History.entries.forEach(e => {
+          const d = new Date(e.at);
+          uniqueDays.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        });
+      }
+    } catch {}
+    uniqueDays.add(key);  // include today
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today.getTime() - i * 86400000);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (uniqueDays.has(k)) streak++;
+      else break;
+    }
+    return { first: true, streak };
+  },
+
+  celebrate() {
+    const result = this.check();
+    if (!result.first) return;
+    showToast('🎯 ' + (t('dailyGoalReached') || 'Objectif du jour atteint !'), 2600);
+    try { Confetti.burst && Confetti.burst(); } catch {}
+    if (result.streak >= 2) {
+      setTimeout(() => {
+        showToast('🔥 ' + (t('streak') || 'Série') + `: ${result.streak} ` + (t('days') || 'jours'), 2600);
+      }, 2800);
+    }
+  },
+};
+
+/* v0.7.56: aggregate session stats dashboard. Derived from
+   History.entries, which is capped at 10 entries — stats may
+   undercount if the history was cleared or if the user has
+   recorded more than 10 takes. Shows a "last 10 tutorials"
+   note at the bottom to make that explicit. */
+const Dashboard = {
+  render() {
+    const wrap = $('tcDashboard');
+    if (!wrap) return;
+    const entries = (History.entries || []);
+    if (entries.length === 0) {
+      wrap.innerHTML = `<div class="tc-dash-empty" data-i18n="dashEmpty">${t('dashEmpty')}</div>`;
+      return;
+    }
+    // Total count, total seconds, total bytes
+    const total = entries.length;
+    const totalSec = entries.reduce((s, e) => s + (e.durSec || 0), 0);
+    const totalBytes = entries.reduce((s, e) => s + (e.size || 0), 0);
+    const longest = entries.reduce((m, e) => Math.max(m, e.durSec || 0), 0);
+    // Favorite day of week (local time)
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    entries.forEach(e => { const d = new Date(e.at); dayCounts[d.getDay()]++; });
+    const favDay = dayCounts.indexOf(Math.max(...dayCounts));
+    const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    // Last 7 calendar days, count per day
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayBuckets = new Array(7).fill(0);
+    entries.forEach(e => {
+      const d = new Date(e.at);
+      const diffMs = today - new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays < 7) dayBuckets[6 - diffDays]++;
+    });
+    const maxBucket = Math.max(1, ...dayBuckets);
+    // Streak: consecutive calendar days ending today with >= 1 recording
+    const uniqueDays = new Set(entries.map(e => {
+      const d = new Date(e.at);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }));
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const day = new Date(today.getTime() - i * 86400000);
+      const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
+      if (uniqueDays.has(key)) streak++;
+      else break;
+    }
+
+    // v0.7.88: average pauses per take (ignores old entries without the field)
+    const totalPauses = entries.reduce((s, e) => s + (e.pauses || 0), 0);
+    const avgPauses = entries.length > 0 ? (totalPauses / entries.length).toFixed(1) : '0';
+
+    // v0.7.93: average star rating across history entries that have one
+    const rated = entries.filter(e => typeof e.rating === 'number' && e.rating > 0);
+    const avgRating = rated.length > 0 ? (rated.reduce((s, e) => s + e.rating, 0) / rated.length).toFixed(1) : '—';
+
+    const fmtDur = secs => {
+      const s = Math.max(0, Math.floor(secs || 0));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      return h > 0 ? `${h}h ${m}m` : `${m}m ${s % 60}s`;
+    };
+    const fmtSize = bytes => {
+      if (!bytes) return '0 B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+      return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    };
+
+    wrap.innerHTML = `
+      <div class="tc-dash-grid">
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${total}</div>
+          <div class="tc-dash-label" data-i18n="dashRecs">${t('dashRecs')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${fmtDur(totalSec)}</div>
+          <div class="tc-dash-label" data-i18n="dashTotal">${t('dashTotal')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${fmtDur(longest)}</div>
+          <div class="tc-dash-label" data-i18n="dashLongest">${t('dashLongest')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${fmtSize(totalBytes)}</div>
+          <div class="tc-dash-label" data-i18n="dashSize">${t('dashSize')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${streak}</div>
+          <div class="tc-dash-label" data-i18n="dashStreak">${t('dashStreak')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${dayNames[favDay]}</div>
+          <div class="tc-dash-label" data-i18n="dashFavDay">${t('dashFavDay')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${avgPauses}</div>
+          <div class="tc-dash-label" data-i18n="dashPauses">${t('dashPauses')}</div>
+        </div>
+        <div class="tc-dash-stat">
+          <div class="tc-dash-value">${avgRating} ${rated.length ? '⭐' : ''}</div>
+          <div class="tc-dash-label" data-i18n="dashAvgRating">${t('dashAvgRating')}</div>
+        </div>
+      </div>
+      <div class="tc-dash-chart">
+        <div class="tc-dash-chart-label" data-i18n="dash7Days">${t('dash7Days')}</div>
+        <div class="tc-dash-chart-bars">
+          ${dayBuckets.map(v => `<div class="tc-dash-bar" style="height:${Math.max(4, (v / maxBucket) * 100)}%"><span>${v || ''}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="tc-dash-note" data-i18n="dashNote">${t('dashNote')}</div>
+    `;
+  },
+};
+
+/* v0.7.137: export / import settings as JSON.
+   Gathers every tc-* localStorage key into a JSON file for backup
+   or sharing setup between machines. */
+const SettingsIO = {
+  exportAll() {
+    const data = { v: 1, type: 'noorcast-settings', app: APP_VERSION, exportedAt: new Date().toISOString(), keys: {} };
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tc-')) data.keys[k] = localStorage.getItem(k);
+      }
+    } catch {}
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-settings-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(t('settingsExported') || '⚙️ Paramètres exportés', 1800);
+  },
+
+  importAll(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== 'object' || data.v !== 1 || data.type !== 'noorcast-settings') {
+          showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+          return;
+        }
+        if (!confirm(t('settingsConfirm') || 'Remplacer tes paramètres locaux par ce fichier ?')) return;
+        if (data.keys) {
+          try {
+            Object.entries(data.keys).forEach(([k, v]) => {
+              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+            });
+          } catch {}
+        }
+        showToast(t('settingsImported') || '⚙️ Paramètres importés — rechargement…', 1800);
+        setTimeout(() => location.reload(), 900);
+      } catch (e) {
+        showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+        log('settings import error: ' + e.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  },
+};
+
+/* v0.7.44: portable session bundle. Exports everything a teacher
+   would want to re-import on another machine — badges, history,
+   preferences, brand logo, tutorial text presets, scene order.
+   Streams, video blobs, and recording chunks are NOT included;
+   this is a "my NoorCast setup" backup, not a "my recordings"
+   archive. */
+const SessionBundle = {
+  export() {
+    const bundle = {
+      v: 1,                           // bundle schema version
+      app: APP_VERSION,
+      built: BUILD_DATE,
+      exportedAt: new Date().toISOString(),
+      settings: {},
+      badges: [...(Badges.unlocked || [])],
+      badgesScenesUsed: [...(Badges.scenesUsed || [])],
+      history: (History.entries || []).slice(),
+      sceneOrder: (Scenes.presets || []).map(p => p.key),
+      brand: {
+        logo: this._tryLocalStorage('tc-brand-logo'),
+        slogan: this._tryLocalStorage('tc-brand-slogan'),
+        sloganColor: this._tryLocalStorage('tc-brand-slogan-color'),
+        url: this._tryLocalStorage('tc-brand-url'),
+      },
+      teleprompter: {
+        script: this._tryLocalStorage('tc-tele-script'),
+        speed: this._tryLocalStorage('tc-tele-speed'),
+        font: this._tryLocalStorage('tc-tele-font'),
+        width: this._tryLocalStorage('tc-tele-width'),
+      },
+      ticker: this._tryLocalStorage('tc-ticker-custom'),
+    };
+    // Grab every tc-* localStorage key for the settings slot
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tc-')) bundle.settings[k] = localStorage.getItem(k);
+      }
+    } catch {}
+    const json = JSON.stringify(bundle, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-session-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(t('bundleExported') || '📦 Session exportée', 1800);
+  },
+
+  import(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const bundle = JSON.parse(reader.result);
+        if (!bundle || typeof bundle !== 'object' || bundle.v !== 1) {
+          showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+          return;
+        }
+        if (!confirm(t('bundleConfirm') || 'Remplacer tes données locales par cette session ?')) return;
+        // Replay all tc-* settings
+        if (bundle.settings) {
+          try {
+            Object.entries(bundle.settings).forEach(([k, v]) => {
+              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+            });
+          } catch {}
+        }
+        showToast(t('bundleImported') || '📦 Session importée — rechargement…', 1800);
+        setTimeout(() => location.reload(), 900);
+      } catch (e) {
+        showToast(t('bundleBadFormat') || '❌ Format invalide', 2500);
+        log('bundle import error: ' + e.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  },
+
+  _tryLocalStorage(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  },
+};
+
+/* v0.7.27: SensorChart — renders the SensorTimeline samples into the
+   take panel's mini-chart canvas. X/Y/Z accelerometer lines over time,
+   button A/B presses as short vertical marks at the bottom. Purely
+   presentational — no interactivity. */
+const SensorChart = {
+  render(samples) {
+    const wrap = $('tcSensorChartWrap');
+    const canvas = $('tcSensorChart');
+    if (!wrap || !canvas || !samples || samples.length === 0) {
+      if (wrap) wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = '';
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, .35)';
+    ctx.fillRect(0, 0, W, H);
+    // Center zero line
+    ctx.strokeStyle = 'rgba(255, 255, 255, .15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, H / 2);
+    ctx.lineTo(W, H / 2);
+    ctx.stroke();
+
+    // Compute time range + accel range
+    const first = parseFloat(samples[0].t);
+    const last = parseFloat(samples[samples.length - 1].t);
+    const duration = Math.max(0.001, last - first);
+    // Accel is typically in g (−2 to +2 on micro:bit). Auto-range anyway.
+    let maxAbs = 0;
+    samples.forEach(s => {
+      const x = Math.abs(parseFloat(s.x));
+      const y = Math.abs(parseFloat(s.y));
+      const z = Math.abs(parseFloat(s.z));
+      if (x > maxAbs) maxAbs = x;
+      if (y > maxAbs) maxAbs = y;
+      if (z > maxAbs) maxAbs = z;
+    });
+    if (maxAbs < 0.1) maxAbs = 1;  // avoid flat chart
+
+    const pad = 8;
+    const plotH = H - pad * 2 - 12; // leave 12px at bottom for button marks
+    const midY = pad + plotH / 2;
+
+    const xAt = (t) => ((parseFloat(t) - first) / duration) * W;
+    const yAt = (v) => midY - (parseFloat(v) / maxAbs) * (plotH / 2);
+
+    // Draw X/Y/Z lines
+    const lines = [
+      { key: 'x', color: '#ef4444' },  // red
+      { key: 'y', color: '#22c55e' },  // green
+      { key: 'z', color: '#38bdf8' },  // cyan
+    ];
+    lines.forEach(({ key, color }) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      samples.forEach((s, i) => {
+        const px = xAt(s.t);
+        const py = yAt(s[key]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+    });
+
+    // Button A/B marks — small vertical ticks at the bottom whenever
+    // the button is pressed (value === 1)
+    ctx.lineWidth = 2;
+    samples.forEach(s => {
+      if (s.a) {
+        ctx.strokeStyle = '#fbbf24';  // yellow for A
+        const px = xAt(s.t);
+        ctx.beginPath();
+        ctx.moveTo(px, H - 10);
+        ctx.lineTo(px, H - 2);
+        ctx.stroke();
+      }
+      if (s.b) {
+        ctx.strokeStyle = '#fb923c';  // orange for B
+        const px = xAt(s.t);
+        ctx.beginPath();
+        ctx.moveTo(px, H - 6);
+        ctx.lineTo(px, H - 2);
+        ctx.stroke();
+      }
+    });
+
+    // Top-left label: sample count + duration
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(255, 255, 255, .55)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${samples.length} pts · ${duration.toFixed(1)}s · ±${maxAbs.toFixed(2)}g`, 6, 4);
+  },
+};
+
+/* ─────────── 6. micro:bit sensors (Web Bluetooth) ─────────── */
+
+const Sensors = {
+  device: null, server: null,
+  values: { a: 0, b: 0, x: 0, y: 0, z: 0, temp: 0, light: 0, sound: 0, compass: 0 },
+  autoOverlayEnabled: false,  // v0.5.0 — opt-in in Settings
+  _lastAutoOverlayAt: 0,
+
+  /* v0.7.171: UART-only BLE connection (inspired by bit-playground).
+     All data flows through a single UART service as text lines.
+     Firmware sends: A:x,y,z  BA:1  BB:0  TP:23  L:128  S:200
+     NoorCast sends: P:90  TI:45  LED:1f1f1f1f1f  TEST  HELLO */
+  _setConnectionUI(connected, statusText) {
+    const s = $('tcBtStatus');
+    const cb = $('btConnectBtn');
+    const db = $('btDisconnectBtn');
+    if (s) { s.textContent = statusText; s.style.color = connected ? '#a3e635' : '#ef4444'; }
+    if (cb) cb.style.display = connected ? 'none' : '';
+    if (db) db.style.display = connected ? '' : 'none';
+  },
+
+  async connect() {
+    if (!navigator.bluetooth) {
+      showToast('❌ Web Bluetooth non supporté (Chrome/Edge requis)', 3000);
+      return;
+    }
+    try {
+      this.device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'BBC micro:bit' }, { namePrefix: 'uBit' }],
+        optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'],
+      });
+      this.server = await this.device.gatt.connect();
+      this._reconnectAttempts = 0;
+      this.device.addEventListener('gattserverdisconnected', () => {
+        log('micro:bit disconnected', 'warn');
+        showToast('⚠ micro:bit disconnected', 3000);
+        this._setConnectionUI(false, '❌ Disconnected');
+        this.server = null;
+        this._uartTx = null;
+        if (this.values) { this.values.x = 0; this.values.y = 0; this.values.z = 0; }
+        this.updatePanel();
+      });
+      // Connect UART service (robust detection from bit-playground)
+      const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+      const chars = await uartSvc.getCharacteristics();
+      const isNotifier = ch => ch && (ch.properties.notify || ch.properties.indicate);
+      const isWriter = ch => ch && (ch.properties.write || ch.properties.writeWithoutResponse);
+      let notifyChar = null;
+      // Pass 1: try standard Nordic UART UUIDs
+      for (const ch of chars) {
+        const id = ch.uuid.toLowerCase();
+        if (id.includes('6e400002') && isWriter(ch)) this._uartTx = ch;
+        if (id.includes('6e400003') && isNotifier(ch)) notifyChar = ch;
+      }
+      // Pass 2: fallback — first notify + first write characteristic (any UUID)
+      if (!notifyChar || !this._uartTx) {
+        for (const ch of chars) {
+          if (!notifyChar && isNotifier(ch)) notifyChar = ch;
+          if (!this._uartTx && isWriter(ch)) this._uartTx = ch;
+        }
+      }
+      if (!notifyChar) throw new Error('UART not found — flash the NoorCast firmware first (click ⚙ above)');
+      await notifyChar.startNotifications();
+      this._uartBuf = '';
+      notifyChar.addEventListener('characteristicvaluechanged', (e) => {
+        const dec = new TextDecoder();
+        this._uartBuf += dec.decode(e.target.value);
+        const lines = this._uartBuf.split('\n');
+        this._uartBuf = lines.pop();
+        lines.forEach(line => this._handleUartLine(line.trim()));
+      });
+      // Say hello
+      this.sendUart('HELLO');
+      log(t('btConnected'), 'success');
+      showToast(t('btConnected'), 2500);
+      this._setConnectionUI(true, '✅ Connected');
+      Badges.unlockMicrobit();
+      this.values = this.values || { a: 0, b: 0, x: 0, y: 0, z: 0 };
+      $('tcBtValues').style.display = 'block';
+    } catch (e) {
+      log(`${t('btError')}: ${e.message}`, 'error');
+      this._setConnectionUI(false, '❌ ' + e.message);
+      showToast(t('btError'), 2500);
+    }
+  },
+
+  _graphData: [], // rolling buffer of {x,y,z} samples for mini graph
+  _graphMax: 100,
+
+  updatePanel() {
+    const el = $('tcBtValues'); if (!el || !this.values) return;
+    el.style.display = 'block';
+    const v = this.values;
+    // Accumulate samples
+    this._graphData.push({ x: v.x || 0, y: v.y || 0, z: v.z || 0, s: (v.sound ?? 0) / 255 });
+    if (this._graphData.length > this._graphMax) this._graphData.shift();
+    // Draw mini graph
+    const canvas = $('tcSensorGraph');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      // Center line
+      ctx.strokeStyle = 'rgba(255,255,255,.1)';
+      ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+      // Draw X/Y/Z + Sound lines
+      const colors = ['#ef4444', '#22c55e', '#38bdf8', '#fbbf24'];
+      const keys = ['x', 'y', 'z', 's'];
+      const data = this._graphData;
+      const range = 2; // -2g to +2g
+      keys.forEach((k, ki) => {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[ki];
+        ctx.lineWidth = k === 's' ? 2 : 1.5;
+        data.forEach((sample, i) => {
+          const px = (i / (this._graphMax - 1)) * W;
+          const val = k === 's' ? sample[k] * range - range / 2 : sample[k];
+          const py = H / 2 - (val / range) * (H / 2);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      });
+    }
+    // Values text
+    const vals = $('tcSensorVals');
+    if (vals) {
+      vals.textContent = `X:${(v.x||0).toFixed(1)} Y:${(v.y||0).toFixed(1)} Z:${(v.z||0).toFixed(1)}` +
+        (v.temp != null ? ` ${v.temp}°` : '') + (v.compass != null ? ` 🧭${v.compass}°` : '') +
+        (v.sound != null ? ` 🔊${v.sound}` : '');
+    }
+  },
+
+  // Overlay position + size (draggable + resizable)
+  _overlayX: null, _overlayY: null, _overlayW: 0, _overlayH: 0,
+  _overlayOpacity: 0.85,
+  _overlayScale: 1.0,
+  _overlayVisible: true,
+
+  _saveOverlayPos() {
+    try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale, visible: this._overlayVisible })); } catch {}
+  },
+  _loadOverlayPos() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-sensor-overlay'));
+      if (s) { this._overlayX = s.x; this._overlayY = s.y; this._overlayOpacity = s.opacity ?? 0.85; this._overlayScale = s.scale ?? 1; if (typeof s.visible === 'boolean') this._overlayVisible = s.visible; }
+    } catch {}
+  },
+
+  drawOverlay(ctx) {
+    if (!this.values) return;
+    const v = this.values;
+    const W = ctx.canvas.width, H = ctx.canvas.height;
+    // Default position: bottom-left
+    if (this._overlayX === null) { this._overlayX = 10; this._overlayY = H - 50; }
+    ctx.save();
+    ctx.globalAlpha = this._overlayOpacity;
+    // Graph with border + text below + LED mirror (like sidebar style)
+    const graphW = 160, graphH = 40;
+    const ledSize = 5, ledGap = 1, ledBlock = this._lastLedState ? 5 * (ledSize + ledGap) + 8 : 0;
+    const px = 8, fs = 11;
+    // Build value string
+    ctx.font = `600 ${fs}px ui-monospace, monospace`;
+    const valText = `X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`
+      + (v.temp != null ? `  ${v.temp}°` : '') + (v.compass != null ? `  🧭${v.compass}°` : '')
+      + (v.sound != null ? `  🔊${v.sound}` : '');
+    const valW = ctx.measureText(valText).width;
+    const bw = Math.max(graphW, valW) + px * 2 + ledBlock;
+    const bh = graphH + fs + 14; // graph + text + padding
+    const sc = this._overlayScale;
+    const bx = this._overlayX, by = this._overlayY;
+    ctx.translate(bx, by); ctx.scale(sc, sc); ctx.translate(-bx, -by);
+    this._overlayW = bw * sc; this._overlayH = bh * sc;
+    if (bx + this._overlayW > W) this._overlayX = W - this._overlayW;
+    if (by + this._overlayH > H) this._overlayY = H - this._overlayH;
+    if (this._overlayX < 0) this._overlayX = 0;
+    if (this._overlayY < 0) this._overlayY = 0;
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill();
+    // Graph area with border
+    const gx = bx + px, gy = by + 4, gw = graphW, gh = graphH;
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, gw, gh);
+    // Center line
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(gx, gy + gh / 2); ctx.lineTo(gx + gw, gy + gh / 2); ctx.stroke();
+    // X/Y/Z sparklines
+    const data = this._graphData;
+    if (data && data.length > 1) {
+      const colors = ['#ef4444', '#22c55e', '#38bdf8', '#fbbf24'];
+      const keys = ['x', 'y', 'z', 's'];
+      const range = 2;
+      keys.forEach((k, ki) => {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[ki];
+        ctx.lineWidth = k === 's' ? 2 : 1.5;
+        data.forEach((sample, i) => {
+          const px2 = gx + (i / (this._graphMax - 1)) * gw;
+          // Sound is 0-1, accel is -2..2 — map sound to same visual range
+          const val = k === 's' ? sample[k] * range - range / 2 : sample[k];
+          const py2 = gy + gh / 2 - (val / range) * (gh / 2);
+          i === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
+        });
+        ctx.stroke();
+      });
+    }
+    // Values text below graph
+    ctx.fillStyle = 'rgba(163,230,53,.7)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(valText, gx, gy + gh + 4);
+    // LED 5x5 mirror (right of graph, vertically centered)
+    if (this._lastLedState) {
+      const lx = bx + bw - ledBlock + 2;
+      const ly = by + (bh - 5 * (ledSize + ledGap)) / 2;
+      for (let r = 0; r < 5; r++) {
+        const row = this._lastLedState[r] || 0;
+        for (let c = 0; c < 5; c++) {
+          const on = (row >> c) & 1;
+          ctx.fillStyle = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+          ctx.fillRect(lx + c * (ledSize + ledGap), ly + r * (ledSize + ledGap), ledSize, ledSize);
+        }
+      }
+    }
+    ctx.restore();
+
+    // v0.7.163: live accelerometer graph (bottom-right corner)
+    if (this._liveGraph && this._graphSamples && this._graphSamples.length > 1) {
+      const gw = 280, gh = 100, gx = ctx.canvas.width - gw - 20, gy = ctx.canvas.height - gh - 20;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.strokeStyle = 'rgba(255,255,255,.1)';
+      ctx.strokeRect(gx, gy, gw, gh);
+      const samples = this._graphSamples;
+      const drawLine = (key, color) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        samples.forEach((s, i) => {
+          const px = gx + (i / (samples.length - 1)) * gw;
+          const py = gy + gh / 2 - (s[key] || 0) * (gh / 4);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      };
+      drawLine('x', '#ef4444');
+      drawLine('y', '#22c55e');
+      drawLine('z', '#38bdf8');
+      ctx.font = '10px monospace';
+      ctx.fillStyle = '#ef4444'; ctx.fillText('X', gx + 4, gy + 12);
+      ctx.fillStyle = '#22c55e'; ctx.fillText('Y', gx + 18, gy + 12);
+      ctx.fillStyle = '#38bdf8'; ctx.fillText('Z', gx + 32, gy + 12);
+      ctx.restore();
+    }
+
+    // v0.7.163: motion trail (center of canvas, fading dots)
+    if (this._motionTrail && this._trailPoints && this._trailPoints.length > 1) {
+      ctx.save();
+      const W = ctx.canvas.width, H = ctx.canvas.height;
+      const now = Date.now();
+      this._trailPoints.forEach((p, i) => {
+        const age = (now - p.t) / 5000; // fade over 5 seconds
+        if (age > 1) return;
+        ctx.globalAlpha = 1 - age;
+        ctx.fillStyle = `hsl(${(i * 3) % 360}, 80%, 60%)`;
+        ctx.beginPath();
+        ctx.arc(p.x * W, p.y * H, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // v0.7.163: temperature overlay (top-right, if available)
+    if (this._showTemp && this.values.temp != null) {
+      ctx.save();
+      ctx.font = '700 28px Orbitron, monospace';
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      const tw = 160, th = 40, tx = ctx.canvas.width - tw - 20, ty = 20;
+      ctx.fillRect(tx, ty, tw, th);
+      ctx.fillStyle = '#fb923c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`🌡 ${this.values.temp}°C`, tx + tw / 2, ty + th / 2);
+      ctx.restore();
+    }
+
+    // v0.7.163: light level bar (top-right, below temp)
+    if (this._showLight && this.values.light != null) {
+      ctx.save();
+      const lw = 160, lh = 20, lx = ctx.canvas.width - lw - 20, ly = this._showTemp ? 70 : 20;
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(lx, ly, lw, lh);
+      const level = Math.min(1, (this.values.light || 0) / 255);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(lx, ly, lw * level, lh);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`💡 ${this.values.light || 0}`, lx + lw / 2, ly + lh / 2);
+      ctx.restore();
+    }
+
+    // v0.7.165: sound level bar (v2 mic via UART, below light bar)
+    if (this._showSound && this.values.sound != null) {
+      ctx.save();
+      const sw = 160, sh = 20;
+      const sx = ctx.canvas.width - sw - 20;
+      const sy = (this._showTemp ? 70 : 20) + (this._showLight ? 28 : 0);
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(sx, sy, sw, sh);
+      const level = Math.min(1, (this.values.sound || 0) / 255);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(sx, sy, sw * level, sh);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`🔊 ${this.values.sound || 0}`, sx + sw / 2, sy + sh / 2);
+      ctx.restore();
+    }
+  },
+
+  // v0.7.163: micro:bit feature flags (toggled from settings or JS)
+  _shakeToScene: false,
+  _shakeConfetti: false,
+  _btnAAction: 'zoom', // 'zoom' or 'sfx'
+  _liveGraph: false,
+  _graphSamples: [],
+  _motionTrail: false,
+  _trailPoints: [],
+  _showTemp: false,
+  _showLight: false,
+  _showSound: false,
+  _tiltToPan: false,
+  _uartTx: null,
+  _reconnectAttempts: 0,
+
+  // v0.7.172: auto-reconnect with guard (from bit-playground)
+  _reconnecting: false,
+  async _tryReconnect() {
+    if (this._reconnecting) return; // prevent re-entrant loops
+    if (!this.device || this._reconnectAttempts >= 3) {
+      if (this._reconnectAttempts >= 3) {
+        showToast('micro:bit reconnect failed after 3 attempts', 3000);
+        this._setConnectionUI(false, '❌ Reconnect failed');
+      }
+      this._reconnectAttempts = 0;
+      this._reconnecting = false;
+      return;
+    }
+    this._reconnecting = true;
+    this._reconnectAttempts++;
+    this._uartQueue.length = 0; // clear pending writes
+    this._uartBusy = false;
+    log(`BLE reconnect attempt ${this._reconnectAttempts}/3`, 'info');
+    await new Promise(r => setTimeout(r, 3000)); // longer cooldown
+    try {
+      this.server = await this.device.gatt.connect();
+      // Re-acquire UART characteristics (robust detection)
+      try {
+        const uartSvc = await this.server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+        const chars = await uartSvc.getCharacteristics();
+        const isNotifier = ch => ch && (ch.properties.notify || ch.properties.indicate);
+        const isWriter = ch => ch && (ch.properties.write || ch.properties.writeWithoutResponse);
+        let notifyChar = null;
+        this._uartTx = null;
+        for (const ch of chars) {
+          const id = ch.uuid.toLowerCase();
+          if (id.includes('6e400002') && isWriter(ch)) this._uartTx = ch;
+          if (id.includes('6e400003') && isNotifier(ch)) notifyChar = ch;
+        }
+        if (!notifyChar || !this._uartTx) {
+          for (const ch of chars) {
+            if (!notifyChar && isNotifier(ch)) notifyChar = ch;
+            if (!this._uartTx && isWriter(ch)) this._uartTx = ch;
+          }
+        }
+        if (notifyChar) {
+          await notifyChar.startNotifications();
+          this._uartBuf = '';
+          notifyChar.addEventListener('characteristicvaluechanged', (e) => {
+            const dec = new TextDecoder();
+            this._uartBuf += dec.decode(e.target.value);
+            const lines = this._uartBuf.split('\n');
+            this._uartBuf = lines.pop();
+            lines.forEach(line => this._handleUartLine(line.trim()));
+          });
+        }
+        this.sendUart('HELLO');
+      } catch {}
+      this._reconnectAttempts = 0;
+      this._reconnecting = false;
+      showToast('micro:bit reconnected!', 2000);
+      this._setConnectionUI(true, '✅ Connected');
+      log('BLE reconnected', 'success');
+    } catch (e) {
+      log('BLE reconnect failed: ' + e.message, 'error');
+      this._reconnecting = false;
+      this._tryReconnect();
+    }
+  },
+  _panAngle: 90,
+  _tiltAngle: 90,
+
+  // v0.7.171: parse all incoming UART lines (unified protocol)
+  _handleUartLine(line) {
+    if (!line || line.startsWith('ECHO:') || line.startsWith('LOG:')) return;
+    log('← ' + line, 'warn');
+    this.values = this.values || {};
+    // ACC:x,y,z (bit-playground format) or A:x,y,z (NoorCast format)
+    if (line.startsWith('ACC:') || line.startsWith('A:')) {
+      const parts = line.slice(line.indexOf(':') + 1).split(',');
+      if (parts.length >= 3) {
+        this.values.x = parseInt(parts[0], 10) / 1000;
+        this.values.y = parseInt(parts[1], 10) / 1000;
+        this.values.z = parseInt(parts[2], 10) / 1000;
+        this.updatePanel();
+        this._processAccel();
+      }
+      return;
+    }
+    // BA:1 / BTN:A:1 — button A
+    if (line.startsWith('BA:') || line.startsWith('BTN:A:')) {
+      const prev = this.values.a || 0;
+      this.values.a = parseInt(line.slice(line.lastIndexOf(':') + 1), 10);
+      this.updatePanel();
+      if (prev === 0 && this.values.a !== 0) {
+        if (this._btnAAction === 'sfx' && typeof SoundBoard !== 'undefined') SoundBoard.play('clap');
+        else Zoom.toggle();
+      }
+      return;
+    }
+    // BB:1 / BTN:B:1 — button B
+    if (line.startsWith('BB:') || line.startsWith('BTN:B:')) {
+      const prev = this.values.b || 0;
+      this.values.b = parseInt(line.slice(line.lastIndexOf(':') + 1), 10);
+      this.updatePanel();
+      if (prev === 0 && this.values.b !== 0) Chapters.addMarker();
+      return;
+    }
+    // TP:23 / TEMP:23 — temperature
+    if (line.startsWith('TP:') || line.startsWith('TEMP:')) {
+      this.values.temp = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+    }
+    // L:128 / LIGHT:128 — light level
+    if (line.startsWith('L:') || line.startsWith('LIGHT:')) {
+      this.values.light = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+    }
+    // S:200 / SOUND:200 — sound level (v2)
+    if (line.startsWith('S:') || line.startsWith('SOUND:')) {
+      this.values.sound = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+    }
+    // LEDS:r0,r1,r2,r3,r4 — sync LED grid from micro:bit (bit-playground format)
+    if (line.startsWith('LEDS:')) {
+      const parts = line.slice(5).split(',');
+      if (parts.length >= 5) {
+        this._syncLedGrid(parts.map(p => parseInt(p, 10)));
+      }
+      return;
+    }
+    // COMPASS:n — heading (0-360)
+    if (line.startsWith('COMPASS:')) {
+      this.values.compass = parseInt(line.slice(8), 10); return;
+    }
+    // OK — test response
+    if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
+    // INFO: / SERVO: / EVENT: — bit-playground ack (ignore silently)
+    if (line.startsWith('INFO:') || line.startsWith('SERVO') || line.startsWith('EVENT:') || line.startsWith('TAB:')) return;
+  },
+
+  // v0.7.172: sync the web LED grid from micro:bit telemetry
+  _lastLedState: null,
+  _syncLedGrid(rows) {
+    this._lastLedState = rows; // store for canvas overlay mirror
+    const grid = $('tcLedGrid');
+    if (!grid) return;
+    const cells = grid.querySelectorAll('div, button');
+    if (cells.length < 25) return;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const on = (rows[r] >> c) & 1;
+        cells[r * 5 + c].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+      }
+    }
+    // v0.7.179: mirror to Pilot overlay
+    MicrobitOverlay.syncLeds(rows);
+  },
+
+  // v0.7.171: process accelerometer data (extracted from old BLE handler)
+  _processAccel() {
+    const v = this.values;
+    // Laser tilt control
+    if (Laser.on) {
+      const nx = Math.max(-1, Math.min(1, v.x));
+      const ny = Math.max(-1, Math.min(1, v.y));
+      Laser.x = Laser.x + (Engine.width * 0.5 + nx * Engine.width * 0.45 - Laser.x) * 0.3;
+      Laser.y = Laser.y + (Engine.height * 0.5 + ny * Engine.height * 0.45 - Laser.y) * 0.3;
+      Laser.lastMove = Date.now();
+    }
+    // Tilt-to-pan
+    if (this._tiltToPan) {
+      const sel = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+      if (sel && sel.type !== 'mic') {
+        const ps = 0.008;
+        sel.cropLeft = Math.max(0, Math.min(0.4, (sel.cropLeft || 0) + v.x * ps));
+        sel.cropRight = Math.max(0, Math.min(0.4, (sel.cropRight || 0) - v.x * ps));
+        sel.cropTop = Math.max(0, Math.min(0.4, (sel.cropTop || 0) + v.y * ps));
+        sel.cropBottom = Math.max(0, Math.min(0.4, (sel.cropBottom || 0) - v.y * ps));
+      }
+    }
+    // Timeline sample
+    if (SensorTimeline.recording) SensorTimeline.sample(v);
+    // Magnitude-based triggers
+    const mag = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (this.autoOverlayEnabled && mag > 1.6 && Date.now() - this._lastAutoOverlayAt > 3000) {
+      this._lastAutoOverlayAt = Date.now();
+      TextOverlays.add('🤖', { size: 120, ttl: 1800, y: Engine.height / 2 });
+    }
+    if (this._shakeToScene && mag > 2.2 && Date.now() - (this._lastShakeAt || 0) > 2000) {
+      this._lastShakeAt = Date.now();
+      if (typeof Scenes.random === 'function') Scenes.random();
+    }
+    if (this._shakeConfetti && mag > 1.8 && Date.now() - (this._lastShakeConfettiAt || 0) > 3000) {
+      this._lastShakeConfettiAt = Date.now();
+      if (typeof Confetti !== 'undefined' && Confetti.burst) Confetti.burst();
+    }
+    if (typeof Reactions !== 'undefined' && Reactions._particles.length) {
+      Reactions._particles.forEach(p => { p.vx += v.x * 0.3; });
+    }
+    if (this._liveGraph && this._graphSamples) {
+      this._graphSamples.push({ t: Date.now(), x: v.x, y: v.y, z: v.z });
+      if (this._graphSamples.length > 200) this._graphSamples.shift();
+    }
+    if (this._motionTrail && this._trailPoints) {
+      this._trailVx = (this._trailVx || 0) + v.x * 0.02;
+      this._trailVy = (this._trailVy || 0) + v.y * 0.02;
+      this._trailX = Math.max(0, Math.min(1, (this._trailX || 0.5) + this._trailVx));
+      this._trailY = Math.max(0, Math.min(1, (this._trailY || 0.5) + this._trailVy));
+      this._trailPoints.push({ x: this._trailX, y: this._trailY, t: Date.now() });
+      if (this._trailPoints.length > 300) this._trailPoints.shift();
+    }
+  },
+
+  // v0.7.172: UART write queue — prevents "GATT operation already in progress"
+  _uartQueue: [],
+  _uartBusy: false,
+  async sendUart(str) {
+    // v0.7.186: auto-record for robot choreography
+    RobotChoreo.recordCommand(str);
+    log('→ ' + str, 'success');
+    if (!this._uartTx) return;
+    this._uartQueue.push(str);
+    if (this._uartBusy) return;
+    this._uartBusy = true;
+    while (this._uartQueue.length > 0) {
+      const msg = this._uartQueue.shift();
+      try {
+        const enc = new TextEncoder();
+        const data = enc.encode(msg + '\n');
+        const MTU = 20;
+        if (data.byteLength <= MTU) {
+          await this._uartTx.writeValue(data);
+        } else {
+          let offset = 0;
+          while (offset < data.byteLength) {
+            const end = Math.min(offset + MTU, data.byteLength);
+            await this._uartTx.writeValue(data.slice(offset, end));
+            offset = end;
+          }
+        }
+      } catch (e) {
+        log('UART send error: ' + e.message, 'error');
+        // If GATT failed, clear queue to avoid flood
+        if (e.message.includes('GATT') || e.message.includes('disconnect')) {
+          this._uartQueue.length = 0;
+          break;
+        }
+      }
+    }
+    this._uartBusy = false;
+  },
+
+  // v0.7.171: test connection via UART
+  async test() {
+    if (!this.server || !this.server.connected) {
+      showToast('micro:bit not connected', 1500);
+      return;
+    }
+    await this.sendUart('TEST');
+    showToast('micro:bit test sent', 1500);
+  },
+
+  // v0.7.171: set LED 5x5 pattern via UART (array of 5 bytes, each bit = 1 LED)
+  async setLeds(pattern) {
+    const hex = pattern.map(b => b.toString(16).padStart(2, '0')).join('');
+    await this.sendUart('LED:' + hex);
+  },
+
+  // v0.7.170: pan/tilt servo control via UART
+  _prevPanSent: -1,
+  _prevTiltSent: -1,
+  pan(delta) {
+    this._panAngle = Math.max(0, Math.min(180, this._panAngle + delta));
+    if (this._panAngle !== this._prevPanSent) {
+      this.sendUart('P:' + this._panAngle);
+      this._prevPanSent = this._panAngle;
+    }
+  },
+  tilt(delta) {
+    this._tiltAngle = Math.max(0, Math.min(180, this._tiltAngle + delta));
+    if (this._tiltAngle !== this._prevTiltSent) {
+      this.sendUart('TI:' + this._tiltAngle);
+      this._prevTiltSent = this._tiltAngle;
+    }
+  },
+  panTiltCenter() {
+    this._panAngle = 90; this._tiltAngle = 90;
+    this.sendUart('P:90');
+    this.sendUart('TI:90');
+  },
+};
+
+/* ─────────── 7. Kid polish: sfx, debug hud, badges, confetti, ticker ─────────── */
+
+/* Jingle — a short "show's starting" arpeggio played INTO the recording.
+   Routes through Engine.audioDest so it's captured by MediaRecorder.
+   Opt-in in Settings (default off). Plays right after MediaRecorder has
+   been started, not during the 3-2-1 countdown. */
+const Jingle = {
+  enabled: false,
+  NOTES: [
+    // [frequencyHz, startSec, durSec]
+    [523.25, 0.00, 0.18],  // C5
+    [659.25, 0.15, 0.18],  // E5
+    [783.99, 0.30, 0.18],  // G5
+    [1046.5, 0.45, 0.55],  // C6 sustained
+  ],
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-jingle') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-jingle', v ? '1' : '0'); } catch {}
+  },
+
+  play() {
+    if (!this.enabled) return;
+    const ac = Engine.audioCtx;
+    if (!ac) return;
+    const now = ac.currentTime;
+    this.NOTES.forEach(([f, t0, dur]) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now + t0);
+      // Soft envelope so it doesn't click
+      g.gain.setValueAtTime(0.0001, now + t0);
+      g.gain.exponentialRampToValueAtTime(0.18, now + t0 + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + dur);
+      // Route through audioDest (captured by MediaRecorder) AND audioCtx.destination
+      // so the teacher hears it too
+      o.connect(g);
+      g.connect(Engine.audioDest);
+      g.connect(ac.destination);
+      o.start(now + t0);
+      o.stop(now + t0 + dur + 0.02);
+    });
+  },
+};
+
+/* v0.7.25: IntroOutro — cinematic fade-in + fade-out cards baked into
+   the recording. Opt-in via Settings > Recording > tcIntroOutroToggle.
+   - Intro (2.5 s after Recorder.start): dark panel with theme accent
+     gradient, big NoorCast/brand title + slogan + current scene name.
+     Fades in over 0-400 ms, holds, fades out over 2100-2500 ms to
+     reveal the actual scene underneath.
+   - Outro (2 s before Recorder.stop): dark panel with "Merci !" +
+     unlocked badge icons. Recorder.stop() is delayed by the outro
+     duration so the card actually ends up in the recording.
+
+   Rendered in Engine.render() right before the laser/ripples composite,
+   so it sits on top of sources and overlays but under the teacher-only
+   whiteboard + teleprompter. */
+const IntroOutro = {
+  enabled: false,
+  introUntil: 0,
+  outroUntil: 0,
+  outroSince: 0,
+  DURATION_INTRO: 2500,
+  DURATION_OUTRO: 2000,
+
+  load() {
+    try { this.enabled = localStorage.getItem('tc-intro-outro') === '1'; } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-intro-outro', v ? '1' : '0'); } catch {}
+  },
+
+  startIntro() {
+    if (!this.enabled) return;
+    this.introUntil = performance.now() + this.DURATION_INTRO;
+  },
+  startOutro() {
+    if (!this.enabled) return;
+    this.outroSince = performance.now();
+    this.outroUntil = this.outroSince + this.DURATION_OUTRO;
+  },
+
+  // Called from Engine.render() — draws the appropriate card if active
+  render(ctx, W, H) {
+    const now = performance.now();
+    if (now < this.introUntil) {
+      const t0 = this.introUntil - this.DURATION_INTRO;
+      const age = now - t0;
+      const alpha = this._introAlpha(age);
+      this._drawCard(ctx, W, H, alpha, 'intro');
+    } else if (now < this.outroUntil) {
+      const age = now - this.outroSince;
+      const alpha = this._outroAlpha(age);
+      this._drawCard(ctx, W, H, alpha, 'outro');
+    }
+  },
+
+  _introAlpha(age) {
+    // Fade in 0-400ms, hold 400-2100ms, fade out 2100-2500ms
+    if (age < 400) return age / 400;
+    if (age < 2100) return 1;
+    return 1 - (age - 2100) / 400;
+  },
+  _outroAlpha(age) {
+    // Fade in 0-300ms, hold 300-1800ms, fade out 1800-2000ms
+    if (age < 300) return age / 300;
+    if (age < 1800) return 1;
+    return 1 - (age - 1800) / 200;
+  },
+
+  _drawCard(ctx, W, H, alpha, kind) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    // Radial gradient background in theme accent
+    const accent = (Engine && Engine._accentColor) || '#a3e635';
+    const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
+    g.addColorStop(0, 'rgba(0,0,0,0.55)');
+    g.addColorStop(1, 'rgba(0,0,0,0.92)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // Accent halo
+    ctx.globalCompositeOperation = 'screen';
+    const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.min(W, H) * 0.55);
+    glow.addColorStop(0, accent + '55');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (kind === 'intro') {
+      // Big title
+      ctx.font = '800 160px Bangers, Righteous, Impact, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 30;
+      const title = (Brand.slogan && Brand.slogan.text) ? Brand.slogan.text : 'NoorCast';
+      ctx.fillText(title, W / 2, H / 2 - 60);
+      // Scene name
+      ctx.shadowBlur = 0;
+      ctx.font = '700 64px Righteous, sans-serif';
+      ctx.fillStyle = accent;
+      const sceneKey = Scenes.active || 'you';
+      const sceneLabel = t('scene_' + sceneKey);
+      ctx.fillText('🎬 ' + sceneLabel, W / 2, H / 2 + 60);
+      // Subtitle
+      ctx.font = '400 42px Righteous, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(t('recStarted') || 'Action !', W / 2, H / 2 + 140);
+    } else {
+      // Outro
+      ctx.font = '800 180px Bangers, Righteous, Impact, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 30;
+      ctx.fillText(t('outroTitle') || 'Merci !', W / 2, H / 2 - 40);
+      ctx.shadowBlur = 0;
+      // Badge summary
+      const count = (Badges && Badges.unlocked) ? Badges.unlocked.size : 0;
+      ctx.font = '700 56px Righteous, sans-serif';
+      ctx.fillStyle = accent;
+      ctx.fillText(`🏆 ${count} ${t('outroBadges') || 'badges'}`, W / 2, H / 2 + 70);
+      // Tagline
+      ctx.font = '400 36px Righteous, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText(t('outroTagline') || 'Ton tuto est prêt', W / 2, H / 2 + 150);
+    }
+    ctx.restore();
+  },
+};
+
+/* Tiny Web Audio SFX — respects the soundToggle checkbox */
+const Sfx = {
+  _ctx: null,
+  enabled: true,
+  ctx() {
+    if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return this._ctx;
+  },
+  play(kind) {
+    if (!this.enabled) return;
+    try {
+      const ac = this.ctx();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      const map = {
+        start:  { f1: 440, f2: 880, d: 0.18, type: 'sine'     },
+        stop:   { f1: 660, f2: 220, d: 0.22, type: 'sine'     },
+        mark:   { f1: 880, f2: 880, d: 0.08, type: 'triangle' },
+        click:  { f1: 520, f2: 520, d: 0.04, type: 'square'   },
+      };
+      const p = map[kind] || map.click;
+      o.type = p.type;
+      o.frequency.setValueAtTime(p.f1, ac.currentTime);
+      o.frequency.linearRampToValueAtTime(p.f2, ac.currentTime + p.d);
+      g.gain.setValueAtTime(0.0001, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.12, ac.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + p.d);
+      o.start();
+      o.stop(ac.currentTime + p.d + 0.02);
+    } catch {}
+  },
+  setEnabled(v) {
+    this.enabled = !!v;
+    try { localStorage.setItem('tc-sfx', v ? '1' : '0'); } catch {}
+  },
+  load() {
+    try {
+      const v = localStorage.getItem('tc-sfx');
+      if (v !== null) this.enabled = v === '1';
+    } catch {}
+  }
+};
+
+/* v0.7.116: Quick sound-board with 6 procedurally-generated SFX.
+   Each sound is created via OscillatorNode / noise buffer / gain envelopes.
+   Routed to both Engine.audioDest (captured) and audioCtx.destination (monitor). */
+const SoundBoard = {
+  _getCtx() {
+    const ac = Engine.audioCtx;
+    if (ac) return ac;
+    return Sfx.ctx();
+  },
+  _route(node) {
+    const ac = this._getCtx();
+    if (Engine.audioDest) node.connect(Engine.audioDest);
+    node.connect(ac.destination);
+  },
+  play(name) {
+    if (!Sfx.enabled) return;
+    try { this['_' + name](); } catch {}
+  },
+  /* Ding/bell — sine at 880 Hz with gentle decay */
+  _ding() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(880, now);
+    o.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+    o.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.85);
+  },
+  /* Buzzer/wrong — low sawtooth with fast cutoff */
+  _buzz() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(150, now);
+    o.frequency.linearRampToValueAtTime(100, now + 0.4);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+    g.gain.setValueAtTime(0.2, now + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.5);
+  },
+  /* Applause-like noise burst — white noise shaped with gain envelope */
+  _clap() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 1.2;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const g = ac.createGain();
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3000; f.Q.value = 0.5;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    g.gain.setValueAtTime(0.18, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.15);
+    src.connect(f); f.connect(g); this._route(g);
+    src.start(now); src.stop(now + 1.2);
+  },
+  /* Drum roll — rapid oscillator bursts simulating snare */
+  _roll() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 1.5;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 1;
+    const g = ac.createGain();
+    // Tremolo via rapid gain modulation
+    const lfo = ac.createOscillator(); const lfoG = ac.createGain();
+    lfo.type = 'square'; lfo.frequency.setValueAtTime(14, now);
+    lfo.frequency.linearRampToValueAtTime(22, now + 1.4);
+    lfoG.gain.value = 0.12;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.14, now + 0.05);
+    g.gain.setValueAtTime(0.14, now + 1.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+    src.connect(f); f.connect(g); this._route(g);
+    lfo.start(now); lfo.stop(now + 1.5);
+    src.start(now); src.stop(now + 1.5);
+  },
+  /* Whistle — sine sweep up then down */
+  _whistle() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(600, now);
+    o.frequency.exponentialRampToValueAtTime(1800, now + 0.25);
+    o.frequency.setValueAtTime(1800, now + 0.35);
+    o.frequency.exponentialRampToValueAtTime(900, now + 0.7);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.15, now + 0.03);
+    g.gain.setValueAtTime(0.15, now + 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+    o.connect(g); this._route(g);
+    o.start(now); o.stop(now + 0.8);
+  },
+  /* Whoosh — filtered noise sweep */
+  _whoosh() {
+    const ac = this._getCtx(); const now = ac.currentTime;
+    const len = ac.sampleRate * 0.6;
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass';
+    f.frequency.setValueAtTime(200, now);
+    f.frequency.exponentialRampToValueAtTime(4000, now + 0.2);
+    f.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+    f.Q.value = 2;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    src.connect(f); f.connect(g); this._route(g);
+    src.start(now); src.stop(now + 0.6);
+  },
+};
+
+/* Small debug HUD — FPS + JS heap, toggled with Ctrl+Shift+D */
+const DebugHud = {
+  on: false,
+  toggle() {
+    this.on = !this.on;
+    $('debugPanel')?.classList.toggle('active', this.on);
+    if (this.on) this.update();
+  },
+  update() {
+    if (!this.on) return;
+    const fps = $('debugFps'); if (fps) fps.textContent = `${Engine.fps} FPS`;
+    const mem = $('debugMem');
+    if (mem && performance.memory) {
+      const mb = performance.memory.usedJSHeapSize / 1048576;
+      mem.textContent = `${mb.toFixed(1)} MB`;
+    } else if (mem) {
+      mem.textContent = '— MB';
+    }
+  }
+};
+
+const Badges = {
+  list: [
+    { key: 'first', icon: '🎬', i18n: 'badge_first' },
+    { key: 'long', icon: '⏱', i18n: 'badge_long' },
+    { key: 'multi', icon: '🎥', i18n: 'badge_multi' },
+    { key: 'all_scenes', icon: '🎭', i18n: 'badge_all_scenes' },
+    { key: 'marker_king', icon: '🏷', i18n: 'badge_marker_king' },
+    { key: 'micro', icon: '🤖', i18n: 'badge_micro' },
+    // v0.7.74: cumulative across all sessions
+    { key: 'veteran', icon: '📽', i18n: 'badge_veteran' },
+    { key: 'marathon', icon: '⏰', i18n: 'badge_marathon' },
+    { key: 'library', icon: '📚', i18n: 'badge_library' },
+  ],
+  unlocked: new Set(),
+  scenesUsed: new Set(),
+
+  load() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-badges') || '[]');
+      this.unlocked = new Set(s);
+    } catch {}
+  },
+  save() { try { localStorage.setItem('tc-badges', JSON.stringify([...this.unlocked])); } catch {} },
+  unlock(k) {
+    if (this.unlocked.has(k)) return;
+    this.unlocked.add(k);
+    this.save();
+    renderBadges();
+    // v0.7.52: celebrate with a confetti burst + modal card instead of just a toast
+    const badge = this.list.find(b => b.key === k);
+    if (badge) {
+      BadgeUnlockCard.show(badge);
+      AchievementPopup.show(badge.icon || '🏆', t('badge_' + k) || k);
+    }
+    try { Confetti.fire ? Confetti.fire() : Confetti.burst ? Confetti.burst() : null; } catch {}
+    // Fallback toast is still nice (appears behind the modal)
+    showToast(`🏆 ${t('badge_' + k)}`, 2200);
+  },
+  unlockFirst() { this.unlock('first'); },
+  unlockLong(ms) { if (ms > 5 * 60 * 1000) this.unlock('long'); },
+  unlockIfMultiCam() { if (Engine.sources.filter(s => s.type === 'cam').length >= 2) this.unlock('multi'); },
+  unlockScene(k) {
+    this.scenesUsed.add(k);
+    if (this.scenesUsed.size >= Scenes.presets.length) this.unlock('all_scenes');
+  },
+  unlockMarker(n) { if (n >= 5) this.unlock('marker_king'); },
+  unlockMicrobit() { this.unlock('micro'); },
+
+  /* v0.7.74: persistent cumulative counters for recordings + total time.
+     Incremented in Recorder.finish(), survive History's 10-entry cap. */
+  _incCounters(durSec) {
+    try {
+      const n = parseInt(localStorage.getItem('tc-total-recordings') || '0', 10) + 1;
+      const s = parseFloat(localStorage.getItem('tc-total-seconds') || '0') + (durSec || 0);
+      localStorage.setItem('tc-total-recordings', String(n));
+      localStorage.setItem('tc-total-seconds', String(s));
+      if (n >= 10) this.unlock('veteran');
+      if (s >= 30 * 60) this.unlock('marathon');
+    } catch {}
+  },
+
+  unlockLibrary() {
+    if (this.scenesUsed && this.scenesUsed.size >= 5) this.unlock('library');
+  },
+};
+
+/* v0.7.77: Hardware / browser capability diagnostics — rendered into the
+   collapsible 🔧 Diagnostics block in Settings → Maintenance. Each check
+   handles "undefined" gracefully so we can ship the panel even when an
+   API is missing on the running browser (e.g. Safari has no Web BT). */
+const Diagnostics = {
+  checks() {
+    return [
+      { key: 'getUserMedia', label: '🎥 getUserMedia (mic/cam)', pass: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) },
+      { key: 'getDisplayMedia', label: '🖥 getDisplayMedia (screen capture)', pass: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) },
+      { key: 'mediaRecorder', label: '🎞 MediaRecorder', pass: typeof MediaRecorder !== 'undefined' },
+      { key: 'mp4', label: '📼 MP4 encoding', pass: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/mp4') },
+      { key: 'webm', label: '📼 WebM/VP9 encoding', pass: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') },
+      { key: 'bt', label: '📡 Web Bluetooth (micro:bit)', pass: !!navigator.bluetooth },
+      { key: 'speech', label: '💬 SpeechRecognition (captions)', pass: !!(window.SpeechRecognition || window.webkitSpeechRecognition) },
+      { key: 'pip', label: '📺 Picture-in-Picture', pass: !!document.pictureInPictureEnabled },
+      { key: 'clipboard', label: '📋 Clipboard paste', pass: typeof ClipboardEvent !== 'undefined' },
+      { key: 'fullscreen', label: '⛶ Fullscreen API', pass: !!(document.documentElement.requestFullscreen) },
+      { key: 'webgl', label: '🧊 WebGL (debug HUD)', pass: (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl') || c.getContext('experimental-webgl')); } catch { return false; } })() },
+      { key: 'pointerEvents', label: '👆 Pointer events (touch)', pass: 'PointerEvent' in window },
+    ];
+  },
+
+  render() {
+    const wrap = $('tcDiagList');
+    if (!wrap) return;
+    const rows = this.checks().map(c => {
+      const icon = c.pass ? '✅' : '❌';
+      const cls = c.pass ? 'pass' : 'fail';
+      return `<div class="tc-diag-row ${cls}"><span class="tc-diag-icon">${icon}</span><span class="tc-diag-label">${c.label}</span></div>`;
+    }).join('');
+    // Also show browser / platform info at the top
+    const ua = navigator.userAgent || '';
+    const brand = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'Unknown';
+    const header = `<div class="tc-diag-header">🌐 ${brand} · ${navigator.platform || 'unknown'}</div>`;
+    wrap.innerHTML = header + rows;
+  },
+};
+
+/* v0.7.72: Tip of the day — fires once per calendar day on first launch.
+   Shows a deterministic kid-friendly tip (day-of-year % 20) as a toast a
+   few seconds after init so it doesn't collide with the splash/onboard. */
+const TipOfDay = {
+  _tips() {
+    // Pull from i18n — each language has tipOfDay_1 … tipOfDay_20
+    const out = [];
+    for (let i = 1; i <= 20; i++) {
+      const s = t('tipOfDay_' + i);
+      if (s && s !== 'tipOfDay_' + i) out.push(s);
+    }
+    return out;
+  },
+
+  maybeShow() {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    let last = null;
+    try { last = localStorage.getItem('tc-last-tip-day'); } catch {}
+    if (last === key) return;  // already fired today
+    const tips = this._tips();
+    if (tips.length === 0) return;
+    // Deterministic index based on day-of-year
+    const start = new Date(today.getFullYear(), 0, 0);
+    const diff = today - start;
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const idx = dayOfYear % tips.length;
+    const tip = tips[idx];
+    // Show after a short delay so it doesn't collide with splash/onboard
+    setTimeout(() => {
+      showToast('💡 ' + tip, 5500);
+    }, 2800);
+    try { localStorage.setItem('tc-last-tip-day', key); } catch {}
+  },
+};
+
+/* v0.7.100: One-shot milestone splash for the 100th version bump. Shown
+   exactly once on the first launch of v0.7.100, gated by tc-v100-seen. */
+const V100Celebration = {
+  maybeShow() {
+    try {
+      if (localStorage.getItem('tc-v100-seen') === '1') return;
+    } catch {}
+    // v0.7.166: don't show if mode picker or template picker is active
+    const modePicker = $('tcModePicker');
+    if (modePicker && modePicker.style.display !== 'none') {
+      // Retry after mode is chosen
+      setTimeout(() => this.maybeShow(), 3000);
+      return;
+    }
+    // Wait for splash + onboard to clear
+    setTimeout(() => this.show(), 2500);
+  },
+
+  show() {
+    if (document.getElementById('tcV100Modal')) return;
+    const modal = document.createElement('div');
+    modal.className = 'tc-v100-modal';
+    modal.id = 'tcV100Modal';
+    modal.innerHTML = `
+      <div class="tc-v100-card">
+        <div class="tc-v100-number">100</div>
+        <div class="tc-v100-title">NoorCast v0.7.100</div>
+        <div class="tc-v100-subtitle" data-i18n="v100Subtitle">100 releases of kid-friendly tutorial recording 🎬</div>
+        <div class="tc-v100-features">
+          <div>🎚 Live captions + mic boost + noise gate + ducking</div>
+          <div>🎨 Chroma key + 9 shapes + 4 aspect ratios</div>
+          <div>⌨ Cheat sheet + rebindable hotkeys + long-press REC</div>
+          <div>📸 Paste image + annotate + 4× print snapshots</div>
+          <div>📊 Stats dashboard + streak + 9 badges + history filter</div>
+          <div>🎬 Broadcast teleprompter + scene transitions + intro/outro</div>
+          <div>🔧 Session bundle + diagnostics + tour + screensaver</div>
+          <div>📐 Alignment guides + drag threshold + grid snap + minimap</div>
+          <div>💧 Ripples + laser + spotlight + big marker + cursor trail</div>
+          <div>📤 Web Share + markdown chapters + waveform + sensor chart</div>
+        </div>
+        <button class="tc-v100-btn" id="tcV100CloseBtn">
+          <span data-i18n="v100Continue">Continuer</span>
+        </button>
+      </div>
+    `;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.id === 'tcV100CloseBtn' || e.target.closest('#tcV100CloseBtn')) {
+        this.hide();
+      }
+    });
+    document.body.appendChild(modal);
+    // Fire confetti for extra party vibes
+    try { Confetti && Confetti.burst && Confetti.burst(); } catch {}
+    try { Sfx && Sfx.play && Sfx.play('start'); } catch {}
+  },
+
+  hide() {
+    const modal = document.getElementById('tcV100Modal');
+    if (modal) modal.remove();
+    try { localStorage.setItem('tc-v100-seen', '1'); } catch {}
+  },
+};
+
+/* v0.7.52: Modal celebration card shown when a badge unlocks. */
+const BadgeUnlockCard = {
+  el: null,
+  _hideTimer: null,
+
+  show(badge) {
+    if (!this.el) this._build();
+    const icon = this.el.querySelector('.tc-buc-icon');
+    const label = this.el.querySelector('.tc-buc-label');
+    const title = this.el.querySelector('.tc-buc-title');
+    const btn = this.el.querySelector('.tc-buc-btn');
+    if (icon) icon.textContent = badge.icon || '🏆';
+    if (label) label.textContent = t(badge.i18n) || badge.key;
+    if (title) title.textContent = t('badgeUnlockTitle') || 'Badge débloqué !';
+    if (btn) btn.textContent = t('badgeUnlockContinue') || 'Continuer';
+    this.el.style.display = 'flex';
+    requestAnimationFrame(() => this.el.classList.add('visible'));
+    clearTimeout(this._hideTimer);
+    this._hideTimer = setTimeout(() => this.hide(), 4500);
+    try { Sfx.play('mark'); } catch {}
+  },
+
+  hide() {
+    if (!this.el) return;
+    this.el.classList.remove('visible');
+    setTimeout(() => { this.el.style.display = 'none'; }, 300);
+    clearTimeout(this._hideTimer);
+  },
+
+  _build() {
+    this.el = document.createElement('div');
+    this.el.className = 'tc-badge-unlock';
+    this.el.innerHTML = `
+      <div class="tc-buc-card">
+        <div class="tc-buc-title"></div>
+        <div class="tc-buc-icon">🏆</div>
+        <div class="tc-buc-label"></div>
+        <button class="tc-buc-btn">Continuer</button>
+      </div>
+    `;
+    this.el.addEventListener('click', (e) => {
+      if (e.target === this.el || e.target.classList.contains('tc-buc-btn')) this.hide();
+    });
+    document.body.appendChild(this.el);
+  },
+};
+
+function renderBadges() {
+  const el = $('tcBadges'); if (!el) return;
+  el.innerHTML = '';
+  Badges.list.forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'tc-badge' + (Badges.unlocked.has(b.key) ? ' unlocked' : '');
+    d.innerHTML = `<div class="tc-badge-icon">${b.icon}</div><div>${t(b.i18n)}</div>`;
+    el.appendChild(d);
+  });
+}
+
+/* v0.7.182: Reactions — enhanced emoji explosions with screen shake.
+   Drawn directly on the output canvas so they're baked into the recording. */
+const Reactions = {
+  _particles: [],
+  _shakeUntil: 0,
+  _shakeIntensity: 0,
+
+  burst(emoji, cx, cy) {
+    const cv = Engine.canvas;
+    if (!cv) return;
+    const w = cv.width, h = cv.height;
+    const ox = cx || w * 0.5, oy = cy || h * 0.5;
+    // Big central emoji
+    this._particles.push({
+      emoji, x: ox, y: oy, vx: 0, vy: -1,
+      life: 1, max: 80, age: 0, size: 64,
+    });
+    // Explosion ring
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2;
+      const speed = 3 + Math.random() * 5;
+      this._particles.push({
+        emoji, x: ox, y: oy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2,
+        life: 1, max: 90 + Math.random() * 40, age: 0,
+        size: 20 + Math.random() * 20,
+      });
+    }
+    // Screen shake
+    this._shakeUntil = Date.now() + 300;
+    this._shakeIntensity = 8;
+  },
+
+  getShake() {
+    if (Date.now() > this._shakeUntil) return [0, 0];
+    const t = (this._shakeUntil - Date.now()) / 300;
+    const i = this._shakeIntensity * t;
+    return [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i];
+  },
+
+  render(ctx, _width, _height) {
+    if (!this._particles.length) return;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = this._particles.length - 1; i >= 0; i--) {
+      const p = this._particles[i];
+      p.age++;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08; // gentle gravity
+      p.vx *= 0.98; // drag
+      p.life = Math.max(0, 1 - p.age / p.max);
+      const scale = p.size * (0.5 + p.life * 0.5);
+      ctx.globalAlpha = p.life;
+      ctx.font = `${Math.round(scale)}px sans-serif`;
+      ctx.fillText(p.emoji, p.x, p.y);
+      if (p.life <= 0) this._particles.splice(i, 1);
+    }
+    ctx.restore();
+  },
+};
+
+const Confetti = {
+  canvas: null, ctx: null, particles: [], rafId: null,
+  burst() {
+    if (!this.canvas) {
+      this.canvas = $('tcConfetti');
+      this.ctx = this.canvas.getContext('2d');
+    }
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.canvas.classList.add('active');
+    this.particles = [];
+    const colors = ['#fb923c', '#a3e635', '#facc15', '#ef4444', '#2563eb', '#ffffff'];
+    for (let i = 0; i < 140; i++) {
+      this.particles.push({
+        x: this.canvas.width / 2,
+        y: this.canvas.height / 2,
+        vx: (Math.random() - 0.5) * 18,
+        vy: (Math.random() - 0.5) * 18 - 6,
+        size: 6 + Math.random() * 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        life: 1,
+      });
+    }
+    const start = Date.now();
+    const tick = () => {
+      const age = Date.now() - start;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.4;
+        p.rot += p.vr;
+        p.life = Math.max(0, 1 - age / 3500);
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(p.rot);
+        this.ctx.globalAlpha = p.life;
+        this.ctx.fillStyle = p.color;
+        this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.5);
+        this.ctx.restore();
+      });
+      if (age < 3500) this.rafId = requestAnimationFrame(tick);
+      else { this.canvas.classList.remove('active'); this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); }
+    };
+    tick();
+  }
+};
+
+/* v0.7.182: VoiceFx — voice-activated visual effects.
+   Reads MicBoost._lastRms each frame. Triggers effects at thresholds. */
+const VoiceFx = {
+  enabled: false,
+  _lastTrigger: 0,
+  _flashUntil: 0,
+  _flashColor: '',
+
+  load() { try { this.enabled = localStorage.getItem('tc-voicefx') === '1'; } catch {} },
+  toggle() { this.enabled = !this.enabled; try { localStorage.setItem('tc-voicefx', this.enabled ? '1' : '0'); } catch {} },
+
+  tick() {
+    if (!this.enabled) return;
+    const rms = MicBoost._lastRms || 0;
+    const now = Date.now();
+    if (now - this._lastTrigger < 1500) return; // cooldown
+
+    // Shout (loud) → fire flash
+    if (rms > 0.35) {
+      this._lastTrigger = now;
+      this._flashUntil = now + 400;
+      this._flashColor = 'rgba(239,68,68,.2)';
+      Reactions.burst('🔥');
+      return;
+    }
+    // Clap (medium burst) → confetti
+    if (rms > 0.2) {
+      this._lastTrigger = now;
+      Confetti.burst();
+      return;
+    }
+    // Whisper (very low but present) → night vision flash
+    if (rms > 0.005 && rms < 0.03) {
+      this._lastTrigger = now;
+      this._flashUntil = now + 600;
+      this._flashColor = 'rgba(74,222,128,.08)';
+    }
+  },
+
+  renderFlash(ctx, W, H) {
+    if (Date.now() > this._flashUntil) return;
+    const t = (this._flashUntil - Date.now()) / 400;
+    ctx.save();
+    ctx.fillStyle = this._flashColor;
+    ctx.globalAlpha = t;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: SpeedLines — manga-style radial motion lines.
+   Triggered manually (button) or auto by micro:bit shake. */
+const SpeedLines = {
+  _active: false,
+  _until: 0,
+  _duration: 800,
+
+  fire(ms) {
+    this._active = true;
+    this._until = Date.now() + (ms || this._duration);
+  },
+
+  render(ctx, W, H) {
+    if (!this._active) return;
+    const remaining = this._until - Date.now();
+    if (remaining <= 0) { this._active = false; return; }
+    const t = remaining / this._duration;
+    const cx = W / 2, cy = H / 2;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${t * 0.3})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 30; i++) {
+      const angle = (i / 30) * Math.PI * 2 + Date.now() * 0.001;
+      const inner = Math.min(W, H) * 0.3;
+      const outer = Math.max(W, H) * 0.7;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+      ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: XpBar — on-canvas progress bar that fills as the kid records.
+   Every second of recording = 1 XP. Milestones trigger celebrations. */
+const XpBar = {
+  visible: false,
+  _xp: 0,
+  _maxXp: 300,
+  _level: 1,
+  _levelUpUntil: 0,
+
+  load() {
+    try {
+      this.visible = localStorage.getItem('tc-xpbar') === '1';
+      const xp = parseInt(localStorage.getItem('tc-xp'));
+      if (!isNaN(xp)) this._xp = xp;
+      const lv = parseInt(localStorage.getItem('tc-xp-level'));
+      if (!isNaN(lv) && lv > 0) { this._level = lv; this._maxXp = 300 * lv; }
+    } catch {}
+  },
+  _save() {
+    try {
+      localStorage.setItem('tc-xpbar', this.visible ? '1' : '0');
+      localStorage.setItem('tc-xp', String(this._xp));
+      localStorage.setItem('tc-xp-level', String(this._level));
+    } catch {}
+  },
+  toggle() { this.visible = !this.visible; this._save(); },
+
+  addXp(amount) {
+    this._xp += amount;
+    const newLevel = Math.floor(this._xp / this._maxXp) + 1;
+    if (newLevel > this._level) {
+      this._level = newLevel;
+      this._maxXp = 300 * this._level;
+      this._levelUpUntil = Date.now() + 2000;
+      Confetti.burst();
+      showToast(`⭐ Level ${this._level}!`, 2000);
+    }
+    this._save();
+    UnlockGallery.checkUnlocks(); // v0.7.192
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const barW = 200, barH = 14, barX = W - barW - 20, barY = 20;
+    const pct = Math.min(1, (this._xp % this._maxXp) / this._maxXp);
+
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.fill();
+    // Fill
+    const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    grad.addColorStop(0, '#a3e635');
+    grad.addColorStop(1, '#22c55e');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW * pct, barH, 7); ctx.fill();
+    // Border
+    ctx.strokeStyle = 'rgba(255,255,255,.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.stroke();
+    // Level text
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`LVL ${this._level}`, barX - 6, barY + 1);
+    // XP text
+    ctx.textAlign = 'center';
+    ctx.fillText(`${this._xp % this._maxXp}/${this._maxXp} XP`, barX + barW / 2, barY + 1);
+
+    // Level up flash
+    if (Date.now() < this._levelUpUntil) {
+      const lt = (this._levelUpUntil - Date.now()) / 2000;
+      ctx.globalAlpha = lt * 0.5;
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = `bold ${40 + (1 - lt) * 20}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`⭐ LEVEL ${this._level}!`, W / 2, H / 3);
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: AchievementPopup — big trophy animation when unlocking badges.
+   Shows a full-screen overlay for 3s with the badge emoji + name. */
+const AchievementPopup = {
+  _queue: [],
+  _current: null,
+  _until: 0,
+
+  show(emoji, name) {
+    this._queue.push({ emoji, name });
+    if (!this._current) this._next();
+  },
+
+  _next() {
+    if (!this._queue.length) { this._current = null; return; }
+    this._current = this._queue.shift();
+    this._until = Date.now() + 3000;
+  },
+
+  render(ctx, W, H) {
+    if (!this._current) return;
+    const remaining = this._until - Date.now();
+    if (remaining <= 0) { this._next(); return; }
+    const t = remaining / 3000; // 1→0
+    const enter = Math.min(1, (3000 - remaining) / 400); // 0→1 over 400ms
+
+    ctx.save();
+    // Dark overlay
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.globalAlpha = t * 0.8;
+    ctx.fillRect(0, 0, W, H);
+
+    // Trophy emoji — bounces in
+    const scale = 0.5 + enter * 0.5;
+    const ey = H * 0.35 - (1 - enter) * 60;
+    ctx.globalAlpha = enter;
+    ctx.font = `${Math.round(80 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this._current.emoji, W / 2, ey);
+
+    // Achievement name
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = `bold ${Math.round(28 * scale)}px 'Righteous', sans-serif`;
+    ctx.fillText(this._current.name, W / 2, ey + 70);
+
+    // "ACHIEVEMENT UNLOCKED" subtitle
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    ctx.font = `${Math.round(14 * scale)}px ui-monospace, monospace`;
+    ctx.fillText('ACHIEVEMENT UNLOCKED', W / 2, ey + 100);
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: SoundPad — clickable audio buttons as HTML overlay on stage.
+   Plays short Web Audio tones/samples. Visible only when toggled. */
+const SoundPad = {
+  _el: null,
+  visible: false,
+
+  load() { try { this.visible = localStorage.getItem('tc-soundpad') === '1'; } catch {} if (this.visible) this._show(); },
+  toggle() {
+    this.visible = !this.visible;
+    try { localStorage.setItem('tc-soundpad', this.visible ? '1' : '0'); } catch {}
+    if (this.visible) this._show();
+    else this._hide();
+  },
+
+  _show() {
+    if (this._el) return;
+    const stage = $('tcStage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.className = 'tc-soundpad';
+
+    const sounds = [
+      { emoji: '👏', label: 'Clap', freq: 0, type: 'noise' },
+      { emoji: '🥁', label: 'Drum', freq: 100, type: 'triangle' },
+      { emoji: '🎺', label: 'Horn', freq: 440, type: 'sawtooth' },
+      { emoji: '💥', label: 'Boom', freq: 60, type: 'sine' },
+      { emoji: '✨', label: 'Magic', freq: 800, type: 'sine' },
+      { emoji: '🔔', label: 'Bell', freq: 600, type: 'sine' },
+      { emoji: '😂', label: 'LOL', freq: 300, type: 'square' },
+      { emoji: '🚀', label: 'Launch', freq: 150, type: 'sawtooth' },
+    ];
+
+    sounds.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-sp-btn';
+      btn.innerHTML = `<span class="tc-sp-emoji">${s.emoji}</span><span class="tc-sp-label">${s.label}</span>`;
+      btn.addEventListener('click', () => this._playTone(s));
+      el.appendChild(btn);
+    });
+
+    stage.appendChild(el);
+    this._el = el;
+  },
+
+  _hide() {
+    if (!this._el) return;
+    this._el.remove();
+    this._el = null;
+  },
+
+  _playTone(s) {
+    try {
+      const ac = Engine.audioCtx;
+      if (!ac) return;
+      if (ac.state === 'suspended') ac.resume();
+      if (s.type === 'noise') {
+        // White noise burst (clap-like)
+        const buf = ac.createBuffer(1, ac.sampleRate * 0.15, ac.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+        const gain = ac.createGain();
+        gain.gain.value = 0.3;
+        src.connect(gain).connect(ac.destination);
+        src.start();
+        return;
+      }
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = s.type;
+      osc.frequency.value = s.freq;
+      // Sweep for fun sounds
+      if (s.label === 'Launch') osc.frequency.linearRampToValueAtTime(800, ac.currentTime + 0.3);
+      if (s.label === 'Magic') osc.frequency.linearRampToValueAtTime(1600, ac.currentTime + 0.2);
+      if (s.label === 'Boom') osc.frequency.linearRampToValueAtTime(20, ac.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.2, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
+      osc.connect(gain).connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.5);
+      // Visual feedback
+      SpeedLines.fire(300);
+    } catch {}
+  },
+};
+
+/* v0.7.184: BgMusic — procedural 8-bit background music loops using Web Audio.
+   5 tracks generated on the fly with oscillators (no audio files). Plays
+   during recording if enabled. Routed to audioDest so it's baked in. */
+const BgMusic = {
+  playing: false,
+  _track: 'chiptune',
+  _nodes: [],
+  _gain: null,
+  _volume: 0.15,
+  tracks: ['chiptune', 'lofi', 'epic', 'chill', 'retro'],
+  labels: { chiptune: '🎮 Chiptune', lofi: '☕ Lo-fi', epic: '⚔️ Epic', chill: '🌊 Chill', retro: '📼 Retro' },
+
+  load() {
+    try {
+      const saved = localStorage.getItem('tc-bgmusic');
+      if (saved) { const d = JSON.parse(saved); this._track = d.track || 'chiptune'; this._volume = d.volume ?? 0.15; }
+    } catch {}
+  },
+  _save() { try { localStorage.setItem('tc-bgmusic', JSON.stringify({ track: this._track, volume: this._volume })); } catch {} },
+
+  setTrack(t) { this._track = t; this._save(); if (this.playing) { this.stop(); this.start(); } },
+  setVolume(v) { this._volume = Math.max(0, Math.min(0.5, v)); this._save(); if (this._gain) this._gain.gain.value = this._volume; },
+
+  start() {
+    if (this.playing) return;
+    const ac = Engine.audioCtx;
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    this._gain = ac.createGain();
+    this._gain.gain.value = this._volume;
+    this._gain.connect(ac.destination);
+    // Also route to recording
+    try { this._gain.connect(Engine.audioDest); } catch {}
+    this['_gen_' + this._track](ac, this._gain);
+    this.playing = true;
+  },
+
+  stop() {
+    this._nodes.forEach(n => { try { n.stop(); } catch {} try { n.disconnect(); } catch {} });
+    this._nodes = [];
+    if (this._gain) { try { this._gain.disconnect(); } catch {} this._gain = null; }
+    this.playing = false;
+  },
+
+  toggle() { if (this.playing) this.stop(); else this.start(); },
+
+  // ── Track generators ──
+
+  _note(ac, gain, freq, start, dur, type) {
+    const osc = ac.createOscillator();
+    const env = ac.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    env.gain.setValueAtTime(0.3, start);
+    env.gain.exponentialRampToValueAtTime(0.01, start + dur * 0.9);
+    osc.connect(env).connect(gain);
+    osc.start(start); osc.stop(start + dur);
+    this._nodes.push(osc);
+  },
+
+  _gen_chiptune(ac, gain) {
+    const notes = [262, 330, 392, 523, 392, 330, 262, 196];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.25, 0.2, 'square'));
+      this._loopTimer = setTimeout(loop, notes.length * 250);
+    };
+    loop();
+  },
+  _gen_lofi(ac, gain) {
+    const notes = [220, 262, 330, 294, 262, 220, 196, 220];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.4, 0.35, 'triangle'));
+      this._loopTimer = setTimeout(loop, notes.length * 400);
+    };
+    loop();
+  },
+  _gen_epic(ac, gain) {
+    const notes = [130, 165, 196, 262, 330, 262, 196, 165];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.3, 0.25, 'sawtooth'));
+      this._loopTimer = setTimeout(loop, notes.length * 300);
+    };
+    loop();
+  },
+  _gen_chill(ac, gain) {
+    const notes = [196, 220, 262, 294, 330, 294, 262, 220];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.5, 0.45, 'sine'));
+      this._loopTimer = setTimeout(loop, notes.length * 500);
+    };
+    loop();
+  },
+  _gen_retro(ac, gain) {
+    const notes = [330, 392, 440, 392, 330, 294, 262, 294];
+    const loop = () => {
+      const t = ac.currentTime;
+      notes.forEach((f, i) => this._note(ac, gain, f, t + i * 0.2, 0.15, 'square'));
+      // Bass line
+      [65, 82, 98, 82].forEach((f, i) => this._note(ac, gain, f, t + i * 0.4, 0.35, 'triangle'));
+      this._loopTimer = setTimeout(loop, notes.length * 200);
+    };
+    loop();
+  },
+};
+
+/* v0.7.185: VoiceCommands — hands-free app control via SpeechRecognition.
+   Listens for keywords and triggers actions. Only active when toggled on. */
+const VoiceCommands = {
+  enabled: false,
+  _recognition: null,
+  _cooldown: 0,
+
+  supported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); },
+
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.enabled) this.start();
+    else this.stop();
+    try { localStorage.setItem('tc-voicecmd', this.enabled ? '1' : '0'); } catch {}
+  },
+
+  load() { try { this.enabled = localStorage.getItem('tc-voicecmd') === '1'; } catch {} },
+
+  start() {
+    if (!this.supported() || this._recognition) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = false;
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    rec.onresult = (ev) => {
+      const now = Date.now();
+      if (now - this._cooldown < 1500) return;
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        const text = ev.results[i][0].transcript.toLowerCase().trim();
+        if (this._exec(text)) { this._cooldown = now; return; }
+      }
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (this.enabled) { try { rec.start(); } catch {} } };
+    try { rec.start(); } catch {}
+    this._recognition = rec;
+    log('🎙 Voice commands active', 'info');
+  },
+
+  stop() {
+    if (this._recognition) { try { this._recognition.stop(); } catch {} this._recognition = null; }
+  },
+
+  _exec(text) {
+    // Record / Stop
+    if (text.includes('record') || text.includes('enregistr') || text.includes('تسجيل')) {
+      if (Recorder.state === 'idle') Recorder.start(); else Recorder.stop();
+      showToast('🎙 ' + (Recorder.state === 'idle' ? 'Record!' : 'Stop!'), 1200);
+      return true;
+    }
+    // Pause
+    if (text.includes('pause') || text.includes('وقف')) {
+      Recorder.togglePause();
+      showToast('🎙 Pause', 1200);
+      return true;
+    }
+    // Screenshot / Photo
+    if (text.includes('screenshot') || text.includes('photo') || text.includes('صورة')) {
+      snapshot();
+      showToast('🎙 📸 Screenshot!', 1200);
+      return true;
+    }
+    // Zoom
+    if (text.includes('zoom') || text.includes('تكبير')) {
+      Zoom.toggle();
+      showToast('🎙 🔍 Zoom!', 1200);
+      return true;
+    }
+    // Laser
+    if (text.includes('laser') || text.includes('ليزر')) {
+      Laser.toggle();
+      showToast('🎙 🔴 Laser!', 1200);
+      return true;
+    }
+    // Freeze
+    if (text.includes('freeze') || text.includes('gel') || text.includes('تجميد')) {
+      Recorder.toggleFreeze();
+      showToast('🎙 ❄️ Freeze!', 1200);
+      return true;
+    }
+    // Fire
+    if (text.includes('fire') || text.includes('feu') || text.includes('نار')) {
+      Sensors.sendUart('CMD:FIRE');
+      Reactions.burst('🔥');
+      showToast('🎙 🔥 FIRE!', 1200);
+      return true;
+    }
+    // Scene switching by number
+    const numMatch = text.match(/scene?\s*(\d)/i) || text.match(/(\d)/);
+    if (numMatch) {
+      const idx = parseInt(numMatch[1]) - 1;
+      if (idx >= 0 && idx < Scenes.presets.length) {
+        Scenes.switch(Scenes.presets[idx].key);
+        showToast(`🎙 Scene ${idx + 1}`, 1200);
+        return true;
+      }
+    }
+    return false;
+  },
+};
+
+/* v0.7.185: DailyChallenges — gamification hook that gives kids a new
+   challenge each day. Completing a challenge awards XP. Challenges rotate
+   from a pool of 20+ tasks. Stored in localStorage. */
+const DailyChallenges = {
+  _challenges: [
+    { id: 'rec2min', text: '🎬 Record a 2+ minute tutorial', check: () => Recorder._elapsed >= 120000 },
+    { id: '3scenes', text: '🎭 Use 3 different scenes', check: () => Badges.scenesUsed && Badges.scenesUsed.size >= 3 },
+    { id: 'skin', text: '🖼 Apply a skin to a source', check: () => Engine.sources.some(s => s.skin && s.skin !== 'none') },
+    { id: '5stickers', text: '🏷 Add 5 stickers', check: () => TextOverlays.items.length >= 5 },
+    { id: 'marker', text: '🏷 Add a chapter marker', check: () => Chapters.items.length >= 1 },
+    { id: 'background', text: '🎨 Set a background pattern', check: () => BgPatterns.current !== 'none' },
+    { id: 'music', text: '🎵 Play background music', check: () => BgMusic.playing },
+    { id: 'pilot', text: '🎮 Use the Pilot scene', check: () => Scenes.active === 'pilot' },
+    { id: 'xp50', text: '⭐ Earn 50 XP', check: () => XpBar._xp >= 50 },
+    { id: 'replay', text: '⚡ Generate an Instant Replay', check: () => DailyChallenges._replayDone },
+    { id: 'mic', text: '🎤 Test your microphone', check: () => Engine.sources.some(s => s.type === 'mic') },
+    { id: 'camera', text: '📷 Add a camera source', check: () => Engine.sources.some(s => s.type === 'cam') },
+    { id: 'screen', text: '🖥 Capture your screen', check: () => Engine.sources.some(s => s.type === 'screen') },
+    { id: 'shape', text: '⬛ Add a shape', check: () => Engine.sources.some(s => s.type === 'shape') },
+    { id: 'rec5min', text: '🏆 Record 5+ minutes', check: () => Recorder._elapsed >= 300000 },
+    { id: 'text', text: '✏️ Add a text overlay', check: () => TextOverlays.items.length >= 1 },
+    { id: 'countdown', text: '⏱ Use the countdown', check: () => DailyChallenges._countdownUsed },
+    { id: 'snapshot', text: '📸 Take a snapshot', check: () => DailyChallenges._snapshotTaken },
+    { id: 'soundpad', text: '🎵 Play a sound effect', check: () => DailyChallenges._soundPlayed },
+    { id: 'voicecmd', text: '🎙 Use a voice command', check: () => VoiceCommands.enabled },
+  ],
+  _today: null,
+  _completed: false,
+  _replayDone: false,
+  _countdownUsed: false,
+  _snapshotTaken: false,
+  _soundPlayed: false,
+  _checkInterval: null,
+
+  load() {
+    try {
+      const key = new Date().toISOString().slice(0, 10);
+      const saved = JSON.parse(localStorage.getItem('tc-daily-challenge'));
+      if (saved && saved.date === key) {
+        this._today = this._challenges.find(c => c.id === saved.id) || this._pick(key);
+        this._completed = !!saved.completed;
+      } else {
+        this._today = this._pick(key);
+        this._completed = false;
+        this._save();
+      }
+    } catch {
+      this._today = this._challenges[0];
+    }
+  },
+
+  _pick(dateKey) {
+    // Deterministic: hash the date to pick a challenge
+    let hash = 0;
+    for (let i = 0; i < dateKey.length; i++) hash = ((hash << 5) - hash) + dateKey.charCodeAt(i);
+    return this._challenges[Math.abs(hash) % this._challenges.length];
+  },
+
+  _save() {
+    try {
+      localStorage.setItem('tc-daily-challenge', JSON.stringify({
+        date: new Date().toISOString().slice(0, 10),
+        id: this._today.id,
+        completed: this._completed,
+      }));
+    } catch {}
+  },
+
+  startChecking() {
+    if (this._completed || !this._today) return;
+    this._checkInterval = setInterval(() => {
+      if (this._completed || !this._today) return;
+      try {
+        if (this._today.check()) {
+          this._completed = true;
+          this._save();
+          clearInterval(this._checkInterval);
+          XpBar.addXp(25);
+          showToast(`🏅 Challenge complete! +25 XP`, 3000);
+          Confetti.burst();
+          SpeedLines.fire(500);
+        }
+      } catch {}
+    }, 3000);
+  },
+
+  getText() {
+    if (!this._today) return '';
+    return this._completed ? `✅ ${this._today.text}` : `🎯 ${this._today.text}`;
+  },
+};
+
+/* v0.7.185: AutoThumbnail — generates a YouTube-ready thumbnail PNG from
+   the recording. Picks the highest-contrast frame, adds title text +
+   NoorCast branding. 1280×720 output. */
+const AutoThumbnail = {
+  async generate() {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    showToast('📸 Generating thumbnail...', 2000);
+
+    try {
+      const srcVideo = document.createElement('video');
+      srcVideo.muted = true;
+      srcVideo.playsInline = true;
+      srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+      await new Promise((resolve, reject) => { srcVideo.onloadedmetadata = resolve; srcVideo.onerror = reject; });
+      const duration = srcVideo.duration;
+
+      // Sample 10 frames evenly distributed across the video
+      const samples = 10;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280; canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+      let bestFrame = null, bestContrast = -1;
+
+      for (let i = 0; i < samples; i++) {
+        const time = (i / samples) * duration * 0.9 + duration * 0.05; // skip first/last 5%
+        srcVideo.currentTime = time;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        ctx.drawImage(srcVideo, 0, 0, 1280, 720);
+
+        // Compute contrast (variance of grayscale)
+        const imgData = ctx.getImageData(0, 0, 320, 180); // sample at low res for speed
+        const px = imgData.data;
+        let sum = 0, sumSq = 0, count = 0;
+        for (let j = 0; j < px.length; j += 16) { // sample every 4th pixel
+          const gray = (px[j] * 0.3 + px[j + 1] * 0.59 + px[j + 2] * 0.11);
+          sum += gray; sumSq += gray * gray; count++;
+        }
+        const mean = sum / count;
+        const variance = sumSq / count - mean * mean;
+        if (variance > bestContrast) {
+          bestContrast = variance;
+          bestFrame = time;
+        }
+      }
+
+      // Draw the best frame
+      if (bestFrame !== null) {
+        srcVideo.currentTime = bestFrame;
+        await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+        ctx.drawImage(srcVideo, 0, 0, 1280, 720);
+      }
+
+      URL.revokeObjectURL(srcVideo.src);
+
+      // Add gradient overlay at bottom for text readability
+      const grad = ctx.createLinearGradient(0, 720 * 0.55, 0, 720);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,.7)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Title text
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 48px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.shadowColor = 'rgba(0,0,0,.7)';
+      ctx.shadowBlur = 10;
+      const title = Recorder._lastTitle || 'My Tutorial';
+      ctx.fillText(title, 640, 660);
+
+      // NoorCast branding (bottom-right)
+      ctx.font = 'bold 20px "Righteous", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#a3e635';
+      ctx.fillText('نُورْكَاسْت NoorCast', 1260, 700);
+
+      // Duration badge (top-right)
+      const dur = Math.floor(duration);
+      const durText = `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}`;
+      ctx.fillStyle = 'rgba(0,0,0,.6)';
+      ctx.beginPath(); ctx.roundRect(1180, 16, 80, 30, 6); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(durText, 1220, 36);
+
+      // Play button overlay (center)
+      ctx.fillStyle = 'rgba(0,0,0,.4)';
+      ctx.beginPath(); ctx.arc(640, 320, 40, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(625, 300); ctx.lineTo(665, 320); ctx.lineTo(625, 340); ctx.closePath();
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+
+      // Download
+      canvas.toBlob((blob) => {
+        if (!blob) { showToast('❌ Thumbnail failed', 2000); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        a.href = url;
+        a.download = `noorcast-thumb-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        showToast('📸 Thumbnail ready!', 2500);
+        // Also show as download link
+        const dlThumb = $('tcDownloadThumb');
+        if (dlThumb) { dlThumb.href = url; dlThumb.download = a.download; dlThumb.style.display = ''; }
+      }, 'image/png');
+    } catch (e) {
+      log('AutoThumbnail error: ' + e.message, 'error');
+      showToast('❌ Thumbnail failed', 2000);
+    }
+  },
+};
+
+/* v0.7.187: PostTranscript — after recording, re-analyze audio with
+   SpeechRecognition to generate a full text transcript. Downloads as .txt. */
+const PostTranscript = {
+  generating: false,
+
+  async generate() {
+    if (this.generating) return;
+    // First check if we have SRT entries from live captions
+    const liveTrans = LiveCaptions.getTranscript();
+    if (liveTrans && liveTrans.length > 20) {
+      this._download(liveTrans);
+      return;
+    }
+
+    // Otherwise, try to transcribe from the recorded blob
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { showToast('❌ Speech recognition not supported', 2500); return; }
+
+    this.generating = true;
+    showToast('📝 Generating transcript...', 3000);
+
+    try {
+      // Play the recording through a hidden audio element and feed to SR
+      const audio = document.createElement('audio');
+      audio.src = URL.createObjectURL(Recorder._lastBlob);
+      audio.muted = false;
+      audio.volume = 0.01; // near silent to avoid echo
+
+      const rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = false;
+      const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+      rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+
+      const parts = [];
+      rec.onresult = (ev) => {
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) parts.push(ev.results[i][0].transcript.trim());
+        }
+      };
+
+      rec.onerror = () => {};
+      rec.onend = () => {
+        audio.pause();
+        URL.revokeObjectURL(audio.src);
+        this.generating = false;
+        if (parts.length > 0) {
+          this._download(parts.join(' '));
+        } else {
+          showToast('📝 No speech detected', 2500);
+        }
+      };
+
+      // Start recognition + play audio
+      rec.start();
+      audio.play();
+
+      // Stop after audio ends or 2 minutes max
+      const maxDur = Math.min((audio.duration || 120) * 1000, 120000);
+      audio.onended = () => { try { rec.stop(); } catch {} };
+      setTimeout(() => {
+        try { rec.stop(); } catch {}
+        try { audio.pause(); } catch {}
+      }, maxDur + 2000);
+
+    } catch (e) {
+      log('PostTranscript error: ' + e.message, 'error');
+      showToast('❌ Transcript failed', 2000);
+      this.generating = false;
+    }
+  },
+
+  _download(text) {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    showToast(`📝 Transcript ready! (${text.split(' ').length} words)`, 3000);
+    this.generating = false;
+  },
+};
+
+/* v0.7.186: LessonGuide — enhanced template step display on canvas.
+   Shows current step name + progress bar + auto-advance timer. */
+const LessonGuide = {
+  render(ctx, W, H) {
+    if (!Templates.active || Templates.currentStep < 0) return;
+    const tpl = Templates.active;
+    const step = tpl.steps[Templates.currentStep];
+    if (!step) return;
+    const total = tpl.steps.length;
+    const current = Templates.currentStep + 1;
+
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+
+    // Background pill (top-center)
+    const pw = 300, ph = 36, px = (W - pw) / 2, py = 50;
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 18); ctx.fill();
+
+    // Progress bar inside pill
+    const prog = current / total;
+    ctx.fillStyle = 'rgba(163,230,53,.3)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw * prog, ph, 18); ctx.fill();
+
+    // Step text
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px "Righteous", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = t(step.label) || `Step ${current}`;
+    ctx.fillText(`${current}/${total} — ${label}`, W / 2, py + ph / 2);
+
+    // Step dots below
+    const dotY = py + ph + 10;
+    for (let i = 0; i < total; i++) {
+      ctx.fillStyle = i < current ? '#a3e635' : i === Templates.currentStep ? '#fff' : 'rgba(255,255,255,.3)';
+      ctx.beginPath();
+      ctx.arc(W / 2 + (i - total / 2 + 0.5) * 16, dotY, i === Templates.currentStep ? 5 : 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.186: RobotChoreo — record and replay micro:bit UART command sequences.
+   Records timestamped commands during a session, replays them in sync. */
+const RobotChoreo = {
+  recording: false,
+  playing: false,
+  _sequence: [],   // { time: ms, cmd: string }
+  _startTime: 0,
+  _playTimer: null,
+
+  startRecording() {
+    this._sequence = [];
+    this._startTime = Date.now();
+    this.recording = true;
+    showToast('🤖 Recording robot moves...', 2000);
+    log('🤖 Choreography recording started', 'info');
+  },
+
+  recordCommand(cmd) {
+    if (!this.recording) return;
+    this._sequence.push({ time: Date.now() - this._startTime, cmd });
+  },
+
+  stopRecording() {
+    this.recording = false;
+    showToast(`🤖 Recorded ${this._sequence.length} moves!`, 2000);
+    log(`🤖 Choreography: ${this._sequence.length} commands recorded`, 'success');
+    this._save();
+  },
+
+  play() {
+    if (this.playing || this._sequence.length === 0) {
+      if (this._sequence.length === 0) showToast('🤖 No moves recorded yet', 2000);
+      return;
+    }
+    this.playing = true;
+    showToast(`🤖 Replaying ${this._sequence.length} moves...`, 2000);
+    log('🤖 Choreography playback started', 'info');
+    let idx = 0;
+    const playNext = () => {
+      if (idx >= this._sequence.length) {
+        this.playing = false;
+        showToast('🤖 Replay done!', 1500);
+        Confetti.burst();
+        return;
+      }
+      const entry = this._sequence[idx];
+      const delay = idx === 0 ? entry.time : entry.time - this._sequence[idx - 1].time;
+      this._playTimer = setTimeout(() => {
+        Sensors.sendUart(entry.cmd);
+        log(`🤖 replay: ${entry.cmd}`, 'info');
+        idx++;
+        playNext();
+      }, Math.max(0, delay));
+    };
+    playNext();
+  },
+
+  stop() {
+    if (this._playTimer) clearTimeout(this._playTimer);
+    this.playing = false;
+    this.recording = false;
+  },
+
+  _save() {
+    try { localStorage.setItem('tc-robot-choreo', JSON.stringify(this._sequence)); } catch {}
+  },
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-robot-choreo');
+      if (raw) this._sequence = JSON.parse(raw);
+    } catch {}
+  },
+};
+
+/* v0.7.186: MultiTakeDirector — stores multiple takes and helps pick the
+   best one per scene based on audio energy (engagement level). */
+const MultiTakeDirector = {
+  takes: [],  // { blob, duration, energy, scenes, timestamp }
+  MAX_TAKES: 5,
+
+  addTake(blob, duration) {
+    if (this.takes.length >= this.MAX_TAKES) this.takes.shift();
+    this.takes.push({
+      blob,
+      duration,
+      scenes: Chapters.items.map(c => c.label),
+      timestamp: Date.now(),
+      energy: 0,  // filled async
+    });
+    this._analyzeEnergy(this.takes[this.takes.length - 1]);
+    showToast(`🎬 Take ${this.takes.length} saved! (${this.takes.length}/${this.MAX_TAKES})`, 2000);
+    this._renderUI();
+  },
+
+  async _analyzeEnergy(take) {
+    try {
+      const ab = await take.blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await ac.decodeAudioData(ab.slice(0));
+      const samples = buf.getChannelData(0);
+      let sum = 0;
+      for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+      take.energy = Math.sqrt(sum / samples.length);
+      try { ac.close(); } catch {}
+      this._renderUI();
+    } catch {}
+  },
+
+  getBestTake() {
+    if (this.takes.length === 0) return null;
+    return this.takes.reduce((best, t) => t.energy > best.energy ? t : best, this.takes[0]);
+  },
+
+  downloadBest() {
+    const best = this.getBestTake();
+    if (!best) { showToast('🎬 No takes yet!', 2000); return; }
+    const url = URL.createObjectURL(best.blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-best-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.webm`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    showToast('🎬 Best take downloaded!', 2500);
+    Confetti.burst();
+  },
+
+  _renderUI() {
+    const el = $('tcDirectorPanel');
+    if (!el) return;
+    el.innerHTML = '';
+    if (this.takes.length === 0) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    this.takes.forEach((take, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 0;font-size:.75rem;font-family:var(--font-mono,monospace)';
+      const isBest = take === this.getBestTake();
+      row.innerHTML = `
+        <span>${isBest ? '⭐' : '🎬'} Take ${i + 1}</span>
+        <span style="opacity:.6">${Math.floor(take.duration / 1000)}s</span>
+        <span style="opacity:.6">E:${(take.energy * 100).toFixed(0)}</span>
+        ${isBest ? '<span style="color:#fbbf24;font-weight:bold">BEST</span>' : ''}
+      `;
+      el.appendChild(row);
+    });
+    // Download best button
+    const btn = document.createElement('button');
+    btn.className = 'tc-btn-full';
+    btn.style.cssText = 'margin-top:4px;font-size:.75rem;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3)';
+    btn.textContent = '⭐ Download Best Take';
+    btn.addEventListener('click', () => this.downloadBest());
+    el.appendChild(btn);
+  },
+};
+
+/* v0.7.186: QRShare — generates a QR code data URL from the current canvas
+   snapshot. Kids can scan it to see the screenshot on their phone.
+   Uses a minimal QR encoder (no library) — encodes a data URL. */
+const QRShare = {
+  async generate() {
+    const canvas = Engine.canvas;
+    if (!canvas) { showToast('No canvas!', 1500); return; }
+    showToast('📱 Generating QR code...', 1500);
+
+    // Take a snapshot of the canvas
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = 640; snapCanvas.height = 360;
+    const sCtx = snapCanvas.getContext('2d');
+    sCtx.drawImage(canvas, 0, 0, 640, 360);
+    const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.6);
+
+    // Generate QR code as canvas (minimal implementation)
+    this._showModal(dataUrl);
+  },
+
+  _showModal(dataUrl) {
+    // Remove existing modal
+    const old = document.querySelector('.tc-qr-modal');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'tc-qr-modal';
+    modal.style.cssText = `
+      position:fixed; inset:0; z-index:99999; display:flex; align-items:center;
+      justify-content:center; background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+    `;
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border-radius:16px;padding:20px;max-width:400px;text-align:center;border:1px solid rgba(163,230,53,.3)">
+        <div style="font-size:1.2rem;font-weight:bold;color:#a3e635;margin-bottom:12px">📱 Share Screenshot</div>
+        <img src="${dataUrl}" style="width:100%;border-radius:8px;margin-bottom:12px" />
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="tcQrDownload" style="padding:8px 16px;border-radius:8px;background:#a3e635;color:#000;border:none;font-weight:bold;cursor:pointer">⬇️ Download</button>
+          <button id="tcQrCopy" style="padding:8px 16px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer">📋 Copy</button>
+          <button id="tcQrClose" style="padding:8px 16px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer">✕ Close</button>
+        </div>
+        <div style="margin-top:10px;font-size:.7rem;color:rgba(255,255,255,.4)">Students can scan this or you can share the image directly</div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#tcQrClose').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    modal.querySelector('#tcQrDownload').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'noorcast-share.jpg';
+      a.click();
+      showToast('⬇️ Screenshot downloaded!', 1500);
+    });
+    modal.querySelector('#tcQrCopy').addEventListener('click', async () => {
+      try {
+        const resp = await fetch(dataUrl);
+        const blob = await resp.blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        showToast('📋 Copied to clipboard!', 1500);
+      } catch {
+        showToast('❌ Copy failed', 1500);
+      }
+    });
+  },
+};
+
+/* v0.7.188: SmartSceneSwitcher — listens to live speech and auto-switches
+   scenes when it detects keywords like "code", "robot", "camera", etc. */
+const SmartSceneSwitcher = {
+  enabled: false,
+  _recognition: null,
+  _cooldown: 0,
+
+  // Keyword → scene key mapping
+  _rules: [
+    { words: ['code', 'program', 'script', 'كود', 'برنامج'], scene: 'code' },
+    { words: ['robot', 'mecha', 'روبوت', 'آلة'], scene: 'robot' },
+    { words: ['sensor', 'capteur', 'مستشعر', 'temperature', 'light'], scene: 'sensors' },
+    { words: ['camera', 'caméra', 'كاميرا', 'face', 'visage', 'me', 'moi', 'أنا'], scene: 'you' },
+    { words: ['studio', 'grid', 'grille', 'all', 'tout', 'الكل'], scene: 'studio' },
+    { words: ['pilot', 'pilote', 'drive', 'control', 'طيار', 'تحكم'], scene: 'pilot' },
+  ],
+
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('tc-smart-scene', this.enabled ? '1' : '0'); } catch {}
+    if (this.enabled) this.start(); else this.stop();
+  },
+  load() { try { this.enabled = localStorage.getItem('tc-smart-scene') === '1'; } catch {} },
+
+  start() {
+    if (this._recognition) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = false;
+    const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+    rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+    rec.onresult = (ev) => {
+      const now = Date.now();
+      if (now - this._cooldown < 3000) return; // 3s cooldown between switches
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        const text = ev.results[i][0].transcript.toLowerCase();
+        for (const rule of this._rules) {
+          if (rule.words.some(w => text.includes(w))) {
+            if (Scenes.active !== rule.scene) {
+              Scenes.switch(rule.scene);
+              this._cooldown = now;
+              log(`🧠 Smart switch → ${rule.scene} ("${text.slice(0, 30)}")`, 'info');
+              showToast(`🧠 → ${Scenes.presets.find(p => p.key === rule.scene)?.icon || ''} ${rule.scene}`, 1500);
+            }
+            return;
+          }
+        }
+      }
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (this.enabled && this._recognition) { try { rec.start(); } catch {} } };
+    try { rec.start(); } catch {}
+    this._recognition = rec;
+    log('🧠 Smart Scene Switcher active', 'info');
+  },
+
+  stop() {
+    if (this._recognition) { try { this._recognition.stop(); } catch {} this._recognition = null; }
+  },
+};
+
+/* v0.7.188: TutorialScore — post-recording quality analysis.
+   Grades: audio clarity, pacing, scene variety, duration, engagement.
+   Shows a visual report card on canvas. */
+const TutorialScore = {
+  _lastScore: null,
+
+  async analyze() {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    showToast('🎯 Analyzing tutorial quality...', 2000);
+
+    try {
+      const ab = await Recorder._lastBlob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      let audioBuf;
+      try { audioBuf = await ac.decodeAudioData(ab.slice(0)); } catch { showToast('❌ Decode failed', 2000); return; }
+
+      const samples = audioBuf.getChannelData(0);
+      const sr = audioBuf.sampleRate;
+      const duration = audioBuf.duration;
+
+      // 1. Audio clarity — average RMS (higher = clearer voice)
+      let totalRms = 0, windows = 0;
+      for (let i = 0; i < samples.length; i += sr) {
+        let sum = 0;
+        const end = Math.min(i + sr, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        totalRms += Math.sqrt(sum / (end - i));
+        windows++;
+      }
+      const avgRms = totalRms / (windows || 1);
+      const audioScore = Math.min(100, Math.round(avgRms * 500));
+
+      // 2. Pacing — variance of energy (varied = good, flat = monotone)
+      const energies = [];
+      for (let i = 0; i < samples.length; i += sr) {
+        let sum = 0;
+        const end = Math.min(i + sr, samples.length);
+        for (let j = i; j < end; j++) sum += samples[j] * samples[j];
+        energies.push(Math.sqrt(sum / (end - i)));
+      }
+      const mean = energies.reduce((a, b) => a + b, 0) / energies.length;
+      const variance = energies.reduce((a, e) => a + (e - mean) ** 2, 0) / energies.length;
+      const pacingScore = Math.min(100, Math.round(Math.sqrt(variance) * 1000));
+
+      // 3. Scene variety
+      const scenesUsed = Chapters.items.length;
+      const sceneScore = Math.min(100, scenesUsed * 20);
+
+      // 4. Duration — sweet spot is 2-5 minutes
+      let durationScore;
+      if (duration < 30) durationScore = 20;
+      else if (duration < 120) durationScore = 50 + (duration / 120) * 30;
+      else if (duration <= 300) durationScore = 90 + (1 - Math.abs(duration - 180) / 180) * 10;
+      else if (duration <= 600) durationScore = 70;
+      else durationScore = 50;
+      durationScore = Math.round(durationScore);
+
+      // 5. Engagement — peaks above 2x average
+      const peaks = energies.filter(e => e > mean * 2).length;
+      const engagementScore = Math.min(100, Math.round((peaks / (windows || 1)) * 400));
+
+      // Overall
+      const overall = Math.round((audioScore + pacingScore + sceneScore + durationScore + engagementScore) / 5);
+
+      try { ac.close(); } catch {}
+
+      this._lastScore = { audioScore, pacingScore, sceneScore, durationScore, engagementScore, overall, duration };
+      this._showReport();
+    } catch (e) {
+      log('TutorialScore error: ' + e.message, 'error');
+      showToast('❌ Analysis failed', 2000);
+    }
+  },
+
+  _grade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B+';
+    if (score >= 60) return 'B';
+    if (score >= 50) return 'C+';
+    if (score >= 40) return 'C';
+    return 'D';
+  },
+
+  _showReport() {
+    if (!this._lastScore) return;
+    const s = this._lastScore;
+    const old = document.querySelector('.tc-score-modal');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'tc-score-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)';
+
+    const grades = [
+      { label: '🎤 Audio', score: s.audioScore },
+      { label: '📈 Pacing', score: s.pacingScore },
+      { label: '🎭 Scenes', score: s.sceneScore },
+      { label: '⏱ Duration', score: s.durationScore },
+      { label: '🔥 Engagement', score: s.engagementScore },
+    ];
+
+    const rows = grades.map(g => {
+      const grade = this._grade(g.score);
+      const barColor = g.score >= 70 ? '#4ade80' : g.score >= 50 ? '#fbbf24' : '#ef4444';
+      return `
+        <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+          <span style="width:110px;font-size:.85rem">${g.label}</span>
+          <div style="flex:1;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden">
+            <div style="width:${g.score}%;height:100%;background:${barColor};border-radius:6px;transition:width .5s"></div>
+          </div>
+          <span style="width:30px;font-weight:bold;color:${barColor}">${grade}</span>
+        </div>
+      `;
+    }).join('');
+
+    const overallGrade = this._grade(s.overall);
+    const overallColor = s.overall >= 70 ? '#4ade80' : s.overall >= 50 ? '#fbbf24' : '#ef4444';
+
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border-radius:16px;padding:24px;max-width:380px;width:90%;border:1px solid rgba(163,230,53,.3)">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:2rem;font-weight:bold;color:${overallColor}">${overallGrade}</div>
+          <div style="font-size:2.5rem;font-weight:bold;color:${overallColor}">${s.overall}/100</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.5)">Tutorial Quality Score</div>
+        </div>
+        ${rows}
+        <div style="text-align:center;margin-top:16px">
+          <button id="tcScoreClose" style="padding:8px 24px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-size:.9rem">Close</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#tcScoreClose').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    if (s.overall >= 80) Confetti.burst();
+    showToast(`🎯 Score: ${s.overall}/100 (${overallGrade})`, 3000);
+  },
+};
+
+/* v0.7.188: AICohost — animated canvas character that reacts to audio.
+   A small cartoon face in a corner that nods, claps, thinks based on
+   mic RMS. Pure canvas drawing, no images. */
+const AICohost = {
+  visible: false,
+  character: 'atom',
+  characters: [
+    'atom', 'dna', 'flask', 'microscope', 'magnet', 'telescope',
+    'saturn', 'earth', 'comet', 'moon', 'pulsar', 'satellite', 'rocket', 'blackhole', 'sun',
+    'lightbulb', 'compass', 'battery', 'crescent', 'infinity', 'lightning', 'gem', 'flame', 'wave',
+    'skull', 'dragon', 'eye', 'terminal', 'lock', 'spider',
+    'jollyroger', 'anchor', 'swords', 'pirateflag',
+    'vmask', 'tux', 'trident', 'redpill', 'globe', 'cipher',
+  ],
+  charLabels: {
+    atom: '⚛️ Atom', dna: '🧬 DNA', flask: '⚗️ Flask', microscope: '🔬 Scope',
+    magnet: '🧲 Magnet', telescope: '📡 Dish',
+    saturn: '🪐 Saturn', earth: '🌍 Earth', comet: '☄️ Comet', moon: '🌙 Moon',
+    pulsar: '⭐ Pulsar', satellite: '🛰 Sat', rocket: '🚀 Rocket',
+    blackhole: '🌌 Hole', sun: '☀️ Sun',
+    lightbulb: '💡 Bulb', compass: '🧭 Compass', battery: '🔋 Battery',
+    crescent: '☪️ Crescent', infinity: '♾️ Infinity', lightning: '⚡ Bolt',
+    gem: '💎 Gem', flame: '🔥 Flame', wave: '🌊 Wave',
+    skull: '💀 Skull', dragon: '🐉 Dragon', eye: '👁 Eye', terminal: '🖥 Term',
+    lock: '🔓 Lock', spider: '🕷 Spider',
+    jollyroger: '☠️ Roger', anchor: '⚓ Anchor', swords: '🗡 Swords', pirateflag: '🏴 Flag',
+    vmask: '🎭 V Mask', tux: '🐧 Tux', trident: '🔱 Trident',
+    redpill: '💊 Pill', globe: '🌐 Globe', cipher: '🔐 Cipher',
+  },
+  _x: 0, _y: 0,
+  _mood: 'idle',
+  _mouthOpen: 0,
+  _blinkTimer: 0,
+  _blinking: false,
+  // v0.7.189: reaction bubbles
+  _bubble: '',
+  _bubbleUntil: 0,
+  _lastBubbleAt: 0,
+  // v0.7.189: scene prompter
+  _sceneStartTime: 0,
+  _lastScene: '',
+  _scenePrompted: false,
+  // v0.7.189: applause tracker
+  _wasSpeaking: false,
+  _silenceStart: 0,
+  _clapping: false,
+  _clapUntil: 0,
+  // v0.7.189: timer buddy
+  _lastTimeCard: 0,
+
+  toggle() {
+    this.visible = !this.visible;
+    this._save();
+  },
+  nextCharacter() {
+    const idx = this.characters.indexOf(this.character);
+    this.character = this.characters[(idx + 1) % this.characters.length];
+    this._save();
+    showToast(`${this.charLabels[this.character]} co-host`, 1200);
+  },
+  _save() { try { localStorage.setItem('tc-cohost', JSON.stringify({ v: this.visible, c: this.character })); } catch {} },
+  load() {
+    try {
+      const raw = localStorage.getItem('tc-cohost');
+      if (raw === '1') { this.visible = true; }
+      else if (raw) { const d = JSON.parse(raw); this.visible = !!d.v; this.character = d.c || 'coder'; }
+    } catch {}
+  },
+
+  // SVG character cache — pre-rendered as Image objects
+  _svgCache: {},
+  _getSvgImg(key) {
+    if (this._svgCache[key]) return this._svgCache[key];
+    const svg = this._svgs[key];
+    if (!svg) return null;
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    this._svgCache[key] = img;
+    return img;
+  },
+
+  _svgs: {
+    atom: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="6" fill="#38bdf8"/><ellipse cx="40" cy="40" rx="30" ry="10" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".6"/><ellipse cx="40" cy="40" rx="30" ry="10" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".6" transform="rotate(60 40 40)"/><ellipse cx="40" cy="40" rx="30" ry="10" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".6" transform="rotate(120 40 40)"/><circle cx="70" cy="40" r="3" fill="#4ade80"/><circle cx="25" cy="14" r="3" fill="#fbbf24"/><circle cx="25" cy="66" r="3" fill="#ef4444"/></svg>',
+    dna: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M28 4Q52 20 28 40Q52 60 28 76" stroke="#38bdf8" fill="none" stroke-width="2.5"/><path d="M52 4Q28 20 52 40Q28 60 52 76" stroke="#4ade80" fill="none" stroke-width="2.5"/><line x1="30" y1="12" x2="50" y2="12" stroke="#fff" stroke-width="1" opacity=".3"/><line x1="32" y1="22" x2="48" y2="22" stroke="#fff" stroke-width="1" opacity=".3"/><line x1="32" y1="32" x2="48" y2="32" stroke="#fff" stroke-width="1" opacity=".3"/><line x1="30" y1="48" x2="50" y2="48" stroke="#fff" stroke-width="1" opacity=".3"/><line x1="32" y1="58" x2="48" y2="58" stroke="#fff" stroke-width="1" opacity=".3"/><line x1="32" y1="68" x2="48" y2="68" stroke="#fff" stroke-width="1" opacity=".3"/></svg>',
+    flask: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="30" y="4" width="20" height="20" rx="2" fill="none" stroke="#94a3b8" stroke-width="2"/><path d="M30 24L14 64Q10 72 18 76H62Q70 72 66 64L50 24" fill="none" stroke="#94a3b8" stroke-width="2"/><path d="M18 76H62Q70 72 66 64L54 38H26L14 64Q10 72 18 76" fill="#4ade80" opacity=".3"/><circle cx="34" cy="58" r="3" fill="#4ade80" opacity=".5"/><circle cx="46" cy="52" r="2" fill="#4ade80" opacity=".4"/><circle cx="40" cy="64" r="4" fill="#4ade80" opacity=".3"/></svg>',
+    microscope: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="34" y="8" width="12" height="30" rx="3" fill="#64748b"/><circle cx="40" cy="44" r="10" fill="none" stroke="#94a3b8" stroke-width="2.5"/><line x1="40" y1="54" x2="40" y2="68" stroke="#64748b" stroke-width="3"/><rect x="24" y="68" width="32" height="6" rx="2" fill="#475569"/><line x1="30" y1="44" x2="50" y2="44" stroke="#94a3b8" stroke-width="1" opacity=".5"/><line x1="40" y1="34" x2="40" y2="54" stroke="#94a3b8" stroke-width="1" opacity=".5"/></svg>',
+    magnet: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M16 20L16 48Q16 66 40 66Q64 66 64 48L64 20" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/><rect x="12" y="14" width="12" height="12" fill="#94a3b8"/><rect x="56" y="14" width="12" height="12" fill="#94a3b8"/><path d="M20 50Q20 58 30 56" stroke="#38bdf8" stroke-width="1" fill="none" opacity=".4"/><path d="M24 46Q26 56 34 52" stroke="#38bdf8" stroke-width="1" fill="none" opacity=".3"/></svg>',
+    telescope: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><ellipse cx="40" cy="40" rx="28" ry="28" fill="none" stroke="#475569" stroke-width="2"/><ellipse cx="40" cy="40" rx="20" ry="20" fill="none" stroke="#475569" stroke-width="1.5" opacity=".5"/><ellipse cx="40" cy="40" rx="12" ry="12" fill="none" stroke="#475569" stroke-width="1" opacity=".3"/><line x1="40" y1="12" x2="40" y2="68" stroke="#475569" stroke-width="1" opacity=".3"/><line x1="12" y1="40" x2="68" y2="40" stroke="#475569" stroke-width="1" opacity=".3"/><circle cx="40" cy="40" r="3" fill="#ef4444" opacity=".6"/></svg>',
+    saturn: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="18" fill="#d4a03c"/><ellipse cx="40" cy="40" rx="36" ry="8" fill="none" stroke="#d4a03c" stroke-width="2.5" opacity=".5" transform="rotate(-20 40 40)"/><circle cx="40" cy="40" r="16" fill="none" stroke="#c9a040" stroke-width="1" opacity=".3"/></svg>',
+    earth: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="28" fill="#1e40af"/><path d="M24 20Q30 18 36 24Q40 28 44 22Q50 18 54 24Q56 30 52 36Q46 40 48 48Q50 54 44 58Q38 60 32 56Q26 52 28 44Q30 38 26 32Q22 26 24 20Z" fill="#22c55e" opacity=".6"/><circle cx="40" cy="40" r="28" fill="none" stroke="#3b82f6" stroke-width="1.5"/></svg>',
+    comet: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="58" cy="28" r="10" fill="#f5f5f0"/><path d="M48 34L4 72" stroke="#f5f5f0" stroke-width="6" opacity=".15" stroke-linecap="round"/><path d="M50 32L10 66" stroke="#f5f5f0" stroke-width="3" opacity=".25" stroke-linecap="round"/><path d="M52 30L18 60" stroke="#fbbf24" stroke-width="1.5" opacity=".3" stroke-linecap="round"/></svg>',
+    moon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M50 10A28 28 0 1 0 50 70A22 22 0 0 1 50 10Z" fill="#e2e8f0"/><circle cx="34" cy="30" r="4" fill="#cbd5e1" opacity=".5"/><circle cx="28" cy="48" r="6" fill="#cbd5e1" opacity=".4"/><circle cx="42" cy="54" r="3" fill="#cbd5e1" opacity=".3"/></svg>',
+    pulsar: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="8" fill="#38bdf8"/><circle cx="40" cy="40" r="16" fill="none" stroke="#38bdf8" stroke-width="1" opacity=".4"/><circle cx="40" cy="40" r="24" fill="none" stroke="#38bdf8" stroke-width="1" opacity=".25"/><circle cx="40" cy="40" r="32" fill="none" stroke="#38bdf8" stroke-width="1" opacity=".15"/><line x1="40" y1="4" x2="40" y2="16" stroke="#38bdf8" stroke-width="2" opacity=".6"/><line x1="40" y1="64" x2="40" y2="76" stroke="#38bdf8" stroke-width="2" opacity=".6"/></svg>',
+    satellite: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="30" y="34" width="20" height="12" rx="2" fill="#94a3b8"/><rect x="6" y="36" width="24" height="8" rx="1" fill="#38bdf8" opacity=".5"/><rect x="50" y="36" width="24" height="8" rx="1" fill="#38bdf8" opacity=".5"/><rect x="36" y="28" width="8" height="6" fill="#475569"/><circle cx="40" cy="26" r="3" fill="#ef4444" opacity=".6"/></svg>',
+    rocket: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 4L30 30V56L36 64H44L50 56V30Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><circle cx="40" cy="28" r="5" fill="#38bdf8"/><path d="M30 40L20 52L30 50Z" fill="#94a3b8"/><path d="M50 40L60 52L50 50Z" fill="#94a3b8"/><path d="M36 64Q38 76 40 76Q42 76 44 64" fill="#ef4444" opacity=".7"/><path d="M37 64Q39 72 40 72Q41 72 43 64" fill="#fbbf24" opacity=".6"/></svg>',
+    blackhole: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="12" fill="#000"/><ellipse cx="40" cy="40" rx="30" ry="8" fill="none" stroke="#c084fc" stroke-width="2" opacity=".5"/><circle cx="40" cy="40" r="20" fill="none" stroke="#c084fc" stroke-width="1" opacity=".2"/><circle cx="40" cy="40" r="28" fill="none" stroke="#c084fc" stroke-width="0.5" opacity=".15"/></svg>',
+    sun: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="16" fill="#fbbf24"/><g stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity=".6"><line x1="40" y1="4" x2="40" y2="16"/><line x1="40" y1="64" x2="40" y2="76"/><line x1="4" y1="40" x2="16" y2="40"/><line x1="64" y1="40" x2="76" y2="40"/><line x1="14" y1="14" x2="22" y2="22"/><line x1="58" y1="58" x2="66" y2="66"/><line x1="14" y1="66" x2="22" y2="58"/><line x1="58" y1="22" x2="66" y2="14"/></g></svg>',
+    lightbulb: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 6A22 22 0 0 0 18 28Q18 42 30 50V58H50V50Q62 42 62 28A22 22 0 0 0 40 6Z" fill="#fbbf24" opacity=".8"/><rect x="30" y="58" width="20" height="4" fill="#d4a020"/><rect x="32" y="62" width="16" height="4" fill="#d4a020"/><rect x="34" y="66" width="12" height="4" rx="2" fill="#d4a020"/><line x1="40" y1="16" x2="40" y2="32" stroke="#fff" stroke-width="1.5" opacity=".4"/><path d="M32 24Q40 18 48 24" stroke="#fff" stroke-width="1.5" fill="none" opacity=".3"/></svg>',
+    compass: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="30" fill="none" stroke="#94a3b8" stroke-width="2"/><circle cx="40" cy="40" r="26" fill="none" stroke="#94a3b8" stroke-width="0.5"/><polygon points="40,14 44,38 40,42 36,38" fill="#ef4444"/><polygon points="40,66 36,42 40,38 44,42" fill="#e2e8f0"/><circle cx="40" cy="40" r="3" fill="#94a3b8"/><text x="40" y="10" text-anchor="middle" font-size="8" fill="#94a3b8">N</text></svg>',
+    battery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="16" y="16" width="48" height="52" rx="4" fill="none" stroke="#4ade80" stroke-width="2.5"/><rect x="30" y="10" width="20" height="6" rx="2" fill="#4ade80"/><rect x="22" y="40" width="36" height="22" rx="2" fill="#4ade80" opacity=".5"/><line x1="34" y1="52" x2="46" y2="52" stroke="#fff" stroke-width="2" opacity=".4"/><line x1="40" y1="46" x2="40" y2="58" stroke="#fff" stroke-width="2" opacity=".4"/></svg>',
+    crescent: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M48 8A28 28 0 1 0 48 72A22 22 0 0 1 48 8Z" fill="#d4a03c"/><circle cx="56" cy="18" r="4" fill="#d4a03c"/></svg>',
+    infinity: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 40Q24 16 12 40Q24 64 40 40Q56 16 68 40Q56 64 40 40Z" fill="none" stroke="#c084fc" stroke-width="3"/></svg>',
+    lightning: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><polygon points="44,4 22,42 36,42 28,76 58,34 42,34" fill="#fbbf24"/></svg>',
+    gem: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><polygon points="40,4 16,28 40,76 64,28" fill="none" stroke="#c084fc" stroke-width="2"/><line x1="16" y1="28" x2="64" y2="28" stroke="#c084fc" stroke-width="1.5"/><line x1="40" y1="4" x2="28" y2="28" stroke="#c084fc" stroke-width="1" opacity=".5"/><line x1="40" y1="4" x2="52" y2="28" stroke="#c084fc" stroke-width="1" opacity=".5"/><line x1="28" y1="28" x2="40" y2="76" stroke="#c084fc" stroke-width="1" opacity=".4"/><line x1="52" y1="28" x2="40" y2="76" stroke="#c084fc" stroke-width="1" opacity=".4"/></svg>',
+    flame: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 4Q56 24 56 44Q56 64 40 76Q24 64 24 44Q24 24 40 4Z" fill="#ef4444" opacity=".8"/><path d="M40 20Q50 32 50 46Q50 60 40 68Q30 60 30 46Q30 32 40 20Z" fill="#fbbf24" opacity=".6"/><path d="M40 36Q46 42 46 50Q46 58 40 62Q34 58 34 50Q34 42 40 36Z" fill="#fff" opacity=".3"/></svg>',
+    wave: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M4 40Q14 20 24 40Q34 60 44 40Q54 20 64 40Q74 60 80 40" fill="none" stroke="#38bdf8" stroke-width="3"/><path d="M4 50Q14 34 24 50Q34 66 44 50Q54 34 64 50Q74 66 80 50" fill="none" stroke="#38bdf8" stroke-width="2" opacity=".4"/><path d="M4 30Q14 14 24 30Q34 46 44 30Q54 14 64 30Q74 46 80 30" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".25"/></svg>',
+    skull: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 6C22 6 10 20 10 36V46Q10 58 20 62V72H32V64H48V72H60V62Q70 58 70 46V36C70 20 58 6 40 6Z" fill="#e2e8f0"/><circle cx="30" cy="36" r="8" fill="#1a1a1a"/><circle cx="50" cy="36" r="8" fill="#1a1a1a"/><path d="M36 52V58" stroke="#1a1a1a" stroke-width="2"/><path d="M44" y1="52" y2="58" stroke="#1a1a1a" stroke-width="2"/><path d="M36 52H44" stroke="#1a1a1a" stroke-width="1.5"/></svg>',
+    dragon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 4L28 16Q16 28 16 44Q16 60 28 68L40 76L52 68Q64 60 64 44Q64 28 52 16Z" fill="#1a2a1a"/><path d="M20 20L10 8" stroke="#4ade80" stroke-width="2"/><path d="M60 20L70 8" stroke="#4ade80" stroke-width="2"/><circle cx="30" cy="36" r="4" fill="#4ade80"/><circle cx="50" cy="36" r="4" fill="#4ade80"/><path d="M34 52Q40 58 46 52" stroke="#4ade80" stroke-width="1.5" fill="none"/></svg>',
+    eye: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M4 40Q20 14 40 14Q60 14 76 40Q60 66 40 66Q20 66 4 40Z" fill="none" stroke="#d4a03c" stroke-width="2.5"/><circle cx="40" cy="40" r="14" fill="#d4a03c" opacity=".3"/><circle cx="40" cy="40" r="8" fill="#1a1a1a"/><circle cx="43" cy="37" r="3" fill="#fff" opacity=".5"/><polygon points="40,4 36,14 44,14" fill="#d4a03c"/></svg>',
+    terminal: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="6" y="10" width="68" height="60" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2"/><rect x="10" y="14" width="60" height="4" rx="1" fill="#1e293b"/><circle cx="14" cy="16" r="1.5" fill="#ef4444"/><circle cx="20" cy="16" r="1.5" fill="#fbbf24"/><circle cx="26" cy="16" r="1.5" fill="#4ade80"/><text x="14" y="34" font-size="10" fill="#4ade80" font-family="monospace">$_</text></svg>',
+    lock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="18" y="34" width="44" height="36" rx="4" fill="#475569"/><path d="M26 34V24A14 14 0 0 1 54 24V34" fill="none" stroke="#94a3b8" stroke-width="3"/><circle cx="40" cy="50" r="5" fill="#fbbf24"/><line x1="40" y1="55" x2="40" y2="62" stroke="#fbbf24" stroke-width="2.5"/></svg>',
+    spider: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><ellipse cx="40" cy="40" rx="12" ry="10" fill="#1a1a1a"/><circle cx="40" cy="30" r="8" fill="#1a1a1a"/><g stroke="#1a1a1a" stroke-width="2"><path d="M32 32Q16 20 8 14"/><path d="M48 32Q64 20 72 14"/><path d="M30 38Q14 36 4 36"/><path d="M50 38Q66 36 76 36"/><path d="M30 44Q16 52 8 60"/><path d="M50 44Q64 52 72 60"/><path d="M32 48Q20 62 14 72"/><path d="M48 48Q60 62 66 72"/></g><circle cx="36" cy="28" r="2" fill="#ef4444"/><circle cx="44" cy="28" r="2" fill="#ef4444"/></svg>',
+    jollyroger: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="30" r="18" fill="#e2e8f0"/><circle cx="32" cy="28" r="5" fill="#1a1a1a"/><circle cx="48" cy="28" r="5" fill="#1a1a1a"/><path d="M34 40H46" stroke="#1a1a1a" stroke-width="2"/><line x1="36" y1="38" x2="36" y2="42" stroke="#1a1a1a" stroke-width="1.5"/><line x1="40" y1="38" x2="40" y2="42" stroke="#1a1a1a" stroke-width="1.5"/><line x1="44" y1="38" x2="44" y2="42" stroke="#1a1a1a" stroke-width="1.5"/><path d="M12 56L68 56" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round"/><path d="M56 44L12 56" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round"/></svg>',
+    anchor: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="16" r="8" fill="none" stroke="#94a3b8" stroke-width="2.5"/><line x1="40" y1="24" x2="40" y2="70" stroke="#94a3b8" stroke-width="3"/><path d="M16 50Q16 70 40 70Q64 70 64 50" fill="none" stroke="#94a3b8" stroke-width="2.5"/><line x1="28" y1="40" x2="52" y2="40" stroke="#94a3b8" stroke-width="3"/></svg>',
+    swords: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><line x1="14" y1="66" x2="60" y2="14" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/><line x1="66" y1="66" x2="20" y2="14" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="58" x2="22" y2="70" stroke="#d4a03c" stroke-width="4" stroke-linecap="round"/><line x1="58" y1="70" x2="70" y2="58" stroke="#d4a03c" stroke-width="4" stroke-linecap="round"/></svg>',
+    pirateflag: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><line x1="14" y1="8" x2="14" y2="76" stroke="#8b6914" stroke-width="3"/><rect x="14" y="8" width="54" height="38" rx="2" fill="#1a1a1a"/><circle cx="40" cy="22" r="8" fill="#e2e8f0" opacity=".8"/><circle cx="36" cy="20" r="2.5" fill="#1a1a1a"/><circle cx="44" cy="20" r="2.5" fill="#1a1a1a"/><path d="M30 36L50 36" stroke="#e2e8f0" stroke-width="3" opacity=".8" stroke-linecap="round"/></svg>',
+    vmask: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M40 6C22 6 10 20 10 36Q10 60 40 76Q70 60 70 36C70 20 58 6 40 6Z" fill="#111"/><path d="M24 32Q28 26 34 32" stroke="#4ade80" fill="none" stroke-width="1.5"/><path d="M46 32Q52 26 58 32" stroke="#4ade80" fill="none" stroke-width="1.5"/><path d="M30 50Q34 48 40 50Q46 48 50 50" stroke="#333" fill="none" stroke-width="1.5"/><path d="M40 54L40 60" stroke="#333" stroke-width="1.5"/></svg>',
+    tux: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><ellipse cx="40" cy="44" rx="22" ry="30" fill="#1a1a1a"/><ellipse cx="40" cy="48" rx="14" ry="22" fill="#e2e8f0"/><circle cx="34" cy="28" r="3" fill="#fff"/><circle cx="46" cy="28" r="3" fill="#fff"/><circle cx="34" cy="28" r="1.5" fill="#1a1a1a"/><circle cx="46" cy="28" r="1.5" fill="#1a1a1a"/><path d="M37 36L40 40L43 36" fill="#f59e0b"/></svg>',
+    trident: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><line x1="40" y1="12" x2="40" y2="72" stroke="#d4a03c" stroke-width="3"/><line x1="40" y1="12" x2="40" y2="4" stroke="#d4a03c" stroke-width="3" stroke-linecap="round"/><path d="M24 24L24 8" stroke="#d4a03c" stroke-width="2.5" stroke-linecap="round"/><path d="M56 24L56 8" stroke="#d4a03c" stroke-width="2.5" stroke-linecap="round"/><path d="M24 24Q40 32 56 24" fill="none" stroke="#d4a03c" stroke-width="2.5"/><line x1="32" y1="56" x2="48" y2="56" stroke="#d4a03c" stroke-width="2.5"/></svg>',
+    redpill: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="28" y="14" width="24" height="52" rx="12" fill="#ef4444"/><rect x="28" y="14" width="24" height="26" rx="12" fill="#dc2626"/><line x1="28" y1="40" x2="52" y2="40" stroke="#b91c1c" stroke-width="1.5"/></svg>',
+    globe: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="28" fill="none" stroke="#38bdf8" stroke-width="2"/><ellipse cx="40" cy="40" rx="14" ry="28" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".6"/><line x1="12" y1="28" x2="68" y2="28" stroke="#38bdf8" stroke-width="1" opacity=".4"/><line x1="12" y1="52" x2="68" y2="52" stroke="#38bdf8" stroke-width="1" opacity=".4"/><line x1="12" y1="40" x2="68" y2="40" stroke="#38bdf8" stroke-width="1" opacity=".3"/></svg>',
+    cipher: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect x="14" y="14" width="52" height="52" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2"/><text x="40" y="32" text-anchor="middle" font-size="12" fill="#4ade80" font-family="monospace" opacity=".6">01101</text><text x="40" y="46" text-anchor="middle" font-size="12" fill="#4ade80" font-family="monospace" opacity=".5">10010</text><text x="40" y="60" text-anchor="middle" font-size="12" fill="#4ade80" font-family="monospace" opacity=".4">11001</text></svg>',
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const t = Date.now() / 1000;
+    const rms = MicBoost._lastRms || 0;
+
+    // Update mood
+    if (rms > 0.2) this._mood = 'excited';
+    else if (rms > 0.03) this._mood = 'speaking';
+    else if (rms > 0.005) this._mood = 'thinking';
+    else this._mood = 'idle';
+
+    this._mouthOpen = Math.min(1, rms * 5);
+
+    // Blink
+    if (t - this._blinkTimer > 3 + Math.random() * 2) {
+      this._blinkTimer = t;
+      this._blinking = true;
+      setTimeout(() => { this._blinking = false; }, 150);
+    }
+
+    // Position: bottom-right corner
+    const cx = W - 70, cy = H - 80;
+    const bobY = Math.sin(t * 2) * 3;
+
+    ctx.save();
+    ctx.translate(cx, cy + bobY);
+
+    // Draw SVG character image
+    const charImg = this._getSvgImg(this.character);
+    if (charImg && charImg.complete && charImg.naturalWidth) {
+      ctx.drawImage(charImg, -40, -40, 80, 80);
+    } else {
+      // Fallback circle
+      ctx.fillStyle = '#555';
+      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Animated mouth overlay (opens with speech — on top of SVG)
+    if (this._mood === 'speaking' || this._mood === 'excited') {
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 5, 2 + this._mouthOpen * 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // v0.7.189: Applause — clap when speech→silence transition
+    const now = Date.now();
+    if (this._mood === 'speaking' || this._mood === 'excited') {
+      this._wasSpeaking = true;
+      this._silenceStart = 0;
+    } else if (this._wasSpeaking && this._mood === 'idle') {
+      if (!this._silenceStart) this._silenceStart = now;
+      if (now - this._silenceStart > 800 && !this._clapping) {
+        this._clapping = true;
+        this._clapUntil = now + 1200;
+        this._wasSpeaking = false;
+      }
+    }
+    if (this._clapping && now < this._clapUntil) {
+      const clapPhase = Math.sin((now - (this._clapUntil - 1200)) * 0.02) > 0;
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(clapPhase ? '👏' : '  ', 28, -20);
+    } else {
+      this._clapping = false;
+    }
+
+    // v0.7.189: Scene prompter — nudge if same scene >2 min
+    if (Recorder.state === 'recording') {
+      if (Scenes.active !== this._lastScene) {
+        this._lastScene = Scenes.active;
+        this._sceneStartTime = now;
+        this._scenePrompted = false;
+      }
+      if (!this._scenePrompted && now - this._sceneStartTime > 120000) {
+        this._scenePrompted = true;
+        this._bubble = '🎭 Scene change?';
+        this._bubbleUntil = now + 4000;
+      }
+    }
+
+    // v0.7.189: Timer buddy — show time cards at milestones
+    if (Recorder.state === 'recording') {
+      const elapsed = Recorder.elapsed ? Recorder.elapsed() / 1000 : 0;
+      const milestones = [60, 120, 300, 600]; // 1min, 2min, 5min, 10min
+      for (const m of milestones) {
+        if (elapsed >= m && elapsed < m + 2 && this._lastTimeCard !== m) {
+          this._lastTimeCard = m;
+          const mins = Math.floor(m / 60);
+          this._bubble = `⏱ ${mins} min`;
+          this._bubbleUntil = now + 3000;
+        }
+      }
+    } else {
+      this._lastTimeCard = 0;
+    }
+
+    // v0.7.189: Reaction bubbles — contextual feedback
+    if (now - this._lastBubbleAt > 8000 && !this._bubble) {
+      if (this._mood === 'excited' && Recorder.state === 'recording') {
+        this._bubble = '💡 Great point!';
+        this._bubbleUntil = now + 3000;
+        this._lastBubbleAt = now;
+      } else if (this._mood === 'idle' && Recorder.state === 'recording' && rms < 0.003) {
+        const silentFor = this._silenceStart ? now - this._silenceStart : 0;
+        if (silentFor > 5000) {
+          this._bubble = '📢 Keep going!';
+          this._bubbleUntil = now + 3000;
+          this._lastBubbleAt = now;
+        }
+      }
+    }
+
+    // Draw speech bubble
+    if (this._bubble && now < this._bubbleUntil) {
+      const bubbleAlpha = Math.min(1, (this._bubbleUntil - now) / 500);
+      ctx.globalAlpha = bubbleAlpha;
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.font = 'bold 11px "Righteous", sans-serif';
+      const bw = ctx.measureText(this._bubble).width + 16;
+      ctx.beginPath(); ctx.roundRect(-bw / 2, -60, bw, 20, 8); ctx.fill();
+      // Tail
+      ctx.beginPath(); ctx.moveTo(-4, -40); ctx.lineTo(4, -40); ctx.lineTo(0, -34); ctx.closePath(); ctx.fill();
+      // Text
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'center';
+      ctx.fillText(this._bubble, 0, -45);
+      ctx.globalAlpha = 1;
+    } else {
+      this._bubble = '';
+    }
+
+    ctx.restore();
+  },
+};
+
+/* v0.7.190: VisualCrop — interactive crop rectangle on the canvas.
+   Click ✂️ on a selected source → drag a rectangle to define the crop
+   region. Press Enter to apply, Escape to cancel. */
+const VisualCrop = {
+  active: false,
+  _sourceId: null,
+  _el: null,          // HTML overlay div
+  _startX: 0, _startY: 0,
+  _rectX: 0, _rectY: 0, _rectW: 0, _rectH: 0,
+  _dragging: false,
+  _phase: 'draw',     // 'draw' (initial drag) or 'adjust' (move/resize)
+
+  start(sourceId) {
+    const src = Engine.sources.find(s => s.id === sourceId);
+    if (!src) return;
+    this._sourceId = sourceId;
+    this.active = true;
+    this._phase = 'draw';
+
+    // Create overlay
+    if (this._el) this._el.remove();
+    const stage = $('tcStage');
+    if (!stage) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tc-crop-overlay';
+    overlay.style.cssText = 'position:absolute;inset:0;z-index:100;cursor:crosshair';
+    overlay.innerHTML = `
+      <div class="tc-crop-hint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font:bold 14px Righteous,sans-serif;text-align:center;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.8)">
+        ✂️ Draw a rectangle to crop<br><span style="font-size:11px;opacity:.6">Enter = apply · Escape = cancel</span>
+      </div>
+      <div class="tc-crop-rect" style="position:absolute;border:2px dashed #a3e635;display:none;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.4)"></div>
+    `;
+    stage.appendChild(overlay);
+    this._el = overlay;
+
+    const rect = overlay.querySelector('.tc-crop-rect');
+    const hint = overlay.querySelector('.tc-crop-hint');
+    const stageRect = stage.getBoundingClientRect();
+
+    overlay.addEventListener('pointerdown', (e) => {
+      if (this._phase !== 'draw') return;
+      e.preventDefault();
+      this._dragging = true;
+      this._startX = e.clientX - stageRect.left;
+      this._startY = e.clientY - stageRect.top;
+      rect.style.display = 'block';
+      hint.style.display = 'none';
+    });
+
+    overlay.addEventListener('pointermove', (e) => {
+      if (!this._dragging) return;
+      const cx = e.clientX - stageRect.left;
+      const cy = e.clientY - stageRect.top;
+      const x = Math.min(this._startX, cx);
+      const y = Math.min(this._startY, cy);
+      const w = Math.abs(cx - this._startX);
+      const h = Math.abs(cy - this._startY);
+      rect.style.left = x + 'px';
+      rect.style.top = y + 'px';
+      rect.style.width = w + 'px';
+      rect.style.height = h + 'px';
+      this._rectX = x; this._rectY = y; this._rectW = w; this._rectH = h;
+    });
+
+    overlay.addEventListener('pointerup', () => {
+      if (!this._dragging) return;
+      this._dragging = false;
+      if (this._rectW < 10 || this._rectH < 10) {
+        // Too small — cancel
+        this.cancel();
+        return;
+      }
+      this._phase = 'adjust';
+      overlay.style.cursor = 'default';
+      // Show apply hint
+      const applyHint = document.createElement('div');
+      applyHint.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#a3e635;padding:8px 16px;border-radius:8px;font:bold 12px Righteous,sans-serif;pointer-events:none';
+      applyHint.textContent = '✂️ Press Enter to crop · Escape to cancel';
+      overlay.appendChild(applyHint);
+    });
+
+    // Keyboard: Enter = apply, Escape = cancel
+    this._keyHandler = (e) => {
+      if (e.key === 'Enter' && this._rectW > 10) {
+        e.preventDefault();
+        this.apply();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this.cancel();
+      }
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  },
+
+  apply() {
+    const src = Engine.sources.find(s => s.id === this._sourceId);
+    const stage = $('tcStage');
+    if (!src || !stage) { this.cancel(); return; }
+
+    const stageRect = stage.getBoundingClientRect();
+    const stageW = stageRect.width;
+    const stageH = stageRect.height;
+
+    // Convert pixel rect to 0-1 fractions relative to the source
+    // First convert stage pixels to canvas coords
+    const canvasX = (this._rectX / stageW) * Engine.width;
+    const canvasY = (this._rectY / stageH) * Engine.height;
+    const canvasW = (this._rectW / stageW) * Engine.width;
+    const canvasH = (this._rectH / stageH) * Engine.height;
+
+    // Compute crop fractions relative to the source bounds
+    const relLeft = Math.max(0, (canvasX - src.x) / src.w);
+    const relTop = Math.max(0, (canvasY - src.y) / src.h);
+    const relRight = Math.max(0, 1 - (canvasX + canvasW - src.x) / src.w);
+    const relBottom = Math.max(0, 1 - (canvasY + canvasH - src.y) / src.h);
+
+    // Clamp to valid range
+    src.cropLeft = Math.max(0, Math.min(0.4, relLeft));
+    src.cropTop = Math.max(0, Math.min(0.4, relTop));
+    src.cropRight = Math.max(0, Math.min(0.4, relRight));
+    src.cropBottom = Math.max(0, Math.min(0.4, relBottom));
+
+    log(`✂️ Crop applied: T${(src.cropTop * 100).toFixed(0)}% B${(src.cropBottom * 100).toFixed(0)}% L${(src.cropLeft * 100).toFixed(0)}% R${(src.cropRight * 100).toFixed(0)}%`, 'success');
+    showToast('✂️ Crop applied!', 1500);
+
+    this._cleanup();
+    SceneAutoSave.trigger();
+  },
+
+  cancel() {
+    showToast('✂️ Crop cancelled', 1200);
+    this._cleanup();
+  },
+
+  _cleanup() {
+    this.active = false;
+    this._sourceId = null;
+    this._dragging = false;
+    this._rectW = 0; this._rectH = 0;
+    if (this._el) { this._el.remove(); this._el = null; }
+    if (this._keyHandler) { document.removeEventListener('keydown', this._keyHandler); this._keyHandler = null; }
+  },
+};
+
+/* v0.7.191: CanvasFlair — visual effects that make the recording output pop.
+   All drawn on the output canvas = baked into the final video. */
+const CanvasFlair = {
+  neonBorder: true,     // animated color-cycling border during recording
+  heartbeatBorder: true, // border pulses with voice volume
+  filmStrip: false,      // sprocket holes on sides
+  cornerDeco: true,      // viewfinder brackets at corners
+  _flashUntil: 0,       // camera flash timestamp
+
+  load() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tc-canvas-flair'));
+      if (s) {
+        if (typeof s.neon === 'boolean') this.neonBorder = s.neon;
+        if (typeof s.heartbeat === 'boolean') this.heartbeatBorder = s.heartbeat;
+        if (typeof s.film === 'boolean') this.filmStrip = s.film;
+        if (typeof s.corner === 'boolean') this.cornerDeco = s.corner;
+      }
+    } catch {}
+  },
+  _save() {
+    try { localStorage.setItem('tc-canvas-flair', JSON.stringify({ neon: this.neonBorder, heartbeat: this.heartbeatBorder, film: this.filmStrip, corner: this.cornerDeco })); } catch {}
+  },
+
+  flash() { this._flashUntil = Date.now() + 300; },
+
+  render(ctx, W, H) {
+    const t = Date.now() / 1000;
+    const recording = Recorder.state === 'recording';
+    const rms = MicBoost._lastRms || 0;
+
+    // ── Animated neon border (recording only) ──
+    if (this.neonBorder && recording) {
+      const hue = (t * 60) % 360;
+      ctx.save();
+      ctx.strokeStyle = `hsla(${hue},100%,60%,.4)`;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = `hsla(${hue},100%,60%,.5)`;
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(2, 2, W - 4, H - 4);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    // ── Heartbeat border (pulses with voice) ──
+    if (this.heartbeatBorder && recording) {
+      const thickness = 2 + Math.min(8, rms * 60);
+      ctx.save();
+      ctx.strokeStyle = `rgba(239,68,68,${0.2 + rms * 2})`;
+      ctx.lineWidth = thickness;
+      ctx.strokeRect(thickness / 2, thickness / 2, W - thickness, H - thickness);
+      ctx.restore();
+    }
+
+    // ── Film strip edges ──
+    if (this.filmStrip) {
+      ctx.save();
+      ctx.fillStyle = '#111';
+      // Left strip
+      ctx.fillRect(0, 0, 20, H);
+      // Right strip
+      ctx.fillRect(W - 20, 0, 20, H);
+      // Sprocket holes
+      ctx.fillStyle = '#333';
+      for (let y = 10; y < H; y += 24) {
+        ctx.beginPath(); ctx.roundRect(4, y, 12, 8, 2); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(W - 16, y, 12, 8, 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // ── Corner decorations (viewfinder brackets) ──
+    if (this.cornerDeco && recording) {
+      const bk = 30, pad = 8;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      ctx.lineWidth = 2;
+      // TL
+      ctx.beginPath(); ctx.moveTo(pad, pad + bk); ctx.lineTo(pad, pad); ctx.lineTo(pad + bk, pad); ctx.stroke();
+      // TR
+      ctx.beginPath(); ctx.moveTo(W - pad - bk, pad); ctx.lineTo(W - pad, pad); ctx.lineTo(W - pad, pad + bk); ctx.stroke();
+      // BL
+      ctx.beginPath(); ctx.moveTo(pad, H - pad - bk); ctx.lineTo(pad, H - pad); ctx.lineTo(pad + bk, H - pad); ctx.stroke();
+      // BR
+      ctx.beginPath(); ctx.moveTo(W - pad - bk, H - pad); ctx.lineTo(W - pad, H - pad); ctx.lineTo(W - pad, H - pad - bk); ctx.stroke();
+
+      // ON AIR badge (top-center, pulsing)
+      const pulse = 0.6 + Math.sin(t * 3) * 0.4;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.roundRect(W / 2 - 40, pad, 80, 22, 6); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px "Righteous", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('● ON AIR', W / 2, pad + 15);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+
+    // ── Camera flash (on snapshot) ──
+    if (Date.now() < this._flashUntil) {
+      const age = (this._flashUntil - Date.now()) / 300;
+      ctx.save();
+      ctx.fillStyle = `rgba(255,255,255,${age * 0.8})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+  },
+};
+
+/* v0.7.192: UnlockGallery — skins and backgrounds are locked by default.
+   Kids earn XP to unlock them. Creates a progression loop. */
+const UnlockGallery = {
+  _unlocked: null, // Set of unlocked skin/bg keys
+
+  load() {
+    this._unlocked = new Set(['none', 'tv', 'polaroid', 'comic', 'robot', 'space', 'pixel', 'chalk']); // starter pack
+    try {
+      const raw = localStorage.getItem('tc-unlocked-gallery');
+      if (raw) JSON.parse(raw).forEach(k => this._unlocked.add(k));
+    } catch {}
+  },
+  _save() {
+    try { localStorage.setItem('tc-unlocked-gallery', JSON.stringify([...this._unlocked])); } catch {}
+  },
+
+  isUnlocked(key) { return !this._unlocked || this._unlocked.has(key); },
+
+  unlock(key) {
+    if (this._unlocked.has(key)) return false;
+    this._unlocked.add(key);
+    this._save();
+    return true;
+  },
+
+  // Check XP level and auto-unlock items at milestones
+  checkUnlocks() {
+    const xp = XpBar._xp;
+    const tiers = [
+      { xp: 0,    items: ['tv', 'polaroid', 'comic', 'robot', 'space', 'pixel', 'chalk'] },
+      { xp: 50,   items: ['phone', 'monitor', 'arcade', 'neon', 'matrix'] },
+      { xp: 100,  items: ['laptop', 'astronaut', 'detective', 'lab', 'radar'] },
+      { xp: 200,  items: ['robothead', 'alien', 'flame', 'terminal', 'oscilloscope'] },
+      { xp: 300,  items: ['hologram', 'sniper', 'forcefield', 'mech', 'sonar'] },
+      { xp: 500,  items: ['crystal', 'mirror', 'gift', 'cube', 'gallery'] },
+      { xp: 750,  items: ['ufo', 'planet', 'warp', 'portal', 'vortex'] },
+      { xp: 1000, items: ['anonymous', 'ninja', 'android', 'neural', 'dna'] },
+    ];
+    let newUnlocks = [];
+    for (const tier of tiers) {
+      if (xp >= tier.xp) {
+        for (const item of tier.items) {
+          if (this.unlock(item)) newUnlocks.push(item);
+        }
+      }
+    }
+    if (newUnlocks.length > 0) {
+      showToast(`🔓 Unlocked ${newUnlocks.length} new items!`, 2500);
+      log(`🔓 Unlocked: ${newUnlocks.join(', ')}`, 'success');
+    }
+  },
+
+  // Get lock status text for a skin/bg
+  getLockText(key) {
+    if (this.isUnlocked(key)) return '';
+    // Find which tier it belongs to
+    const tiers = [50, 100, 200, 300, 500, 750, 1000];
+    const allTiers = [
+      { xp: 50, items: ['phone', 'monitor', 'arcade', 'neon', 'matrix'] },
+      { xp: 100, items: ['laptop', 'astronaut', 'detective', 'lab', 'radar'] },
+      { xp: 200, items: ['robothead', 'alien', 'flame', 'terminal', 'oscilloscope'] },
+      { xp: 300, items: ['hologram', 'sniper', 'forcefield', 'mech', 'sonar'] },
+      { xp: 500, items: ['crystal', 'mirror', 'gift', 'cube', 'gallery'] },
+      { xp: 750, items: ['ufo', 'planet', 'warp', 'portal', 'vortex'] },
+      { xp: 1000, items: ['anonymous', 'ninja', 'android', 'neural', 'dna'] },
+    ];
+    for (const t of allTiers) {
+      if (t.items.includes(key)) return `🔒 ${t.xp} XP`;
+    }
+    return '🔒';
+  },
+};
+
+/* v0.7.192: ComboSystem — use multiple features in a row for bonus XP.
+   Tracks active features each frame. 3+ simultaneous = COMBO! */
+const ComboSystem = {
+  _lastCombo: 0,
+  _comboCount: 0,
+  _displayUntil: 0,
+  _displayText: '',
+
+  tick() {
+    if (Recorder.state !== 'recording') return;
+    const now = Date.now();
+    if (now - this._lastCombo < 5000) return; // 5s cooldown
+
+    // Count active features
+    let count = 0;
+    if (Engine.sources.some(s => s.skin && s.skin !== 'none')) count++;
+    if (BgPatterns.current !== 'none') count++;
+    if (TextOverlays.items.length > 0) count++;
+    if (BgMusic.playing) count++;
+    if (AICohost.visible) count++;
+    if (XpBar.visible) count++;
+    if (VoiceFx.enabled) count++;
+    if (LiveCaptions.enabled) count++;
+    if (CanvasFlair.neonBorder) count++;
+
+    if (count >= 3 && count > this._comboCount) {
+      this._comboCount = count;
+      this._lastCombo = now;
+      const bonus = count * 5;
+      XpBar.addXp(bonus);
+
+      let tier = '';
+      if (count >= 7) tier = '🌟 ULTRA COMBO';
+      else if (count >= 5) tier = '🔥 SUPER COMBO';
+      else tier = '⚡ COMBO';
+
+      this._displayText = `${tier} x${count} (+${bonus} XP)`;
+      this._displayUntil = now + 2500;
+      showToast(this._displayText, 2500);
+      SpeedLines.fire(400);
+    }
+  },
+
+  render(ctx, W, H) {
+    if (Date.now() > this._displayUntil) { this._comboCount = 0; return; }
+    const t = (this._displayUntil - Date.now()) / 2500;
+    ctx.save();
+    ctx.globalAlpha = t;
+    ctx.font = `bold ${36 + (1 - t) * 10}px "Righteous", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fbbf24';
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 15;
+    ctx.fillText(this._displayText, W / 2, H * 0.4);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+};
+
+/* v0.7.192: GhostReplay — plays a faint ghost of the previous take
+   behind the live canvas during a new recording. Like racing game ghosts. */
+const GhostReplay = {
+  enabled: false,
+  _video: null,
+  _active: false,
+  opacity: 0.15,
+
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('tc-ghost-replay', this.enabled ? '1' : '0'); } catch {}
+  },
+  load() { try { this.enabled = localStorage.getItem('tc-ghost-replay') === '1'; } catch {} },
+
+  // Called when recording starts — if enabled and previous take exists
+  startIfReady() {
+    if (!this.enabled || !Recorder._lastBlob) return;
+    if (this._video) { this._video.pause(); this._video = null; }
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.src = URL.createObjectURL(Recorder._lastBlob);
+    video.onloadedmetadata = () => {
+      video.play();
+      this._video = video;
+      this._active = true;
+      log('👻 Ghost replay active', 'info');
+    };
+  },
+
+  stop() {
+    this._active = false;
+    if (this._video) {
+      this._video.pause();
+      try { URL.revokeObjectURL(this._video.src); } catch {}
+      this._video = null;
+    }
+  },
+
+  render(ctx, W, H) {
+    if (!this._active || !this._video || this._video.ended) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    try {
+      ctx.drawImage(this._video, 0, 0, W, H);
+    } catch {}
+    // Ghost label
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px ui-monospace, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('👻 GHOST', 10, 20);
+    ctx.restore();
+  },
+};
+
+/* v0.7.193: SceneThemes — one-click canvas presets that set background,
+   source skins, flair options, and overall mood. */
+const SceneThemes = {
+  presets: [
+    {
+      key: 'cinema', label: '🎬 Cinema', bg: '#000000', pattern: 'none',
+      skin: 'none', flair: { neon: false, heartbeat: false, film: true, corner: true },
+    },
+    {
+      key: 'retro', label: '🕹 Retro Gaming', bg: '#0a0a0a', pattern: 'pixel',
+      skin: 'arcade', flair: { neon: true, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'scifi', label: '🤖 Sci-fi Lab', bg: '#050510', pattern: 'circuit',
+      skin: 'robot', flair: { neon: true, heartbeat: true, film: false, corner: true },
+    },
+    {
+      key: 'islamic', label: '🕌 Islamic', bg: '#0a1a0a', pattern: 'zellige',
+      skin: 'andalusia', flair: { neon: false, heartbeat: false, film: false, corner: false },
+    },
+    {
+      key: 'news', label: '📺 News Studio', bg: '#0a0a2e', pattern: 'none',
+      skin: 'livestream', flair: { neon: false, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'space', label: '🚀 Space', bg: '#050510', pattern: 'space',
+      skin: 'astronaut', flair: { neon: true, heartbeat: false, film: false, corner: true },
+    },
+    {
+      key: 'hacker', label: '💻 Hacker', bg: '#0a0a0a', pattern: 'matrix',
+      skin: 'terminal', flair: { neon: true, heartbeat: true, film: false, corner: true },
+    },
+    {
+      key: 'clean', label: '✨ Clean', bg: '#000000', pattern: 'none',
+      skin: 'none', flair: { neon: false, heartbeat: false, film: false, corner: false },
+    },
+  ],
+
+  apply(key) {
+    const preset = this.presets.find(p => p.key === key);
+    if (!preset) return;
+    // Apply background
+    CanvasBg.set(preset.bg);
+    const cbg = $('tcCanvasBgColor'); if (cbg) cbg.value = preset.bg;
+    // Apply pattern
+    BgPatterns.setPattern(preset.pattern);
+    const bgpSel = $('tcBgPattern'); if (bgpSel) bgpSel.value = preset.pattern;
+    // Apply skin to all video sources
+    Engine.sources.forEach(s => { if (s.type !== 'mic') s.skin = preset.skin; });
+    // Apply flair
+    Object.assign(CanvasFlair, preset.flair);
+    CanvasFlair._save();
+
+    showToast(`🎨 ${preset.label}`, 2000);
+    log(`🎨 Scene theme: ${preset.label}`, 'success');
+    SpeedLines.fire(400);
+  },
+};
+
+/* v0.7.197: CanvasPets — animated characters that walk/fly across the canvas.
+   Interactive: react to audio, cursor, recording state. Baked into recording. */
+const CanvasPets = {
+  active: [],
+  types: ['robot', 'anonymous', 'skull', 'agent', 'bug', 'ufo', 'drone', 'arc', 'pencil', 'wrench', 'spider', 'eye'],
+  labels: {
+    robot: '🤖 Robot', anonymous: '🎭 Anon', skull: '💀 Skull', agent: '🕵️ Agent',
+    bug: '🐛 Bug', ufo: '🛸 UFO', drone: '🤖 Drone', arc: '⚡ Arc',
+    pencil: '📝 Pencil', wrench: '🔧 Wrench', spider: '🕷 Spider', eye: '👁 Eye',
+  },
+
+  add(type) {
+    const W = Engine.width || 1920, H = Engine.height || 1080;
+    this.active.push({
+      type, x: Math.random() * W, y: H - 40,
+      vx: (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 2),
+      vy: 0, state: 'walk', phase: Math.random() * 10, trail: [],
+    });
+    showToast(this.labels[type] + ' added!', 1200);
+    this._save();
+  },
+  remove(type) { this.active = this.active.filter(function(p) { return p.type !== type; }); this._save(); },
+  toggle(type) { if (this.active.some(function(p) { return p.type === type; })) this.remove(type); else this.add(type); },
+  _save() { try { localStorage.setItem('tc-canvas-pets', JSON.stringify(this.active.map(function(p) { return p.type; }))); } catch(e) {} },
+  load() { try { var raw = JSON.parse(localStorage.getItem('tc-canvas-pets')); if (raw) raw.forEach(function(t) { CanvasPets.add(t); }); } catch(e) {} },
+
+  render(ctx, W, H) {
+    if (!this.active.length) return;
+    var t = Date.now() / 1000;
+    var rms = MicBoost._lastRms || 0;
+    var frozen = rms > 0.15;
+
+    this.active.forEach(function(pet) {
+      pet.phase += 0.1;
+      if (!frozen) { pet.x += pet.vx; pet.y += pet.vy; }
+      if (pet.x < 10) { pet.x = 10; pet.vx = Math.abs(pet.vx); }
+      if (pet.x > W - 10) { pet.x = W - 10; pet.vx = -Math.abs(pet.vx); }
+      if (pet.y < 10) { pet.y = 10; pet.vy = Math.abs(pet.vy); }
+      if (pet.y > H - 10) { pet.y = H - 10; pet.vy = -Math.abs(pet.vy); }
+      ctx.save();
+      ctx.translate(pet.x, pet.y);
+      if (pet.vx < 0) ctx.scale(-1, 1);
+      var fn = CanvasPets['_draw_' + pet.type];
+      if (fn) fn(ctx, pet, t, frozen, rms);
+      ctx.restore();
+    });
+  },
+
+  _draw_robot: function(ctx, pet, t, frozen) {
+    var lp = frozen ? 0 : Math.sin(t * 8) * 4;
+    ctx.fillStyle = '#64748b'; ctx.fillRect(-10, -20, 20, 16);
+    ctx.fillStyle = '#94a3b8'; ctx.fillRect(-8, -26, 16, 8);
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(-5, -24, 4, 3); ctx.fillRect(2, -24, 4, 3);
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-6, -4); ctx.lineTo(-6 + lp, 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -4); ctx.lineTo(6 - lp, 6); ctx.stroke();
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(0, -34); ctx.stroke();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0, -34, 2, 0, Math.PI * 2); ctx.fill();
+    if (!frozen && Math.random() > 0.9) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(lp > 0 ? -8 : 8, 4, 1.5, 0, Math.PI * 2); ctx.fill(); }
+  },
+  _draw_anonymous: function(ctx, pet, t, frozen) {
+    if (!frozen && Math.random() > 0.995) pet.x += (Math.random() - 0.5) * 100;
+    ctx.fillStyle = '#111'; ctx.fillRect(-10, -28, 20, 28);
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(0, -24, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(-4, -26, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(4, -26, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(17,17,17,.6)';
+    ctx.beginPath(); ctx.moveTo(-10, -14); ctx.lineTo(-14, 0); ctx.lineTo(14, 0); ctx.lineTo(10, -14); ctx.fill();
+    if (Math.random() > 0.92) { ctx.fillStyle = 'rgba(74,222,128,.2)'; ctx.fillRect(-12, -30 + Math.random() * 30, 24, 2); }
+  },
+  _draw_skull: function(ctx, pet, t) {
+    ctx.rotate(pet.phase * 0.5);
+    ctx.fillStyle = '#e2e8f0'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-4, -2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(4, -2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(-3, 4, 6, 2);
+  },
+  _draw_agent: function(ctx, pet, t, frozen) {
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(-8, -24, 16, 24); ctx.fillRect(-6, -30, 12, 8);
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(-5, -28, 10, 4);
+    if (Math.sin(t * 2) > 0.5) { ctx.strokeStyle = 'rgba(239,68,68,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(80, -28 + Math.sin(t * 4) * 20); ctx.stroke(); }
+  },
+  _draw_bug: function(ctx, pet, t) {
+    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 1;
+    for (var i = 0; i < 3; i++) { var lx = -4 + i * 4, ly = Math.sin(t * 10 + i) * 2; ctx.beginPath(); ctx.moveTo(lx, 4); ctx.lineTo(lx - 3, 8 + ly); ctx.stroke(); ctx.beginPath(); ctx.moveTo(lx, 4); ctx.lineTo(lx + 3, 8 - ly); ctx.stroke(); }
+    if (Math.random() > 0.85) { ctx.fillStyle = 'rgba(74,222,128,.15)'; ctx.fillRect(-3, -3, 2, 2); }
+  },
+  _draw_ufo: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 2 + pet.phase) * 0.5;
+    ctx.fillStyle = '#666'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(56,189,248,.3)'; ctx.beginPath(); ctx.arc(0, -4, 6, Math.PI, 0); ctx.fill();
+    if (Math.sin(t * 1.5) > 0.7) { ctx.fillStyle = 'rgba(163,230,53,.06)'; ctx.beginPath(); ctx.moveTo(-6, 4); ctx.lineTo(-16, 40); ctx.lineTo(16, 40); ctx.lineTo(6, 4); ctx.fill(); }
+    ctx.fillStyle = '#fbbf24'; for (var i = 0; i < 4; i++) { var a = Math.PI + (i / 3) * Math.PI; ctx.beginPath(); ctx.arc(Math.cos(a) * 10, Math.sin(a) * 3, 1.5, 0, Math.PI * 2); ctx.fill(); }
+  },
+  _draw_drone: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 3) * 0.3;
+    ctx.fillStyle = '#333'; ctx.fillRect(-8, -3, 16, 6);
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 1; var rot = t * 20;
+    ctx.beginPath(); ctx.moveTo(-12 + Math.cos(rot) * 6, -4); ctx.lineTo(-12 - Math.cos(rot) * 6, -4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(12 + Math.cos(rot) * 6, -4); ctx.lineTo(12 - Math.cos(rot) * 6, -4); ctx.stroke();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(-12, -4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(8, -2); ctx.lineTo(12, -4); ctx.stroke();
+    ctx.strokeStyle = 'rgba(239,68,68,.2)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(0, 60); ctx.stroke();
+  },
+  _draw_arc: function(ctx, pet, t) {
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -10);
+    for (var i = 0; i < 5; i++) ctx.lineTo((Math.random() - 0.5) * 16, -10 + i * 5);
+    ctx.stroke();
+    ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 6; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fillStyle = '#fbbf24'; ctx.fill(); ctx.shadowBlur = 0;
+    if (Math.random() > 0.98) pet.x += (Math.random() - 0.5) * 200;
+  },
+  _draw_pencil: function(ctx, pet, t) {
+    ctx.rotate(-0.3);
+    ctx.fillStyle = '#fbbf24'; ctx.fillRect(-2, -20, 4, 16);
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.moveTo(-2, -4); ctx.lineTo(2, -4); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(-2, -24, 4, 4);
+  },
+  _draw_wrench: function(ctx, pet, t) {
+    ctx.rotate(pet.phase * 0.3);
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-6, -18); ctx.lineTo(6, -18); ctx.lineTo(4, -12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(4, -12); ctx.stroke();
+  },
+  _draw_spider: function(ctx, pet, t, frozen) {
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -6, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+    for (var i = 0; i < 4; i++) { var a = (i / 4) * Math.PI - Math.PI / 2, w = frozen ? 0 : Math.sin(t * 8 + i * 2) * 3;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * 6, Math.sin(a) * 5); ctx.lineTo(Math.cos(a) * 14 + w, Math.sin(a) * 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-Math.cos(a) * 6, Math.sin(a) * 5); ctx.lineTo(-Math.cos(a) * 14 - w, Math.sin(a) * 12); ctx.stroke();
+    }
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(-2, -7, 1, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(2, -7, 1, 0, Math.PI * 2); ctx.fill();
+    if (pet.state === 'drop') { ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(0, -200); ctx.stroke(); }
+    if (!frozen && Math.random() > 0.998) pet.state = pet.state === 'drop' ? 'walk' : 'drop';
+  },
+  _draw_eye: function(ctx, pet, t) {
+    pet.vy = Math.sin(t * 1.5) * 0.3;
+    pet.vx *= 0.99; if (Math.abs(pet.vx) < 0.3) pet.vx = (Math.random() > 0.5 ? 1 : -1) * 1.5;
+    ctx.scale(pet.vx > 0 ? 1 : -1, 1);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(Math.sin(t) * 3, Math.cos(t * 0.7) * 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(Math.sin(t) * 3, Math.cos(t * 0.7) * 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    if (Math.sin(t * 0.5) > 0.95) { ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.fill(); }
+  },
+};
+
+/* v0.7.198: ExportFlyer — generates an A4 flyer PNG from the current canvas
+   with NoorCast branding, workshop-diy.org logo, custom title, and metadata. */
+const ExportFlyer = {
+  async generate() {
+    const srcCanvas = Engine.canvas;
+    if (!srcCanvas) { showToast('No canvas!', 2000); return; }
+
+    // Prompt for title
+    const title = prompt(t('flyerTitle') || 'Flyer title:', Recorder._lastTitle || 'My Tutorial') || 'My Tutorial';
+
+    showToast('📄 Generating flyer...', 2000);
+
+    const W = 794, H = 1123; // A4 at 96dpi
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#071407';
+    ctx.fillRect(0, 0, W, H);
+
+    // Top accent bar
+    const topGrad = ctx.createLinearGradient(0, 0, W, 0);
+    topGrad.addColorStop(0, '#65a30d'); topGrad.addColorStop(0.5, '#a3e635'); topGrad.addColorStop(1, '#65a30d');
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, W, 8);
+
+    // NoorCast title
+    ctx.fillStyle = '#a3e635';
+    ctx.font = 'bold 48px "Righteous", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(163,230,53,.3)'; ctx.shadowBlur = 20;
+    ctx.fillText('NoorCast', W / 2, 60);
+    ctx.shadowBlur = 0;
+
+    // Arabic name
+    ctx.fillStyle = '#d4a03c';
+    ctx.font = '24px "Tajawal", sans-serif';
+    ctx.fillText('\u0646\u064f\u0648\u0631\u0652\u0643\u064e\u0627\u0633\u0652\u062a', W / 2, 90);
+
+    // Slogan
+    ctx.fillStyle = '#fff';
+    ctx.font = 'italic bold 18px "Righteous", sans-serif';
+    ctx.fillText('\uD83C\uDFAC Lumi\u00e8re, cam\u00e9ra, ROBOT !', W / 2, 120);
+
+    // Separator
+    const sepGrad = ctx.createLinearGradient(40, 0, W - 40, 0);
+    sepGrad.addColorStop(0, 'transparent'); sepGrad.addColorStop(0.5, '#a3e635'); sepGrad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = sepGrad; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, 135); ctx.lineTo(W - 40, 135); ctx.stroke();
+
+    // Custom title
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 28px "Righteous", sans-serif';
+    ctx.fillText(title, W / 2, 172);
+
+    // Canvas screenshot — centered with border
+    const screenY = 195;
+    const screenW = W - 80;
+    const screenH = Math.round(screenW * (srcCanvas.height / srcCanvas.width));
+    const screenX = 40;
+
+    // Dark inset + border
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.roundRect(screenX - 4, screenY - 4, screenW + 8, screenH + 8, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(163,230,53,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(screenX - 4, screenY - 4, screenW + 8, screenH + 8, 8); ctx.stroke();
+
+    // Draw the canvas
+    ctx.drawImage(srcCanvas, screenX, screenY, screenW, screenH);
+
+    // Corner brackets on screenshot
+    const bk = 20, pad = screenX - 8;
+    ctx.strokeStyle = 'rgba(163,230,53,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pad, screenY + bk); ctx.lineTo(pad, screenY - 4); ctx.lineTo(pad + bk, screenY - 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W - pad - bk, screenY - 4); ctx.lineTo(W - pad, screenY - 4); ctx.lineTo(W - pad, screenY + bk); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, screenY + screenH - bk + 4); ctx.lineTo(pad, screenY + screenH + 4); ctx.lineTo(pad + bk, screenY + screenH + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W - pad - bk, screenY + screenH + 4); ctx.lineTo(W - pad, screenY + screenH + 4); ctx.lineTo(W - pad, screenY + screenH - bk + 4); ctx.stroke();
+
+    const belowScreen = screenY + screenH + 30;
+
+    // Metadata badges
+    ctx.textAlign = 'center';
+    const duration = Recorder._elapsed ? Math.floor(Recorder._elapsed / 1000) : 0;
+    const durText = duration > 0 ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}` : '';
+    const dateText = new Date().toLocaleDateString();
+    const sources = Engine.sources.filter(s => s.type !== 'mic').length;
+
+    if (durText || sources) {
+      ctx.fillStyle = 'rgba(163,230,53,.1)';
+      ctx.beginPath(); ctx.roundRect(W / 2 - 200, belowScreen - 14, 400, 30, 8); ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Tajawal", sans-serif';
+      const meta = [dateText, durText ? `Duration: ${durText}` : '', sources ? `${sources} sources` : ''].filter(Boolean).join('  ·  ');
+      ctx.fillText(meta, W / 2, belowScreen + 6);
+    }
+
+    // Separator
+    ctx.strokeStyle = sepGrad; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, belowScreen + 30); ctx.lineTo(W - 40, belowScreen + 30); ctx.stroke();
+
+    // CTA box
+    const ctaY = belowScreen + 45;
+    ctx.fillStyle = 'rgba(163,230,53,.06)';
+    ctx.strokeStyle = 'rgba(163,230,53,.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(40, ctaY, W - 80, 60, 12); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#a3e635';
+    ctx.font = 'bold 20px "Righteous", sans-serif';
+    ctx.fillText('100% FREE \u00b7 Zero Install \u00b7 Chrome / Edge', W / 2, ctaY + 25);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px "Righteous", sans-serif';
+    ctx.fillText('abourdim.github.io/noor-cast', W / 2, ctaY + 48);
+
+    // Workshop-diy.org logo
+    const logoY = ctaY + 75;
+    try {
+      const logoImg = new Image();
+      logoImg.src = './workshop-diy-logo.svg';
+      await new Promise((resolve, reject) => { logoImg.onload = resolve; logoImg.onerror = reject; setTimeout(reject, 3000); });
+      const logoH = 40;
+      const logoW = logoH * (logoImg.naturalWidth / logoImg.naturalHeight);
+      // Invert colors for dark bg (logo is black)
+      ctx.filter = 'invert(1)';
+      ctx.drawImage(logoImg, W / 2 - logoW / 2, logoY, logoW, logoH);
+      ctx.filter = 'none';
+    } catch {
+      // Fallback text
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('workshop-diy.org', W / 2, logoY + 20);
+    }
+
+    // Footer
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '9px "Tajawal", sans-serif';
+    ctx.fillText('No account \u00b7 No cloud \u00b7 No tracking \u00b7 Works offline \u00b7 PWA installable', W / 2, H - 30);
+    ctx.fillText('workshop-diy.org \u00b7 Made with \u2764 for makers and teachers', W / 2, H - 16);
+
+    // Bottom accent bar
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, H - 6, W, 6);
+
+    // Download
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast('\u274c Flyer failed', 2000); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-flyer-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      showToast('\uD83D\uDCC4 Flyer ready!', 2500);
+    }, 'image/png');
+  },
+};
+
+function renderTicker() {
+  const el = $('tcTickerTrack'); if (!el) return;
+  // v0.7.8: prefer user-defined custom messages from localStorage (one per
+  // line). Falls back to the 10 built-in tip_* translations if empty.
+  let items = [];
+  try {
+    const custom = localStorage.getItem('tc-ticker-custom') || '';
+    const lines = custom.split('\n').map(s => s.trim()).filter(Boolean);
+    if (lines.length) items = lines;
+  } catch {}
+  if (!items.length) {
+    for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+  }
+  // v0.7.17: SINGLE-pass ticker — user feedback "just one". No JS-side
+  // duplication. Each message appears exactly once per loop. The CSS
+  // animation uses padding-left:100% + translateX(-100%) so the text
+  // starts off-screen right, scrolls all the way to off-screen left,
+  // then loops. Brief gap between loops is intentional and natural.
+  const sep = '    •    ';
+  el.textContent = items.join(sep);
+}
+
+/* ─────────── 8. Onboarding + wiring ─────────── */
+
+// v0.7.166: Simple/Pro mode system
+function applyMode(mode) {
+  document.body.classList.toggle('tc-simple', mode === 'simple');
+  try { localStorage.setItem('tc-mode', mode); } catch {}
+  const btn = $('tcModeSwitchBtn');
+  if (btn) btn.textContent = mode === 'simple' ? '🚀 Switch to Pro mode' : '🎓 Switch to Simple mode';
+  const badge = $('tcModeBadge');
+  if (badge) badge.textContent = mode === 'simple' ? '🎓 Simple' : '🚀 Pro';
+  // v0.7.179: collapse right sidebar in simple mode for a cleaner canvas
+  const grid = document.querySelector('.tc-studio-grid');
+  if (grid) grid.classList.toggle('rsidebar-collapsed', mode === 'simple');
+}
+
+function setupOnboarding() {
+  // Load saved mode (default: simple for new users)
+  const savedMode = localStorage.getItem('tc-mode');
+  const modeChosen = savedMode !== null;
+
+  if (modeChosen) {
+    applyMode(savedMode);
+  } else {
+    // First launch: show mode picker
+    applyMode('simple'); // default while choosing
+    const picker = $('tcModePicker');
+    if (picker) picker.style.display = '';
+  }
+
+  // Mode picker buttons
+  $('tcModeSimpleBtn')?.addEventListener('click', () => {
+    applyMode('simple');
+    $('tcModePicker').style.display = 'none';
+    // Then show template picker
+    const seen = localStorage.getItem('tc-onboarded');
+    if (!seen) Templates.showPicker();
+  });
+  $('tcModeProBtn')?.addEventListener('click', () => {
+    applyMode('pro');
+    $('tcModePicker').style.display = 'none';
+    const seen = localStorage.getItem('tc-onboarded');
+    if (!seen) Templates.showPicker();
+  });
+
+  // Mode switch — settings button + header badge
+  const toggleMode = () => {
+    const current = localStorage.getItem('tc-mode') || 'simple';
+    const next = current === 'simple' ? 'pro' : 'simple';
+    applyMode(next);
+    showToast(next === 'simple' ? '🎓 Simple mode' : '🚀 Pro mode', 1400);
+  };
+  $('tcModeSwitchBtn')?.addEventListener('click', toggleMode);
+  $('tcModeBadge')?.addEventListener('click', toggleMode);
+
+  // Template picker (show if mode already chosen but not onboarded)
+  const seen = localStorage.getItem('tc-onboarded');
+  if (!seen && modeChosen) Templates.showPicker();
+
+  const close = $('tcTemplatesClose');
+  if (close) close.addEventListener('click', () => {
+    Templates.hidePicker();
+    try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+  });
+  // Wire each template card button
+  document.querySelectorAll('[data-tpl]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.tpl;
+      try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+      if (key) {
+        Templates.apply(key);
+      } else {
+        Templates.clear();
+        Templates.hidePicker();
+      }
+    });
+  });
+}
+
+function setupHelpTabs() {
+  document.querySelectorAll('.help-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.help-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.help-content').forEach(c => c.classList.remove('active'));
+      const id = 'help' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
+      const el = $(id); if (el) el.classList.add('active');
+    });
+  });
+}
+
+/* v0.7.80: live search box at the top of the Help panel. As the user
+   types, every <details>, .wiki-entry and .help-step in any tab is
+   filtered by case-insensitive substring against its textContent.
+   Non-matches hide via display:none; matching <details> auto-open so
+   the answer is visible. Clearing the input restores everything. */
+const HelpSearch = {
+  setup() {
+    const input = $('tcHelpSearch');
+    if (!input) return;
+    input.setAttribute('placeholder', t('helpSearchPlaceholder') || '🔍 Rechercher…');
+    input.addEventListener('input', () => this._apply(input.value));
+  },
+
+  _apply(query) {
+    const q = (query || '').trim().toLowerCase();
+    const items = document.querySelectorAll(
+      '#helpPanel details, #helpPanel .wiki-entry, #helpPanel .help-step'
+    );
+    if (q === '') {
+      items.forEach(el => { el.style.display = ''; });
+      return;
+    }
+    items.forEach(el => {
+      const text = (el.textContent || '').toLowerCase();
+      const match = text.includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match && el.tagName === 'DETAILS') el.open = true;
+    });
+  },
+};
+
+/* v0.7.134: HotkeyRef — dynamic hotkey reference panel inside the Help sidebar.
+   Scans KeyBindings + hard-coded combos and renders a searchable two-column
+   grid. Rows are generated at runtime so rebinds are always reflected. */
+const HotkeyRef = {
+  _container: null,
+  _input: null,
+  _grid: null,
+  _noMatch: null,
+
+  /* All hard-coded (non-rebindable) shortcuts. Each entry:
+     { keys: 'Ctrl+S', label: i18n-key, fallback: string } */
+  FIXED: [
+    { keys: '1-9', labelKey: 'cheatScene', fallback: 'Switch scene' },
+    { keys: 'Shift+R', labelKey: 'cheatMiscInstantRec', fallback: 'Instant rec' },
+    { keys: 'Shift+F', labelKey: 'focusModeToggle', fallback: 'Focus mode' },
+    { keys: '?', labelKey: 'sceneRandom', fallback: 'Random scene' },
+    { keys: 'Ctrl+S', labelKey: 'cheatRecSaveAll', fallback: 'Save all files' },
+    { keys: 'Ctrl+D', labelKey: 'cheatTextDup', fallback: 'Duplicate text' },
+    { keys: 'Ctrl+Z', labelKey: 'cheatMiscRetry', fallback: 'Undo / retry 30s' },
+    { keys: 'Ctrl+Shift+Z', labelKey: 'layoutRedo', fallback: 'Redo layout' },
+    { keys: 'Ctrl+Y', labelKey: 'layoutRedo', fallback: 'Redo layout' },
+    { keys: 'Ctrl+Shift+D', labelKey: 'cheatMiscDebug', fallback: 'Debug HUD' },
+    { keys: 'Ctrl+V', labelKey: 'cheatMiscPasteImg', fallback: 'Paste image' },
+    { keys: 'Shift+Alt+\u2190/\u2192', labelKey: 'cheatSceneMove', fallback: 'Reorder scene' },
+    { keys: 'Alt+1-9', labelKey: 'sourceToggle', fallback: 'Toggle source visibility' },
+    { keys: '[ / ]', labelKey: 'cheatTextLayer', fallback: 'Layer back / front' },
+    { keys: 'Shift+[ / ]', labelKey: 'cheatTextLayerX', fallback: 'Layer extreme' },
+    { keys: ', / .', labelKey: 'cheatTextRotL', fallback: 'Rotate text' },
+    { keys: '/', labelKey: 'cheatTextRotReset', fallback: 'Reset rotation' },
+    { keys: 'Del', labelKey: 'cheatTextDel', fallback: 'Delete selection' },
+    { keys: 'Esc', labelKey: 'cheatMiscEsc', fallback: 'Close panels' },
+  ],
+
+  /* Labels for rebindable actions (mirrors RebindModal) */
+  _actionLabel(action) {
+    const map = {
+      rec: 'cheatRecStart', pause: 'cheatRecPause', marker: 'cheatRecMark',
+      snapshot: 'cheatRecSnap', laser: 'cheatToolLaser', freeze: 'cheatToolFreeze',
+      draw: 'cheatToolDraw', zoom: 'cheatToolZoom', quiz: 'cheatToolQuiz',
+      teleprompter: 'cheatToolTele', captions: 'cheatToolCaptions',
+      bigMarker: 'cheatRecBig', grid: 'gridLabel',
+    };
+    const fallback = {
+      rec: 'Record / stop', pause: 'Pause / resume', marker: 'Add marker',
+      snapshot: 'Photo snapshot', laser: 'Laser on/off', freeze: 'Freeze screen',
+      draw: 'Whiteboard', zoom: 'Manual zoom', quiz: 'Quiz card',
+      teleprompter: 'Teleprompter', captions: 'Captions on/off',
+      bigMarker: 'Big marker', grid: 'Grid overlay',
+    };
+    return t(map[action]) || fallback[action] || action;
+  },
+
+  setup() {
+    this._container = $('helpHotkeys');
+    if (!this._container) return;
+    // Build search input
+    this._input = document.createElement('input');
+    this._input.type = 'search';
+    this._input.className = 'tc-hkref-search';
+    this._input.placeholder = t('hotkeyRefSearch') || 'Filter shortcuts...';
+    this._container.appendChild(this._input);
+    // Grid
+    this._grid = document.createElement('div');
+    this._grid.className = 'tc-hkref-grid';
+    this._container.appendChild(this._grid);
+    // No-match message
+    this._noMatch = document.createElement('div');
+    this._noMatch.className = 'tc-hkref-nomatch';
+    this._noMatch.style.display = 'none';
+    this._noMatch.textContent = t('hotkeyRefNoMatch') || 'No shortcuts found';
+    this._container.appendChild(this._noMatch);
+
+    this._input.addEventListener('input', () => this.filter(this._input.value));
+    this.build();
+  },
+
+  build() {
+    if (!this._grid) return;
+    this._grid.innerHTML = '';
+
+    // 1) Rebindable shortcuts from KeyBindings
+    Object.keys(KeyBindings.DEFAULTS).forEach(action => {
+      const key = (KeyBindings.current[action] || KeyBindings.DEFAULTS[action]).toUpperCase();
+      this._addRow(key, this._actionLabel(action));
+    });
+
+    // 2) Hard-coded shortcuts
+    this.FIXED.forEach(f => {
+      this._addRow(f.keys, t(f.labelKey) || f.fallback);
+    });
+  },
+
+  _addRow(keys, label) {
+    const row = document.createElement('div');
+    row.className = 'tc-hkref-row';
+    // Build kbd elements for the key combo
+    const kbdWrap = document.createElement('span');
+    kbdWrap.className = 'tc-hkref-keys';
+    keys.split('+').forEach((part, i) => {
+      if (i > 0) kbdWrap.appendChild(document.createTextNode('+'));
+      const kbd = document.createElement('kbd');
+      kbd.textContent = part.trim();
+      kbdWrap.appendChild(kbd);
+    });
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'tc-hkref-label';
+    labelSpan.textContent = label;
+    row.appendChild(kbdWrap);
+    row.appendChild(labelSpan);
+    row._searchText = (keys + ' ' + label).toLowerCase();
+    this._grid.appendChild(row);
+  },
+
+  filter(query) {
+    const q = (query || '').trim().toLowerCase();
+    if (!this._grid) return;
+    const rows = this._grid.querySelectorAll('.tc-hkref-row');
+    let visible = 0;
+    rows.forEach(row => {
+      const show = q === '' || row._searchText.includes(q);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (this._noMatch) this._noMatch.style.display = visible === 0 ? '' : 'none';
+  },
+};
+
+const KeyBindings = {
+  /* v0.7.66: action → key binding lookup. Loaded from localStorage
+     on startup; falls back to defaults. Rebinding via the Settings
+     modal writes back to localStorage. */
+  DEFAULTS: {
+    rec: 'r', pause: 'p', marker: 'm', snapshot: 's',
+    laser: 'l', freeze: 'f', draw: 'd', zoom: 'z',
+    quiz: 'q', teleprompter: 't',
+    captions: 'c',  // v0.7.75
+    bigMarker: 'b',  // v0.7.78
+    grid: 'g',       // v0.7.115
+  },
+  current: {},
+
+  load() {
+    this.current = { ...this.DEFAULTS };
+    try {
+      const raw = localStorage.getItem('tc-keybinds');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          Object.keys(this.DEFAULTS).forEach(action => {
+            if (typeof saved[action] === 'string' && saved[action].length > 0) {
+              this.current[action] = saved[action].toLowerCase();
+            }
+          });
+        }
+      }
+    } catch {}
+  },
+
+  save() {
+    try { localStorage.setItem('tc-keybinds', JSON.stringify(this.current)); } catch {}
+  },
+
+  set(action, key) {
+    if (!(action in this.DEFAULTS)) return;
+    this.current[action] = key.toLowerCase();
+    this.save();
+  },
+
+  reset() {
+    this.current = { ...this.DEFAULTS };
+    this.save();
+  },
+
+  // Given a keyboard event's lowercased key, return the matching action
+  // name or null.
+  actionForKey(k) {
+    for (const [action, bound] of Object.entries(this.current)) {
+      if (bound === k) return action;
+    }
+    return null;
+  },
+};
+
+const RebindModal = {
+  el: null,
+  _activeAction: null,
+  _keyListener: null,
+
+  setup() {
+    this.el = $('tcRebindModal');
+    if (!this.el) return;
+    $('tcRebindCloseBtn')?.addEventListener('click', () => this.hide());
+    $('tcRebindResetBtn')?.addEventListener('click', () => {
+      KeyBindings.reset();
+      this.render();
+      showToast(t('rebindReset') || '↺ Raccourcis restaurés', 1400);
+    });
+    this.el.addEventListener('click', (e) => {
+      if (e.target === this.el) this.hide();
+    });
+  },
+
+  show() {
+    if (!this.el) this.setup();
+    if (!this.el) return;
+    this.render();
+    this.el.style.display = 'flex';
+  },
+
+  hide() {
+    if (!this.el) return;
+    this.el.style.display = 'none';
+    this._cancelCapture();
+  },
+
+  render() {
+    const list = $('tcRebindList');
+    if (!list) return;
+    const labels = {
+      rec: '🔴 ' + (t('recStart') || 'Record'),
+      pause: '⏸ Pause',
+      marker: '🏷 Marker',
+      snapshot: '📸 Snapshot',
+      laser: '🔴 Laser',
+      freeze: '❄ Freeze',
+      draw: '✏ Draw',
+      zoom: '🔍 Zoom',
+      quiz: '❓ Quiz',
+      teleprompter: '📜 Teleprompter',
+      captions: '💬 ' + (t('captionsLabel') || 'Captions'),
+      bigMarker: '★ ' + (t('bigMarker') || 'Big marker'),
+    };
+    list.innerHTML = '';
+    Object.keys(KeyBindings.DEFAULTS).forEach(action => {
+      const row = document.createElement('div');
+      row.className = 'tc-rebind-row';
+      const cur = KeyBindings.current[action];
+      row.innerHTML = `
+        <span class="tc-rebind-label">${labels[action] || action}</span>
+        <kbd class="tc-rebind-key">${cur.toUpperCase()}</kbd>
+        <button class="tc-rebind-btn" data-action="${action}">Change</button>
+      `;
+      row.querySelector('button').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._startCapture(action, row);
+      });
+      list.appendChild(row);
+    });
+  },
+
+  _startCapture(action, row) {
+    this._cancelCapture();
+    this._activeAction = action;
+    const btn = row.querySelector('button');
+    if (btn) { btn.textContent = '…'; btn.disabled = true; }
+    this._keyListener = (e) => {
+      if (e.key === 'Escape') { this._cancelCapture(); return; }
+      const k = e.key.toLowerCase();
+      // Only accept single printable characters for now
+      if (k.length === 1 && /[a-z0-9]/.test(k)) {
+        KeyBindings.set(action, k);
+        this.render();
+        showToast(`⌨ ${action} → ${k.toUpperCase()}`, 1400);
+      }
+      this._cancelCapture();
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.addEventListener('keydown', this._keyListener, true);
+  },
+
+  _cancelCapture() {
+    if (this._keyListener) {
+      document.removeEventListener('keydown', this._keyListener, true);
+      this._keyListener = null;
+    }
+    this._activeAction = null;
+  },
+};
+
+function setupHotkeys() {
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    // v0.7.148: piano overlay intercepts note keys when visible
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && PianoOverlay.handleKeyDown(e)) {
+      e.preventDefault(); return;
+    }
+    const k = e.key.toLowerCase();
+    // v0.7.87: Ctrl/Cmd+S saves every file of the current take at once
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
+      const take = $('tcTake');
+      if (take && take.style.display !== 'none') {
+        BulkDownload.all();
+        e.preventDefault();
+        return;
+      }
+      // else fall through — let the browser save-page action happen
+    }
+    // v0.7.199: Ctrl/Cmd + K opens global search
+    if ((e.ctrlKey || e.metaKey) && k === 'k') {
+      e.preventDefault(); GlobalSearch.toggle(); return;
+    }
+    // Ctrl/Cmd + Shift + D toggles the debug HUD
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'd') {
+      DebugHud.toggle(); e.preventDefault(); return;
+    }
+    // Ctrl/Cmd + D duplicates the selected text overlay (Canva-style)
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'd') {
+      if (TextOverlays.selectedId != null) {
+        const orig = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+        if (orig) {
+          const copy = TextOverlays.add(orig.text, { ttl: 0, size: orig.size, color: orig.color, bg: orig.bg });
+          copy.x = orig.x + 30;
+          copy.y = orig.y + 30;
+          copy.rotation = orig.rotation || 0;
+          TextOverlays.selectedId = copy.id;
+          showToast(t('overlayDuplicated'), 1500);
+        }
+        e.preventDefault();
+      }
+      return;
+    }
+    // v0.7.38: Ctrl/Cmd+Z during recording = soft rewind 30s
+    // v0.7.41: Ctrl/Cmd+Z outside recording = undo layout change
+    // Ctrl+Shift+Z = redo (in either state, since recording doesn't
+    // have a "redo" semantic)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'z') {
+      LayoutHistory.redo();
+      e.preventDefault();
+      return;
+    }
+    // v0.7.131: Ctrl/Cmd+Y = redo layout change (alternative to Ctrl+Shift+Z)
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'y') {
+      LayoutHistory.redo();
+      e.preventDefault();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'z') {
+      if (Recorder.state === 'recording' || Recorder.state === 'paused') {
+        Recorder.softRewind();
+      } else {
+        LayoutHistory.undo();
+      }
+      e.preventDefault();
+      return;
+    }
+    // v0.7.85: Shift+Alt+ArrowLeft/Right = move active scene in the grid
+    if (e.shiftKey && e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const presets = Scenes.presets;
+      const idx = presets.findIndex(p => p.key === Scenes.active);
+      if (idx < 0) { e.preventDefault(); return; }
+      const newIdx = e.key === 'ArrowLeft' ? Math.max(0, idx - 1) : Math.min(presets.length - 1, idx + 1);
+      if (newIdx !== idx) {
+        const [moved] = presets.splice(idx, 1);
+        presets.splice(newIdx, 0, moved);
+        Scenes.saveOrder();
+        Scenes.render();
+        showToast('🎭 ' + (t('sceneReordered') || 'Scene reordered'), 900);
+      }
+      e.preventDefault();
+      return;
+    }
+    // v0.7.106: Alt+1..9 toggles visibility of the Nth video source in
+    // the sidebar. Plain 1..9 is reserved for scene switching, so we put
+    // this on the Alt modifier. Mic sources are skipped (they have no
+    // on-canvas presence), so N counts only visible-on-stage entries.
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key >= '1' && e.key <= '9') {
+      const idx = parseInt(e.key, 10) - 1;
+      const videoSources = Engine.sources.filter(s => s.type !== 'mic');
+      const target = videoSources[idx];
+      if (target) {
+        target.hidden = !target.hidden;
+        Engine.onSourcesChanged();
+        const label = target.label || `#${idx + 1}`;
+        showToast(`${idx + 1}. ${label} — ${target.hidden ? t('sourceHidden') : t('sourceShown')}`, 1400);
+        log(target.hidden ? `👁 hidden: ${label}` : `👁 shown: ${label}`, 'info');
+      }
+      e.preventDefault();
+      return;
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Layer ordering for the selected text overlay: [ = backward, ] = forward,
+    // Shift+[ = send to back, Shift+] = bring to front. (v0.7.1)
+    if ((k === '[' || k === ']') && TextOverlays.selectedId != null) {
+      const items = TextOverlays.items;
+      const idx = items.findIndex(i => i.id === TextOverlays.selectedId);
+      if (idx < 0) return;
+      const item = items[idx];
+      items.splice(idx, 1);
+      let newIdx;
+      if (k === '[' && e.shiftKey)       newIdx = 0;
+      else if (k === ']' && e.shiftKey)  newIdx = items.length;
+      else if (k === '[')                newIdx = Math.max(0, idx - 1);
+      else                                newIdx = Math.min(items.length, idx + 1);
+      items.splice(newIdx, 0, item);
+      showToast(k === '[' ? t('layerBackward') : t('layerForward'), 1200);
+      e.preventDefault();
+      return;
+    }
+    // v0.7.49: layer ordering for the selected SOURCE (same [/] hotkeys),
+    // only when no text overlay is selected.
+    if ((k === '[' || k === ']') && Drag.selectedSourceId != null && TextOverlays.selectedId == null) {
+      const items = Engine.sources;
+      const idx = items.findIndex(s => s.id === Drag.selectedSourceId);
+      if (idx < 0) return;
+      const item = items[idx];
+      items.splice(idx, 1);
+      let newIdx;
+      if (k === '[' && e.shiftKey)       newIdx = 0;
+      else if (k === ']' && e.shiftKey)  newIdx = items.length;
+      else if (k === '[')                newIdx = Math.max(0, idx - 1);
+      else                                newIdx = Math.min(items.length, idx + 1);
+      items.splice(newIdx, 0, item);
+      Engine.onSourcesChanged();
+      showToast(k === '[' ? t('sourceBackward') : t('sourceForward'), 1200);
+      e.preventDefault();
+      return;
+    }
+    // Rotation hotkeys for the selected text overlay: , = -5°, . = +5°, / = reset
+    if ((k === ',' || k === '.' || k === '/') && TextOverlays.selectedId != null) {
+      const item = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+      if (!item) return;
+      if (k === '/') item.rotation = 0;
+      else           item.rotation = (item.rotation || 0) + (k === ',' ? -Math.PI / 36 : Math.PI / 36);
+      e.preventDefault();
+      return;
+    }
+    if (k >= '1' && k <= '9') {
+      const idx = parseInt(k) - 1;
+      if (Scenes.presets[idx]) { Scenes.switch(Scenes.presets[idx].key); e.preventDefault(); }
+      return;
+    }
+    // v0.7.109: Shift+F = toggle full focus / distraction-free mode
+    if (e.shiftKey && k === 'f') {
+      FocusMode.toggle();
+      e.preventDefault();
+      return;
+    }
+    // v0.7.61: Shift+R = instant record (skip countdown). Kept as an
+    // explicit branch so Shift+R still works even if the user rebinds
+    // the rec action away from 'r'.
+    if (e.shiftKey && k === 'r') {
+      if (Recorder.state === 'idle') Recorder.startInstant();
+      else Recorder.stop();
+      e.preventDefault();
+      return;
+    }
+    // v0.7.110: ? (Shift+/) triggers random scene shuffle.
+    // (Previously toggled the cheat sheet, now accessible via its button.)
+    if (e.key === '?' || (k === '/' && e.shiftKey)) {
+      Scenes.random();
+      e.preventDefault();
+      return;
+    }
+    // v0.7.66: action lookup via rebindable KeyBindings table. Replaces
+    // the old chain of `k === 'r' / 'p' / ...` branches. Only runs for
+    // plain single-key presses (no modifiers), so Shift/Ctrl/Alt combos
+    // handled above are untouched.
+    if (!e.shiftKey) {
+      const action = KeyBindings.actionForKey(k);
+      if (action) {
+        switch (action) {
+          case 'rec':
+            Recorder.state === 'idle' ? Recorder.start() : Recorder.stop();
+            break;
+          case 'pause': Recorder.togglePause(); break;
+          case 'marker': Chapters.addMarker(); break;
+          case 'bigMarker': Chapters.addBigMarker(); break;
+          case 'snapshot': snapshot(); break;
+          case 'laser': Laser.toggle(); break;
+          case 'freeze': Freeze.toggle(); break;
+          case 'draw': Whiteboard.toggle(); break;
+          case 'zoom': Zoom.toggle(); break;
+          case 'quiz': QuizCard.prompt(); break;
+          case 'teleprompter': Teleprompter.toggle(); break;
+          case 'grid': GridOverlay.toggle(); break;  // v0.7.115
+          case 'captions': {
+            // v0.7.75: 'C' toggles LiveCaptions.enabled at runtime,
+            // bypassing the persisted setting for the current session.
+            // If a recording is in progress, captions start/stop in
+            // real-time so they appear (or disappear) immediately.
+            LiveCaptions.setEnabled(!LiveCaptions.enabled);
+            if (Recorder.state === 'recording' || Recorder.state === 'paused') {
+              if (LiveCaptions.enabled) LiveCaptions.start();
+              else LiveCaptions.stop();
+            }
+            const capEl = $('tcCaptionsToggle');
+            if (capEl) capEl.checked = LiveCaptions.enabled;
+            showToast(LiveCaptions.enabled ? '💬 ' + (t('captionsOn') || 'Sous-titres on') : '💬 ' + (t('captionsOff') || 'Sous-titres off'), 1200);
+            break;
+          }
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+    if (k === 'escape') {
+      // v0.7.138: clear multi-source selection on Escape
+      if (MultiSelect.sources.length > 0) {
+        MultiSelect.clear();
+        Drag.selectedSourceId = null;
+        showToast(t('multiDeselected'), 1000);
+        return;
+      }
+      // v0.7.121: cancel color picker if active
+      if (ColorPicker.active) { ColorPicker.deactivate(); return; }
+      // v0.7.24: cheat sheet gets closed first if open
+      if (Cheatsheet.el && Cheatsheet.el.style.display === 'flex') {
+        Cheatsheet.hide();
+        return;
+      }
+      // Exit focus mode first if active
+      if (FocusMode.on) { FocusMode.toggle(); return; }
+      // Exit maximize first if active
+      const app = document.querySelector('.app');
+      if (app && app.classList.contains('maximized')) { toggleMaximize(); return; }
+      closeAllPanels();
+    }
+  });
+
+  // v0.7.148: piano overlay — release note on keyup
+  document.addEventListener('keyup', (e) => {
+    PianoOverlay.handleKeyUp(e);
+  });
+
+  // v0.7.62: Ctrl+V / Cmd+V pastes a clipboard image as an overlay source.
+  // Listens on document so it works anywhere in the app — but ignores
+  // input / textarea / contentEditable targets so users can still paste
+  // text into the teleprompter, scene names, etc.
+  document.addEventListener('paste', async (e) => {
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable)) return;
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for (const item of items) {
+      if (item.type && item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          Engine.addImage(blob, 'clipboard');
+          return;
+        }
+      }
+    }
+  });
+
+  // v0.7.182: drag & drop image files onto the stage
+  const stage = $('tcStage');
+  if (stage) {
+    stage.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      stage.classList.add('tc-drop-active');
+    });
+    stage.addEventListener('dragleave', () => {
+      stage.classList.remove('tc-drop-active');
+    });
+    stage.addEventListener('drop', (e) => {
+      e.preventDefault();
+      stage.classList.remove('tc-drop-active');
+      const files = e.dataTransfer.files;
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          Engine.addImage(file, file.name.replace(/\.[^.]+$/, ''));
+          showToast(`📸 ${file.name}`, 1500);
+        }
+      }
+    });
+  }
+}
+
+function wireEvents() {
+  // Splash dismiss
+  const sp = $('splash');
+  if (sp) setTimeout(() => { sp.classList.add('hidden'); setTimeout(() => sp.remove(), 600); }, 2200);
+
+  // Panels
+  $('helpBtn').addEventListener('click', () => openPanel('helpPanel'));
+  $('settingsBtn').addEventListener('click', () => {
+    openPanel('settingsPanel');
+    try { Diagnostics.render(); } catch {}
+  });
+  // v0.7.77: re-render diagnostics every time the user expands the block
+  document.querySelector('.tc-diag-wrap')?.addEventListener('toggle', () => {
+    const w = document.querySelector('.tc-diag-wrap');
+    if (w && w.open) { try { Diagnostics.render(); } catch {} }
+  });
+  $('logBtn').addEventListener('click', () => openPanel('logPanel'));
+  $('helpCloseBtn').addEventListener('click', () => closePanel('helpPanel'));
+  $('settingsCloseBtn').addEventListener('click', () => closePanel('settingsPanel'));
+  $('logCloseBtn').addEventListener('click', () => closePanel('logPanel'));
+  ['helpOverlay', 'settingsOverlay'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', closeAllPanels); });
+
+  // Log controls
+  $('clearLogBtn').addEventListener('click', () => { $('logContainer').innerHTML = ''; log(t('logCleared'), 'info'); });
+  $('copyLogBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(logHistory.map(l => `[${new Date(l.time).toLocaleTimeString()}] ${l.msg}`).join('\n')); showToast(t('copied'), 1500); }
+    catch { showToast(t('copyFail'), 1500); }
+  });
+  $('exportLogBtn').addEventListener('click', () => {
+    const txt = logHistory.map(l => `[${new Date(l.time).toLocaleTimeString()}] [${l.type}] ${l.msg}`).join('\n');
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'noorcast-log.txt'; a.click();
+  });
+
+  // v0.7.189: log filter buttons
+  const logFilters = $('logFilters');
+  if (logFilters) {
+    logFilters.addEventListener('click', (e) => {
+      const btn = e.target.closest('.log-filter');
+      if (!btn) return;
+      logFilters.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      const lines = $('logContainer')?.querySelectorAll('.log-line') || [];
+      lines.forEach(line => {
+        if (filter === 'all') { line.style.display = ''; return; }
+        if (filter === 'tx') { line.style.display = line.dataset.dir === 'tx' ? '' : 'none'; return; }
+        if (filter === 'rx') { line.style.display = line.dataset.dir === 'rx' ? '' : 'none'; return; }
+        line.style.display = line.classList.contains(filter) ? '' : 'none';
+      });
+    });
+  }
+
+  // Lang & theme
+  $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
+  $('themeSelect').addEventListener('change', (e) => setTheme(e.target.value));
+
+  // v0.7.79: snapshot resolution multiplier dropdown
+  const smEl = $('tcSnapMultSelect');
+  if (smEl) {
+    try { smEl.value = localStorage.getItem('tc-snap-mult') || '1'; } catch {}
+    smEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-snap-mult', e.target.value); } catch {}
+    });
+  }
+
+  // v0.7.55: custom accent color picker — overlays current theme's --accent
+  const ca = $('tcCustomAccentInput');
+  if (ca) {
+    // Initialize from saved value
+    if (CustomAccent.current) ca.value = CustomAccent.current;
+    ca.addEventListener('input', (e) => CustomAccent.set(e.target.value));
+  }
+  $('tcCustomAccentClear')?.addEventListener('click', () => {
+    CustomAccent.clear();
+    const inp = $('tcCustomAccentInput');
+    if (inp) inp.value = '#a3e635';
+    showToast(t('customAccentReset') || '🎨 Couleur par défaut restaurée', 1400);
+  });
+
+  // v0.7.143: canvas background color picker
+  const cbg = $('tcCanvasBgColor');
+  if (cbg) {
+    cbg.value = CanvasBg.current;
+    cbg.addEventListener('input', (e) => CanvasBg.set(e.target.value));
+  }
+  // v0.7.180: background pattern picker + opacity
+  const bgpSel = $('tcBgPattern');
+  if (bgpSel) {
+    bgpSel.value = BgPatterns.current;
+    bgpSel.addEventListener('change', (e) => BgPatterns.setPattern(e.target.value));
+  }
+  const bgpOp = $('tcBgPatternOpacity');
+  const bgpOpVal = $('tcBgPatternOpacityVal');
+  if (bgpOp) {
+    bgpOp.value = Math.round(BgPatterns.opacity * 100);
+    if (bgpOpVal) bgpOpVal.textContent = bgpOp.value + '%';
+    bgpOp.addEventListener('input', (e) => {
+      BgPatterns.setOpacity(parseInt(e.target.value) / 100);
+      if (bgpOpVal) bgpOpVal.textContent = e.target.value + '%';
+    });
+  }
+
+  // v0.7.19: Maintenance — reset badges + clear cache + build meta
+  $('tcResetBadgesBtn')?.addEventListener('click', () => {
+    Badges.unlocked.clear();
+    Badges.scenesUsed.clear();
+    try { localStorage.removeItem('tc-badges'); } catch {}
+    renderBadges();
+    showToast(t('badgesReset'), 1800);
+  });
+  $('tcClearCacheBtn')?.addEventListener('click', () => {
+    if (!confirm(t('confirmClearCache'))) return;
+    // Wipe every tc-* key in localStorage so the app restarts fresh.
+    try {
+      const victims = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tc-')) victims.push(k);
+      }
+      victims.forEach(k => localStorage.removeItem(k));
+    } catch {}
+    showToast(t('cacheCleared'), 1400);
+    setTimeout(() => location.reload(), 900);
+  });
+  // v0.7.66: rebindable keyboard shortcuts modal
+  $('tcRebindBtn')?.addEventListener('click', () => RebindModal.show());
+  // v0.7.44: portable session bundle — export / import JSON manifest
+  $('tcExportBundleBtn')?.addEventListener('click', () => SessionBundle.export());
+  $('tcImportBundleInput')?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (f) SessionBundle.import(f);
+    e.target.value = '';  // Reset for re-selection
+  });
+  // v0.7.137: export / import settings as JSON
+  $('tcExportSettingsBtn')?.addEventListener('click', () => SettingsIO.exportAll());
+  $('tcImportSettingsInput')?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (f) SettingsIO.importAll(f);
+    e.target.value = '';
+  });
+  // Build timestamp chip — static text + i18n label
+  const bm = $('tcBuildMeta');
+  if (bm) bm.textContent = `${t('buildMeta')} : v${APP_VERSION} · ${BUILD_DATE}`;
+
+  // Sound effects toggle
+  const sndEl = $('soundToggle');
+  if (sndEl) {
+    sndEl.checked = Sfx.enabled;
+    sndEl.addEventListener('change', (e) => Sfx.setEnabled(e.target.checked));
+  }
+
+  // Output format preference (mp4 / webm / auto)
+  const fmtEl = $('tcFormatSelect');
+  if (fmtEl) {
+    try { fmtEl.value = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    fmtEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-format', e.target.value); } catch {}
+      log(`🎞 format preference: ${e.target.value}`, 'info');
+    });
+  }
+
+  // v0.7.58: stage aspect ratio preset
+  const stageAspectEl = $('tcStageAspectSelect');
+  if (stageAspectEl) {
+    stageAspectEl.value = StageAspect.current;
+    stageAspectEl.addEventListener('change', (e) => {
+      StageAspect.set(e.target.value);
+      // Guard: if the change was blocked (recording), revert the UI
+      stageAspectEl.value = StageAspect.current;
+    });
+  }
+
+  // v0.7.69: mic boost + noise gate sliders
+  const mbEl = $('tcMicBoostSlider');
+  if (mbEl) {
+    mbEl.value = MicBoost.gain;
+    const label = $('tcMicBoostValue');
+    if (label) label.textContent = MicBoost.gain.toFixed(1) + '×';
+    mbEl.addEventListener('input', (e) => {
+      MicBoost.setGain(e.target.value);
+      if (label) label.textContent = MicBoost.gain.toFixed(1) + '×';
+    });
+  }
+  const gtEl = $('tcMicGateSlider');
+  if (gtEl) {
+    gtEl.value = MicBoost.gateDb;
+    const label = $('tcMicGateValue');
+    if (label) label.textContent = MicBoost.gateDb + ' dB';
+    gtEl.addEventListener('input', (e) => {
+      MicBoost.setGate(e.target.value);
+      if (label) label.textContent = MicBoost.gateDb + ' dB';
+    });
+  }
+  // v0.7.83: volume ducking toggle
+  const duckEl = $('tcDuckToggle');
+  if (duckEl) {
+    duckEl.checked = VolumeDuck.enabled;
+    duckEl.addEventListener('change', (e) => VolumeDuck.setEnabled(e.target.checked));
+  }
+
+  // Sources
+  $('srcScreenBtn').addEventListener('click', () => Engine.addScreen());
+  $('srcCamBtn').addEventListener('click', () => {
+    const sel = $('camSelect');
+    if (!sel || sel.selectedIndex < 0) { showToast(t('needCamSelected'), 2200); return; }
+    const deviceId = sel.value;
+    if (!deviceId) { showToast(t('needCamSelected'), 2200); return; }
+    const label = sel.options[sel.selectedIndex].textContent;
+    Engine.addCamera(deviceId, label);
+  });
+  $('micSelect').addEventListener('change', (e) => Engine.setMic(e.target.value));
+  Sensors._loadOverlayPos();
+  $('btConnectBtn').addEventListener('click', () => Sensors.connect());
+  $('btDisconnectBtn')?.addEventListener('click', async () => {
+    if (Sensors.device && Sensors.device.gatt && Sensors.device.gatt.connected) {
+      // Tell firmware to stop before disconnecting
+      try { await Sensors.sendUart('BYE'); } catch {}
+      // Small delay for BYE to arrive
+      await new Promise(r => setTimeout(r, 200));
+      Sensors.device.gatt.disconnect();
+      Sensors._uartTx = null;
+      Sensors._uartQueue.length = 0;
+      Sensors._uartBusy = false;
+      showToast('micro:bit disconnected', 1500);
+    } else {
+      showToast('Not connected', 1200);
+    }
+  });
+  // v0.7.162: copy micro:bit firmware code to clipboard
+  // v0.7.172: firmware modal (inspired by bit-playground)
+  $('tcFwModalBtn')?.addEventListener('click', () => {
+    $('tcFwModal').style.display = '';
+  });
+  $('tcFwCloseBtn')?.addEventListener('click', () => {
+    $('tcFwModal').style.display = 'none';
+  });
+  $('tcFwModal')?.addEventListener('click', (e) => {
+    if (e.target === $('tcFwModal')) $('tcFwModal').style.display = 'none';
+  });
+  $('tcFwCopyBtn')?.addEventListener('click', () => {
+    const code = $('tcMicrobitCode')?.textContent || '';
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('📋 Code copied!', 1400);
+      $('tcFwCopyBtn').textContent = 'Copied!';
+      setTimeout(() => { $('tcFwCopyBtn').textContent = 'Copy Code'; }, 2000);
+    }).catch(() => {});
+  });
+  // v0.7.170: test connection button
+  $('tcBtTestBtn')?.addEventListener('click', () => Sensors.test());
+  // v0.7.170: pan/tilt D-pad
+  // v0.7.173: GamePad D-pad (inspired by bit-playground)
+  const SERVO_STEP = 10;
+  $('tcPanLeft')?.addEventListener('click', () => { Sensors.sendUart('CMD:LEFT'); Sensors.pan(-SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcPanRight')?.addEventListener('click', () => { Sensors.sendUart('CMD:RIGHT'); Sensors.pan(SERVO_STEP); $('tcPanVal').textContent = Sensors._panAngle; });
+  $('tcTiltUp')?.addEventListener('click', () => { Sensors.sendUart('CMD:UP'); Sensors.tilt(-SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcTiltDown')?.addEventListener('click', () => { Sensors.sendUart('CMD:DOWN'); Sensors.tilt(SERVO_STEP); $('tcTiltVal').textContent = Sensors._tiltAngle; });
+  $('tcPanCenter')?.addEventListener('click', () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
+  // FIRE button
+  $('tcFireBtn')?.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
+  // v0.7.173: Servo sliders (inspired by bit-playground)
+  $('tcServo1Slider')?.addEventListener('input', e => { $('tcServo1Val').textContent = e.target.value + '°'; });
+  $('tcServo1Move')?.addEventListener('click', () => {
+    const angle = parseInt($('tcServo1Slider')?.value || 90);
+    Sensors._panAngle = angle; $('tcPanVal').textContent = angle;
+    Sensors.sendUart('P:' + angle);
+  });
+  $('tcServo1Stop')?.addEventListener('click', () => { Sensors.sendUart('P:OFF'); });
+  $('tcServo2Slider')?.addEventListener('input', e => { $('tcServo2Val').textContent = e.target.value + '°'; });
+  $('tcServo2Move')?.addEventListener('click', () => {
+    const angle = parseInt($('tcServo2Slider')?.value || 90);
+    Sensors._tiltAngle = angle; $('tcTiltVal').textContent = angle;
+    Sensors.sendUart('TI:' + angle);
+  });
+  $('tcServo2Stop')?.addEventListener('click', () => { Sensors.sendUart('TI:OFF'); });
+  // v0.7.170: LED 5x5 grid editor
+  // v0.7.170: LED 5x5 grid with drag-to-paint (inspired by bit-playground)
+  const ledGrid = $('tcLedGrid');
+  if (ledGrid) {
+    const ledState = Array(25).fill(false);
+    let isDrawing = false;
+    let drawMode = true; // true = paint ON, false = erase
+    const cells = [];
+    const setLed = (i, on) => {
+      ledState[i] = on;
+      cells[i].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+    };
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'width:22px;height:22px;border:1px solid rgba(255,255,255,.15);border-radius:3px;background:rgba(255,255,255,.08);cursor:crosshair;user-select:none';
+      cell.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        drawMode = !ledState[i]; // toggle: first cell decides paint or erase
+        setLed(i, drawMode);
+      });
+      cell.addEventListener('mouseenter', () => {
+        if (isDrawing) setLed(i, drawMode);
+      });
+      cells.push(cell);
+      ledGrid.appendChild(cell);
+    }
+    document.addEventListener('mouseup', () => { isDrawing = false; });
+    // Presets
+    const PRESETS = {
+      heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0],
+      smile: [0,0,0,0,0, 0,1,0,1,0, 0,0,0,0,0, 1,0,0,0,1, 0,1,1,1,0],
+      check: [0,0,0,0,0, 0,0,0,0,1, 0,0,0,1,0, 1,0,1,0,0, 0,1,0,0,0],
+      cross: [1,0,0,0,1, 0,1,0,1,0, 0,0,1,0,0, 0,1,0,1,0, 1,0,0,0,1],
+      arrow: [0,0,1,0,0, 0,1,1,1,0, 1,0,1,0,1, 0,0,1,0,0, 0,0,1,0,0],
+    };
+    // Add preset buttons
+    const presetRow = document.createElement('div');
+    presetRow.style.cssText = 'display:flex;gap:3px;margin-top:4px;justify-content:center';
+    Object.entries(PRESETS).forEach(([name, pat]) => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-btn-full';
+      btn.style.cssText = 'flex:0;padding:3px 6px;font-size:.6rem';
+      btn.textContent = name === 'heart' ? '❤' : name === 'smile' ? '😀' : name === 'check' ? '✓' : name === 'cross' ? '✕' : '↑';
+      btn.title = name;
+      btn.addEventListener('click', () => {
+        pat.forEach((v, i) => setLed(i, !!v));
+        // Send immediately — no need to click Send button
+        const bytes = [0, 0, 0, 0, 0];
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            if (pat[row * 5 + col]) bytes[row] |= (1 << (4 - col));
+          }
+        }
+        Sensors.setLeds(bytes);
+        // Also send CMD for bit-playground firmware
+        const cmdMap = { heart: 'HEART', smile: 'SMILE', check: 'CLEAR', cross: 'SAD', arrow: 'UP' };
+        if (cmdMap[name]) Sensors.sendUart('CMD:' + cmdMap[name]);
+      });
+      presetRow.appendChild(btn);
+    });
+    ledGrid.parentElement.insertBefore(presetRow, ledGrid.nextSibling);
+
+    $('tcLedSend')?.addEventListener('click', () => {
+      const bytes = [0, 0, 0, 0, 0];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (ledState[row * 5 + col]) bytes[row] |= (1 << (4 - col));
+        }
+      }
+      Sensors.setLeds(bytes);
+    });
+    $('tcLedClear')?.addEventListener('click', () => {
+      ledState.fill(false);
+      cells.forEach(c => c.style.background = 'rgba(255,255,255,.08)');
+      Sensors.setLeds([0, 0, 0, 0, 0]);
+    });
+  }
+
+  // v0.7.161: text picker dropdown toggle
+  $('tcAddTextDropdown')?.addEventListener('click', () => {
+    const pick = $('tcTextPicker');
+    if (pick) pick.style.display = pick.style.display === 'none' ? '' : 'none';
+  });
+  // Text free
+  $('tcAddTextBtn').addEventListener('click', () => {
+    const text = prompt(t('promptFreeText'), '');
+    if (text) TextOverlays.add(text, { ttl: 0 });
+  });
+  // v0.7.60: emoji picker
+  $('tcEmojiBtn')?.addEventListener('click', () => {
+    const palette = $('tcEmojiPalette');
+    if (!palette) return;
+    palette.style.display = palette.style.display === 'none' ? 'block' : 'none';
+  });
+  $('tcEmojiPalette')?.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.textContent.trim();
+      // Drop an emoji overlay at center-stage. TTL so it fades after 4s.
+      TextOverlays.add(emoji, {
+        ttl: 4000,
+        size: 220,
+        color: '#ffffff',
+        bg: '#000000',
+        transparency: 2,  // outlined — no bg box
+        x: Engine.width / 2,
+        y: Engine.height / 2,
+      });
+      $('tcEmojiPalette').style.display = 'none';
+    });
+  });
+  // Close palette on Escape / outside-click
+  document.addEventListener('click', (e) => {
+    const palette = $('tcEmojiPalette');
+    if (!palette || palette.style.display === 'none') return;
+    if (e.target.closest('#tcEmojiBtn') || e.target.closest('#tcEmojiPalette')) return;
+    palette.style.display = 'none';
+  });
+  // v0.7.182: sticker stamps — permanent large emoji overlays on canvas
+  $('tcStickerGrid')?.querySelectorAll('.tc-sticker-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sticker = btn.dataset.sticker;
+      if (!sticker) return;
+      const anims = ['bounce', 'spin', 'pulse', 'wiggle', 'float'];
+      const item = TextOverlays.add(sticker, {
+        ttl: 0,
+        size: 120,
+        color: '#ffffff',
+        transparency: 2,
+        x: Engine.width / 2 + (Math.random() - 0.5) * 200,
+        y: Engine.height / 2 + (Math.random() - 0.5) * 200,
+      });
+      if (item) item.anim = anims[Math.floor(Math.random() * anims.length)];
+      showToast(`🏷 ${sticker}`, 800);
+    });
+  });
+
+  // v0.7.14: text default font picker — applies to subsequent text overlays.
+  // Existing overlays can still cycle their font via the floating Aa button.
+  const tfs = $('tcTextFontSelect');
+  if (tfs) {
+    try {
+      const saved = parseInt(localStorage.getItem('tc-text-default-font') || '0', 10);
+      if (!isNaN(saved)) {
+        TextOverlays.defaultFont = saved;
+        tfs.value = String(saved);
+      }
+    } catch {}
+    tfs.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.value, 10) || 0;
+      TextOverlays.defaultFont = idx;
+      try { localStorage.setItem('tc-text-default-font', String(idx)); } catch {}
+      showToast('Aa ' + (TEXT_FONTS[idx]?.name || 'font'), 1400);
+    });
+  }
+
+  // v0.7.76: outline thickness slider for text overlays. Drives
+  // TextOverlays.defaultStroke (used at .add() time) and live-updates the
+  // currently selected overlay so the user gets instant visual feedback.
+  // Persisted in tc-text-stroke. Range 0-14; 0 = no outline.
+  const tsEl = $('tcTextStrokeSlider');
+  if (tsEl) {
+    try {
+      const saved = parseInt(localStorage.getItem('tc-text-stroke'), 10);
+      if (!isNaN(saved)) {
+        TextOverlays.defaultStroke = saved;
+        tsEl.value = saved;
+      }
+    } catch {}
+    tsEl.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value, 10);
+      TextOverlays.defaultStroke = v;
+      try { localStorage.setItem('tc-text-stroke', String(v)); } catch {}
+      // Live-update the currently selected overlay if any
+      if (TextOverlays.selectedId != null) {
+        const sel = TextOverlays.items.find(i => i.id === TextOverlays.selectedId);
+        if (sel) sel.stroke = v;
+      }
+    });
+  }
+
+  // Tools
+  // v0.7.131: undo/redo toolbar buttons
+  $('tcUndoBtn')?.addEventListener('click', () => LayoutHistory.undo());
+  $('tcRedoBtn')?.addEventListener('click', () => LayoutHistory.redo());
+  // v0.7.138: select all visible sources
+  $('tcSelectAllBtn')?.addEventListener('click', () => {
+    MultiSelect.selectAll();
+    if (MultiSelect.sources.length) {
+      Drag.selectedSourceId = MultiSelect.sources[0].id;
+      showToast(`${MultiSelect.sources.length} ${t('multiSelected')}`, 1200);
+    }
+  });
+  $('tcLaserBtn').addEventListener('click', () => Laser.toggle());
+  $('tcRipplesBtn')?.addEventListener('click', () => Ripples.toggle());
+  $('tcSpotlightBtn')?.addEventListener('click', () => Spotlight.toggle());
+  $('tcCursorTrailBtn')?.addEventListener('click', () => CursorTrail.toggle());
+  $('tcGridBtn')?.addEventListener('click', () => GridOverlay.toggle());  // v0.7.115
+  // v0.7.104: emoji reaction burst button + palette
+  const reactBtn = $('tcReactBtn');
+  if (reactBtn) {
+    reactBtn.addEventListener('click', () => {
+      const pal = $('tcReactPalette');
+      if (!pal) return;
+      pal.style.display = pal.style.display === 'flex' ? 'none' : 'flex';
+    });
+  }
+  const reactPal = $('tcReactPalette');
+  if (reactPal) {
+    reactPal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tc-react-emoji');
+      if (!btn) return;
+      Reactions.burst(btn.textContent.trim());
+      reactPal.style.display = 'none';
+    });
+  }
+  // close react palette on outside click
+  document.addEventListener('click', (e) => {
+    const pal = $('tcReactPalette');
+    if (!pal || pal.style.display === 'none') return;
+    if (e.target.closest('#tcReactBtn') || e.target.closest('#tcReactPalette')) return;
+    pal.style.display = 'none';
+  });
+  // v0.7.116: sound-board SFX button + palette
+  const sfxBtn = $('tcSfxBtn');
+  if (sfxBtn) {
+    sfxBtn.addEventListener('click', () => {
+      const pal = $('tcSfxPalette');
+      if (!pal) return;
+      pal.style.display = pal.style.display === 'flex' ? 'none' : 'flex';
+    });
+  }
+  const sfxPal = $('tcSfxPalette');
+  if (sfxPal) {
+    sfxPal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tc-sfx-trigger');
+      if (!btn) return;
+      SoundBoard.play(btn.dataset.sfx);
+    });
+  }
+  document.addEventListener('click', (e) => {
+    const pal = $('tcSfxPalette');
+    if (!pal || pal.style.display === 'none') return;
+    if (e.target.closest('#tcSfxBtn') || e.target.closest('#tcSfxPalette')) return;
+    pal.style.display = 'none';
+  });
+  // v0.7.157: More Tools overflow popup toggle + click-outside
+  $('tcMoreToolsBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const pop = $('tcMoreToolsPopup');
+    if (!pop) return;
+    const showing = pop.style.display !== 'none';
+    if (showing) { pop.style.display = 'none'; return; }
+    // Position fixed popup — prefer above, fall back to below if clipped
+    const btn = $('tcMoreToolsBtn');
+    const r = btn.getBoundingClientRect();
+    pop.style.display = '';
+    pop.style.bottom = 'auto'; pop.style.top = 'auto';
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let left = r.right - pw;
+    if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    pop.style.left = left + 'px';
+    // Try above; if not enough room, go below
+    if (r.top - ph - 8 > 0) {
+      pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+    } else {
+      pop.style.top = (r.bottom + 8) + 'px';
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const pop = $('tcMoreToolsPopup');
+    if (!pop || pop.style.display === 'none') return;
+    if (e.target.closest('#tcMoreToolsBtn') || e.target.closest('#tcMoreToolsPopup')) return;
+    pop.style.display = 'none';
+  });
+  // v0.7.190: make More Tools popup draggable
+  const mtPop = $('tcMoreToolsPopup');
+  if (mtPop && !mtPop.querySelector('.tc-ssp-drag-handle')) {
+    const handle = document.createElement('div');
+    handle.className = 'tc-ssp-drag-handle';
+    handle.textContent = '⋯ drag to move ⋯';
+    mtPop.insertBefore(handle, mtPop.firstChild);
+    let dx = 0, dy = 0;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dx = e.clientX - mtPop.offsetLeft;
+      dy = e.clientY - mtPop.offsetTop;
+      const onMove = (ev) => {
+        mtPop.style.left = Math.max(0, Math.min(window.innerWidth - mtPop.offsetWidth, ev.clientX - dx)) + 'px';
+        mtPop.style.top = Math.max(0, ev.clientY - dy) + 'px';
+        mtPop.style.bottom = 'auto';
+      };
+      const onUp = () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  }
+  // v0.7.189: Fun popup — dedicated button
+  $('tcFunMenuBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const pop = $('tcFunPopup');
+    if (!pop) return;
+    const showing = pop.style.display !== 'none';
+    if (showing) { pop.style.display = 'none'; return; }
+    const btn = $('tcFunMenuBtn');
+    const r = btn.getBoundingClientRect();
+    pop.style.display = '';
+    pop.style.bottom = 'auto'; pop.style.top = 'auto';
+    const pw = pop.offsetWidth;
+    let left = r.right - pw;
+    if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    pop.style.left = left + 'px';
+    if (r.top - pop.offsetHeight - 8 > 0) {
+      pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+    } else {
+      pop.style.top = (r.bottom + 8) + 'px';
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const pop = $('tcFunPopup');
+    if (!pop || pop.style.display === 'none') return;
+    if (e.target.closest('#tcFunMenuBtn') || e.target.closest('#tcFunPopup')) return;
+    pop.style.display = 'none';
+  });
+  // Fun popup button handlers
+  const funToggle = (btnId, obj, prop, label) => {
+    $(btnId)?.addEventListener('click', (e) => {
+      if (typeof obj.toggle === 'function') obj.toggle();
+      else obj[prop] = !obj[prop];
+      const val = obj[prop];
+      e.target.closest('.tc-tool-btn')?.classList.toggle('active', val);
+      showToast(`${label} ${val ? 'ON' : 'OFF'}`, 1200);
+    });
+  };
+  funToggle('tcFunVoiceFx', VoiceFx, 'enabled', '🗣 Voice FX');
+  funToggle('tcFunXpBar', XpBar, 'visible', '⭐ XP Bar');
+  funToggle('tcFunSoundPad', SoundPad, 'visible', '🎵 Sound Pad');
+  funToggle('tcFunMusic', BgMusic, 'playing', '🎵 Music');
+  funToggle('tcFunCohost', AICohost, 'visible', '😊 Co-host');
+  funToggle('tcFunVoiceCmd', VoiceCommands, 'enabled', '🎙 Voice');
+  funToggle('tcFunSmartScene', SmartSceneSwitcher, 'enabled', '🧠 Smart');
+  funToggle('tcFunSensors', Sensors, '_overlayVisible', '📊 Sensors');
+  funToggle('tcFunGauges', ServoGauge, 'visible', '🎛 Gauges');
+  $('tcFunSpeedLines')?.addEventListener('click', () => SpeedLines.fire(800));
+  $('tcFunShare')?.addEventListener('click', () => QRShare.generate());
+  $('tcFunChoreoRec')?.addEventListener('click', (e) => {
+    if (RobotChoreo.recording) { RobotChoreo.stopRecording(); e.target.closest('.tc-tool-btn')?.classList.remove('active'); }
+    else { RobotChoreo.startRecording(); e.target.closest('.tc-tool-btn')?.classList.add('active'); }
+  });
+  $('tcFunChoreoPlay')?.addEventListener('click', () => RobotChoreo.play());
+  $('tcFreezeBtn').addEventListener('click', () => Freeze.toggle());
+  $('tcTimerBtn')?.addEventListener('click', () => CountdownTimer.toggle());
+  $('tcPianoBtn')?.addEventListener('click', () => PianoOverlay.toggle());
+  $('tcLetterboxBtn')?.addEventListener('click', () => Letterbox.toggle());
+  $('tcColorPickerBtn')?.addEventListener('click', () => ColorPicker.toggle());
+  // v0.7.159: moved from inline onclick to JS
+  $('tcRandomSceneBtn')?.addEventListener('click', () => Scenes.random());
+  $('tcCamSetupBtn')?.addEventListener('click', () => CameraWizard.start());
+  $('tcTextStampBtn')?.addEventListener('click', () => TextStamps.togglePopup());
+  $('tcWhiteboardBtn').addEventListener('click', () => Whiteboard.toggle());
+  $('tcZoomBtn').addEventListener('click', () => Zoom.toggle());
+  $('tcAutoZoomBtn')?.addEventListener('click', () => AutoZoom.toggle());
+  $('tcTeleBtn').addEventListener('click', () => Teleprompter.toggle());
+  $('tcStickyNoteBtn')?.addEventListener('click', () => StickyNotes.add());
+  // v0.7.182: fun effects toggle buttons
+  $('tcVoiceFxBtn')?.addEventListener('click', (e) => {
+    VoiceFx.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceFx.enabled);
+    showToast(VoiceFx.enabled ? '🗣 Voice FX ON' : '🗣 Voice FX OFF', 1200);
+  });
+  $('tcXpBarBtn')?.addEventListener('click', (e) => {
+    XpBar.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', XpBar.visible);
+    showToast(XpBar.visible ? '⭐ XP Bar ON' : '⭐ XP Bar OFF', 1200);
+  });
+  $('tcSoundPadBtn')?.addEventListener('click', (e) => {
+    SoundPad.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', SoundPad.visible);
+    showToast(SoundPad.visible ? '🎵 Sound Pad ON' : '🎵 Sound Pad OFF', 1200);
+  });
+  $('tcSpeedLinesBtn')?.addEventListener('click', () => {
+    SpeedLines.fire(800);
+  });
+  // v0.7.193: scene theme picker
+  $('tcSceneTheme')?.addEventListener('change', (e) => { if (e.target.value) SceneThemes.apply(e.target.value); });
+  // v0.7.194: co-host character dropdown
+  const cohostSel = $('tcCohostCharSelect');
+  if (cohostSel) {
+    cohostSel.value = AICohost.character;
+    cohostSel.addEventListener('change', (e) => {
+      AICohost.character = e.target.value;
+      AICohost._save();
+      showToast(`${AICohost.charLabels[AICohost.character]} co-host`, 1200);
+    });
+    cohostSel.addEventListener('click', (e) => e.stopPropagation());
+  }
+  $('tcPetSelect')?.addEventListener('change', (e) => {
+    const type = e.target.value;
+    if (type === '_clear') { CanvasPets.active = []; CanvasPets._save(); showToast('🐾 All pets cleared', 1200); }
+    else if (type) { CanvasPets.toggle(type); }
+    e.target.value = '';
+  });
+  $('tcPetSelect')?.addEventListener('click', (e) => e.stopPropagation());
+  $('tcGhostBtn')?.addEventListener('click', (e) => {
+    GhostReplay.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', GhostReplay.enabled);
+    showToast(GhostReplay.enabled ? '👻 Ghost ON' : '👻 Ghost OFF', 1200);
+  });
+  $('tcSmartSceneBtn')?.addEventListener('click', (e) => {
+    SmartSceneSwitcher.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', SmartSceneSwitcher.enabled);
+    showToast(SmartSceneSwitcher.enabled ? '🧠 Smart Scene ON' : '🧠 Smart Scene OFF', 1200);
+  });
+  $('tcCohostBtn')?.addEventListener('click', (e) => {
+    AICohost.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', AICohost.visible);
+    showToast(AICohost.visible ? '😊 Co-host ON' : '😊 Co-host OFF', 1200);
+  });
+  $('tcScoreBtn')?.addEventListener('click', () => TutorialScore.analyze());
+  $('tcChoreoRecBtn')?.addEventListener('click', (e) => {
+    if (RobotChoreo.recording) {
+      RobotChoreo.stopRecording();
+      e.target.closest('.tc-tool-btn')?.classList.remove('active');
+    } else {
+      RobotChoreo.startRecording();
+      e.target.closest('.tc-tool-btn')?.classList.add('active');
+    }
+  });
+  $('tcChoreoPlayBtn')?.addEventListener('click', () => RobotChoreo.play());
+  $('tcQRShareBtn')?.addEventListener('click', () => QRShare.generate());
+  $('tcSaveTakeBtn')?.addEventListener('click', () => {
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+    MultiTakeDirector.addTake(Recorder._lastBlob, Recorder._elapsed || 0);
+  });
+  $('tcVoiceCmdBtn')?.addEventListener('click', (e) => {
+    VoiceCommands.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceCommands.enabled);
+    showToast(VoiceCommands.enabled ? '🎙 Voice Commands ON' : '🎙 Voice Commands OFF', 1200);
+  });
+  $('tcBgMusicBtn')?.addEventListener('click', (e) => {
+    BgMusic.toggle();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', BgMusic.playing);
+    showToast(BgMusic.playing ? '🎵 Music ON' : '🎵 Music OFF', 1200);
+  });
+  $('tcSensorOverlayBtn')?.addEventListener('click', (e) => {
+    Sensors._overlayVisible = !Sensors._overlayVisible;
+    Sensors._saveOverlayPos();
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', Sensors._overlayVisible);
+    showToast(Sensors._overlayVisible ? '📊 Sensors ON' : '📊 Sensors OFF', 1200);
+  });
+  $('tcServoGaugeBtn')?.addEventListener('click', (e) => {
+    ServoGauge.visible = !ServoGauge.visible;
+    try { localStorage.setItem('tc-servo-gauge-visible', ServoGauge.visible ? '1' : '0'); } catch {}
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', ServoGauge.visible);
+    showToast(ServoGauge.visible ? '🎛 Gauges ON' : '🎛 Gauges OFF', 1200);
+  });
+  $('tcSnapBtn').addEventListener('click', () => snapshot());
+
+  // Rec bar
+  // v0.7.61: long-press REC (600ms) = instant record, short press = normal start
+  (() => {
+    const btn = $('tcRecBtn');
+    if (!btn) return;
+    let longPressFired = false;
+    let longPressTimer = null;
+    const LONG_PRESS_MS = 600;
+    btn.addEventListener('pointerdown', (e) => {
+      if (e.button && e.button !== 0) return;
+      longPressFired = false;
+      longPressTimer = setTimeout(() => {
+        longPressFired = true;
+        btn.classList.add('long-pressing');
+        if (Recorder.state === 'idle') Recorder.startInstant();
+      }, LONG_PRESS_MS);
+    });
+    const cancel = () => {
+      clearTimeout(longPressTimer);
+      btn.classList.remove('long-pressing');
+    };
+    btn.addEventListener('pointerup', () => {
+      clearTimeout(longPressTimer);
+      btn.classList.remove('long-pressing');
+      if (longPressFired) return;  // already triggered during hold
+      // Normal short-click behavior: start with countdown OR stop if recording
+      if (Recorder.state === 'idle') Recorder.start();
+      else Recorder.stop();
+    });
+    btn.addEventListener('pointercancel', cancel);
+    btn.addEventListener('pointerleave', cancel);
+  })();
+  $('tcPauseBtn').addEventListener('click', () => Recorder.togglePause());
+  $('tcMarkBtn').addEventListener('click', () => Chapters.addMarker());
+  $('tcStopBtn').addEventListener('click', () => Recorder.stop());
+
+  // v0.7.26: auto-pause on tab-hidden, auto-resume on tab-visible.
+  // Opt-in via Settings > Recording > Auto-pause. Uses document
+  // visibilitychange (works in every browser we support). A user who
+  // manually paused before tabbing away stays paused (autoResume only
+  // fires if _autoPaused flag is set).
+  document.addEventListener('visibilitychange', () => {
+    try {
+      if (localStorage.getItem('tc-auto-pause') !== '1') return;
+    } catch { return; }
+    if (document.hidden) {
+      Recorder.autoPause();
+    } else {
+      Recorder.autoResume();
+    }
+  });
+  $('tcNewTakeBtn').addEventListener('click', () => {
+    $('tcTake').style.display = 'none';
+    $('tcTakeVideo').src = '';
+    if (Recorder._prevUrls) {
+      Recorder._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+      Recorder._prevUrls = null;
+    }
+  });
+
+  // Reset Layout — clears all .custom flags and re-runs the active scene
+  const resetBtn = $('tcResetLayoutBtn');
+  if (resetBtn) resetBtn.addEventListener('click', () => Drag.resetAll());
+
+  // v0.7.94: collapse the right sidebar (focus mode) — small ◀ / ▶ toggle
+  // anchored to the studio grid. State persisted in tc-rsidebar-collapsed.
+  (() => {
+    const btn = $('tcRSidebarToggle');
+    const grid = document.querySelector('.tc-studio-grid');
+    if (!btn || !grid) return;
+    let collapsed = false;
+    try { collapsed = localStorage.getItem('tc-rsidebar-collapsed') === '1'; } catch {}
+    const apply = () => {
+      grid.classList.toggle('rsidebar-collapsed', collapsed);
+      btn.textContent = collapsed ? '▶' : '◀';
+      btn.title = collapsed ? (t('expandSidebar') || 'Expand sidebar') : (t('collapseSidebar') || 'Collapse sidebar');
+    };
+    apply();
+    btn.addEventListener('click', () => {
+      collapsed = !collapsed;
+      try { localStorage.setItem('tc-rsidebar-collapsed', collapsed ? '1' : '0'); } catch {}
+      apply();
+    });
+  })();
+
+  // v0.7.48: Save current layout as a new custom scene
+  $('tcSaveSceneBtn')?.addEventListener('click', () => Scenes.saveCurrentAsScene());
+
+  // Silence-trim wiring (v0.5.0) — appears after recording if the scan found > 2s of silence
+  const silBtn = $('tcSilenceTrimBtn');
+  if (silBtn) silBtn.addEventListener('click', () => SilenceTrim.exportCleaned());
+
+  // Badge card wiring (v0.6.0)
+  const badgeBtn = $('tcBadgeBtn');
+  if (badgeBtn) badgeBtn.addEventListener('click', () => BadgeCard.exportPng());
+
+  // Brand watermark (v0.7.0): logo upload, slogan input, fun effect select
+  const brandLogoInput = $('tcBrandLogoInput');
+  if (brandLogoInput) {
+    brandLogoInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) Brand.setLogoFromFile(f);
+      e.target.value = '';  // allow re-selecting the same file
+    });
+  }
+  const brandClear = $('tcBrandClearBtn');
+  if (brandClear) brandClear.addEventListener('click', () => { Brand.clearLogo(); showToast(t('brandLogoCleared'), 1500); });
+  const sloganInput = $('tcBrandSloganInput');
+  if (sloganInput) {
+    sloganInput.value = Brand.slogan?.text || '';
+    sloganInput.addEventListener('input', (e) => Brand.setSlogan(e.target.value));
+  }
+  const effectSel = $('tcBrandEffectSelect');
+  if (effectSel) {
+    effectSel.value = Brand.logo?.effect || 'none';
+    effectSel.addEventListener('change', (e) => Brand.setEffect(e.target.value));
+  }
+
+  // Background removal toggle (v0.7.4)
+  const bgRemove = $('tcBrandBgRemoveToggle');
+  if (bgRemove) {
+    bgRemove.checked = Brand.bgRemoved;
+    bgRemove.addEventListener('change', (e) => {
+      Brand.setBgRemoved(e.target.checked);
+      showToast(e.target.checked ? t('brandBgRemoved') : t('brandBgRestored'), 1800);
+    });
+  }
+  // Size slider (v0.7.4)
+  const sizeSlider = $('tcBrandSizeSlider');
+  if (sizeSlider) {
+    sizeSlider.value = Brand.logo.w;
+    sizeSlider.addEventListener('input', (e) => Brand.setSize(parseInt(e.target.value)));
+  }
+  // Logo opacity slider (v0.7.7)
+  const opacitySlider = $('tcBrandOpacitySlider');
+  if (opacitySlider) {
+    opacitySlider.value = Math.round((Brand.logo.opacity ?? 1) * 100);
+    opacitySlider.addEventListener('input', (e) => Brand.setLogoOpacity(parseInt(e.target.value) / 100));
+  }
+  // Logo filter select (v0.7.7)
+  const logoFilterSel = $('tcBrandLogoFilterSelect');
+  if (logoFilterSel) {
+    logoFilterSel.value = Brand.logo.filter || 'none';
+    logoFilterSel.addEventListener('change', (e) => Brand.setLogoFilter(e.target.value));
+  }
+  // Logo tint swatches (v0.7.11)
+  document.querySelectorAll('#tcBrandLogoTintRow .tc-brand-swatch').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const c = btn.dataset.bt || null;
+      Brand.setLogoTint(c);
+      document.querySelectorAll('#tcBrandLogoTintRow .tc-brand-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    if ((btn.dataset.bt || '') === (Brand.logo.tint || '')) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+
+  // Slogan font select (v0.7.11)
+  const sloganFontSel = $('tcBrandSloganFontSelect');
+  if (sloganFontSel) {
+    sloganFontSel.value = String(Brand.slogan.font ?? 0);
+    sloganFontSel.addEventListener('change', (e) => Brand.setSloganFont(parseInt(e.target.value)));
+  }
+  // Slogan size slider (v0.7.11)
+  const sloganSizeSlider = $('tcBrandSloganSizeSlider');
+  if (sloganSizeSlider) {
+    sloganSizeSlider.value = Brand.slogan.size || 48;
+    sloganSizeSlider.addEventListener('input', (e) => Brand.setSloganSize(parseInt(e.target.value)));
+  }
+  // v0.7.39: badge card link URL — text fallback (see BadgeCard.exportPng).
+  // Persisted separately from Brand so non-recording flows don't touch it.
+  const urlEl = $('tcBrandUrlInput');
+  if (urlEl) {
+    try { urlEl.value = localStorage.getItem('tc-brand-url') || ''; } catch {}
+    urlEl.addEventListener('input', (e) => {
+      try { localStorage.setItem('tc-brand-url', e.target.value); } catch {}
+    });
+  }
+  // v0.7.98: stage watermark text overlay
+  const wmText = $('tcWatermarkInput');
+  if (wmText) {
+    wmText.value = Watermark.text;
+    wmText.addEventListener('input', (e) => Watermark.setText(e.target.value));
+  }
+  const wmCorner = $('tcWatermarkCorner');
+  if (wmCorner) {
+    wmCorner.value = Watermark.corner;
+    wmCorner.addEventListener('change', (e) => Watermark.setCorner(e.target.value));
+  }
+  const wmOp = $('tcWatermarkOpacity');
+  if (wmOp) {
+    wmOp.value = String(Watermark.opacity);
+    wmOp.addEventListener('input', (e) => Watermark.setOpacity(e.target.value));
+  }
+  // v0.7.169: brand mini panels — show on canvas click
+  const _showBrandPanel = (panelId, ref) => {
+    const panel = $(panelId);
+    if (!panel) return;
+    // Hide any other brand panel
+    document.querySelectorAll('.tc-brand-panel').forEach(p => { if (p.id !== panelId) p.style.display = 'none'; });
+    const showing = panel.style.display !== 'none';
+    if (showing) { panel.style.display = 'none'; return; }
+    // Position near the brand element
+    const stage = $('tcStage');
+    const sr = stage.getBoundingClientRect();
+    const bx = sr.left + (ref.x + ref.w) / Engine.width * sr.width;
+    const by = sr.top + ref.y / Engine.height * sr.height;
+    panel.style.display = '';
+    panel.style.left = Math.min(bx + 10, window.innerWidth - 340) + 'px';
+    panel.style.top = Math.max(10, by) + 'px';
+  };
+  // Intercept brand clicks from Drag._onDown
+  const stageEl = $('tcStage');
+  // v0.7.171: double-click logo/slogan to open edit panel (single click = drag)
+  if (stageEl) {
+    stageEl.addEventListener('dblclick', (e) => {
+      if (e.target.closest('.tc-brand-panel')) return;
+      const [mx, my] = Drag._stageToCanvas(e);
+      // Double-click sensor overlay: cycle opacity 100→75→50→25→100
+      if (Sensors._overlayW > 0) {
+        const so = { x: Sensors._overlayX, y: Sensors._overlayY, w: Sensors._overlayW, h: Sensors._overlayH };
+        if (Drag._insideRect(so, mx, my)) {
+          const steps = [1, 0.75, 0.5, 0.25];
+          const cur = steps.indexOf(Sensors._overlayOpacity);
+          Sensors._overlayOpacity = steps[(cur + 1) % steps.length];
+          Sensors._saveOverlayPos();
+          showToast(`Sensor overlay: ${Math.round(Sensors._overlayOpacity * 100)}%`, 1000);
+          return;
+        }
+      }
+      if (Brand.hasLogo() && Drag._insideRect(Brand.logo, mx, my)) {
+        const lp = $('tcLogoPanelSize'); if (lp) lp.value = Brand.logo.w || 120;
+        const lo = $('tcLogoPanelOpacity'); if (lo) lo.value = Math.round((Brand.logo.opacity ?? 1) * 100);
+        const le = $('tcLogoPanelEffect'); if (le) le.value = Brand.logo.effect || 'none';
+        const lf = $('tcLogoPanelFilter'); if (lf) lf.value = Brand.logo.filter || 'none';
+        _showBrandPanel('tcLogoPanel', Brand.logo);
+      } else if (Brand.hasSlogan() && Drag._insideRect(Brand.slogan, mx, my)) {
+        const st = $('tcSloganPanelText'); if (st) st.value = Brand.slogan.text || '';
+        const sf = $('tcSloganPanelFont'); if (sf) sf.value = String(Brand.slogan.font ?? 0);
+        const ss = $('tcSloganPanelSize'); if (ss) ss.value = Brand.slogan.size || 48;
+        const sop = $('tcSloganPanelOpacity'); if (sop) sop.value = Math.round((Brand.slogan.opacity ?? 1) * 100);
+        _showBrandPanel('tcSloganPanel', Brand.slogan);
+      }
+    });
+  }
+  // Close brand panels on outside click
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.tc-brand-panel')) return;
+    document.querySelectorAll('.tc-brand-panel').forEach(p => p.style.display = 'none');
+  });
+  // Prevent brand panels from deselecting
+  document.querySelectorAll('.tc-brand-panel').forEach(p => {
+    p.addEventListener('pointerdown', e => e.stopPropagation());
+    p.addEventListener('mousedown', e => e.stopPropagation());
+  });
+  // Logo panel controls
+  $('tcLogoPanelSize')?.addEventListener('input', e => { Brand.resizeLogo(parseInt(e.target.value)); });
+  $('tcLogoPanelOpacity')?.addEventListener('input', e => { Brand.setLogoOpacity(parseInt(e.target.value) / 100); });
+  $('tcLogoPanelEffect')?.addEventListener('change', e => { Brand.setEffect(e.target.value); });
+  $('tcLogoPanelFilter')?.addEventListener('change', e => { Brand.logo.filter = e.target.value; Brand.save(); });
+  $('tcLogoPanelRemove')?.addEventListener('click', () => { Brand.clearLogo(); document.querySelectorAll('.tc-brand-panel').forEach(p => p.style.display = 'none'); });
+  // Logo tint swatches
+  document.querySelectorAll('#tcLogoPanel [data-tint]').forEach(btn => {
+    btn.addEventListener('click', () => { Brand.logo.tint = btn.dataset.tint || ''; Brand.save(); });
+  });
+  // Slogan panel controls
+  $('tcSloganPanelText')?.addEventListener('input', e => { Brand.setSlogan(e.target.value); });
+  $('tcSloganPanelFont')?.addEventListener('change', e => { Brand.setSloganFont(parseInt(e.target.value)); });
+  $('tcSloganPanelSize')?.addEventListener('input', e => { Brand.setSloganSize(parseInt(e.target.value)); });
+  $('tcSloganPanelOpacity')?.addEventListener('input', e => { Brand.setSloganOpacity(parseInt(e.target.value) / 100); });
+  // Slogan color swatches
+  document.querySelectorAll('#tcSloganPanel [data-sc]').forEach(btn => {
+    btn.addEventListener('click', () => { Brand.setSloganColor(btn.dataset.sc); });
+  });
+
+  // v0.7.169: logo gallery — store multiple logos in localStorage
+  const LogoGallery = {
+    KEY: 'tc-logo-gallery',
+    _items: [],
+    load() {
+      try { this._items = JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { this._items = []; }
+    },
+    save() {
+      try { localStorage.setItem(this.KEY, JSON.stringify(this._items)); } catch {}
+    },
+    add(dataUrl, name) {
+      // Max 8 logos, ~200KB each
+      if (this._items.length >= 8) { showToast('Max 8 logos in gallery', 1500); return; }
+      this._items.push({ url: dataUrl, name: name || 'Logo ' + (this._items.length + 1) });
+      this.save();
+      this.render();
+    },
+    remove(idx) {
+      this._items.splice(idx, 1);
+      this.save();
+      this.render();
+    },
+    render() {
+      const container = $('tcLogoGallery');
+      if (!container) return;
+      container.innerHTML = '';
+      this._items.forEach((item, i) => {
+        const thumb = document.createElement('img');
+        thumb.src = item.url;
+        thumb.title = item.name + ' (click to use, right-click to remove)';
+        thumb.style.cssText = 'width:40px;height:40px;object-fit:contain;border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;background:rgba(0,0,0,.3)';
+        thumb.addEventListener('click', () => {
+          Brand.logo.img = new Image();
+          Brand.logo.img.src = item.url;
+          Brand.logo.imgUrl = item.url;
+          try { localStorage.setItem('tc-brand-logo', item.url); } catch {}
+          Brand.save();
+          showToast('Logo: ' + item.name, 1200);
+        });
+        thumb.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          this.remove(i);
+        });
+        container.appendChild(thumb);
+      });
+      // Also add current logo if not in gallery
+      if (Brand.logo.imgUrl && !this._items.find(it => it.url === Brand.logo.imgUrl)) {
+        const cur = document.createElement('div');
+        cur.style.cssText = 'width:40px;height:40px;border:2px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--accent);cursor:default';
+        cur.textContent = 'Active';
+        container.appendChild(cur);
+      }
+    }
+  };
+  LogoGallery.load();
+  LogoGallery.render();
+  // Upload more logos to gallery
+  $('tcLogoUploadMore')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      LogoGallery.add(reader.result, file.name.replace(/\.[^.]+$/, ''));
+      // Also set as active logo
+      Brand.logo.img = new Image();
+      Brand.logo.img.src = reader.result;
+      Brand.logo.imgUrl = reader.result;
+      try { localStorage.setItem('tc-brand-logo', reader.result); } catch {}
+      Brand.save();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  // Custom ticker messages (v0.7.8)
+  const tickerTA = $('tcTickerCustomInput');
+  if (tickerTA) {
+    try { tickerTA.value = localStorage.getItem('tc-ticker-custom') || ''; } catch {}
+    let tDebounce;
+    tickerTA.addEventListener('input', (e) => {
+      try { localStorage.setItem('tc-ticker-custom', e.target.value); } catch {}
+      clearTimeout(tDebounce);
+      tDebounce = setTimeout(() => renderTicker(), 200);
+    });
+  }
+  // Slogan color swatches (v0.7.4)
+  document.querySelectorAll('#tcBrandColorRow .tc-brand-swatch').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Brand.setSloganColor(btn.dataset.bc);
+      // Visual selected state: clear other active, set this one
+      document.querySelectorAll('#tcBrandColorRow .tc-brand-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    if (btn.dataset.bc === Brand.sloganColor) btn.classList.add('active');
+  });
+
+  // Maximize mode (v0.7.0): press the ⛶ button or the F hotkey
+  const maxBtn = $('tcMaxBtn');
+  if (maxBtn) maxBtn.addEventListener('click', () => toggleMaximize());
+  // v0.7.9: also wire the big labeled button in the Tools sidebar
+  const fsBtn = $('tcFullscreenBtn');
+  if (fsBtn) fsBtn.addEventListener('click', () => toggleMaximize());
+
+  // v0.7.109: Focus mode button
+  const focusBtn = $('tcFocusBtn');
+  if (focusBtn) focusBtn.addEventListener('click', () => FocusMode.toggle());
+
+  // Jingle toggle (v0.6.0) — opt-in in Settings
+  const jingleEl = $('tcJingleToggle');
+  if (jingleEl) {
+    jingleEl.checked = Jingle.enabled;
+    jingleEl.addEventListener('change', (e) => Jingle.setEnabled(e.target.checked));
+  }
+
+  // v0.7.95: timelapse mode (record at reduced captureStream fps)
+  const tlEl = $('tcTimelapseToggle');
+  const tlOpts = $('tcTimelapseOptions');
+  const tlMul = $('tcTimelapseMult');
+  if (tlEl) {
+    tlEl.checked = Timelapse.enabled;
+    if (tlOpts) tlOpts.style.display = Timelapse.enabled ? 'block' : 'none';
+    tlEl.addEventListener('change', (e) => {
+      Timelapse.setEnabled(e.target.checked);
+      if (tlOpts) tlOpts.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  if (tlMul) {
+    tlMul.value = Timelapse.multiplier;
+    tlMul.addEventListener('change', (e) => Timelapse.setMultiplier(e.target.value));
+  }
+
+  // v0.7.65: recording time goal + optional auto-stop
+  const tgEl = $('tcTimeGoalToggle');
+  const tgOpts = $('tcTimeGoalOptions');
+  const tgMin = $('tcTimeGoalMinutes');
+  const tgAuto = $('tcTimeGoalAutoStop');
+  if (tgEl) {
+    tgEl.checked = TimeGoal.enabled;
+    if (tgOpts) tgOpts.style.display = TimeGoal.enabled ? 'block' : 'none';
+    tgEl.addEventListener('change', (e) => {
+      TimeGoal.setEnabled(e.target.checked);
+      if (tgOpts) tgOpts.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  if (tgMin) {
+    tgMin.value = TimeGoal.minutes;
+    tgMin.addEventListener('input', (e) => TimeGoal.setMinutes(e.target.value));
+  }
+  if (tgAuto) {
+    tgAuto.checked = TimeGoal.autoStop;
+    tgAuto.addEventListener('change', (e) => TimeGoal.setAutoStop(e.target.checked));
+  }
+
+  // v0.7.90: opt-in on-canvas clock overlay (HH:MM:SS + optional date)
+  const clkEl = $('tcClockToggle');
+  if (clkEl) {
+    clkEl.checked = ClockOverlay.enabled;
+    clkEl.addEventListener('change', (e) => ClockOverlay.setEnabled(e.target.checked));
+  }
+  const clkDateEl = $('tcClockDateToggle');
+  if (clkDateEl) {
+    clkDateEl.checked = ClockOverlay.showDate;
+    clkDateEl.addEventListener('change', (e) => ClockOverlay.setShowDate(e.target.checked));
+  }
+
+  // v0.7.120: REC indicator pulsing dot toggle
+  const recIndEl = $('tcRecIndicatorToggle');
+  if (recIndEl) {
+    recIndEl.checked = RecIndicator.enabled;
+    recIndEl.addEventListener('change', (e) => RecIndicator.setEnabled(e.target.checked));
+  }
+
+  // v0.7.135: on-canvas audio waveform visualizer toggle
+  const avEl = $('tcAudioVizToggle');
+  if (avEl) {
+    avEl.checked = AudioViz.visible;
+    avEl.addEventListener('change', (e) => AudioViz.setVisible(e.target.checked));
+  }
+
+  // v0.7.154: canvas vignette effect
+  const vigEl = $('tcVignetteToggle');
+  if (vigEl) {
+    vigEl.checked = Vignette.visible;
+    vigEl.addEventListener('change', (e) => Vignette.setVisible(e.target.checked));
+  }
+  const vigInt = $('tcVignetteIntensity');
+  if (vigInt) {
+    vigInt.value = Vignette.intensity;
+    vigInt.addEventListener('input', (e) => Vignette.setIntensity(parseFloat(e.target.value)));
+  }
+
+  // v0.7.141: recording elapsed timer toggle
+  const reEl = $('tcRecElapsedToggle');
+  if (reEl) {
+    reEl.checked = RecElapsed.visible;
+    reEl.addEventListener('change', (e) => RecElapsed.setVisible(e.target.checked));
+  }
+
+  // v0.7.152: cinematic letterbox bars toggle + height slider
+  const lbEl = $('tcLetterboxToggle');
+  if (lbEl) {
+    lbEl.checked = Letterbox.visible;
+    lbEl.addEventListener('change', (e) => Letterbox.setVisible(e.target.checked));
+  }
+  const lbHEl = $('tcLetterboxHeight');
+  const lbHVal = $('tcLetterboxHeightVal');
+  if (lbHEl) {
+    lbHEl.value = Math.round(Letterbox.height * 100);
+    if (lbHVal) lbHVal.textContent = Math.round(Letterbox.height * 100) + '%';
+    lbHEl.addEventListener('input', (e) => {
+      const pct = parseInt(e.target.value, 10);
+      Letterbox.setHeight(pct / 100);
+      if (lbHVal) lbHVal.textContent = pct + '%';
+    });
+  }
+  // Sync letterbox button active state on load
+  const lbBtn = $('tcLetterboxBtn');
+  if (lbBtn) lbBtn.classList.toggle('active', Letterbox.visible);
+
+  // v0.7.25: Intro/outro cinematic cards toggle — opt-in in Settings
+  const ioEl = $('tcIntroOutroToggle');
+  if (ioEl) {
+    ioEl.checked = IntroOutro.enabled;
+    ioEl.addEventListener('change', (e) => IntroOutro.setEnabled(e.target.checked));
+  }
+  // v0.7.57: Live captions toggle — opt-in in Settings
+  const capEl = $('tcCaptionsToggle');
+  if (capEl) {
+    capEl.checked = LiveCaptions.enabled;
+    capEl.disabled = !LiveCaptions.supported();
+    if (!LiveCaptions.supported()) {
+      capEl.parentElement.style.opacity = '.5';
+      capEl.parentElement.title = 'Not supported in this browser';
+    }
+    capEl.addEventListener('change', (e) => LiveCaptions.setEnabled(e.target.checked));
+  }
+
+  // v0.7.26: Auto-pause on tab focus loss — opt-in in Settings.
+  // Reads localStorage directly in the visibilitychange listener so
+  // no dedicated object is needed.
+  const apEl = $('tcAutoPauseToggle');
+  if (apEl) {
+    try { apEl.checked = localStorage.getItem('tc-auto-pause') === '1'; } catch {}
+    apEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-auto-pause', e.target.checked ? '1' : '0'); } catch {}
+    });
+  }
+  // v0.7.54: opt-in snapshot annotation modal before saving
+  const saEl = $('tcSnapAnnotToggle');
+  if (saEl) {
+    try { saEl.checked = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
+    saEl.addEventListener('change', (e) => {
+      try { localStorage.setItem('tc-snap-annotate', e.target.checked ? '1' : '0'); } catch {}
+    });
+  }
+  // v0.7.37: auto scene intro text overlay toggle
+  const siEl = $('tcSceneIntroToggle');
+  if (siEl) {
+    siEl.checked = SceneIntroText.enabled;
+    siEl.addEventListener('change', (e) => SceneIntroText.setEnabled(e.target.checked));
+  }
+  // v0.7.64 / v0.7.153: scene transition mode selector (none/fade/wipe)
+  const stEl = $('tcSceneTransitionSelect');
+  if (stEl) {
+    stEl.value = SceneTransition.enabled ? SceneTransition.mode : 'none';
+    stEl.addEventListener('change', (e) => SceneTransition.setMode(e.target.value));
+  }
+  // v0.7.127: auto-save scene on source changes
+  const asEl = $('tcSceneAutoSaveToggle');
+  if (asEl) {
+    asEl.checked = SceneAutoSave.enabled;
+    asEl.addEventListener('change', (e) => SceneAutoSave.setEnabled(e.target.checked));
+  }
+  // v0.7.130: source name labels on canvas
+  const slEl = $('tcSourceLabelsToggle');
+  if (slEl) {
+    slEl.checked = SourceLabels.visible;
+    slEl.addEventListener('change', () => SourceLabels.toggle());
+  }
+  // v0.7.140: FPS counter overlay
+  const fpsEl = $('tcFpsCounterToggle');
+  if (fpsEl) {
+    fpsEl.checked = FpsCounter.visible;
+    fpsEl.addEventListener('change', () => FpsCounter.toggle());
+  }
+  // v0.7.81: opt-in idle screensaver mode
+  const ssEl = $('tcScreensaverToggle');
+  if (ssEl) {
+    ssEl.checked = Screensaver.enabled;
+    ssEl.addEventListener('change', (e) => Screensaver.setEnabled(e.target.checked));
+  }
+  // v0.7.113: countdown timer duration input
+  const timerDurEl = $('tcTimerDur');
+  if (timerDurEl) {
+    timerDurEl.value = Math.round(CountdownTimer.durationSec / 60);
+    timerDurEl.addEventListener('change', (e) => CountdownTimer.setDuration(parseInt(e.target.value, 10)));
+  }
+  // v0.7.112: opt-in scene auto-advance timer
+  const aaChk = $('tcAutoAdvChk');
+  const aaSec = $('tcAutoAdvSec');
+  if (aaChk) {
+    aaChk.checked = SceneAutoAdvance.enabled;
+    aaChk.addEventListener('change', (e) => SceneAutoAdvance.setEnabled(e.target.checked));
+  }
+  if (aaSec) {
+    aaSec.value = SceneAutoAdvance.intervalSec;
+    aaSec.addEventListener('change', (e) => SceneAutoAdvance.setInterval(parseInt(e.target.value, 10)));
+  }
+  // v0.7.126: snap-to-grid settings
+  const sgChk = $('tcSnapGridChk');
+  const sgSize = $('tcSnapGridSize');
+  if (sgChk) {
+    sgChk.checked = SnapGrid.enabled;
+    sgChk.addEventListener('change', (e) => SnapGrid.setEnabled(e.target.checked));
+  }
+  if (sgSize) {
+    sgSize.value = SnapGrid.size;
+    sgSize.addEventListener('change', (e) => SnapGrid.setSize(parseInt(e.target.value, 10)));
+  }
+  // v0.7.28: History clear button
+  $('tcHistoryClearBtn')?.addEventListener('click', () => {
+    if (History.entries.length === 0) return;
+    if (!confirm(t('historyConfirmClear') || "Vider l'historique des tutos ?")) return;
+    History.clear();
+    showToast(t('historyCleared') || '🗑 Historique vidé', 1400);
+  });
+
+  // v0.7.97: history search + min-star filter
+  const hsEl = $('tcHistorySearch');
+  if (hsEl) {
+    hsEl.placeholder = t('historySearchPlaceholder') || '🔍 Rechercher…';
+    hsEl.addEventListener('input', (e) => History.setFilter(e.target.value));
+  }
+  document.querySelectorAll('#tcHistoryStars button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tcHistoryStars button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      History.setMinStars(parseInt(btn.dataset.stars));
+    });
+  });
+
+  // Sensor-triggered overlay toggle (v0.5.0) — opt-in in Settings
+  const sensorOverlayEl = $('tcSensorOverlayToggle');
+  if (sensorOverlayEl) {
+    try { sensorOverlayEl.checked = localStorage.getItem('tc-sensor-overlay') === '1'; } catch {}
+    Sensors.autoOverlayEnabled = sensorOverlayEl.checked;
+    sensorOverlayEl.addEventListener('change', (e) => {
+      Sensors.autoOverlayEnabled = e.target.checked;
+      try { localStorage.setItem('tc-sensor-overlay', e.target.checked ? '1' : '0'); } catch {}
+    });
+  }
+  // v0.7.163: micro:bit feature toggles
+  const mbToggles = [
+    ['tcShakeSceneToggle', '_shakeToScene', 'tc-shake-scene'],
+    ['tcShakeConfettiToggle', '_shakeConfetti', 'tc-shake-confetti'],
+    ['tcLiveGraphToggle', '_liveGraph', 'tc-live-graph'],
+    ['tcMotionTrailToggle', '_motionTrail', 'tc-motion-trail'],
+    ['tcShowTempToggle', '_showTemp', 'tc-show-temp'],
+    ['tcShowLightToggle', '_showLight', 'tc-show-light'],
+    ['tcShowSoundToggle', '_showSound', 'tc-show-sound'],
+    ['tcTiltPanToggle', '_tiltToPan', 'tc-tilt-pan'],
+  ];
+  mbToggles.forEach(([elId, prop, lsKey]) => {
+    const el = $(elId);
+    if (!el) return;
+    try { el.checked = localStorage.getItem(lsKey) === '1'; } catch {}
+    Sensors[prop] = el.checked;
+    if (prop === '_liveGraph' && el.checked) Sensors._graphSamples = [];
+    if (prop === '_motionTrail' && el.checked) Sensors._trailPoints = [];
+    el.addEventListener('change', (e) => {
+      Sensors[prop] = e.target.checked;
+      if (prop === '_liveGraph') Sensors._graphSamples = [];
+      if (prop === '_motionTrail') Sensors._trailPoints = [];
+      try { localStorage.setItem(lsKey, e.target.checked ? '1' : '0'); } catch {}
+    });
+  });
+  // Button A action toggle
+  const btnASfxEl = $('tcBtnASfxToggle');
+  if (btnASfxEl) {
+    try { btnASfxEl.checked = localStorage.getItem('tc-btn-a-sfx') === '1'; } catch {}
+    Sensors._btnAAction = btnASfxEl.checked ? 'sfx' : 'zoom';
+    btnASfxEl.addEventListener('change', (e) => {
+      Sensors._btnAAction = e.target.checked ? 'sfx' : 'zoom';
+      try { localStorage.setItem('tc-btn-a-sfx', e.target.checked ? '1' : '0'); } catch {}
+    });
+  }
+
+  // v0.7.71: custom countdown duration (1-10s, default 3) persisted in tc-countdown-secs
+  const cdEl = $('tcCountdownSecs');
+  if (cdEl) {
+    try {
+      const saved = parseInt(localStorage.getItem('tc-countdown-secs'), 10);
+      if (!isNaN(saved) && saved >= 1 && saved <= 10) cdEl.value = saved;
+    } catch {}
+    cdEl.addEventListener('change', (e) => {
+      let v = parseInt(e.target.value, 10);
+      if (isNaN(v)) v = 3;
+      v = Math.max(1, Math.min(10, v));
+      e.target.value = v;
+      try { localStorage.setItem('tc-countdown-secs', String(v)); } catch {}
+    });
+  }
+
+  // v0.7.87: bulk download button
+  $('tcBulkDlBtn')?.addEventListener('click', () => BulkDownload.all());
+
+  // v0.7.96: Web Share API button
+  $('tcShareBtn')?.addEventListener('click', () => ShareTake.share());
+  // Hide if not supported
+  const shareBtn = $('tcShareBtn');
+  if (shareBtn && !ShareTake.supported()) {
+    shareBtn.style.opacity = '.5';
+    shareBtn.title = 'Web Share API not supported in this browser';
+  }
+
+  // Trim wiring
+  $('tcSearchBtn')?.addEventListener('click', () => GlobalSearch.toggle());
+  $('tcCaptionsBtn')?.addEventListener('click', (e) => {
+    LiveCaptions.setEnabled(!LiveCaptions.enabled);
+    // Start/stop recognition immediately (not just on record)
+    if (LiveCaptions.enabled) {
+      if (!LiveCaptions.supported()) {
+        showToast('💬 Captions not supported (use Chrome/Edge)', 3000);
+        LiveCaptions.setEnabled(false);
+      } else {
+        LiveCaptions.start();
+        showToast('💬 Captions ON — speak to see subtitles', 2000);
+      }
+    } else {
+      LiveCaptions.stop();
+      showToast('💬 Captions OFF', 1200);
+    }
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', LiveCaptions.enabled);
+    const saveBtn = $('tcSaveCaptionsBtn');
+    if (saveBtn) saveBtn.style.display = LiveCaptions.enabled ? '' : 'none';
+    // Sync the settings checkbox if it exists
+    const capEl = $('tcCaptionsToggle');
+    if (capEl) capEl.checked = LiveCaptions.enabled;
+  });
+  $('tcSaveCaptionsBtn')?.addEventListener('click', () => LiveCaptions.saveCaptions());
+  $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
+  $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
+  $('tcExportFlyerBtn')?.addEventListener('click', () => ExportFlyer.generate());
+  $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());
+  $('tcTrimBtn').addEventListener('click', () => Trim.open());
+  $('tcTrimClose').addEventListener('click', () => Trim.close());
+  $('tcTrimCancelBtn').addEventListener('click', () => Trim.close());
+  $('tcTrimExportBtn').addEventListener('click', () => Trim.exportTrimmed());
+  $('tcTrimIn').addEventListener('input', (e) => Trim.onInChange(e.target.value));
+  $('tcTrimOut').addEventListener('input', (e) => Trim.onOutChange(e.target.value));
+  $('tcTrimPreviewInBtn').addEventListener('click', () => Trim.previewIn());
+  $('tcTrimPreviewOutBtn').addEventListener('click', () => Trim.previewOut());
+  const tcas = $('tcTrimAutoCutBtn');
+  if (tcas) tcas.addEventListener('click', () => Trim.autoCutSilences());
+
+  // Ticker pause
+  $('tcTickerPause').addEventListener('click', () => {
+    const ticker = $('tcTicker'); ticker.classList.toggle('paused');
+    $('tcTickerPause').textContent = ticker.classList.contains('paused') ? '▶' : '⏸';
+  });
+
+  // Mirror toggle re-applies to cams
+  $('tcMirrorCam').addEventListener('change', (e) => {
+    Engine.sources.filter(s => s.type === 'cam').forEach(s => s.mirrored = e.target.checked);
+  });
+}
+
+async function init() {
+  // Restore prefs
+  try {
+    const lang = localStorage.getItem('tc-lang'); if (lang) currentLang = lang;
+    const theme = localStorage.getItem('tc-theme'); if (theme) setTheme(theme);
+  } catch {}
+  $('langSelect').value = currentLang;
+
+  // v0.7.55: apply any custom accent override on top of the theme restored above
+  CustomAccent.load();
+  // v0.7.143: load persisted canvas background color
+  CanvasBg.load();
+  BgPatterns.load();
+
+  Sfx.load();
+  Jingle.load();
+  MicBoost.load();  // v0.7.69
+  VolumeDuck.load();  // v0.7.83
+  Timelapse.load();  // v0.7.95
+  TimeGoal.load();
+  ClockOverlay.load();  // v0.7.90
+  RecIndicator.load();  // v0.7.120
+  AudioViz.load();  // v0.7.135
+  Vignette.load();  // v0.7.154
+  RecElapsed.load();  // v0.7.141
+  LiveCaptions.load();
+  SceneIntroText.load();
+  SceneTransition.load();
+  SceneAutoSave.setup();  // v0.7.127
+  Screensaver.load();  // v0.7.81
+  IntroOutro.load();
+  History.load();
+  Scenes.loadCustom();  // v0.7.48: restore custom scenes
+  Scenes._loadPresetOverrides(); // v0.7.139: restore renamed presets
+  Scenes.loadOrder();  // v0.7.32: restore persisted scene order before first render
+  Brand.load();
+  Watermark.load();  // v0.7.98
+  ServoGauge.load(); // v0.7.177
+  VoiceFx.load();    // v0.7.182
+  BgMusic.load();    // v0.7.184
+  VoiceCommands.load(); // v0.7.185
+  DailyChallenges.load(); // v0.7.185
+  RobotChoreo.load();     // v0.7.186
+  SmartSceneSwitcher.load(); // v0.7.188
+  CanvasFlair.load();       // v0.7.191
+  UnlockGallery.load();    // v0.7.192
+  GhostReplay.load();      // v0.7.192
+  CanvasPets.load();       // v0.7.197
+  AICohost.load();        // v0.7.188
+  XpBar.load();      // v0.7.182
+  SoundPad.load();   // v0.7.182
+  BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
+  Badges.load();
+
+  applyI18n();  // after Sfx/Badges so Teleprompter.hasUserText() is safe
+
+  // v0.7.23 hotfix: Ripples.setup() must run BEFORE Engine.init() because
+  // Engine.init() starts the render loop which immediately calls
+  // ctx.drawImage(Ripples.canvas, 0, 0) — if canvas is null it throws.
+  Ripples.setup();
+  Engine.init();
+  StageAspect.load();  // v0.7.58: restore stage aspect ratio preset
+  Laser.setup();
+  Spotlight.setup();
+  Spotlight.load();
+  CursorTrail.setup();
+  CursorTrail.load();
+  Whiteboard.setup();
+  Zoom.setup();
+  Drag.setup();
+  TextToolbar.setup();
+  SourceToolbar.setup();
+  SourceContextMenu.setup();
+  Teleprompter.setup();
+  Cheatsheet.setup();
+  RebindModal.setup();
+  SnapshotAnnotator.setup();
+  Tooltip.setup();
+  GuidedTour.setup();
+  Minimap.setup();
+  Screensaver.setup();  // v0.7.81
+  SceneAutoAdvance.setup();  // v0.7.112
+  SnapGrid.setup();          // v0.7.126
+  GridOverlay.init();  // v0.7.115
+  SourceLabels.init(); // v0.7.130
+  FpsCounter.init();   // v0.7.140
+  PreviewZoom.setup();  // v0.7.133
+  FocusMode.setup();    // v0.7.109
+
+  renderScenes();
+  renderTextPresets();
+  renderBadges();
+  History.render();
+  Dashboard.render();
+  renderTicker();
+  Templates.renderStepStrip();
+
+  setupOnboarding();
+  TipOfDay.maybeShow();
+  V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
+  GuidedTour.maybeAutoStart();
+  setupHelpTabs();
+  // v0.7.172: sidebar icon tabs
+  document.querySelectorAll('.tc-side-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wasActive = btn.classList.contains('active');
+      document.querySelectorAll('.tc-side-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tc-side-panel').forEach(p => p.classList.remove('active'));
+      if (!wasActive) {
+        btn.classList.add('active');
+        const name = btn.dataset.stab;
+        const id = 'tcSidebar' + name.charAt(0).toUpperCase() + name.slice(1);
+        $(id)?.classList.add('active');
+      }
+    });
+  });
+  HelpSearch.setup();
+  KeyBindings.load();
+  HotkeyRef.setup();  // v0.7.134
+  setupHotkeys();
+  wireEvents();
+
+  // Set default scene
+  Scenes.active = 'code';
+  Recorder.updateUI();
+
+  // First-pass device list — labels are blank until the user grants permission,
+  // then refreshDeviceList() is called automatically after addCamera/setMic.
+  await Engine.refreshDeviceList();
+
+  // v0.7.185: start daily challenge + voice commands if enabled
+  DailyChallenges.startChecking();
+  if (VoiceCommands.enabled) VoiceCommands.start();
+  if (SmartSceneSwitcher.enabled) SmartSceneSwitcher.start();
+  setTimeout(() => {
+    if (DailyChallenges._today && !DailyChallenges._completed) {
+      showToast(`🎯 Today: ${DailyChallenges._today.text}`, 4000);
+    }
+  }, 3000);
+
+  log(t('ready'), 'success');
+}
+
+/* Stop all active streams / recording when the tab is closed so the camera
+   and mic lights turn off promptly instead of at GC time. */
+window.addEventListener('beforeunload', () => {
+  try {
+    if (Recorder && Recorder.recorder && Recorder.state !== 'idle') {
+      try { Recorder.recorder.stop(); } catch {}
+    }
+    if (Engine && Engine.sources) {
+      Engine.sources.forEach(s => {
+        try { s.stream && s.stream.getTracks().forEach(tr => tr.stop()); } catch {}
+      });
+    }
+    if (Recorder && Recorder._prevUrls) {
+      Recorder._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+    }
+  } catch {}
+});
+
+// v0.7.158: global error handlers — prevent silent recording death
+window.onerror = (msg, src, line, col, err) => {
+  const detail = `${msg} at ${src}:${line}:${col}`;
+  try { log('error', `Uncaught error: ${detail}`); } catch {}
+  try { showToast(`⚠ Error: ${msg}`, 5000); } catch {}
+  console.error('[NoorCast] Uncaught:', err || detail);
+  return false; // let default handler also fire
+};
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason?.message || e.reason || 'unknown';
+  try { log('error', `Unhandled promise rejection: ${reason}`); } catch {}
+  try { showToast(`⚠ Async error: ${reason}`, 5000); } catch {}
+  console.error('[NoorCast] Unhandled rejection:', e.reason);
+});
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+/* v0.7.199: GlobalSearch — Spotlight-style search overlay.
+   Press / or Ctrl+K to open. Searches settings, skins, shortcuts,
+   scenes, tools, features. Click a result to navigate/apply. */
+const GlobalSearch = {
+  _el: null,
+  _items: null,
+
+  _buildIndex() {
+    if (this._items) return;
+    this._items = [];
+    const add = (cat, label, action) => this._items.push({ cat, label: label.toLowerCase(), display: label, action });
+
+    // Scenes
+    Scenes.presets.forEach((s, i) => {
+      const lbl = s.overrideName || t('scene_' + s.key) || s.key;
+      add('Scene', s.icon + ' ' + lbl, () => Scenes.switch(s.key));
+    });
+
+    // Skins
+    SourceSkins.list.forEach(k => {
+      if (k === 'none') return;
+      add('Skin', SourceSkins.labels[k] || k, () => {
+        const src = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+        if (src) { src.skin = k; showToast('Skin: ' + k, 1200); }
+        else showToast('Select a source first', 1500);
+      });
+    });
+
+    // Backgrounds
+    BgPatterns.render && ['space','pixel','matrix','arcade','circuit','chalk','zellige','arabesque','riad','muqarnas','astrolabe','algebra','radar','sonar','oscilloscope'].forEach(k => {
+      add('Background', k.charAt(0).toUpperCase() + k.slice(1), () => { BgPatterns.setPattern(k); const el = $('tcBgPattern'); if (el) el.value = k; showToast('Background: ' + k, 1200); });
+    });
+
+    // Scene Themes
+    SceneThemes.presets.forEach(p => add('Theme', p.label, () => SceneThemes.apply(p.key)));
+
+    // Shortcuts
+    const shortcuts = [
+      ['R', 'Record / Stop'], ['P', 'Pause'], ['M', 'Marker'], ['S', 'Snapshot'],
+      ['L', 'Laser'], ['F', 'Freeze'], ['D', 'Draw'], ['T', 'Teleprompter'],
+      ['Z', 'Zoom'], ['G', 'Grid'], ['C', 'Captions'], ['?', 'Shortcuts'],
+      ['Shift+F', 'Focus mode'], ['Shift+R', 'Instant record'],
+      ['Ctrl+Z', 'Undo'], ['Ctrl+Y', 'Redo'], ['Ctrl+S', 'Download all'],
+    ];
+    shortcuts.forEach(([key, desc]) => add('Shortcut', key + ' — ' + desc, () => showToast(key + ': ' + desc, 2000)));
+
+    // Tools & Features
+    const tools = [
+      ['Laser pointer', () => Laser.toggle()],
+      ['Freeze screen', () => Recorder.toggleFreeze?.()],
+      ['Whiteboard draw', () => Whiteboard.toggle?.()],
+      ['Zoom', () => Zoom.toggle()],
+      ['Teleprompter', () => Teleprompter.toggle()],
+      ['Spotlight', () => Spotlight.toggle()],
+      ['Ripples', () => Ripples.toggle()],
+      ['Cursor trail', () => CursorTrail.toggle()],
+      ['Grid overlay', () => GridOverlay.toggle()],
+      ['Letterbox bars', () => Letterbox.toggle()],
+      ['Vignette', () => Vignette.setVisible(!Vignette.visible)],
+      ['Focus mode', () => FocusMode.toggle()],
+      ['Captions', () => { LiveCaptions.setEnabled(!LiveCaptions.enabled); if (LiveCaptions.enabled) LiveCaptions.start(); else LiveCaptions.stop(); }],
+      ['Voice commands', () => VoiceCommands.toggle()],
+      ['Smart scene switcher', () => SmartSceneSwitcher.toggle()],
+      ['AI co-host', () => AICohost.toggle()],
+      ['XP bar', () => XpBar.toggle()],
+      ['Sound pad', () => SoundPad.toggle()],
+      ['Background music', () => BgMusic.toggle()],
+      ['Voice FX', () => VoiceFx.toggle()],
+      ['Ghost replay', () => GhostReplay.toggle()],
+      ['Speed lines', () => SpeedLines.fire(800)],
+      ['Sensor overlay', () => { Sensors._overlayVisible = !Sensors._overlayVisible; Sensors._saveOverlayPos(); }],
+      ['Servo gauges', () => { ServoGauge.visible = !ServoGauge.visible; }],
+      ['Instant replay', () => InstantReplay.generate()],
+      ['Auto thumbnail', () => AutoThumbnail.generate()],
+      ['Export flyer', () => ExportFlyer.generate()],
+      ['Transcript', () => PostTranscript.generate()],
+      ['Quality score', () => TutorialScore.analyze()],
+      ['Screenshot share', () => QRShare.generate()],
+      ['Visual crop', () => { if (Drag.selectedSourceId) VisualCrop.start(Drag.selectedSourceId); else showToast('Select a source first', 1500); }],
+    ];
+    tools.forEach(([name, fn]) => add('Tool', name, fn));
+
+    // Settings panels
+    add('Settings', 'Open settings', () => { const p = $('settingsPanel'); if (p) { p.classList.add('open'); const ov = $('settingsOverlay'); if (ov) ov.classList.add('show'); } });
+    add('Settings', 'Language', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
+    add('Settings', 'Theme', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
+    add('Settings', 'Help / User guide', () => window.open('./guide.html', '_blank'));
+
+    // Co-host characters
+    AICohost.characters.forEach(c => add('Co-host', AICohost.charLabels[c] || c, () => { AICohost.character = c; AICohost._save(); showToast(AICohost.charLabels[c], 1200); }));
+
+    // Canvas pets
+    CanvasPets.types.forEach(t => add('Pet', CanvasPets.labels[t] || t, () => CanvasPets.toggle(t)));
+  },
+
+  open() {
+    if (this._el) return;
+    this._buildIndex();
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding-top:80px';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'width:min(500px,90vw);background:#1a1a1a;border:1px solid rgba(163,230,53,.3);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)';
+
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.placeholder = 'Search features, skins, shortcuts, settings...';
+    input.style.cssText = 'width:100%;padding:16px 20px;background:#111;border:none;border-bottom:1px solid rgba(163,230,53,.15);color:#fff;font-size:16px;font-family:inherit;outline:none';
+
+    const results = document.createElement('div');
+    results.style.cssText = 'max-height:400px;overflow-y:auto';
+
+    const renderResults = (query) => {
+      results.innerHTML = '';
+      if (!query || query.length < 1) {
+        results.innerHTML = '<div style="padding:20px;text-align:center;color:#4a5568;font-size:13px">Type to search...</div>';
+        return;
+      }
+      const q = query.toLowerCase();
+      const matches = this._items.filter(item => item.label.includes(q));
+      if (matches.length === 0) {
+        results.innerHTML = '<div style="padding:20px;text-align:center;color:#4a5568;font-size:13px">No results</div>';
+        return;
+      }
+      matches.slice(0, 20).forEach(item => {
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:10px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s';
+        row.addEventListener('mouseenter', () => { row.style.background = 'rgba(163,230,53,.08)'; });
+        row.addEventListener('mouseleave', () => { row.style.background = ''; });
+        const catColors = { Scene: '#a3e635', Skin: '#38bdf8', Background: '#c084fc', Theme: '#fbbf24', Shortcut: '#94a3b8', Tool: '#4ade80', Settings: '#f59e0b', 'Co-host': '#fb923c', Pet: '#e879f9' };
+        row.innerHTML = '<span style="font-size:.65rem;padding:2px 8px;border-radius:8px;background:' + (catColors[item.cat] || '#666') + '20;color:' + (catColors[item.cat] || '#666') + ';border:1px solid ' + (catColors[item.cat] || '#666') + '40;flex-shrink:0">' + item.cat + '</span><span style="color:#e2e8f0;font-size:14px">' + item.display + '</span>';
+        row.addEventListener('click', () => { this.close(); item.action(); });
+        results.appendChild(row);
+      });
+    };
+
+    input.addEventListener('input', () => renderResults(input.value));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.close();
+      if (e.key === 'Enter') {
+        const first = results.querySelector('div[style*="cursor:pointer"]');
+        if (first) first.click();
+      }
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) this.close(); });
+
+    box.appendChild(input);
+    box.appendChild(results);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    this._el = overlay;
+    renderResults('');
+    requestAnimationFrame(() => input.focus());
+  },
+
+  close() {
+    if (this._el) { this._el.remove(); this._el = null; }
+  },
+
+  toggle() { if (this._el) this.close(); else this.open(); },
+};

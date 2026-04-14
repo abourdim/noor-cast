@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NoorCast FAQ</title>
+  <style>
+    :root { --bg: #0a0f0a; --card: #141e14; --border: #1e3a1e; --accent: #a3e635; --accent2: #fb923c; --text: #e2e8e0; --muted: #94a394; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .faq { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    h1 { font-size: 2rem; color: var(--accent); margin-bottom: 8px; }
+    h1 span { color: var(--accent2); }
+    .subtitle { color: var(--muted); margin-bottom: 32px; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    details[open] { border-color: var(--accent); }
+    summary { padding: 14px 18px; font-size: 1.05rem; font-weight: 600; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: '▸'; color: var(--accent); font-size: 14px; transition: transform .15s; flex-shrink: 0; }
+    details[open] summary::before { transform: rotate(90deg); }
+    summary:hover { background: rgba(255,255,255,.03); }
+    details > div { padding: 0 18px 16px; color: var(--muted); line-height: 1.8; }
+    details > div p { margin-bottom: 8px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: rgba(163,230,53,.1); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-size: .9em; }
+    kbd { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: .85em; font-family: monospace; }
+    .links { text-align: center; margin-top: 40px; color: var(--muted); }
+    .links a { margin: 0 12px; }
+    @media (max-width: 600px) { .faq { padding: 16px 12px; } h1 { font-size: 1.5rem; } }
+  </style>
+</head>
+<body>
+<div class="faq">
+
+<h1>❓ Noor<span>Cast</span> FAQ</h1>
+<p class="subtitle">Frequently asked questions about NoorCast</p>
+
+<details open>
+  <summary>What is NoorCast?</summary>
+  <div><p>NoorCast is a browser-based tool for recording multi-camera tutorial videos. Screen + webcams + mic, all from Chrome or Edge. Zero install, zero account, everything stays on your computer.</p></div>
+</details>
+
+<details>
+  <summary>How do I add multiple cameras?</summary>
+  <div><p>In the left sidebar, select a camera from the dropdown and click <strong>+ Add</strong>. Repeat for each camera. There is no limit — you can add built-in webcams, USB cameras, and phones via DroidCam/Iriun/Camo. See the <a href="guide.html#phone-cameras">User Guide</a> for phone setup instructions.</p></div>
+</details>
+
+<details>
+  <summary>Can I use my phone as a camera?</summary>
+  <div>
+    <p>Yes! Install a virtual webcam app on your phone:</p>
+    <p><a href="https://iriun.com"><strong>Iriun Webcam</strong></a> (recommended) — free, all platforms, supports portrait mode<br>
+    <a href="https://www.dev47apps.com/droidcam/"><strong>DroidCam</strong></a> — free, landscape only<br>
+    <a href="https://reincubate.com/camo/"><strong>Camo</strong></a> — pro quality, free/paid<br>
+    <strong>Continuity Camera</strong> — Mac + iPhone, zero install</p>
+    <p>Full setup instructions: <a href="guide.html#phone-cameras">guide.html → Phone Cameras</a></p>
+  </div>
+</details>
+
+<details>
+  <summary>Can I get a vertical/portrait camera feed?</summary>
+  <div><p>Use <strong>Iriun Webcam</strong> or <strong>Camo</strong>. Just hold your phone vertically — they send the portrait feed automatically. DroidCam does NOT support portrait mode.</p></div>
+</details>
+
+<details>
+  <summary>Can I read my micro:bit sensors?</summary>
+  <div><p>Yes! Click <strong>"📡 Connect micro:bit"</strong> in the left sidebar. Your browser connects via Bluetooth. Accelerometer values display as an overlay on the canvas. Button A = zoom, Button B = chapter marker, tilting = laser pointer. Chrome/Edge only. NoorCast detects micro:bits advertising as either "BBC micro:bit" or "uBit".</p></div>
+</details>
+
+<details>
+  <summary>What are the keyboard shortcuts?</summary>
+  <div>
+    <p><kbd>R</kbd> Record/Stop · <kbd>L</kbd> Laser · <kbd>F</kbd> Freeze · <kbd>D</kbd> Draw · <kbd>S</kbd> Snapshot · <kbd>T</kbd> Teleprompter · <kbd>Z</kbd> Zoom · <kbd>M</kbd> Marker · <kbd>Q</kbd> Quiz · <kbd>G</kbd> Grid · <kbd>1</kbd>-<kbd>6</kbd> Scenes · <kbd>?</kbd> Random scene · <kbd>Ctrl+Z</kbd> Undo · <kbd>Ctrl+Y</kbd> Redo · <kbd>Esc</kbd> Stop/Exit</p>
+    <p>Full list: <a href="guide.html#shortcuts">guide.html → Shortcuts</a></p>
+  </div>
+</details>
+
+<details>
+  <summary>Are my videos private?</summary>
+  <div><p>100%. Nothing ever leaves your computer. The recording stays in browser memory and downloads directly to your disk. No accounts, no analytics, no server. Even the fonts are self-hosted — zero network requests from JavaScript.</p></div>
+</details>
+
+<details>
+  <summary>What output format?</summary>
+  <div><p><strong>WebM</strong> (VP9 + Opus) by default. <strong>MP4</strong> (H.264 + AAC) when available (Chrome on Windows/Mac). You can choose in Settings → Recording → Output Format. Both work with VLC, YouTube, and most editors.</p></div>
+</details>
+
+<details>
+  <summary>Is the teleprompter visible in my video?</summary>
+  <div><p>No, never. The teleprompter is an HTML overlay shown only to you. It is NOT drawn on the canvas, so it does not appear in the recording. Same for sticky notes, the grid overlay, FPS counter, and source labels.</p></div>
+</details>
+
+<details>
+  <summary>Which browser should I use?</summary>
+  <div><p><strong>Chrome</strong> or <strong>Edge</strong> (desktop, version 100+). Firefox works for basic recording but doesn't support Web Bluetooth (micro:bit). Safari is not supported. Mobile browsers are not supported (no screen capture, no multi-camera, no WebM).</p></div>
+</details>
+
+<details>
+  <summary>What are the badges?</summary>
+  <div>
+    <p>Local achievement trophies that unlock as you use NoorCast:</p>
+    <p>🎬 First tutorial · ⏱ 5+ minute take · 🎥 Multi-camera · 🎭 All scenes used · 🏷 5+ markers · 🤖 micro:bit connected</p>
+    <p>Stored locally in your browser. Nothing is sent anywhere.</p>
+  </div>
+</details>
+
+<details>
+  <summary>How do I reset everything?</summary>
+  <div><p>Settings → General → <strong>"💥 Clear all data"</strong> erases everything: badges, logo, preferences, scenes, ticker, onboarding. The app restarts fresh after a page reload. <strong>"🗑 Reset badges"</strong> only clears trophies.</p></div>
+</details>
+
+<details>
+  <summary>Can I use NoorCast on a tablet or phone?</summary>
+  <div><p>No. NoorCast requires desktop Chrome or Edge. Mobile browsers block screen capture, multi-camera access, and WebM recording. Use your phone as a <strong>camera source</strong> instead (via DroidCam/Iriun/Camo) connected to a desktop running NoorCast.</p></div>
+</details>
+
+<details>
+  <summary>My recording is 0 bytes — what happened?</summary>
+  <div><p>Check the activity log at the bottom. Try switching output format (Settings → Recording → Output Format). Make sure at least one video source is active. If using MP4, try WebM as fallback.</p></div>
+</details>
+
+<details>
+  <summary>The video is choppy / laggy</summary>
+  <div><p>Close other browser tabs. Reduce the canvas resolution (Settings → Recording → Stage Format). Disable overlays you're not using (clock, vignette, audio visualizer, FPS counter). Try USB instead of Wi-Fi for phone cameras.</p></div>
+</details>
+
+<div class="links">
+  <a href="guide.html">📖 Full User Guide</a>
+  <a href="cheatsheet.html">📋 Cheat Sheet</a>
+  <a href="start.html">🚀 Start Here</a>
+  <a href="index.html">← Back to NoorCast</a>
+</div>
+
+</div>
+</body>
+</html>

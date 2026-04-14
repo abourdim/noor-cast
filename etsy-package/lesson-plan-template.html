@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NoorCast Lesson Plan Template</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Orbitron:wght@500&family=Tajawal:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4 portrait; margin: 0; }
+  body { width: 210mm; font-family: 'Tajawal', sans-serif; background: #fafaf9; color: #1e293b; line-height: 1.6; font-size: 14px; }
+
+  .page { width: 210mm; min-height: 297mm; padding: 14mm 18mm; position: relative; page-break-after: always; }
+
+  /* Header */
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 8mm; padding-bottom: 6mm; border-bottom: 3px solid #a3e635; }
+  .header-logo { width: 44px; height: 44px; background: #071407; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .header-logo span { font-family: 'Righteous', sans-serif; font-size: 20px; color: #a3e635; }
+  .header-text h1 { font-family: 'Righteous', sans-serif; font-size: 24px; color: #071407; }
+  .header-text span { font-size: 12px; color: #64748b; }
+
+  /* Form fields */
+  .field { margin-bottom: 5mm; }
+  .field-row { display: flex; gap: 10px; margin-bottom: 5mm; }
+  .field-row .field { flex: 1; margin-bottom: 0; }
+  label { font-weight: 700; font-size: 12px; color: #374151; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+  .input {
+    width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 12px; font-size: 14px; min-height: 32px; background: #fff;
+    font-family: 'Tajawal', sans-serif; color: #1e293b;
+  }
+  .input-tall { min-height: 60px; }
+  .input-xl { min-height: 100px; }
+
+  /* Section headers */
+  .section {
+    font-family: 'Righteous', sans-serif; font-size: 16px; color: #fff;
+    background: #071407; padding: 6px 14px; border-radius: 8px;
+    margin: 6mm 0 4mm; display: flex; align-items: center; gap: 8px;
+  }
+  .section .dot { width: 8px; height: 8px; border-radius: 50%; background: #a3e635; }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 3mm 0; }
+  .checklist li {
+    display: flex; align-items: center; gap: 8px; padding: 4px 0;
+    border-bottom: 1px dashed #e5e7eb;
+  }
+  .checklist li::before {
+    content: ''; width: 16px; height: 16px; border: 2px solid #a3e635;
+    border-radius: 4px; flex-shrink: 0;
+  }
+
+  /* Timeline */
+  .timeline { margin: 3mm 0; }
+  .trow { display: flex; border-bottom: 1px solid #e5e7eb; }
+  .trow.thead { font-weight: 700; font-size: 11px; text-transform: uppercase; color: #64748b; background: #f1f5f9; border-radius: 6px 6px 0 0; }
+  .trow div { padding: 6px 10px; }
+  .tcol-time { width: 20%; }
+  .tcol-act { width: 40%; }
+  .tcol-tool { width: 20%; }
+  .tcol-notes { width: 20%; }
+
+  /* NoorCast features callout */
+  .callout {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+    padding: 10px 16px; margin: 4mm 0;
+  }
+  .callout h4 { font-size: 13px; color: #166534; margin-bottom: 4px; }
+  .callout ul { margin: 0; padding-left: 20px; font-size: 12px; color: #374151; }
+  .callout li { margin: 2px 0; }
+
+  /* Footer */
+  .footer { position: absolute; bottom: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; border-top: 1px solid #e5e7eb; padding-top: 4px; }
+
+  /* Sample lesson markers */
+  .sample { color: #94a3b8; font-style: italic; font-size: 13px; }
+
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .pg { background: #dcfce7; color: #166534; }
+  .pb { background: #dbeafe; color: #1e40af; }
+  .py { background: #fef3c7; color: #92400e; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Template -->
+<div class="page">
+  <div class="header">
+    <div class="header-logo"><span>NC</span></div>
+    <div class="header-text">
+      <h1>NoorCast Lesson Plan</h1>
+      <span>Video Tutorial Lesson Planner &bull; workshop-diy.org</span>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field"><label>Lesson Title</label><div class="input"></div></div>
+    <div class="field" style="width:30%;flex:none;"><label>Date</label><div class="input"></div></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Teacher / Creator</label><div class="input"></div></div>
+    <div class="field"><label>Grade / Age Group</label><div class="input"></div></div>
+    <div class="field"><label>Subject</label><div class="input"></div></div>
+  </div>
+
+  <div class="section"><div class="dot"></div> Learning Objectives</div>
+  <div class="field"><label>By the end of this lesson, students will be able to:</label><div class="input input-tall"></div></div>
+
+  <div class="section"><div class="dot"></div> Materials & Setup</div>
+  <div class="checklist">
+    <li>Computer with Chrome/Edge browser</li>
+    <li>NoorCast open in browser (index.html)</li>
+    <li>Screen source added</li>
+    <li>Camera source added (webcam / phone)</li>
+    <li>Microphone tested (Mic Check)</li>
+    <li>micro:bit connected (if applicable)</li>
+    <li>Teleprompter script loaded (if applicable)</li>
+    <li>Scene layout chosen: ________________</li>
+  </div>
+
+  <div class="section"><div class="dot"></div> Lesson Timeline</div>
+  <div class="timeline">
+    <div class="trow thead">
+      <div class="tcol-time">Time</div>
+      <div class="tcol-act">Activity</div>
+      <div class="tcol-tool">NoorCast Tool</div>
+      <div class="tcol-notes">Notes</div>
+    </div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+    <div class="trow"><div class="tcol-time"></div><div class="tcol-act"></div><div class="tcol-tool"></div><div class="tcol-notes"></div></div>
+  </div>
+
+  <div class="section"><div class="dot"></div> Post-Recording</div>
+  <div class="checklist">
+    <li>Review take in Take Panel</li>
+    <li>Generate auto-thumbnail</li>
+    <li>Export transcript (.srt)</li>
+    <li>Check tutorial quality score</li>
+    <li>Share via QR code</li>
+  </div>
+
+  <div class="section"><div class="dot"></div> Reflection & Notes</div>
+  <div class="field"><div class="input input-xl"></div></div>
+
+  <div class="footer">
+    <span>NoorCast Lesson Plan Template &bull; Editable &bull; Print or fill digitally</span>
+    <span>workshop-diy.org</span>
+  </div>
+</div>
+
+<!-- PAGE 2: Sample Lesson - Micro:bit -->
+<div class="page">
+  <div class="header">
+    <div class="header-logo"><span>NC</span></div>
+    <div class="header-text">
+      <h1>Sample Lesson: My First Micro:bit Tutorial</h1>
+      <span>Example lesson plan using NoorCast</span>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field"><label>Lesson Title</label><div class="input"><span class="sample">Making a Digital Pet with Micro:bit</span></div></div>
+    <div class="field" style="width:30%;flex:none;"><label>Duration</label><div class="input"><span class="sample">45 minutes</span></div></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Grade / Age Group</label><div class="input"><span class="sample">Ages 8-12</span></div></div>
+    <div class="field"><label>Subject</label><div class="input"><span class="sample">STEM / Coding / Robotics</span></div></div>
+  </div>
+
+  <div class="section"><div class="dot"></div> Learning Objectives</div>
+  <div class="field"><div class="input input-tall"><span class="sample">1. Students will connect a micro:bit to NoorCast via Bluetooth<br>2. Students will create a simple LED animation program<br>3. Students will record a tutorial explaining their code</span></div></div>
+
+  <div class="section"><div class="dot"></div> Lesson Timeline</div>
+  <div class="timeline">
+    <div class="trow thead">
+      <div class="tcol-time">Time</div>
+      <div class="tcol-act">Activity</div>
+      <div class="tcol-tool">NoorCast Tool</div>
+      <div class="tcol-notes">Notes</div>
+    </div>
+    <div class="trow"><div class="tcol-time"><span class="sample">0-5 min</span></div><div class="tcol-act"><span class="sample">Setup: open NoorCast, add screen + camera</span></div><div class="tcol-tool"><span class="sample">Scene: PiP</span></div><div class="tcol-notes"><span class="sample">Help with browser permissions</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">5-10 min</span></div><div class="tcol-act"><span class="sample">Connect micro:bit via BLE</span></div><div class="tcol-tool"><span class="sample">Pilot scene overlay</span></div><div class="tcol-notes"><span class="sample">Pair code on LED grid</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">10-15 min</span></div><div class="tcol-act"><span class="sample">Write code in MakeCode editor</span></div><div class="tcol-tool"><span class="sample">Freeze + Laser</span></div><div class="tcol-notes"><span class="sample">Show code on frozen screen</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">15-25 min</span></div><div class="tcol-act"><span class="sample">Record tutorial: explain each block</span></div><div class="tcol-tool"><span class="sample">REC + Markers</span></div><div class="tcol-notes"><span class="sample">Add markers at each step</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">25-35 min</span></div><div class="tcol-act"><span class="sample">Demo the micro:bit running the code</span></div><div class="tcol-tool"><span class="sample">Sensor overlay + Zoom</span></div><div class="tcol-notes"><span class="sample">Show LED animation live</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">35-40 min</span></div><div class="tcol-act"><span class="sample">Stop & review in Take Panel</span></div><div class="tcol-tool"><span class="sample">Thumbnail + Score</span></div><div class="tcol-notes"><span class="sample">Aim for 80%+ quality</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">40-45 min</span></div><div class="tcol-act"><span class="sample">Share with classmates via QR code</span></div><div class="tcol-tool"><span class="sample">QR Share</span></div><div class="tcol-notes"><span class="sample">Peer review</span></div></div>
+  </div>
+
+  <div class="callout">
+    <h4>NoorCast Features Used in This Lesson</h4>
+    <ul>
+      <li><span class="pill pg">Pilot Scene</span> micro:bit overlay with D-pad, LED grid, servo gauges</li>
+      <li><span class="pill pb">Freeze</span> pause the screen to annotate with the laser</li>
+      <li><span class="pill py">Markers</span> create chapters for easy navigation</li>
+      <li><span class="pill pg">Sensor Overlay</span> show accelerometer/temperature data live on canvas</li>
+      <li><span class="pill pb">Auto Thumbnail</span> generate a cover image from the best frame</li>
+      <li><span class="pill py">Quality Score</span> check audio levels, duration, scene variety</li>
+    </ul>
+  </div>
+
+  <div class="section"><div class="dot"></div> Assessment Rubric</div>
+  <div class="timeline">
+    <div class="trow thead">
+      <div class="tcol-time">Criteria</div>
+      <div class="tcol-act">Excellent (3)</div>
+      <div class="tcol-tool">Good (2)</div>
+      <div class="tcol-notes">Needs Work (1)</div>
+    </div>
+    <div class="trow"><div class="tcol-time"><span class="sample">Clarity</span></div><div class="tcol-act"><span class="sample">Steps are clear & logical</span></div><div class="tcol-tool"><span class="sample">Mostly clear</span></div><div class="tcol-notes"><span class="sample">Confusing order</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">Code explanation</span></div><div class="tcol-act"><span class="sample">Every block explained</span></div><div class="tcol-tool"><span class="sample">Some blocks skipped</span></div><div class="tcol-notes"><span class="sample">No explanation</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">Demo quality</span></div><div class="tcol-act"><span class="sample">Micro:bit shown clearly</span></div><div class="tcol-tool"><span class="sample">Partially visible</span></div><div class="tcol-notes"><span class="sample">Can't see demo</span></div></div>
+    <div class="trow"><div class="tcol-time"><span class="sample">Audio quality</span></div><div class="tcol-act"><span class="sample">Clear, confident voice</span></div><div class="tcol-tool"><span class="sample">A bit quiet</span></div><div class="tcol-notes"><span class="sample">Can't hear</span></div></div>
+  </div>
+
+  <div class="footer">
+    <span>NoorCast Sample Lesson &bull; Adapt for your classroom!</span>
+    <span>workshop-diy.org</span>
+  </div>
+</div>
+
+</body>
+</html>
