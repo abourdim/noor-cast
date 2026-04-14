@@ -20518,6 +20518,10 @@ function setupHotkeys() {
       }
       // else fall through — let the browser save-page action happen
     }
+    // v0.7.199: Ctrl/Cmd + K opens global search
+    if ((e.ctrlKey || e.metaKey) && k === 'k') {
+      e.preventDefault(); GlobalSearch.toggle(); return;
+    }
     // Ctrl/Cmd + Shift + D toggles the debug HUD
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'd') {
       DebugHud.toggle(); e.preventDefault(); return;
@@ -22215,6 +22219,7 @@ function wireEvents() {
   }
 
   // Trim wiring
+  $('tcSearchBtn')?.addEventListener('click', () => GlobalSearch.toggle());
   $('tcCaptionsBtn')?.addEventListener('click', (e) => {
     LiveCaptions.setEnabled(!LiveCaptions.enabled);
     // Start/stop recognition immediately (not just on record)
@@ -22446,3 +22451,166 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+/* v0.7.199: GlobalSearch — Spotlight-style search overlay.
+   Press / or Ctrl+K to open. Searches settings, skins, shortcuts,
+   scenes, tools, features. Click a result to navigate/apply. */
+const GlobalSearch = {
+  _el: null,
+  _items: null,
+
+  _buildIndex() {
+    if (this._items) return;
+    this._items = [];
+    const add = (cat, label, action) => this._items.push({ cat, label: label.toLowerCase(), display: label, action });
+
+    // Scenes
+    Scenes.presets.forEach((s, i) => {
+      const lbl = s.overrideName || t('scene_' + s.key) || s.key;
+      add('Scene', s.icon + ' ' + lbl, () => Scenes.switch(s.key));
+    });
+
+    // Skins
+    SourceSkins.list.forEach(k => {
+      if (k === 'none') return;
+      add('Skin', SourceSkins.labels[k] || k, () => {
+        const src = Engine.sources.find(s => s.id === Drag.selectedSourceId);
+        if (src) { src.skin = k; showToast('Skin: ' + k, 1200); }
+        else showToast('Select a source first', 1500);
+      });
+    });
+
+    // Backgrounds
+    BgPatterns.render && ['space','pixel','matrix','arcade','circuit','chalk','zellige','arabesque','riad','muqarnas','astrolabe','algebra','radar','sonar','oscilloscope'].forEach(k => {
+      add('Background', k.charAt(0).toUpperCase() + k.slice(1), () => { BgPatterns.setPattern(k); const el = $('tcBgPattern'); if (el) el.value = k; showToast('Background: ' + k, 1200); });
+    });
+
+    // Scene Themes
+    SceneThemes.presets.forEach(p => add('Theme', p.label, () => SceneThemes.apply(p.key)));
+
+    // Shortcuts
+    const shortcuts = [
+      ['R', 'Record / Stop'], ['P', 'Pause'], ['M', 'Marker'], ['S', 'Snapshot'],
+      ['L', 'Laser'], ['F', 'Freeze'], ['D', 'Draw'], ['T', 'Teleprompter'],
+      ['Z', 'Zoom'], ['G', 'Grid'], ['C', 'Captions'], ['?', 'Shortcuts'],
+      ['Shift+F', 'Focus mode'], ['Shift+R', 'Instant record'],
+      ['Ctrl+Z', 'Undo'], ['Ctrl+Y', 'Redo'], ['Ctrl+S', 'Download all'],
+    ];
+    shortcuts.forEach(([key, desc]) => add('Shortcut', key + ' — ' + desc, () => showToast(key + ': ' + desc, 2000)));
+
+    // Tools & Features
+    const tools = [
+      ['Laser pointer', () => Laser.toggle()],
+      ['Freeze screen', () => Recorder.toggleFreeze?.()],
+      ['Whiteboard draw', () => Whiteboard.toggle?.()],
+      ['Zoom', () => Zoom.toggle()],
+      ['Teleprompter', () => Teleprompter.toggle()],
+      ['Spotlight', () => Spotlight.toggle()],
+      ['Ripples', () => Ripples.toggle()],
+      ['Cursor trail', () => CursorTrail.toggle()],
+      ['Grid overlay', () => GridOverlay.toggle()],
+      ['Letterbox bars', () => Letterbox.toggle()],
+      ['Vignette', () => Vignette.setVisible(!Vignette.visible)],
+      ['Focus mode', () => FocusMode.toggle()],
+      ['Captions', () => { LiveCaptions.setEnabled(!LiveCaptions.enabled); if (LiveCaptions.enabled) LiveCaptions.start(); else LiveCaptions.stop(); }],
+      ['Voice commands', () => VoiceCommands.toggle()],
+      ['Smart scene switcher', () => SmartSceneSwitcher.toggle()],
+      ['AI co-host', () => AICohost.toggle()],
+      ['XP bar', () => XpBar.toggle()],
+      ['Sound pad', () => SoundPad.toggle()],
+      ['Background music', () => BgMusic.toggle()],
+      ['Voice FX', () => VoiceFx.toggle()],
+      ['Ghost replay', () => GhostReplay.toggle()],
+      ['Speed lines', () => SpeedLines.fire(800)],
+      ['Sensor overlay', () => { Sensors._overlayVisible = !Sensors._overlayVisible; Sensors._saveOverlayPos(); }],
+      ['Servo gauges', () => { ServoGauge.visible = !ServoGauge.visible; }],
+      ['Instant replay', () => InstantReplay.generate()],
+      ['Auto thumbnail', () => AutoThumbnail.generate()],
+      ['Export flyer', () => ExportFlyer.generate()],
+      ['Transcript', () => PostTranscript.generate()],
+      ['Quality score', () => TutorialScore.analyze()],
+      ['Screenshot share', () => QRShare.generate()],
+      ['Visual crop', () => { if (Drag.selectedSourceId) VisualCrop.start(Drag.selectedSourceId); else showToast('Select a source first', 1500); }],
+    ];
+    tools.forEach(([name, fn]) => add('Tool', name, fn));
+
+    // Settings panels
+    add('Settings', 'Open settings', () => { const p = $('settingsPanel'); if (p) { p.classList.add('open'); const ov = $('settingsOverlay'); if (ov) ov.classList.add('show'); } });
+    add('Settings', 'Language', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
+    add('Settings', 'Theme', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
+    add('Settings', 'Help / User guide', () => window.open('./guide.html', '_blank'));
+
+    // Co-host characters
+    AICohost.characters.forEach(c => add('Co-host', AICohost.charLabels[c] || c, () => { AICohost.character = c; AICohost._save(); showToast(AICohost.charLabels[c], 1200); }));
+
+    // Canvas pets
+    CanvasPets.types.forEach(t => add('Pet', CanvasPets.labels[t] || t, () => CanvasPets.toggle(t)));
+  },
+
+  open() {
+    if (this._el) return;
+    this._buildIndex();
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding-top:80px';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'width:min(500px,90vw);background:#1a1a1a;border:1px solid rgba(163,230,53,.3);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)';
+
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.placeholder = 'Search features, skins, shortcuts, settings...';
+    input.style.cssText = 'width:100%;padding:16px 20px;background:#111;border:none;border-bottom:1px solid rgba(163,230,53,.15);color:#fff;font-size:16px;font-family:inherit;outline:none';
+
+    const results = document.createElement('div');
+    results.style.cssText = 'max-height:400px;overflow-y:auto';
+
+    const renderResults = (query) => {
+      results.innerHTML = '';
+      if (!query || query.length < 1) {
+        results.innerHTML = '<div style="padding:20px;text-align:center;color:#4a5568;font-size:13px">Type to search...</div>';
+        return;
+      }
+      const q = query.toLowerCase();
+      const matches = this._items.filter(item => item.label.includes(q));
+      if (matches.length === 0) {
+        results.innerHTML = '<div style="padding:20px;text-align:center;color:#4a5568;font-size:13px">No results</div>';
+        return;
+      }
+      matches.slice(0, 20).forEach(item => {
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:10px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s';
+        row.addEventListener('mouseenter', () => { row.style.background = 'rgba(163,230,53,.08)'; });
+        row.addEventListener('mouseleave', () => { row.style.background = ''; });
+        const catColors = { Scene: '#a3e635', Skin: '#38bdf8', Background: '#c084fc', Theme: '#fbbf24', Shortcut: '#94a3b8', Tool: '#4ade80', Settings: '#f59e0b', 'Co-host': '#fb923c', Pet: '#e879f9' };
+        row.innerHTML = '<span style="font-size:.65rem;padding:2px 8px;border-radius:8px;background:' + (catColors[item.cat] || '#666') + '20;color:' + (catColors[item.cat] || '#666') + ';border:1px solid ' + (catColors[item.cat] || '#666') + '40;flex-shrink:0">' + item.cat + '</span><span style="color:#e2e8f0;font-size:14px">' + item.display + '</span>';
+        row.addEventListener('click', () => { this.close(); item.action(); });
+        results.appendChild(row);
+      });
+    };
+
+    input.addEventListener('input', () => renderResults(input.value));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.close();
+      if (e.key === 'Enter') {
+        const first = results.querySelector('div[style*="cursor:pointer"]');
+        if (first) first.click();
+      }
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) this.close(); });
+
+    box.appendChild(input);
+    box.appendChild(results);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    this._el = overlay;
+    renderResults('');
+    requestAnimationFrame(() => input.focus());
+  },
+
+  close() {
+    if (this._el) { this._el.remove(); this._el = null; }
+  },
+
+  toggle() { if (this._el) this.close(); else this.open(); },
+};
