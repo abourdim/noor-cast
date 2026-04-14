@@ -1375,6 +1375,36 @@
             <label class="sidebar-label" data-i18n="canvasBgColor">🎨 Couleur de fond du canvas</label>
             <input type="color" id="tcCanvasBgColor" value="#000000" />
           </div>
+          <div class="sidebar-group">
+            <label class="sidebar-label">🖼 Background pattern</label>
+            <select id="tcBgPattern" class="tc-select" style="width:100%;margin-bottom:6px">
+              <option value="none">— None —</option>
+              <optgroup label="🎮 Geeky">
+                <option value="space">🌌 Space</option>
+                <option value="pixel">🧱 Pixel Grid</option>
+                <option value="matrix">💻 Matrix</option>
+                <option value="arcade">🎮 Arcade</option>
+                <option value="circuit">🤖 Circuit Board</option>
+                <option value="chalk">🏫 Chalkboard</option>
+              </optgroup>
+              <optgroup label="🕌 Islamic">
+                <option value="zellige">🕌 Zellige</option>
+                <option value="arabesque">✨ Arabesque</option>
+                <option value="riad">🌙 Riad</option>
+                <option value="muqarnas">⭐ Muqarnas</option>
+              </optgroup>
+              <optgroup label="🔬 Islamic Science">
+                <option value="astrolabe">🔭 Astrolabe</option>
+                <option value="algebra">📐 Al-Khwarizmi</option>
+              </optgroup>
+              <optgroup label="📡 Radar">
+                <option value="radar">📡 Radar</option>
+                <option value="sonar">🎯 Sonar</option>
+                <option value="oscilloscope">📊 Oscilloscope</option>
+              </optgroup>
+            </select>
+            <label class="sidebar-label">Opacity <input type="range" id="tcBgPatternOpacity" min="5" max="100" value="30" style="width:120px;vertical-align:middle" /> <span id="tcBgPatternOpacityVal">30%</span></label>
+          </div>
           <!-- v0.7.20: reset controls + build timestamp -->
           <div class="sidebar-group">
             <label class="sidebar-label" data-i18n="setSecDanger">♻ Maintenance</label>

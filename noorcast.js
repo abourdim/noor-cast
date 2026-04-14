@@ -2296,6 +2296,447 @@ const CanvasBg = {
   },
 };
 
+/* v0.7.180: BgPatterns — decorative animated canvas backgrounds.
+   15 patterns across 4 categories. Pure canvas drawing, no images.
+   Rendered at user-configurable opacity over the solid CanvasBg color. */
+const BgPatterns = {
+  current: 'none',
+  opacity: 0.3,
+  _t0: Date.now(),
+
+  load() {
+    try {
+      const p = localStorage.getItem('tc-bg-pattern');
+      if (p) this.current = p;
+      const o = parseFloat(localStorage.getItem('tc-bg-pattern-opacity'));
+      if (!isNaN(o)) this.opacity = Math.max(0.05, Math.min(1, o));
+    } catch {}
+  },
+
+  setPattern(v) {
+    this.current = v || 'none';
+    try { localStorage.setItem('tc-bg-pattern', this.current); } catch {}
+  },
+
+  setOpacity(v) {
+    this.opacity = Math.max(0.05, Math.min(1, v));
+    try { localStorage.setItem('tc-bg-pattern-opacity', String(this.opacity)); } catch {}
+  },
+
+  render(ctx, W, H) {
+    if (this.current === 'none') return;
+    const fn = this['_' + this.current];
+    if (!fn) return;
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    fn.call(this, ctx, W, H, (Date.now() - this._t0) / 1000);
+    ctx.restore();
+  },
+
+  // ═══ GEEKY ═══
+
+  _space(ctx, W, H, t) {
+    // Twinkling stars
+    ctx.fillStyle = '#0a0a2e';
+    ctx.fillRect(0, 0, W, H);
+    const seed = 42;
+    for (let i = 0; i < 120; i++) {
+      const sx = ((i * 7919 + seed) % W);
+      const sy = ((i * 6271 + seed) % H);
+      const r = ((i * 3571) % 3) + 0.5;
+      const twinkle = 0.4 + 0.6 * Math.sin(t * 2 + i * 0.7);
+      ctx.globalAlpha = this.opacity * twinkle;
+      ctx.fillStyle = i % 5 === 0 ? '#fef08a' : '#ffffff';
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _pixel(ctx, W, H) {
+    // 8-bit pixel grid
+    const sz = 24;
+    ctx.strokeStyle = 'rgba(163,230,53,.3)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += sz) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sz) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Highlight every 4th cell
+    ctx.fillStyle = 'rgba(163,230,53,.04)';
+    for (let x = 0; x < W; x += sz * 4) {
+      for (let y = 0; y < H; y += sz * 4) {
+        ctx.fillRect(x, y, sz, sz);
+      }
+    }
+  },
+
+  _matrix(ctx, W, H, t) {
+    // Falling green characters
+    const cols = Math.floor(W / 18);
+    ctx.font = '14px ui-monospace, monospace';
+    ctx.fillStyle = '#0f0';
+    const chars = 'ﺃﺏﺕﺙﺝﺡﺥﺩﺫﺭﺯ01ABCDEF{}[]<>/\\';
+    for (let c = 0; c < cols; c++) {
+      const speed = 40 + (c * 17) % 60;
+      const yOff = ((t * speed + c * 137) % (H + 200)) - 100;
+      for (let r = 0; r < 8; r++) {
+        const cy = yOff - r * 18;
+        if (cy < -18 || cy > H) continue;
+        ctx.globalAlpha = this.opacity * (1 - r / 8) * 0.7;
+        const ch = chars[(c * 7 + r * 13 + Math.floor(t * 3)) % chars.length];
+        ctx.fillText(ch, c * 18 + 2, cy);
+      }
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _arcade(ctx, W, H) {
+    // Neon grid (Tron-style)
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 0.8;
+    const sp = 60;
+    for (let x = 0; x < W; x += sp) {
+      ctx.globalAlpha = this.opacity * 0.3;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sp) {
+      ctx.globalAlpha = this.opacity * 0.3;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Brighter lines every 4
+    ctx.globalAlpha = this.opacity * 0.7;
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x < W; x += sp * 4) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += sp * 4) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _circuit(ctx, W, H) {
+    // PCB traces
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 1;
+    const seed = 31;
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 5519 + seed) % W;
+      const sy = (i * 3733 + seed) % H;
+      const horiz = i % 2 === 0;
+      const len = 40 + (i * 71) % 120;
+      ctx.globalAlpha = this.opacity * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      if (horiz) ctx.lineTo(sx + len, sy);
+      else ctx.lineTo(sx, sy + len);
+      ctx.stroke();
+      // Solder pad at end
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      const ex = horiz ? sx + len : sx;
+      const ey = horiz ? sy : sy + len;
+      ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // IC chip occasionally
+      if (i % 7 === 0) {
+        ctx.strokeRect(sx - 10, sy - 6, 20, 12);
+      }
+    }
+    ctx.globalAlpha = this.opacity;
+  },
+
+  _chalk(ctx, W, H) {
+    // Chalkboard
+    ctx.fillStyle = '#1a3a1a';
+    ctx.fillRect(0, 0, W, H);
+    // Chalk dust specks
+    ctx.fillStyle = 'rgba(255,255,255,.15)';
+    for (let i = 0; i < 200; i++) {
+      const cx = (i * 8377) % W;
+      const cy = (i * 5471) % H;
+      const r = ((i * 37) % 3) * 0.5 + 0.3;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // Faint ruled lines
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 1;
+    for (let y = 60; y < H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(W - 40, y); ctx.stroke();
+    }
+  },
+
+  // ═══ ISLAMIC ═══
+
+  _zellige(ctx, W, H) {
+    // Star-and-cross tile pattern
+    const sz = 50;
+    ctx.lineWidth = 1.2;
+    for (let gx = -sz; gx < W + sz; gx += sz) {
+      for (let gy = -sz; gy < H + sz; gy += sz) {
+        const cx = gx + sz / 2, cy = gy + sz / 2;
+        // 8-point star
+        ctx.strokeStyle = 'rgba(56,189,248,.5)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+          const r1 = sz * 0.4, r2 = sz * 0.2;
+          const r = i % 2 === 0 ? r1 : r2;
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        // Cross fill
+        ctx.fillStyle = 'rgba(212,160,60,.08)';
+        ctx.fill();
+      }
+    }
+  },
+
+  _arabesque(ctx, W, H) {
+    // Interlocking geometric curves
+    const sz = 80;
+    ctx.strokeStyle = 'rgba(212,160,60,.5)';
+    ctx.lineWidth = 1.5;
+    for (let gx = 0; gx < W + sz; gx += sz) {
+      for (let gy = 0; gy < H + sz; gy += sz) {
+        const cx = gx, cy = gy;
+        // Four interlocking arcs
+        for (let q = 0; q < 4; q++) {
+          const a = (q / 4) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(a) * sz * 0.3, cy + Math.sin(a) * sz * 0.3, sz * 0.25, a - 0.8, a + 0.8);
+          ctx.stroke();
+        }
+        // Center dot
+        ctx.fillStyle = 'rgba(212,160,60,.2)';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  },
+
+  _riad(ctx, W, H) {
+    // Warm arches pattern
+    const archW = 80, archH = 100;
+    ctx.strokeStyle = 'rgba(194,112,62,.5)';
+    ctx.lineWidth = 2;
+    for (let gx = 0; gx < W + archW; gx += archW) {
+      for (let gy = 0; gy < H + archH; gy += archH) {
+        const offset = (Math.floor(gy / archH) % 2) * archW / 2;
+        const ax = gx + offset;
+        // Pointed arch
+        ctx.beginPath();
+        ctx.moveTo(ax, gy + archH);
+        ctx.lineTo(ax, gy + archH * 0.4);
+        ctx.quadraticCurveTo(ax, gy, ax + archW / 2, gy);
+        ctx.quadraticCurveTo(ax + archW, gy, ax + archW, gy + archH * 0.4);
+        ctx.lineTo(ax + archW, gy + archH);
+        ctx.stroke();
+        // Lantern glow at top
+        ctx.fillStyle = 'rgba(251,191,36,.06)';
+        ctx.beginPath(); ctx.arc(ax + archW / 2, gy + 10, 8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  },
+
+  _muqarnas(ctx, W, H) {
+    // Octagonal tessellation
+    const sz = 40;
+    ctx.strokeStyle = 'rgba(14,124,107,.5)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W + sz; gx += sz) {
+      for (let gy = 0; gy < H + sz; gy += sz) {
+        const cx = gx + sz / 2, cy = gy + sz / 2;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+          const px = cx + Math.cos(a) * sz * 0.45;
+          const py = cy + Math.sin(a) * sz * 0.45;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(14,124,107,.04)';
+        ctx.fill();
+      }
+    }
+  },
+
+  // ═══ ISLAMIC SCIENCE ═══
+
+  _astrolabe(ctx, W, H) {
+    // Concentric circles with degree marks + star pointers
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.42;
+    ctx.strokeStyle = 'rgba(212,160,60,.4)';
+    ctx.lineWidth = 1;
+    // Concentric rings
+    for (let i = 1; i <= 5; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, maxR * (i / 5), 0, Math.PI * 2); ctx.stroke();
+    }
+    // Degree ticks
+    ctx.lineWidth = 0.5;
+    for (let a = 0; a < 360; a += 10) {
+      const rad = (a * Math.PI) / 180;
+      const inner = a % 30 === 0 ? maxR * 0.75 : maxR * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(rad) * inner, cy + Math.sin(rad) * inner);
+      ctx.lineTo(cx + Math.cos(rad) * maxR, cy + Math.sin(rad) * maxR);
+      ctx.stroke();
+    }
+    // Star pointers
+    ctx.fillStyle = 'rgba(212,160,60,.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(212,160,60,.6)';
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + 0.3;
+      const r = maxR * (0.3 + (i * 0.12));
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      // Pointer line
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+    }
+    // Center brass hub
+    ctx.fillStyle = 'rgba(212,160,60,.15)';
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(212,160,60,.5)';
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
+  },
+
+  _algebra(ctx, W, H) {
+    // Floating algebra equations (gold chalk)
+    ctx.font = '16px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(212,160,60,.4)';
+    const eqs = [
+      'x² + y² = r²', 'a² + b² = c²', 'الخوارزمي', 'sin θ = y/r',
+      'f(x) = ax² + bx + c', '∑ n = n(n+1)/2', 'π ≈ 3.14159',
+      'φ = (1+√5)/2', '∫ dx = x + C', 'Δ = b²−4ac', 'الجبر',
+    ];
+    for (let i = 0; i < eqs.length; i++) {
+      const ex = (i * 4519 + 31) % (W - 200) + 20;
+      const ey = (i * 3137 + 31) % (H - 40) + 30;
+      const rot = ((i * 17) % 20 - 10) * Math.PI / 180;
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(rot);
+      ctx.fillText(eqs[i], 0, 0);
+      ctx.restore();
+    }
+    // Geometric proof: triangle
+    ctx.strokeStyle = 'rgba(212,160,60,.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.7, H * 0.6);
+    ctx.lineTo(W * 0.85, H * 0.85);
+    ctx.lineTo(W * 0.55, H * 0.85);
+    ctx.closePath();
+    ctx.stroke();
+    // Right angle mark
+    ctx.strokeRect(W * 0.55 + 8, H * 0.85 - 8, 8, 8);
+  },
+
+  // ═══ RADAR ═══
+
+  _radar(ctx, W, H, t) {
+    // Rotating sweep on circular grid
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.4;
+    // Grid rings
+    ctx.strokeStyle = 'rgba(74,222,128,.3)';
+    ctx.lineWidth = 0.8;
+    for (let i = 1; i <= 4; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, maxR * (i / 4), 0, Math.PI * 2); ctx.stroke();
+    }
+    // Cross lines
+    ctx.beginPath(); ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR); ctx.stroke();
+    // Sweep line (rotating)
+    const angle = (t * 0.8) % (Math.PI * 2);
+    ctx.strokeStyle = 'rgba(74,222,128,.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+    ctx.stroke();
+    // Sweep fade trail
+    const grad = ctx.createConicGradient(angle - 0.5, cx, cy);
+    grad.addColorStop(0, 'rgba(74,222,128,0)');
+    grad.addColorStop(0.08, 'rgba(74,222,128,.15)');
+    grad.addColorStop(0.1, 'rgba(74,222,128,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2); ctx.fill();
+    // Blips
+    ctx.fillStyle = 'rgba(74,222,128,.8)';
+    for (let i = 0; i < 5; i++) {
+      const ba = ((i * 2.1 + 0.5) % (Math.PI * 2));
+      const br = maxR * (0.25 + (i * 0.15));
+      const age = ((angle - ba + Math.PI * 4) % (Math.PI * 2)) / (Math.PI * 2);
+      if (age < 0.3) {
+        ctx.globalAlpha = this.opacity * (1 - age / 0.3);
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(ba) * br, cy + Math.sin(ba) * br, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = this.opacity;
+      }
+    }
+  },
+
+  _sonar(ctx, W, H, t) {
+    // Concentric pulsing rings
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.45;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) {
+      const phase = ((t * 0.6 + i * 0.25) % 1);
+      const r = phase * maxR;
+      ctx.globalAlpha = this.opacity * (1 - phase) * 0.7;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    // Center dot
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+  },
+
+  _oscilloscope(ctx, W, H, t) {
+    // Green waveform on dark grid
+    const gridSp = 40;
+    ctx.strokeStyle = 'rgba(74,222,128,.15)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += gridSp) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gridSp) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Waveform
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(74,222,128,.5)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    const cy = H / 2;
+    for (let x = 0; x < W; x += 2) {
+      const wave = Math.sin((x / W) * Math.PI * 6 + t * 3) * H * 0.2
+        + Math.sin((x / W) * Math.PI * 14 + t * 5) * H * 0.05;
+      if (x === 0) ctx.moveTo(x, cy + wave);
+      else ctx.lineTo(x, cy + wave);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Center line
+    ctx.strokeStyle = 'rgba(74,222,128,.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  },
+};
+
 const logHistory = [];
 function log(msg, type = 'info') {
   const c = $('logContainer'); if (!c) return;
@@ -2908,6 +3349,8 @@ const Engine = {
     // background (v0.7.143: user-configurable canvas background color)
     ctx.fillStyle = CanvasBg.current;
     ctx.fillRect(0, 0, width, height);
+    // v0.7.180: decorative background pattern
+    BgPatterns.render(ctx, width, height);
     // v0.7.6: source selection chrome buffer — drawn after sources so it's on top
     this._srcChrome = null;
 
@@ -15864,6 +16307,22 @@ function wireEvents() {
     cbg.value = CanvasBg.current;
     cbg.addEventListener('input', (e) => CanvasBg.set(e.target.value));
   }
+  // v0.7.180: background pattern picker + opacity
+  const bgpSel = $('tcBgPattern');
+  if (bgpSel) {
+    bgpSel.value = BgPatterns.current;
+    bgpSel.addEventListener('change', (e) => BgPatterns.setPattern(e.target.value));
+  }
+  const bgpOp = $('tcBgPatternOpacity');
+  const bgpOpVal = $('tcBgPatternOpacityVal');
+  if (bgpOp) {
+    bgpOp.value = Math.round(BgPatterns.opacity * 100);
+    if (bgpOpVal) bgpOpVal.textContent = bgpOp.value + '%';
+    bgpOp.addEventListener('input', (e) => {
+      BgPatterns.setOpacity(parseInt(e.target.value) / 100);
+      if (bgpOpVal) bgpOpVal.textContent = e.target.value + '%';
+    });
+  }
 
   // v0.7.19: Maintenance — reset badges + clear cache + build meta
   $('tcResetBadgesBtn')?.addEventListener('click', () => {
@@ -17038,6 +17497,7 @@ async function init() {
   CustomAccent.load();
   // v0.7.143: load persisted canvas background color
   CanvasBg.load();
+  BgPatterns.load();
 
   Sfx.load();
   Jingle.load();
