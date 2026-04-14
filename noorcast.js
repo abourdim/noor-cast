@@ -13096,6 +13096,10 @@ const SourceToolbar = {
     alignBtn('tcSrcAlignBottom',  s => { s.y = cH() - s.h; });
     alignBtn('tcSrcAlignCenterH', s => { s.x = (cW() - s.w) / 2; });
     alignBtn('tcSrcAlignCenterV', s => { s.y = (cH() - s.h) / 2; });
+    $('tcSrcCropBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (Drag.selectedSourceId != null) VisualCrop.start(Drag.selectedSourceId);
+    });
     $('tcSrcToolbarDel')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const s = sel(); if (!s) return;
@@ -19142,6 +19146,151 @@ const AICohost = {
     }
 
     ctx.restore();
+  },
+};
+
+/* v0.7.190: VisualCrop — interactive crop rectangle on the canvas.
+   Click ✂️ on a selected source → drag a rectangle to define the crop
+   region. Press Enter to apply, Escape to cancel. */
+const VisualCrop = {
+  active: false,
+  _sourceId: null,
+  _el: null,          // HTML overlay div
+  _startX: 0, _startY: 0,
+  _rectX: 0, _rectY: 0, _rectW: 0, _rectH: 0,
+  _dragging: false,
+  _phase: 'draw',     // 'draw' (initial drag) or 'adjust' (move/resize)
+
+  start(sourceId) {
+    const src = Engine.sources.find(s => s.id === sourceId);
+    if (!src) return;
+    this._sourceId = sourceId;
+    this.active = true;
+    this._phase = 'draw';
+
+    // Create overlay
+    if (this._el) this._el.remove();
+    const stage = $('tcStage');
+    if (!stage) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tc-crop-overlay';
+    overlay.style.cssText = 'position:absolute;inset:0;z-index:100;cursor:crosshair';
+    overlay.innerHTML = `
+      <div class="tc-crop-hint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font:bold 14px Righteous,sans-serif;text-align:center;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.8)">
+        ✂️ Draw a rectangle to crop<br><span style="font-size:11px;opacity:.6">Enter = apply · Escape = cancel</span>
+      </div>
+      <div class="tc-crop-rect" style="position:absolute;border:2px dashed #a3e635;display:none;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.4)"></div>
+    `;
+    stage.appendChild(overlay);
+    this._el = overlay;
+
+    const rect = overlay.querySelector('.tc-crop-rect');
+    const hint = overlay.querySelector('.tc-crop-hint');
+    const stageRect = stage.getBoundingClientRect();
+
+    overlay.addEventListener('pointerdown', (e) => {
+      if (this._phase !== 'draw') return;
+      e.preventDefault();
+      this._dragging = true;
+      this._startX = e.clientX - stageRect.left;
+      this._startY = e.clientY - stageRect.top;
+      rect.style.display = 'block';
+      hint.style.display = 'none';
+    });
+
+    overlay.addEventListener('pointermove', (e) => {
+      if (!this._dragging) return;
+      const cx = e.clientX - stageRect.left;
+      const cy = e.clientY - stageRect.top;
+      const x = Math.min(this._startX, cx);
+      const y = Math.min(this._startY, cy);
+      const w = Math.abs(cx - this._startX);
+      const h = Math.abs(cy - this._startY);
+      rect.style.left = x + 'px';
+      rect.style.top = y + 'px';
+      rect.style.width = w + 'px';
+      rect.style.height = h + 'px';
+      this._rectX = x; this._rectY = y; this._rectW = w; this._rectH = h;
+    });
+
+    overlay.addEventListener('pointerup', () => {
+      if (!this._dragging) return;
+      this._dragging = false;
+      if (this._rectW < 10 || this._rectH < 10) {
+        // Too small — cancel
+        this.cancel();
+        return;
+      }
+      this._phase = 'adjust';
+      overlay.style.cursor = 'default';
+      // Show apply hint
+      const applyHint = document.createElement('div');
+      applyHint.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#a3e635;padding:8px 16px;border-radius:8px;font:bold 12px Righteous,sans-serif;pointer-events:none';
+      applyHint.textContent = '✂️ Press Enter to crop · Escape to cancel';
+      overlay.appendChild(applyHint);
+    });
+
+    // Keyboard: Enter = apply, Escape = cancel
+    this._keyHandler = (e) => {
+      if (e.key === 'Enter' && this._rectW > 10) {
+        e.preventDefault();
+        this.apply();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this.cancel();
+      }
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  },
+
+  apply() {
+    const src = Engine.sources.find(s => s.id === this._sourceId);
+    const stage = $('tcStage');
+    if (!src || !stage) { this.cancel(); return; }
+
+    const stageRect = stage.getBoundingClientRect();
+    const stageW = stageRect.width;
+    const stageH = stageRect.height;
+
+    // Convert pixel rect to 0-1 fractions relative to the source
+    // First convert stage pixels to canvas coords
+    const canvasX = (this._rectX / stageW) * Engine.width;
+    const canvasY = (this._rectY / stageH) * Engine.height;
+    const canvasW = (this._rectW / stageW) * Engine.width;
+    const canvasH = (this._rectH / stageH) * Engine.height;
+
+    // Compute crop fractions relative to the source bounds
+    const relLeft = Math.max(0, (canvasX - src.x) / src.w);
+    const relTop = Math.max(0, (canvasY - src.y) / src.h);
+    const relRight = Math.max(0, 1 - (canvasX + canvasW - src.x) / src.w);
+    const relBottom = Math.max(0, 1 - (canvasY + canvasH - src.y) / src.h);
+
+    // Clamp to valid range
+    src.cropLeft = Math.max(0, Math.min(0.4, relLeft));
+    src.cropTop = Math.max(0, Math.min(0.4, relTop));
+    src.cropRight = Math.max(0, Math.min(0.4, relRight));
+    src.cropBottom = Math.max(0, Math.min(0.4, relBottom));
+
+    log(`✂️ Crop applied: T${(src.cropTop * 100).toFixed(0)}% B${(src.cropBottom * 100).toFixed(0)}% L${(src.cropLeft * 100).toFixed(0)}% R${(src.cropRight * 100).toFixed(0)}%`, 'success');
+    showToast('✂️ Crop applied!', 1500);
+
+    this._cleanup();
+    SceneAutoSave.trigger();
+  },
+
+  cancel() {
+    showToast('✂️ Crop cancelled', 1200);
+    this._cleanup();
+  },
+
+  _cleanup() {
+    this.active = false;
+    this._sourceId = null;
+    this._dragging = false;
+    this._rectW = 0; this._rectH = 0;
+    if (this._el) { this._el.remove(); this._el = null; }
+    if (this._keyHandler) { document.removeEventListener('keydown', this._keyHandler); this._keyHandler = null; }
   },
 };
 
