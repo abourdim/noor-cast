@@ -16621,7 +16621,7 @@ const Sensors = {
   // v0.7.171: parse all incoming UART lines (unified protocol)
   _handleUartLine(line) {
     if (!line || line.startsWith('ECHO:') || line.startsWith('LOG:')) return;
-    log('← ' + line, 'info');
+    log('← ' + line, 'warn');
     this.values = this.values || {};
     // ACC:x,y,z (bit-playground format) or A:x,y,z (NoorCast format)
     if (line.startsWith('ACC:') || line.startsWith('A:')) {
@@ -16763,7 +16763,7 @@ const Sensors = {
   async sendUart(str) {
     // v0.7.186: auto-record for robot choreography
     RobotChoreo.recordCommand(str);
-    log('→ ' + str, 'info');
+    log('→ ' + str, 'success');
     if (!this._uartTx) return;
     this._uartQueue.push(str);
     if (this._uartBusy) return;
