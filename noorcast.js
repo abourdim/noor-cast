@@ -138,7 +138,7 @@ const LANG = {
     stageAspect: '📐 Format de la scène',
     stageAspectHint: "Ne change pas pendant un enregistrement",
     aspectLockedDuringRec: '⚠ Impossible de changer pendant un enregistrement',
-    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', trim: 'Couper', trimTitle: 'Couper le tuto',
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', transcript: '📝 Transcript', trim: 'Couper', trimTitle: 'Couper le tuto',
     trimIn: 'Début', trimOut: 'Fin', trimDuration: 'Durée finale :',
     trimPreviewIn: '▶ début', trimPreviewOut: '▶ fin',
     trimEncoding: 'Encodage en cours…',
@@ -858,7 +858,7 @@ const LANG = {
     stageAspect: '📐 Stage format',
     stageAspectHint: "Doesn't change during recording",
     aspectLockedDuringRec: "⚠ Can't change during recording",
-    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', trim: 'Trim', trimTitle: 'Trim the tutorial',
+    instantReplay: '⚡ Instant Replay', autoThumbnail: '📸 Auto Thumbnail', transcript: '📝 Transcript', trim: 'Trim', trimTitle: 'Trim the tutorial',
     trimIn: 'Start', trimOut: 'End', trimDuration: 'Final duration:',
     trimPreviewIn: '▶ start', trimPreviewOut: '▶ end',
     trimEncoding: 'Encoding…',
@@ -1567,7 +1567,7 @@ const LANG = {
     stageAspect: '📐 صيغة المسرح',
     stageAspectHint: 'لا يتغير أثناء التسجيل',
     aspectLockedDuringRec: '⚠ لا يمكن التغيير أثناء التسجيل',
-    instantReplay: '⚡ إعادة فورية', autoThumbnail: '📸 صورة مصغرة', trim: 'قص', trimTitle: 'قص الدرس',
+    instantReplay: '⚡ إعادة فورية', autoThumbnail: '📸 صورة مصغرة', transcript: '📝 نص مكتوب', trim: 'قص', trimTitle: 'قص الدرس',
     trimIn: 'البداية', trimOut: 'النهاية', trimDuration: 'المدة النهائية:',
     trimPreviewIn: '▶ البداية', trimPreviewOut: '▶ النهاية',
     trimEncoding: 'جارٍ الترميز…',
@@ -15513,40 +15513,98 @@ const LiveCaptions = {
     return new Blob([srt], { type: 'text/srt' });
   },
 
-  // Called from Engine.render() each frame to draw the current caption
-  // at the bottom of the canvas. Fades out 3s after last final result.
+  // v0.7.187: improved render — karaoke-style with word highlighting,
+  // bigger text, gradient bg, accent-colored current word
   render(ctx, W, H) {
     if (!this.running || !this.current) return;
     const age = performance.now() - this._lastFinalAt;
-    const alpha = age < 3000 ? 1 : Math.max(0, 1 - (age - 3000) / 500);
+    const alpha = age < 4000 ? 1 : Math.max(0, 1 - (age - 4000) / 600);
     if (alpha <= 0) return;
+
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = '800 54px Righteous, Arial, sans-serif';
+    const fontSize = 60;
+    ctx.font = `800 ${fontSize}px Righteous, Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    // Measure + draw a black rounded-rect background with padding
-    const metrics = ctx.measureText(this.current);
-    const padX = 28, padY = 16;
-    const boxW = Math.min(W - 80, metrics.width + padX * 2);
-    const boxH = 54 * 1.2 + padY * 2;
+
+    // Word-wrap if too long
+    const maxW = W - 100;
+    const words = this.current.split(' ');
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    if (lines.length === 0) { ctx.restore(); return; }
+
+    const lineH = fontSize * 1.25;
+    const padX = 30, padY = 18;
+    const totalH = lines.length * lineH + padY * 2;
+    const boxW = Math.min(W - 60, Math.max(...lines.map(l => ctx.measureText(l).width)) + padX * 2);
     const boxX = (W - boxW) / 2;
-    const boxY = H - boxH - 40;
-    ctx.fillStyle = 'rgba(0, 0, 0, .8)';
-    ctx.beginPath();
-    const r = 14;
-    ctx.moveTo(boxX + r, boxY);
-    ctx.lineTo(boxX + boxW - r, boxY); ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
-    ctx.lineTo(boxX + boxW, boxY + boxH - r); ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
-    ctx.lineTo(boxX + r, boxY + boxH); ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
-    ctx.lineTo(boxX, boxY + r); ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
-    ctx.fill();
-    // Text
-    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-    ctx.strokeText(this.current, W / 2, boxY + boxH - padY);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(this.current, W / 2, boxY + boxH - padY);
+    const boxY = H - totalH - 30;
+
+    // Background — gradient pill
+    const bgGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + totalH);
+    bgGrad.addColorStop(0, 'rgba(0,0,0,.85)');
+    bgGrad.addColorStop(1, 'rgba(10,10,10,.9)');
+    ctx.fillStyle = bgGrad;
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, totalH, 16); ctx.fill();
+
+    // Accent border (bottom edge)
+    ctx.strokeStyle = 'rgba(163,230,53,.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, totalH, 16); ctx.stroke();
+
+    // Draw lines
+    lines.forEach((l, i) => {
+      const ly = boxY + padY + (i + 1) * lineH - fontSize * 0.15;
+      // Outline
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.7)';
+      ctx.strokeText(l, W / 2, ly);
+      // Fill — last word highlighted in accent
+      if (i === lines.length - 1 && l.includes(' ')) {
+        const lastSpace = l.lastIndexOf(' ');
+        const before = l.slice(0, lastSpace);
+        const last = l.slice(lastSpace);
+        // Measure to position colored part
+        const fullW = ctx.measureText(l).width;
+        const beforeW = ctx.measureText(before).width;
+        const startX = W / 2 - fullW / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(before, startX, ly);
+        ctx.fillStyle = '#a3e635'; // accent highlight on last word
+        ctx.fillText(last, startX + beforeW, ly);
+        ctx.textAlign = 'center';
+      } else {
+        ctx.fillStyle = '#fff';
+        ctx.fillText(l, W / 2, ly);
+      }
+    });
+
+    // Mic icon pulse (left of caption box)
+    const micPulse = 0.6 + Math.sin(performance.now() / 200) * 0.4;
+    ctx.globalAlpha = alpha * micPulse;
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎤', boxX - 18, boxY + totalH / 2 + 6);
+
     ctx.restore();
+  },
+
+  // v0.7.187: get full transcript as plain text
+  getTranscript() {
+    if (!this._srtEntries.length) return '';
+    return this._srtEntries.map(e => e.text).join(' ');
   },
 };
 
@@ -18251,6 +18309,95 @@ const AutoThumbnail = {
   },
 };
 
+/* v0.7.187: PostTranscript — after recording, re-analyze audio with
+   SpeechRecognition to generate a full text transcript. Downloads as .txt. */
+const PostTranscript = {
+  generating: false,
+
+  async generate() {
+    if (this.generating) return;
+    // First check if we have SRT entries from live captions
+    const liveTrans = LiveCaptions.getTranscript();
+    if (liveTrans && liveTrans.length > 20) {
+      this._download(liveTrans);
+      return;
+    }
+
+    // Otherwise, try to transcribe from the recorded blob
+    if (!Recorder._lastBlob) { showToast('No recording yet!', 2000); return; }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { showToast('❌ Speech recognition not supported', 2500); return; }
+
+    this.generating = true;
+    showToast('📝 Generating transcript...', 3000);
+
+    try {
+      // Play the recording through a hidden audio element and feed to SR
+      const audio = document.createElement('audio');
+      audio.src = URL.createObjectURL(Recorder._lastBlob);
+      audio.muted = false;
+      audio.volume = 0.01; // near silent to avoid echo
+
+      const rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = false;
+      const lang = (typeof currentLang === 'string' && currentLang) || 'en';
+      rec.lang = lang === 'fr' ? 'fr-FR' : lang === 'ar' ? 'ar-SA' : 'en-US';
+
+      const parts = [];
+      rec.onresult = (ev) => {
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) parts.push(ev.results[i][0].transcript.trim());
+        }
+      };
+
+      rec.onerror = () => {};
+      rec.onend = () => {
+        audio.pause();
+        URL.revokeObjectURL(audio.src);
+        this.generating = false;
+        if (parts.length > 0) {
+          this._download(parts.join(' '));
+        } else {
+          showToast('📝 No speech detected', 2500);
+        }
+      };
+
+      // Start recognition + play audio
+      rec.start();
+      audio.play();
+
+      // Stop after audio ends or 2 minutes max
+      const maxDur = Math.min((audio.duration || 120) * 1000, 120000);
+      audio.onended = () => { try { rec.stop(); } catch {} };
+      setTimeout(() => {
+        try { rec.stop(); } catch {}
+        try { audio.pause(); } catch {}
+      }, maxDur + 2000);
+
+    } catch (e) {
+      log('PostTranscript error: ' + e.message, 'error');
+      showToast('❌ Transcript failed', 2000);
+      this.generating = false;
+    }
+  },
+
+  _download(text) {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `noorcast-transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    showToast(`📝 Transcript ready! (${text.split(' ').length} words)`, 3000);
+    this.generating = false;
+  },
+};
+
 /* v0.7.186: LessonGuide — enhanced template step display on canvas.
    Shows current step name + progress bar + auto-advance timer. */
 const LessonGuide = {
@@ -20528,6 +20675,7 @@ function wireEvents() {
   // Trim wiring
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
+  $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
   $('tcTrimClose').addEventListener('click', () => Trim.close());
   $('tcTrimCancelBtn').addEventListener('click', () => Trim.close());
