@@ -19965,6 +19965,167 @@ const CanvasPets = {
     if (Math.sin(t * 0.5) > 0.95) { ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2); ctx.fill(); }
   },
 };
+
+/* v0.7.198: ExportFlyer — generates an A4 flyer PNG from the current canvas
+   with NoorCast branding, workshop-diy.org logo, custom title, and metadata. */
+const ExportFlyer = {
+  async generate() {
+    const srcCanvas = Engine.canvas;
+    if (!srcCanvas) { showToast('No canvas!', 2000); return; }
+
+    // Prompt for title
+    const title = prompt(t('flyerTitle') || 'Flyer title:', Recorder._lastTitle || 'My Tutorial') || 'My Tutorial';
+
+    showToast('📄 Generating flyer...', 2000);
+
+    const W = 794, H = 1123; // A4 at 96dpi
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#071407';
+    ctx.fillRect(0, 0, W, H);
+
+    // Top accent bar
+    const topGrad = ctx.createLinearGradient(0, 0, W, 0);
+    topGrad.addColorStop(0, '#65a30d'); topGrad.addColorStop(0.5, '#a3e635'); topGrad.addColorStop(1, '#65a30d');
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, W, 8);
+
+    // NoorCast title
+    ctx.fillStyle = '#a3e635';
+    ctx.font = 'bold 48px "Righteous", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(163,230,53,.3)'; ctx.shadowBlur = 20;
+    ctx.fillText('NoorCast', W / 2, 60);
+    ctx.shadowBlur = 0;
+
+    // Arabic name
+    ctx.fillStyle = '#d4a03c';
+    ctx.font = '24px "Tajawal", sans-serif';
+    ctx.fillText('\u0646\u064f\u0648\u0631\u0652\u0643\u064e\u0627\u0633\u0652\u062a', W / 2, 90);
+
+    // Slogan
+    ctx.fillStyle = '#fff';
+    ctx.font = 'italic bold 18px "Righteous", sans-serif';
+    ctx.fillText('\uD83C\uDFAC Lumi\u00e8re, cam\u00e9ra, ROBOT !', W / 2, 120);
+
+    // Separator
+    const sepGrad = ctx.createLinearGradient(40, 0, W - 40, 0);
+    sepGrad.addColorStop(0, 'transparent'); sepGrad.addColorStop(0.5, '#a3e635'); sepGrad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = sepGrad; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, 135); ctx.lineTo(W - 40, 135); ctx.stroke();
+
+    // Custom title
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 28px "Righteous", sans-serif';
+    ctx.fillText(title, W / 2, 172);
+
+    // Canvas screenshot — centered with border
+    const screenY = 195;
+    const screenW = W - 80;
+    const screenH = Math.round(screenW * (srcCanvas.height / srcCanvas.width));
+    const screenX = 40;
+
+    // Dark inset + border
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.roundRect(screenX - 4, screenY - 4, screenW + 8, screenH + 8, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(163,230,53,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(screenX - 4, screenY - 4, screenW + 8, screenH + 8, 8); ctx.stroke();
+
+    // Draw the canvas
+    ctx.drawImage(srcCanvas, screenX, screenY, screenW, screenH);
+
+    // Corner brackets on screenshot
+    const bk = 20, pad = screenX - 8;
+    ctx.strokeStyle = 'rgba(163,230,53,.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pad, screenY + bk); ctx.lineTo(pad, screenY - 4); ctx.lineTo(pad + bk, screenY - 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W - pad - bk, screenY - 4); ctx.lineTo(W - pad, screenY - 4); ctx.lineTo(W - pad, screenY + bk); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, screenY + screenH - bk + 4); ctx.lineTo(pad, screenY + screenH + 4); ctx.lineTo(pad + bk, screenY + screenH + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W - pad - bk, screenY + screenH + 4); ctx.lineTo(W - pad, screenY + screenH + 4); ctx.lineTo(W - pad, screenY + screenH - bk + 4); ctx.stroke();
+
+    const belowScreen = screenY + screenH + 30;
+
+    // Metadata badges
+    ctx.textAlign = 'center';
+    const duration = Recorder._elapsed ? Math.floor(Recorder._elapsed / 1000) : 0;
+    const durText = duration > 0 ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}` : '';
+    const dateText = new Date().toLocaleDateString();
+    const sources = Engine.sources.filter(s => s.type !== 'mic').length;
+
+    if (durText || sources) {
+      ctx.fillStyle = 'rgba(163,230,53,.1)';
+      ctx.beginPath(); ctx.roundRect(W / 2 - 200, belowScreen - 14, 400, 30, 8); ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Tajawal", sans-serif';
+      const meta = [dateText, durText ? `Duration: ${durText}` : '', sources ? `${sources} sources` : ''].filter(Boolean).join('  ·  ');
+      ctx.fillText(meta, W / 2, belowScreen + 6);
+    }
+
+    // Separator
+    ctx.strokeStyle = sepGrad; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, belowScreen + 30); ctx.lineTo(W - 40, belowScreen + 30); ctx.stroke();
+
+    // CTA box
+    const ctaY = belowScreen + 45;
+    ctx.fillStyle = 'rgba(163,230,53,.06)';
+    ctx.strokeStyle = 'rgba(163,230,53,.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(40, ctaY, W - 80, 60, 12); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#a3e635';
+    ctx.font = 'bold 20px "Righteous", sans-serif';
+    ctx.fillText('100% FREE \u00b7 Zero Install \u00b7 Chrome / Edge', W / 2, ctaY + 25);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px "Righteous", sans-serif';
+    ctx.fillText('abourdim.github.io/noor-cast', W / 2, ctaY + 48);
+
+    // Workshop-diy.org logo
+    const logoY = ctaY + 75;
+    try {
+      const logoImg = new Image();
+      logoImg.src = './workshop-diy-logo.svg';
+      await new Promise((resolve, reject) => { logoImg.onload = resolve; logoImg.onerror = reject; setTimeout(reject, 3000); });
+      const logoH = 40;
+      const logoW = logoH * (logoImg.naturalWidth / logoImg.naturalHeight);
+      // Invert colors for dark bg (logo is black)
+      ctx.filter = 'invert(1)';
+      ctx.drawImage(logoImg, W / 2 - logoW / 2, logoY, logoW, logoH);
+      ctx.filter = 'none';
+    } catch {
+      // Fallback text
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('workshop-diy.org', W / 2, logoY + 20);
+    }
+
+    // Footer
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '9px "Tajawal", sans-serif';
+    ctx.fillText('No account \u00b7 No cloud \u00b7 No tracking \u00b7 Works offline \u00b7 PWA installable', W / 2, H - 30);
+    ctx.fillText('workshop-diy.org \u00b7 Made with \u2764 for makers and teachers', W / 2, H - 16);
+
+    // Bottom accent bar
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, H - 6, W, 6);
+
+    // Download
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast('\u274c Flyer failed', 2000); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = `noorcast-flyer-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      showToast('\uD83D\uDCC4 Flyer ready!', 2500);
+    }, 'image/png');
+  },
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
@@ -22128,6 +22289,7 @@ function wireEvents() {
   $('tcSaveCaptionsBtn')?.addEventListener('click', () => LiveCaptions.saveCaptions());
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
+  $('tcExportFlyerBtn')?.addEventListener('click', () => ExportFlyer.generate());
   $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
   $('tcTrimClose').addEventListener('click', () => Trim.close());
