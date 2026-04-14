@@ -1,614 +1,226 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NoorCast User Guide</title>
-  <style>
-    :root { --bg: #0a0f0a; --card: #141e14; --border: #1e3a1e; --accent: #a3e635; --accent2: #fb923c; --text: #e2e8e0; --muted: #94a394; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
-    .guide { max-width: 860px; margin: 0 auto; padding: 24px 20px 60px; }
-    h1 { font-size: 2.2rem; color: var(--accent); margin-bottom: 8px; }
-    h1 span { color: var(--accent2); }
-    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 32px; }
-    h2 { font-size: 1.5rem; color: var(--accent); margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-    h3 { font-size: 1.15rem; color: var(--accent2); margin: 24px 0 10px; }
-    h4 { font-size: 1rem; color: var(--text); margin: 16px 0 8px; }
-    p { margin-bottom: 12px; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    ul, ol { margin: 0 0 12px 20px; }
-    li { margin-bottom: 4px; }
-    code { background: rgba(163,230,53,.1); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-size: .9em; }
-    pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 12px 0; font-size: .88em; }
-    pre code { background: none; padding: 0; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: .92em; }
-    th { background: var(--card); color: var(--accent); text-align: left; padding: 8px 12px; border: 1px solid var(--border); }
-    td { padding: 8px 12px; border: 1px solid var(--border); }
-    tr:nth-child(even) td { background: rgba(255,255,255,.02); }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
-    .card h3 { margin-top: 0; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .78rem; font-weight: 700; }
-    .badge-free { background: #166534; color: #a3e635; }
-    .badge-paid { background: #7c2d12; color: #fb923c; }
-    .badge-rec { background: #1e3a5f; color: #38bdf8; }
-    .tip { background: rgba(163,230,53,.06); border-left: 3px solid var(--accent); padding: 10px 14px; margin: 12px 0; border-radius: 0 8px 8px 0; }
-    .warn { background: rgba(251,146,60,.06); border-left: 3px solid var(--accent2); padding: 10px 14px; margin: 12px 0; border-radius: 0 8px 8px 0; }
-    .comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
-    .comparison .card { text-align: center; }
-    .comparison .card h3 { font-size: 1.3rem; }
-    .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 24px; margin: 20px 0; }
-    .toc a { display: block; padding: 4px 0; color: var(--muted); }
-    .toc a:hover { color: var(--accent); }
-    kbd { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: .85em; font-family: monospace; }
-    .steps { counter-reset: step; list-style: none; margin-left: 0; }
-    .steps li { counter-increment: step; padding: 6px 0 6px 36px; position: relative; }
-    .steps li::before { content: counter(step); position: absolute; left: 0; top: 6px; width: 26px; height: 26px; background: var(--accent); color: var(--bg); font-weight: 700; font-size: .85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .back-link { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 20px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,.4); z-index: 99; }
-    @media (max-width: 600px) { .guide { padding: 16px 12px; } h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; } .comparison { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoorCast User Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Tajawal:wght@400;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Tajawal',sans-serif;background:#071407;color:#e2e8f0;line-height:1.7}
+  a{color:#a3e635;text-decoration:none}a:hover{text-decoration:underline}
+  .header{text-align:center;padding:40px 20px 30px;border-bottom:1px solid rgba(163,230,53,.2)}
+  .header h1{font-family:'Righteous',sans-serif;font-size:48px;color:#a3e635}
+  .header .arabic{font-size:24px;color:#d4a03c}
+  .header .slogan{font-size:16px;color:#94a3b8;margin-top:8px}
+  .header .version{font-size:12px;color:#4a5568;margin-top:4px}
+  nav{position:sticky;top:0;z-index:100;background:rgba(7,20,7,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(163,230,53,.15);padding:10px 20px;overflow-x:auto;white-space:nowrap}
+  nav a{display:inline-block;padding:4px 14px;margin:2px 4px;border-radius:20px;font-size:13px;color:#94a3b8;border:1px solid rgba(163,230,53,.15)}
+  nav a:hover{background:rgba(163,230,53,.1);color:#a3e635;text-decoration:none}
+  .container{max-width:900px;margin:0 auto;padding:20px}
+  h2{font-family:'Righteous',sans-serif;font-size:28px;color:#a3e635;margin:40px 0 16px;padding-top:20px;border-top:1px solid rgba(163,230,53,.1)}
+  h3{font-size:18px;color:#fbbf24;margin:24px 0 8px}
+  h4{font-size:15px;color:#38bdf8;margin:16px 0 6px}
+  p{margin:8px 0;color:#cbd5e1}
+  .card{background:rgba(15,31,15,.6);border:1px solid rgba(163,230,53,.1);border-radius:12px;padding:16px 20px;margin:12px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}}
+  kbd{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:12px;font-family:ui-monospace,monospace}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+  th{color:#a3e635;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  tr:hover{background:rgba(163,230,53,.03)}
+  .tip{background:rgba(251,191,36,.08);border-left:3px solid #fbbf24;padding:10px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13px}
+  .tip::before{content:"Tip: ";font-weight:bold;color:#fbbf24}
+  .warn{background:rgba(239,68,68,.08);border-left:3px solid #ef4444;padding:10px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13px}
+  .warn::before{content:"Note: ";font-weight:bold;color:#ef4444}
+  .footer{text-align:center;padding:40px 20px;margin-top:40px;border-top:1px solid rgba(163,230,53,.1);color:#4a5568;font-size:12px}
+  ol,ul{margin-left:20px;color:#cbd5e1}
+</style>
 </head>
 <body>
-<div class="guide">
-
-<h1>🎬 Noor<span>Cast</span> User Guide</h1>
-<p class="subtitle">Record multi-camera tutorial videos from your browser.<br>Zero install, zero account, zero cloud. Everything stays on your computer.</p>
-
-<nav class="toc">
-  <strong>Contents</strong>
-  <a href="#quickstart">Quick Start</a>
-  <a href="#sources">Adding Sources</a>
-  <a href="#style-popup">Source Style Popup</a>
-  <a href="#phone-cameras">Using Your Phone as a Camera</a>
-  <a href="#comparison">Camera App Comparison</a>
-  <a href="#continuity">Option A: Continuity Camera (Mac + iPhone)</a>
-  <a href="#droidcam">Option B: DroidCam</a>
-  <a href="#iriun">Option C: Iriun Webcam</a>
-  <a href="#camo">Option D: Camo</a>
-  <a href="#phone-tricks">Creative Phone Use Cases</a>
-  <a href="#robot-setup">Robot Tutorial Setup</a>
-  <a href="#microbit">Connecting micro:bit</a>
-  <a href="#assembly">Assembly Tutorial Setup</a>
-  <a href="#scenes">Scenes</a>
-  <a href="#recording">Recording</a>
-  <a href="#shortcuts">Keyboard Shortcuts</a>
-  <a href="#settings">Settings</a>
-  <a href="#tips">Tips for Great Tutorials</a>
-  <a href="#troubleshooting">Troubleshooting</a>
-  <a href="#compatibility">Platform Compatibility</a>
-  <a href="#privacy">Privacy</a>
+<div class="header">
+  <h1>NoorCast</h1>
+  <div class="arabic">&#1606;&#1615;&#1608;&#1585;&#1618;&#1603;&#1614;&#1575;&#1587;&#1618;&#1578;</div>
+  <div class="slogan">Lumiere, camera, ROBOT ! &mdash; Complete User Guide</div>
+  <div class="version">v0.7.198 &mdash; <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a></div>
+</div>
+<nav>
+  <a href="#start">Getting Started</a><a href="#sources">Sources</a><a href="#canvas">Canvas</a><a href="#scenes">Scenes</a><a href="#recording">Recording</a><a href="#post">Post-Recording</a><a href="#microbit">micro:bit</a><a href="#fun">Fun</a><a href="#effects">Effects</a><a href="#settings">Settings</a><a href="#shortcuts">Shortcuts</a>
 </nav>
+<div class="container">
 
-<!-- ═══════════════════════════════════════ QUICK START ═══════════ -->
-<h2 id="quickstart">🚀 Quick Start (2 minutes)</h2>
-<ol class="steps">
-  <li>Open <code>index.html</code> in <strong>Chrome</strong> or <strong>Edge</strong> (desktop only)</li>
-  <li>Grant camera + microphone permissions when prompted</li>
-  <li>Pick a template: <code>📚 Full lesson</code>, <code>🤖 Robot demo</code>, <code>🔧 Fix-it</code>, or <code>🤖 Robot Tuto</code></li>
-  <li>Hit the big red <strong>REC</strong> button</li>
-  <li>Follow the template steps — each click switches scenes and drops a chapter marker</li>
-  <li>Press <strong>Stop</strong> when done</li>
-  <li>Download your <code>.webm</code> video + <code>.vtt</code> chapter file</li>
-</ol>
+<h2 id="start">Getting Started</h2>
+<h3>What is NoorCast?</h3>
+<p>A <strong>free, browser-based multi-camera screen recorder</strong> for teachers creating tutorials with robots and micro:bits. No install, no account, no cloud. 100% local.</p>
+<div class="card"><strong>Requirements:</strong> Chrome or Edge (desktop). Works offline after first load (PWA).</div>
+<h3>Simple vs Pro Mode</h3>
+<div class="grid">
+  <div class="card"><h4>Simple Mode</h4><p>Hides advanced tools. Right sidebar collapsed. Perfect for beginners.</p></div>
+  <div class="card"><h4>Pro Mode</h4><p>All tools visible. Scenes sidebar open. Full control.</p></div>
+</div>
+<p>Switch anytime in Settings.</p>
+<h3>First Steps</h3>
+<ol><li>Add a <strong>Screen</strong> source (blue button)</li><li>Add a <strong>Camera</strong> (dropdown + green button)</li><li>Select a <strong>Mic</strong></li><li>Click <strong>REC</strong></li><li>Click <strong>Stop</strong> and download</li></ol>
 
-<!-- ═══════════════════════════════════════ SOURCES ═══════════════ -->
-<h2 id="sources">📹 Adding Sources</h2>
-
-<h3>Screen share</h3>
-<p>Click <strong>+ Add</strong> under Screen. Pick a window, tab, or entire screen.</p>
-
-<h3>Webcam</h3>
-<p>Select your camera from the dropdown, then click <strong>+ Add</strong>. Drag and resize on the canvas.</p>
-
-<h3>Microphone</h3>
-<p>Select your mic from the dropdown. Audio is recorded automatically.</p>
-
-<h3>Image</h3>
-<p>Paste an image from clipboard (<kbd>Ctrl+V</kbd>) to add it as a static source.</p>
-
-<h3>Ways to add cameras</h3>
+<h2 id="sources">Sources</h2>
+<h3>Adding Sources</h3>
 <table>
-  <tr><th>Source</th><th>How to add</th><th>Cost</th></tr>
-  <tr><td>Built-in laptop webcam</td><td>Already in dropdown → + Add</td><td><span class="badge badge-free">Free</span></td></tr>
-  <tr><td>USB webcam</td><td>Plug in, select in dropdown → + Add</td><td>~10-15 EUR</td></tr>
-  <tr><td>iPhone (Mac only)</td><td>Same Wi-Fi + Apple ID → auto-appears</td><td><span class="badge badge-free">Free</span></td></tr>
-  <tr><td>Phone via DroidCam</td><td>Install app + driver → "DroidCam Source"</td><td><span class="badge badge-free">Free</span></td></tr>
-  <tr><td>Phone via Iriun</td><td>Install app + driver → "Iriun Webcam"</td><td><span class="badge badge-free">Free</span></td></tr>
-  <tr><td>Phone via Camo</td><td>Install app + driver → "Camo"</td><td><span class="badge badge-paid">Free / Paid</span></td></tr>
+  <tr><th>Source</th><th>How</th><th>Notes</th></tr>
+  <tr><td>&#x1F5A5; Screen</td><td>Blue button</td><td>Screen, window, or tab</td></tr>
+  <tr><td>&#x1F3A5; Camera</td><td>Dropdown + green button</td><td>Multiple supported</td></tr>
+  <tr><td>&#x1F3A4; Mic</td><td>Dropdown (auto-activates)</td><td>Auto mic check</td></tr>
+  <tr><td>&#x1F4F8; Image</td><td><kbd>Ctrl+V</kbd> or drag &amp; drop</td><td>Any image format</td></tr>
+  <tr><td>&#x2B1B; Shape</td><td>Ajouter &rarr; Shapes</td><td>9 shapes + utilities</td></tr>
 </table>
-<p class="tip">There is <strong>no limit</strong> on cameras. Mix and match — e.g. laptop + USB cam + 2 phones = 4 cameras.</p>
+<h3>Source Toolbar</h3>
+<p>Click a source to select it. Toolbar appears with: Hide, Pin, Lock, Shape, Crop, Style, Delete.</p>
+<h3>Resize Handles</h3>
+<p>8 circular handles (4 corner + 4 edge). Hold <kbd>Shift</kbd> for free resize. Cursor changes on hover.</p>
+<div class="tip">Hover any source for a subtle bounding box outline.</div>
 
-<h3>Colored shapes</h3>
-<p>Click any shape in the <strong>🟩 Shapes</strong> accordion (left sidebar). 15 presets: rectangle, circle, rounded, pill, hexagon, octagon, diamond, star, heart, full background, dark/white bars, red/green dots, dark card.</p>
-<p>Shapes support <strong>all source features</strong>: drag, free resize (no aspect lock), opacity, color, border, shadow, corners, rotation, flip, badge. Change color via <strong>🎨 Style → Shape Color</strong>.</p>
-
-<h3>Simple / Pro mode</h3>
-<div class="card">
-  <p><strong>🎓 Simple</strong> — essentials only: Laser, Freeze, Draw, Snapshot, Fullscreen. One settings section. No sensors.</p>
-  <p><strong>🚀 Pro</strong> — everything visible: 25+ tools, all settings, shapes, sensors, text stickers.</p>
-  <p>Switch anytime: click the badge in the header or the button at the top of Settings.</p>
+<h2 id="canvas">Canvas &amp; Skins</h2>
+<h3>49 Camera Skins</h3>
+<p>Select source &rarr; Style &rarr; Frame &rarr; Skin dropdown. 11 categories:</p>
+<div class="grid">
+  <div class="card"><strong>Classic:</strong> TV, Polaroid, Comic, Monitor</div>
+  <div class="card"><strong>Tech:</strong> Phone, Laptop, Terminal, Hologram, Android</div>
+  <div class="card"><strong>Characters:</strong> Robot, Alien, Anonymous, Ninja, Detective</div>
+  <div class="card"><strong>Gaming:</strong> Arcade, HP Bar, Leaderboard, Sniper, Slots</div>
+  <div class="card"><strong>Space:</strong> Astronaut, UFO, Planet, Warp</div>
+  <div class="card"><strong>Science:</strong> Lab, Microscope, DNA, Electric, Neural</div>
+  <div class="card"><strong>Futurist:</strong> Mech, HUD, Shield, Hexgrid, Portal, Float</div>
+  <div class="card"><strong>Style:</strong> Diamond, Flame, Neon, Circus, Vortex</div>
+  <div class="card"><strong>Broadcast:</strong> Clapboard, Livestream, CCTV</div>
+  <div class="card"><strong>Islamic:</strong> Minaret, Crescent, Andalusia</div>
+  <div class="card"><strong>3D:</strong> Cube, Gallery, Box, Crystal, Mirror, Book, Museum, Ice, Gift</div>
 </div>
+<h3>Stickers &amp; Shapes</h3>
+<p>Right sidebar &rarr; <strong>Ajouter</strong>: Quick stickers, custom text, emoji, 20 animated stickers (bounce/spin/pulse/wiggle/float), 15 shapes.</p>
 
-<h3 id="style-popup">Source Style popup (Pro)</h3>
+<h2 id="scenes">Scenes</h2>
+<h3>Presets</h3>
 <table>
-  <tr><th>Section</th><th>Controls</th></tr>
-  <tr><td>🟩 Shape Color</td><td>Color picker (shapes only)</td></tr>
-  <tr><td>🎨 Look</td><td>Opacity 0-100%, Filter (9 presets), Corner radius 0-50px, Rotation ±180°</td></tr>
-  <tr><td>🖼 Frame</td><td>Border (color + width), Shadow (color + blur + offset X/Y)</td></tr>
-  <tr><td>✂ Crop</td><td>Top/Bottom/Left/Right 0-40%</td></tr>
-  <tr><td>🏷 Badge</td><td>Text label + color pill at top-right</td></tr>
-  <tr><td>↔ Align</td><td>Left, Center H, Right, Top, Center V, Bottom</td></tr>
-  <tr><td>🔗 Flip</td><td>Aspect lock, Flip H, Flip V</td></tr>
-  <tr><td>🙈 Privacy</td><td>Avatar mode (cartoon face) / Privacy blur (30px)</td></tr>
+  <tr><th>Scene</th><th>Layout</th><th>Key</th></tr>
+  <tr><td>&lt;Code/&gt;</td><td>Screen + facecam circle</td><td><kbd>1</kbd></td></tr>
+  <tr><td>Mecha</td><td>Camera + facecam</td><td><kbd>2</kbd></td></tr>
+  <tr><td>Sensors</td><td>2nd camera + facecam</td><td><kbd>3</kbd></td></tr>
+  <tr><td>Code+Mecha</td><td>Screen left + camera right</td><td><kbd>4</kbd></td></tr>
+  <tr><td>Matrix</td><td>2x2 grid</td><td><kbd>5</kbd></td></tr>
+  <tr><td>Pilot</td><td>Camera + micro:bit overlay</td><td><kbd>6</kbd></td></tr>
+  <tr><td>Solo</td><td>Facecam full</td><td><kbd>7</kbd></td></tr>
 </table>
+<h3>Custom Scenes</h3>
+<p>Arrange sources, click Save This Layout. Drag to reorder. Double-click label to rename.</p>
+<h3>Transitions</h3>
+<p>Settings &rarr; 6 options: Fade, Wipe, Slide, Zoom, Flip, Glitch.</p>
+<h3>Scene Themes</h3>
+<p>Settings &rarr; Scene Theme: Cinema, Retro Gaming, Sci-fi, Islamic, News, Space, Hacker, Clean. One click sets bg + pattern + skins + flair.</p>
 
-<!-- ═══════════════════════════════════════ PHONE CAMERAS ═════════ -->
-<h2 id="phone-cameras">📱 Using Your Phone as a Camera</h2>
-
-<h3 id="comparison">Which app should I use?</h3>
-<div class="comparison">
-  <a href="#continuity" class="card" style="text-decoration:none;color:inherit">
-    <h3>📱 <span style="color:var(--accent)">Continuity</span></h3>
-    <p>Mac + iPhone only<br>Zero install<br>Landscape only</p>
-    <span class="badge badge-free">Free</span>
-  </a>
-  <a href="#droidcam" class="card" style="text-decoration:none;color:inherit">
-    <h3>📲 <span style="color:var(--accent)">DroidCam</span></h3>
-    <p>All phones + Win/Mac<br>Easy setup<br><strong>Landscape only</strong></p>
-    <span class="badge badge-free">Free</span>
-  </a>
-  <a href="#iriun" class="card" style="text-decoration:none;color:inherit">
-    <h3>📡 <span style="color:var(--accent)">Iriun</span></h3>
-    <p>All phones + all OS<br><strong>Portrait + Landscape</strong><br>Best for vertical</p>
-    <span class="badge badge-free">Free</span>
-  </a>
-  <a href="#camo" class="card" style="text-decoration:none;color:inherit">
-    <h3>🎥 <span style="color:var(--accent)">Camo</span></h3>
-    <p>All phones + Win/Mac<br>Pro controls (zoom, focus)<br>Portrait + Landscape</p>
-    <span class="badge badge-paid">Free / $5/mo</span>
-  </a>
-</div>
-<p class="warn"><strong>Need vertical/portrait video?</strong> Use <a href="#iriun"><strong>Iriun</strong></a> or <a href="#camo"><strong>Camo</strong></a>. DroidCam forces landscape.</p>
-
-<!-- ═══════════════ CONTINUITY ═══════════════ -->
-<div class="card" id="continuity">
-  <h3>📱 Option A: Continuity Camera (Mac + iPhone)</h3>
-  <p>Zero setup — just works if both devices share the same Apple ID and Wi-Fi.</p>
-  <ol class="steps">
-    <li>Sign into the <strong>same Apple ID</strong> on both devices</li>
-    <li>Connect to the <strong>same Wi-Fi network</strong></li>
-    <li>Open NoorCast in Chrome on your Mac</li>
-    <li>Click <strong>+ Camera</strong> — your iPhone appears as "iPhone Camera"</li>
-    <li>Select it and click <strong>+ Add</strong></li>
-  </ol>
-</div>
-
-<!-- ═══════════════ DROIDCAM ═══════════════ -->
-<div class="card" id="droidcam">
-  <h3>📲 Option B: DroidCam</h3>
-  <p>Free. Works on any phone + Windows/Mac. <strong>Landscape only</strong> — use Iriun if you need portrait.</p>
-
-  <h4>On your phone</h4>
-  <ol class="steps">
-    <li>Install DroidCam: <a href="https://apps.apple.com/app/droidcam-webcam-obs-camera/id1510258102">App Store (iPhone)</a> · <a href="https://play.google.com/store/apps/details?id=com.dev47apps.droidcam">Play Store (Android)</a></li>
-    <li>Open the app — note the <strong>IP address</strong> and <strong>port</strong> shown on screen</li>
-  </ol>
-
-  <h4>On your computer</h4>
-  <ol class="steps">
-    <li>Download DroidCam Client: <a href="https://www.dev47apps.com/droidcam/">dev47apps.com/droidcam</a></li>
-    <li>Install it — adds a virtual camera driver</li>
-    <li>Open DroidCam Client, enter the phone's IP, click <strong>Start</strong></li>
-  </ol>
-
-  <h4>In NoorCast</h4>
-  <ol class="steps">
-    <li>Click <strong>+ Camera</strong> — "DroidCam Source" appears in the dropdown</li>
-    <li>Select it, click <strong>+ Add</strong></li>
-    <li>Drag and resize on the canvas</li>
-  </ol>
-</div>
-
-<!-- ═══════════════ IRIUN ═══════════════ -->
-<div class="card" id="iriun">
-  <h3>📡 Option C: Iriun Webcam <span class="badge badge-rec">Recommended for portrait</span></h3>
-  <p>Free. Works on Windows/Mac/Linux. Supports <strong>portrait (vertical) mode</strong> — DroidCam does not.</p>
-
-  <h4>On your phone</h4>
-  <ol class="steps">
-    <li>Install Iriun: <a href="https://apps.apple.com/app/iriun-webcam/id1439013982">App Store (iPhone)</a> · <a href="https://play.google.com/store/apps/details?id=com.jacksoftw.webcam">Play Store (Android)</a></li>
-    <li>Open the app — it shows "Waiting for connection..."</li>
-  </ol>
-
-  <h4>On your computer</h4>
-  <ol class="steps">
-    <li>Download from <a href="https://iriun.com">iriun.com</a>: <a href="https://iriun.com/IriunWebcam-2.8.1.exe">Windows</a> · <a href="https://iriun.com/IriunWebcam-2.8.pkg">Mac</a> · <a href="https://iriun.com/IriunWebcam-2.8.deb">Linux (Ubuntu)</a></li>
-    <li>Install — adds a virtual camera driver</li>
-    <li><strong>No need to open the desktop app</strong> — the driver runs automatically</li>
-  </ol>
-
-  <h4>Connecting via Wi-Fi</h4>
-  <ol class="steps">
-    <li>Same Wi-Fi network on both devices</li>
-    <li>Open Iriun on the phone — it auto-discovers your computer</li>
-    <li>Phone shows "Connected" with a live preview</li>
-  </ol>
-
-  <h4>Connecting via USB (recommended)</h4>
-  <ol class="steps">
-    <li>Plug phone into computer with USB cable</li>
-    <li><strong>iPhone:</strong> trust the computer · <strong>Android:</strong> enable USB debugging</li>
-    <li>Open Iriun on the phone — connects via USB (faster, no lag)</li>
-  </ol>
-
-  <h4>In NoorCast</h4>
-  <ol class="steps">
-    <li>Click <strong>+ Camera</strong> → select <strong>"Iriun Webcam"</strong></li>
-    <li>Click <strong>+ Add</strong></li>
-  </ol>
-
-  <h4>Portrait (vertical) mode</h4>
-  <p>Just hold your phone <strong>vertically</strong>. Iriun sends the portrait feed automatically — no rotation needed. Resize the source in NoorCast to a tall narrow rectangle.</p>
-
-  <h4>Settings in the phone app</h4>
-  <ul>
-    <li><strong>Camera:</strong> tap to switch front/back</li>
-    <li><strong>Resolution:</strong> 640p default is fine; 1080p uses more CPU</li>
-    <li><strong>Orientation:</strong> auto-detects when you rotate</li>
-    <li><strong>Mirror:</strong> toggle if image is flipped</li>
-  </ul>
-
-  <h4>Troubleshooting</h4>
-  <ul>
-    <li><strong>"Waiting for connection":</strong> check that the desktop driver is installed (system tray on Windows, menu bar on Mac)</li>
-    <li><strong>Lag/stuttering:</strong> switch to USB, or lower resolution</li>
-    <li><strong>Not in dropdown:</strong> restart Chrome after installing the driver</li>
-    <li><strong>Black screen:</strong> close other apps using the camera (Zoom, Teams)</li>
-  </ul>
-</div>
-
-<!-- ═══════════════ CAMO ═══════════════ -->
-<div class="card" id="camo">
-  <h3>🎥 Option D: Camo <span class="badge badge-paid">Pro quality</span></h3>
-  <p>Best image quality. Manual controls for zoom, exposure, focus, white balance, ISO. Supports portrait + landscape.</p>
-
-  <h4>On your phone</h4>
-  <ol class="steps">
-    <li>Install Camo: <a href="https://apps.apple.com/app/camo-webcam-for-mac-and-pc/id1514199064">App Store (iPhone)</a> · <a href="https://play.google.com/store/apps/details?id=com.reincubate.camo">Play Store (Android)</a></li>
-    <li>Open the app — live camera preview with toolbar</li>
-  </ol>
-
-  <h4>On your computer</h4>
-  <ol class="steps">
-    <li>Download Camo Studio: <a href="https://reincubate.com/camo/download/windows/">Windows</a> · <a href="https://reincubate.com/camo/download/mac/">Mac</a> (no Linux)</li>
-    <li>Install — adds a "Camo" virtual camera</li>
-    <li>Open Camo Studio — it shows a pairing screen</li>
-  </ol>
-
-  <h4>Connecting via USB (recommended)</h4>
-  <ol class="steps">
-    <li>Plug phone into computer</li>
-    <li><strong>iPhone:</strong> trust the computer · <strong>Android:</strong> enable USB debugging</li>
-    <li>Camo Studio shows the live feed immediately</li>
-  </ol>
-
-  <h4>Connecting via Wi-Fi</h4>
-  <ol class="steps">
-    <li>Same Wi-Fi network on both devices</li>
-    <li>In Camo Studio, select your phone from the device dropdown</li>
-  </ol>
-
-  <h4>In NoorCast</h4>
-  <ol class="steps">
-    <li>Click <strong>+ Camera</strong> → select <strong>"Camo"</strong></li>
-    <li>Click <strong>+ Add</strong></li>
-  </ol>
-
-  <h4>Camo Studio controls</h4>
-  <table>
-    <tr><th>Control</th><th>What it does</th></tr>
-    <tr><td>Zoom</td><td>Digital zoom — zoom into the robot without moving the phone</td></tr>
-    <tr><td>Focus</td><td>Auto-focus or manual slider</td></tr>
-    <tr><td>Exposure</td><td>Brighten/darken (for poorly lit classrooms)</td></tr>
-    <tr><td>White balance</td><td>Fix yellow/blue casts under fluorescent lights</td></tr>
-    <tr><td>ISO</td><td>Increase for dark rooms (adds grain)</td></tr>
-    <tr><td>Rotation</td><td>Force 0/90/180/270 degrees</td></tr>
-    <tr><td>Lens</td><td>Switch front/back/ultra-wide</td></tr>
-  </table>
-
-  <h4>Free vs Pro</h4>
-  <table>
-    <tr><th>Feature</th><th>Free</th><th>Pro ($5/mo)</th></tr>
-    <tr><td>Resolution</td><td>720p</td><td>1080p / 4K</td></tr>
-    <tr><td>Zoom / Focus / Exposure</td><td>---</td><td>Full control</td></tr>
-    <tr><td>Lens selection</td><td>Back only</td><td>All lenses</td></tr>
-    <tr><td>Watermark</td><td>Small logo</td><td>None</td></tr>
-    <tr><td>Portrait mode</td><td>Yes</td><td>Yes</td></tr>
-  </table>
-
-  <h4>Troubleshooting</h4>
-  <ul>
-    <li><strong>Not in dropdown:</strong> restart Chrome after installing Camo Studio</li>
-    <li><strong>Black screen:</strong> make sure Camo Studio is <strong>open</strong> on the computer (required, unlike Iriun)</li>
-    <li><strong>Lag:</strong> switch to USB</li>
-    <li><strong>Watermark:</strong> upgrade to Pro, or use NoorCast's Crop sliders to crop it out</li>
-  </ul>
-</div>
-
-<p class="tip"><strong>General tip:</strong> USB beats Wi-Fi for stability. Disable phone auto-lock. A cheap phone tripod makes a huge difference.</p>
-
-<!-- ═══════════════════════════════════════ PHONE USE CASES ═══════ -->
-<h2 id="phone-tricks">📱 Creative Phone Use Cases</h2>
-
-<div class="card">
-  <h3>🎙 Phone as wireless microphone</h3>
-  <p>Phone in your pocket or clipped to collar = free wireless mic. Enable audio in DroidCam/Iriun, select it as Mic source in NoorCast. Even better with Bluetooth earbuds — earbud mic right at your mouth.</p>
-</div>
-
-<div class="card">
-  <h3>🤖 Robot sounds from phone mic</h3>
-  <p>Phone mounted on robot captures motor whirring, servo clicks, wheel noise. Select phone as Mic source. Limitation: one mic for entire recording — can't switch per scene.</p>
-</div>
-
-<div class="card">
-  <h3>🔊 Phone as classroom loudspeaker</h3>
-  <p>Teacher speaks into laptop mic → phone on robot plays their voice out loud for students nearby. Use <a href="https://meet.google.com"><strong>Google Meet</strong></a>: join call on both devices, mute phone mic, teacher's voice plays through phone speaker. Or use <a href="https://audiorelay.net">AudioRelay</a> app.</p>
-</div>
-
-<div class="card">
-  <h3>🚶 Walking teacher camera + mic</h3>
-  <p>Hold the phone, walk around filming student projects while narrating. Phone is both camera AND mic. Switch between "Walking" and "Code" scenes during recording.</p>
-</div>
-
-<div class="card">
-  <h3>📺 Cast laptop video to phone screen</h3>
-  <p>Show NoorCast's preview on the phone screen so students around the robot can see what's being recorded. Use <a href="https://remotedesktop.google.com"><strong>Chrome Remote Desktop</strong></a> or <strong>screen mirroring</strong> (Miracast on Windows, AirPlay on Mac). The phone becomes a portable monitor.</p>
-</div>
-
-<h3>Summary</h3>
+<h2 id="recording">Recording</h2>
 <table>
-  <tr><th>Phone role</th><th>Camera</th><th>Mic</th><th>Where</th></tr>
-  <tr><td>Robot camera</td><td>Yes</td><td>Optional</td><td>On robot</td></tr>
-  <tr><td>Wireless mic</td><td>No</td><td>Yes</td><td>In pocket</td></tr>
-  <tr><td>Classroom speaker</td><td>No</td><td>Speaker only</td><td>On robot (Meet)</td></tr>
-  <tr><td>Walking cam + mic</td><td>Yes</td><td>Yes</td><td>In hand</td></tr>
-  <tr><td>Portable monitor</td><td>No</td><td>No</td><td>Near students</td></tr>
+  <tr><th>Control</th><th>Action</th><th>Key</th></tr>
+  <tr><td>REC</td><td>Start (with countdown)</td><td><kbd>R</kbd></td></tr>
+  <tr><td>Pause</td><td>Pause/resume</td><td><kbd>P</kbd></td></tr>
+  <tr><td>Marker</td><td>Chapter marker</td><td><kbd>M</kbd></td></tr>
+  <tr><td>Stop</td><td>Stop recording</td><td><kbd>R</kbd></td></tr>
+</table>
+<div class="tip">Long-press REC for instant start. Or <kbd>Shift+R</kbd>.</div>
+<h3>Countdown</h3>
+<p>3-2-1 with rising pitch beeps + "GO!" flash + speed lines. Customize 1-10s in Settings.</p>
+<h3>Live Captions</h3>
+<p>Click <strong>&#x1F4AC;</strong> in toolbar. SpeechRecognition (Chrome/Edge). Baked into recording. Save as .srt anytime.</p>
+
+<h2 id="post">Post-Recording</h2>
+<table>
+  <tr><th>Button</th><th>What it does</th></tr>
+  <tr><td>Download</td><td>Download .webm/.mp4</td></tr>
+  <tr><td>Share</td><td>Native share</td></tr>
+  <tr><td>Trim</td><td>Visual trim editor</td></tr>
+  <tr><td>Remove Silences</td><td>Auto-cut silent sections</td></tr>
+  <tr><td>Instant Replay</td><td>30s highlight reel from loudest moments</td></tr>
+  <tr><td>Auto Thumbnail</td><td>Best frame + branding = 1280x720 PNG</td></tr>
+  <tr><td>Export Flyer</td><td>A4 PNG with canvas screenshot + workshop-diy.org</td></tr>
+  <tr><td>Transcript</td><td>Full text download (.txt)</td></tr>
+  <tr><td>Quality Score</td><td>Grades: Audio, Pacing, Scenes, Duration, Engagement</td></tr>
+  <tr><td>Save as Take</td><td>Multi-take director (compare up to 5)</td></tr>
+  <tr><td>Badge Card</td><td>Shareable achievement card (1200x630)</td></tr>
 </table>
 
-<!-- ═══════════════════════════════════════ ROBOT SETUP ═══════════ -->
-<h2 id="robot-setup">🤖 Robot Tutorial Setup</h2>
-
-<h3>Recommended camera layout</h3>
-<table>
-  <tr><th>Camera</th><th>What it films</th><th>Scene</th></tr>
-  <tr><td>Laptop webcam</td><td>Your face</td><td>"You"</td></tr>
-  <tr><td>Phone 1 (DroidCam)</td><td>The robot moving</td><td>"Robot"</td></tr>
-  <tr><td>Phone 2 (Iriun)</td><td>Sensors / breadboard</td><td>"Sensors"</td></tr>
-  <tr><td>Phone 3 / USB cam</td><td>Wide shot / whiteboard</td><td>"Studio"</td></tr>
-  <tr><td>Screen share</td><td>Code editor</td><td>"Code"</td></tr>
-</table>
-
-<h3>Using the Robot Tuto template</h3>
-<ol class="steps">
-  <li>On first launch, pick <strong>🤖 Robot Tuto</strong></li>
-  <li>NoorCast creates 5 steps: <strong>Intro → Code → Robot → Sensors → Recap</strong></li>
-  <li>Click each step to switch scenes during recording</li>
-  <li>Each switch drops a chapter marker in the video</li>
-</ol>
-
-<!-- ═══════════════════════════════════════ MICRO:BIT ═════════════ -->
-<h2 id="microbit">🔌 Connecting micro:bit</h2>
-
-<p>NoorCast reads your <strong>micro:bit sensors live</strong> via Web Bluetooth.</p>
-
-<ol class="steps">
-  <li>Click <strong>📡 Connect micro:bit</strong> in the left sidebar</li>
-  <li>Pair your micro:bit in the browser popup</li>
-  <li>Accelerometer data appears in real time</li>
-  <li><strong>Button A</strong> = zoom in · <strong>Button B</strong> = drop a chapter marker</li>
-  <li>Tilting the micro:bit drives the <strong>laser pointer</strong> on screen</li>
-</ol>
-
-<h3><a href="https://makecode.microbit.org/#editor">MakeCode</a> program (flash to your micro:bit)</h3>
-<pre><code>bluetooth.startAccelerometerService()
-bluetooth.startButtonService()
-basic.forever(() => {
-    basic.pause(100)
-})</code></pre>
-
-<p class="tip">Enable <strong>"🤖 Overlay auto si le robot bouge fort"</strong> in Settings → Recording to show accelerometer values on the canvas during recording.</p>
-
-<!-- ═══════════════════════════════════════ ASSEMBLY ══════════════ -->
-<h2 id="assembly">🔧 Assembly Tutorial Setup</h2>
-<p>For teachers who film themselves <strong>building and assembling robots</strong> on a desk.</p>
-
-<h3>Recommended camera layout</h3>
-<table>
-  <tr><th>Camera</th><th>What it films</th><th>Mount</th></tr>
-  <tr><td>Phone 1 (Iriun, portrait)</td><td>Hands + desk from above</td><td>Gooseneck clamp (~8 EUR)</td></tr>
-  <tr><td>Phone 2 (DroidCam)</td><td>Close-up on the robot</td><td>Small tripod</td></tr>
-  <tr><td>Screen share</td><td>Assembly instructions</td><td>Browser/PDF</td></tr>
-  <tr><td>USB webcam</td><td>Face for intro/outro</td><td>On laptop</td></tr>
-</table>
-
-<h3>Cheap overhead mounts</h3>
-<ul>
-  <li><strong>Phone gooseneck clamp</strong> (~8 EUR) — clips to desk, bends over workspace. Best option.</li>
-  <li><strong>Selfie stick + tape</strong> — quick and dirty</li>
-  <li><strong>Book stand</strong> leaning over desk with phone resting on it</li>
-</ul>
-
-<h3>Assembly filming tips</h3>
-<ol>
-  <li><strong>Portrait mode</strong> (Iriun) for overhead — shows more vertical desk space</li>
-  <li><strong>Good lighting</strong> matters more than camera quality — desk lamp on the workspace</li>
-  <li><strong>Freeze + Draw</strong> (<kbd>F</kbd> then <kbd>D</kbd>) — freeze overhead, annotate components</li>
-  <li><strong>Drop markers</strong> (<kbd>M</kbd>) at each step — "Step 1: Solder motor driver"</li>
-  <li><strong>Rename "You" scene</strong> to "My Hands" — double-click the label</li>
-  <li><strong>Text stickers</strong> for part labels — ✏️ Add Text → "Motor Driver"</li>
-</ol>
-
-<h3>Example workflow</h3>
-<div class="card">
-  <ol>
-    <li><strong>Intro</strong> (face cam) — "Today we're building a line-following robot!"</li>
-    <li><strong>Parts</strong> (overhead) — show all components laid out</li>
-    <li><strong>Build</strong> (overhead + close-up) — assemble step by step, drop markers</li>
-    <li><strong>Code</strong> (screen share) — write the program</li>
-    <li><strong>Test</strong> (robot cam) — run the robot</li>
-    <li><strong>Recap</strong> (face cam) — wrap up</li>
-  </ol>
+<h2 id="microbit">micro:bit</h2>
+<h3>Connect</h3>
+<p>Green <strong>Connect micro:bit</strong> button on canvas (draggable). Web Bluetooth (Chrome/Edge only).</p>
+<h3>Controls</h3>
+<div class="grid">
+  <div class="card"><h4>D-pad</h4><p>CMD:LEFT/RIGHT/UP/DOWN/CLEAR commands.</p></div>
+  <div class="card"><h4>Servos</h4><p>Pan + Tilt (0-180). Synced with canvas gauges.</p></div>
+  <div class="card"><h4>LED Grid</h4><p>5x5 toggleable. Mirrors micro:bit LEDs.</p></div>
+  <div class="card"><h4>Joystick</h4><p>CMD mode (blue) or Servo mode (green).</p></div>
 </div>
+<h3>Pilot Scene</h3>
+<p>Scene 6 shows D-pad + servos + joystick + LEDs as draggable overlay on canvas.</p>
+<h3>Sensor Overlay</h3>
+<p>Accelerometer, temp, light, sound, compass on canvas. Toggle: More &rarr; Fun &rarr; Sensors.</p>
+<h3>Robot Choreography</h3>
+<p>Record UART commands with timestamps. Replay in sync. Persisted in localStorage.</p>
 
-<h3>Privacy for camera-shy teachers</h3>
-<ul>
-  <li><strong>🤖 Avatar mode</strong> — cartoon face replaces camera, mouth animates with voice</li>
-  <li><strong>🔲 Privacy blur</strong> — heavy blur, face unrecognizable but presence felt</li>
-  <li>Or simply <strong>skip the face camera</strong> — screen + robot + mic works great</li>
-</ul>
-<p>Toggle per-source in <strong>🎨 Style → Privacy</strong>.</p>
-
-<!-- ═══════════════════════════════════════ SCENES ════════════════ -->
-<h2 id="scenes">🎭 Scenes</h2>
-
+<h2 id="fun">Fun Features</h2>
+<p>Access: toolbar &rarr; More &rarr; Fun section.</p>
+<h3>AI Co-host</h3>
+<p>36 reactive SVG characters (Science, Space, Hacker, Pirate, Cyber). Reacts to voice: claps on pause, prompts scene changes, shows time cards.</p>
+<h3>Canvas Pets</h3>
+<p>12 animated walkers: Robot, Anonymous, Skull, Agent, Bug, UFO, Drone, Arc, Spider, Eye, Pencil, Wrench. Freeze when loud. Multiple active. Baked in.</p>
+<h3>Voice Commands</h3>
+<p>"record", "stop", "screenshot", "zoom", "laser", "fire", "scene 3". FR/EN/AR.</p>
+<h3>Smart Scene</h3>
+<p>Auto-switches scenes on keywords ("code" &rarr; Code scene, "robot" &rarr; Robot scene).</p>
+<h3>XP &amp; Challenges</h3>
+<p>1 XP/sec recording. Level up every 300 XP. Daily challenge = +25 XP. Unlock skins at XP milestones.</p>
+<h3>Combos</h3>
+<p>3+ features = COMBO, 5+ = SUPER, 7+ = ULTRA. Bonus XP.</p>
+<h3>Other</h3>
 <table>
-  <tr><th>Scene</th><th>Layout</th></tr>
-  <tr><td>Code</td><td>Screen fullscreen, face cam in corner</td></tr>
-  <tr><td>Robot</td><td>Robot camera fullscreen</td></tr>
-  <tr><td>Sensors</td><td>Sensor camera fullscreen</td></tr>
-  <tr><td>Code + Robot</td><td>Split screen: code left, robot right</td></tr>
-  <tr><td>Studio</td><td>All cameras in a grid</td></tr>
-  <tr><td>You</td><td>Face cam fullscreen (intro/outro)</td></tr>
+  <tr><td>Voice FX</td><td>Shout=fire, clap=confetti, whisper=night vision</td></tr>
+  <tr><td>Sound Pad</td><td>8 audio buttons (clap, drum, horn, boom...)</td></tr>
+  <tr><td>Music</td><td>5 procedural 8-bit tracks</td></tr>
+  <tr><td>Speed Lines</td><td>Manga burst</td></tr>
+  <tr><td>Ghost Replay</td><td>Previous take as faint ghost</td></tr>
 </table>
 
-<p><strong>Switch scenes:</strong> click in sidebar, press <kbd>1</kbd>-<kbd>6</kbd>, or <kbd>?</kbd> for random.</p>
-<p><strong>Custom scenes:</strong> arrange sources → click <strong>💾 Save this layout</strong> → name it.</p>
+<h2 id="effects">Canvas Effects</h2>
+<h3>15 Animated Backgrounds</h3>
+<p>Settings &rarr; Background pattern. Geeky (Space, Matrix, Arcade...), Islamic (Zellige, Arabesque...), Science (Astrolabe, Al-Khwarizmi), Radar. Opacity adjustable.</p>
+<h3>Canvas Flair</h3>
+<p>During recording: Neon border (rainbow), Heartbeat border (voice-reactive), Film strip edges, Corner brackets + ON AIR badge, Camera flash on snapshot.</p>
 
-<!-- ═══════════════════════════════════════ RECORDING ═════════════ -->
-<h2 id="recording">⏺ Recording</h2>
+<h2 id="settings">Settings</h2>
+<p>Gear icon top-right. Sections: General, Recording, micro:bit, Ticker, Badges, Tutorials, Stats, Maintenance.</p>
+<h3>8 Themes</h3>
+<p>Jungle (default), Mosque Gold, Zellige, Andalus, Space, Robot Lab, Riad (light), Medina (light).</p>
+<h3>3 Languages</h3>
+<p>French, English, Arabic (full RTL).</p>
 
-<h3>Starting</h3>
-<p>Click the big red <strong>REC</strong> button or press <kbd>R</kbd>. A 3-2-1 countdown plays first.</p>
-
-<h3>During recording</h3>
-<ul>
-  <li><kbd>M</kbd> = drop a chapter marker</li>
-  <li><kbd>Q</kbd> = quiz card overlay</li>
-  <li><strong>Pause</strong> = pause (⏸ PAUSED appears on canvas)</li>
-  <li><kbd>1</kbd>-<kbd>6</kbd> = switch scenes</li>
-</ul>
-
-<h3>After recording</h3>
-<ul>
-  <li><strong>Trim:</strong> cut start/end of video</li>
-  <li><strong>Silence trim:</strong> auto-remove pauses</li>
-  <li><strong>Take notes:</strong> journal what went well</li>
-  <li><strong>Rate:</strong> 1-5 stars</li>
-  <li><strong>SRT captions:</strong> download .srt subtitle file (if live captions were on)</li>
-  <li><strong>Thumbnail:</strong> download .png screenshot for YouTube thumbnails</li>
-</ul>
-
-<!-- ═══════════════════════════════════════ SHORTCUTS ═════════════ -->
-<h2 id="shortcuts">⌨ Keyboard Shortcuts</h2>
-
+<h2 id="shortcuts">Keyboard Shortcuts</h2>
+<p>Press <kbd>?</kbd> for the cheat sheet.</p>
 <table>
-  <tr><th>Key</th><th>Action</th><th>Key</th><th>Action</th></tr>
-  <tr><td><kbd>R</kbd></td><td>Record / Stop</td><td><kbd>M</kbd></td><td>Chapter marker</td></tr>
-  <tr><td><kbd>L</kbd></td><td>Laser pointer</td><td><kbd>Q</kbd></td><td>Quiz card</td></tr>
-  <tr><td><kbd>F</kbd></td><td>Freeze screen</td><td><kbd>G</kbd></td><td>Grid overlay</td></tr>
-  <tr><td><kbd>D</kbd></td><td>Draw / Whiteboard</td><td><kbd>T</kbd></td><td>Teleprompter</td></tr>
+  <tr><td><kbd>R</kbd></td><td>Record/Stop</td><td><kbd>L</kbd></td><td>Laser</td></tr>
+  <tr><td><kbd>Shift+R</kbd></td><td>Instant record</td><td><kbd>F</kbd></td><td>Freeze</td></tr>
+  <tr><td><kbd>P</kbd></td><td>Pause</td><td><kbd>D</kbd></td><td>Draw</td></tr>
+  <tr><td><kbd>M</kbd></td><td>Marker</td><td><kbd>T</kbd></td><td>Teleprompter</td></tr>
   <tr><td><kbd>S</kbd></td><td>Snapshot</td><td><kbd>Z</kbd></td><td>Zoom</td></tr>
-  <tr><td><kbd>1</kbd>-<kbd>6</kbd></td><td>Switch scene</td><td><kbd>?</kbd></td><td>Random scene</td></tr>
-  <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td><td><kbd>Ctrl+Y</kbd></td><td>Redo</td></tr>
-  <tr><td><kbd>Ctrl+S</kbd></td><td>Download all</td><td><kbd>Shift+F</kbd></td><td>Focus mode</td></tr>
-  <tr><td><kbd>Alt+1-9</kbd></td><td>Toggle source</td><td><kbd>Esc</kbd></td><td>Stop / exit</td></tr>
+  <tr><td><kbd>G</kbd></td><td>Grid</td><td><kbd>C</kbd></td><td>Captions</td></tr>
+  <tr><td><kbd>1-7</kbd></td><td>Scenes</td><td><kbd>?</kbd></td><td>Cheat sheet</td></tr>
+  <tr><td><kbd>Shift+F</kbd></td><td>Focus mode</td><td><kbd>Esc</kbd></td><td>Exit/deselect</td></tr>
+  <tr><td><kbd>Ctrl+Z/Y</kbd></td><td>Undo/Redo</td><td><kbd>Ctrl+S</kbd></td><td>Download all</td></tr>
+  <tr><td><kbd>Ctrl+V</kbd></td><td>Paste image</td><td><kbd>Del</kbd></td><td>Remove selected</td></tr>
 </table>
-
-<!-- ═══════════════════════════════════════ SETTINGS ══════════════ -->
-<h2 id="settings">⚙ Settings</h2>
-
-<p>Click the <strong>⚙</strong> gear icon (top-right). Organized into 5 sections:</p>
-<ul>
-  <li><strong>General:</strong> Language, theme, canvas background, snap-to-grid</li>
-  <li><strong>Recording → Capture:</strong> countdown, mirror webcam, output format, aspect ratio</li>
-  <li><strong>Recording → Overlays:</strong> clock, REC indicator, captions, letterbox, vignette</li>
-  <li><strong>Recording → Audio:</strong> SFX, mic boost, noise gate, volume ducking</li>
-  <li><strong>Recording → Behavior:</strong> auto-pause, transitions, auto-save</li>
-  <li><strong>Logo:</strong> upload school logo, adjust size/opacity/filter, 3 brand presets</li>
-  <li><strong>Slogan:</strong> scrolling text, watermark (draggable on canvas, position saved), badge card URL</li>
-  <li><strong>Ticker:</strong> custom scrolling messages</li>
-</ul>
-
-<!-- ═══════════════════════════════════════ TIPS ══════════════════ -->
-<h2 id="tips">💡 Tips for Great Tutorials</h2>
-
-<ol>
-  <li><strong>Do a dry run</strong> — test all scene switches before recording</li>
-  <li><strong>Use the teleprompter</strong> (<kbd>T</kbd>) — paste your script, it auto-scrolls</li>
-  <li><strong>Drop markers</strong> (<kbd>M</kbd>) — viewers get a clickable chapter timeline</li>
-  <li><strong>Freeze + Draw</strong> (<kbd>F</kbd> then <kbd>D</kbd>) — annotate code with arrows and circles</li>
-  <li><strong>Keep takes short</strong> — 5-10 minutes, re-record freely</li>
-  <li><strong>Use silence trim</strong> — removes "umm..." pauses automatically</li>
-  <li><strong>Check the dashboard</strong> — track your streak and badges</li>
-</ol>
-
-<!-- ═══════════════════════════════════════ TROUBLESHOOTING ═══════ -->
-<h2 id="troubleshooting">🔧 Troubleshooting</h2>
-
-<div class="card">
-  <h4>Camera not in dropdown</h4>
-  <p>Close other apps using the camera (Zoom, Teams). Refresh the page. Check browser permissions: lock icon → Camera → Allow.</p>
-</div>
-<div class="card">
-  <h4>Phone camera not appearing</h4>
-  <p>Same Wi-Fi? Driver installed? Try USB instead. Restart Chrome after installing a new driver.</p>
-</div>
-<div class="card">
-  <h4>0-byte recording</h4>
-  <p>Check the activity log. Try switching output format. Ensure at least one video source is active.</p>
-</div>
-<div class="card">
-  <h4>micro:bit won't connect</h4>
-  <p>Chrome/Edge only (no Firefox). Bluetooth enabled? Flash the MakeCode BLE program above. NoorCast scans for both "BBC micro:bit" and "uBit" name prefixes.</p>
-</div>
-<div class="card">
-  <h4>Video is choppy</h4>
-  <p>Close browser tabs. Lower resolution in Settings. Disable unused overlays.</p>
-</div>
-
-<!-- ═══════════════════════════════════════ COMPATIBILITY ═════════ -->
-<h2 id="compatibility">💻 Platform Compatibility</h2>
-
-<table>
-  <tr><th>Feature</th><th>Windows</th><th>macOS</th><th>Linux</th><th>Mobile</th></tr>
-  <tr><td>Screen capture</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-  <tr><td>Multi-camera</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-  <tr><td>Recording</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-  <tr><td>micro:bit BLE</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-  <tr><td>MP4 output</td><td>✅ Chrome</td><td>✅ Chrome</td><td>❌</td><td>—</td></tr>
-  <tr><td>WebM output</td><td>✅</td><td>✅</td><td>✅</td><td>—</td></tr>
-</table>
-<p><strong>Browser:</strong> Chrome 100+ or Edge 100+ required.</p>
-
-<!-- ═══════════════════════════════════════ PRIVACY ═══════════════ -->
-<h2 id="privacy">🔒 Privacy</h2>
-
-<ul>
-  <li><strong>Zero network calls</strong> — no data leaves your computer</li>
-  <li><strong>No accounts</strong> — no login, no signup, no cloud</li>
-  <li><strong>No analytics</strong> — no tracking, no cookies</li>
-  <li><strong>Self-hosted fonts</strong> — even fonts load locally</li>
-  <li><strong>GDPR-friendly</strong> — safe for schools with strict data policies</li>
-</ul>
-
-<p style="text-align:center;margin-top:40px;color:var(--muted)">
-  NoorCast v0.7.176 — A professional tool for teachers who code with robots<br>
-  <a href="cheatsheet.html">📋 Cheat Sheet</a> ·
-  <a href="index.html">← Back to NoorCast</a>
-</p>
+<div class="tip">All shortcuts are rebindable in Settings &rarr; Maintenance &rarr; Keyboard Shortcuts.</div>
 
 </div>
-<a href="#" class="back-link">↑ Top</a>
+<div class="footer">
+  <p><strong>NoorCast</strong> &mdash; 100% free, zero dependencies, works offline</p>
+  <p><a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a> &mdash; <a href="https://workshop-diy.org">workshop-diy.org</a></p>
+  <p style="margin-top:8px">Made with &#9829; for makers and teachers</p>
+</div>
 </body>
 </html>
