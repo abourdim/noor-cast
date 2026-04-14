@@ -2741,7 +2741,12 @@ const logHistory = [];
 function log(msg, type = 'info') {
   const c = $('logContainer'); if (!c) return;
   const d = document.createElement('div');
+  // v0.7.189: tag TX/RX for filtering
+  const isTx = msg.startsWith('→');
+  const isRx = msg.startsWith('←');
   d.className = `log-line ${type}`;
+  if (isTx) d.dataset.dir = 'tx';
+  if (isRx) d.dataset.dir = 'rx';
   d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
@@ -19741,6 +19746,25 @@ function wireEvents() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'noorcast-log.txt'; a.click();
   });
+
+  // v0.7.189: log filter buttons
+  const logFilters = $('logFilters');
+  if (logFilters) {
+    logFilters.addEventListener('click', (e) => {
+      const btn = e.target.closest('.log-filter');
+      if (!btn) return;
+      logFilters.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      const lines = $('logContainer')?.querySelectorAll('.log-line') || [];
+      lines.forEach(line => {
+        if (filter === 'all') { line.style.display = ''; return; }
+        if (filter === 'tx') { line.style.display = line.dataset.dir === 'tx' ? '' : 'none'; return; }
+        if (filter === 'rx') { line.style.display = line.dataset.dir === 'rx' ? '' : 'none'; return; }
+        line.style.display = line.classList.contains(filter) ? '' : 'none';
+      });
+    });
+  }
 
   // Lang & theme
   $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
