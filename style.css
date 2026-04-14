@@ -5171,6 +5171,35 @@ body.tc-focus .tc-stage {
   flex-shrink: 0;
 }
 
+/* v0.7.182: Sound pad overlay */
+.tc-soundpad {
+  position: absolute;
+  bottom: 10px; right: 10px;
+  z-index: 76;
+  pointer-events: auto;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.tc-sp-btn {
+  width: 54px; height: 54px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  transition: transform .1s, background .1s;
+  padding: 0;
+}
+.tc-sp-btn:hover { background: rgba(255,255,255,.15); transform: scale(1.08); }
+.tc-sp-btn:active { transform: scale(.92); }
+.tc-sp-emoji { font-size: 1.3rem; line-height: 1; }
+.tc-sp-label { font-size: .45rem; color: rgba(255,255,255,.5); font-family: var(--font-mono, monospace); }
+
 .tc-sticky-layer {
   position: absolute;
   inset: 0;

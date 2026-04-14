@@ -3346,6 +3346,9 @@ const Engine = {
 
   render() {
     const { ctx, width, height } = this;
+    // v0.7.182: screen shake from reaction explosions
+    const [sx, sy] = Reactions.getShake();
+    if (sx || sy) { ctx.save(); ctx.translate(sx, sy); }
     // background (v0.7.143: user-configurable canvas background color)
     ctx.fillStyle = CanvasBg.current;
     ctx.fillRect(0, 0, width, height);
@@ -3555,6 +3558,24 @@ const Engine = {
     // v0.7.13: same deal for the floating source toolbar (HTML, never
     // overlaps the video since it's above the stage, not drawn on canvas)
     if (typeof SourceToolbar !== 'undefined') SourceToolbar.updatePosition();
+
+    // v0.7.182: close screen shake transform
+    if (sx || sy) ctx.restore();
+
+    // v0.7.182: fun effects
+    VoiceFx.tick();
+    VoiceFx.renderFlash(ctx, width, height);
+    SpeedLines.render(ctx, width, height);
+    XpBar.render(ctx, width, height);
+    AchievementPopup.render(ctx, width, height);
+
+    // v0.7.182: XP ticks during recording (1 XP per second)
+    if (Recorder.state === 'recording' && XpBar.visible) {
+      if (!this._lastXpTick || Date.now() - this._lastXpTick >= 1000) {
+        this._lastXpTick = Date.now();
+        XpBar.addXp(1);
+      }
+    }
 
     // update VU meter + FPS stats
     this.updateVU();
@@ -15229,7 +15250,10 @@ const Badges = {
     renderBadges();
     // v0.7.52: celebrate with a confetti burst + modal card instead of just a toast
     const badge = this.list.find(b => b.key === k);
-    if (badge) BadgeUnlockCard.show(badge);
+    if (badge) {
+      BadgeUnlockCard.show(badge);
+      AchievementPopup.show(badge.icon || '🏆', t('badge_' + k) || k);
+    }
     try { Confetti.fire ? Confetti.fire() : Confetti.burst ? Confetti.burst() : null; } catch {}
     // Fallback toast is still nice (appears behind the modal)
     showToast(`🏆 ${t('badge_' + k)}`, 2200);
@@ -15457,42 +15481,63 @@ function renderBadges() {
   });
 }
 
-/* v0.7.104: Reactions — emoji burst overlay (YouTube / Twitch style).
-   Drawn directly on the output canvas via Engine.render() so the
-   emojis are baked into the recording. */
+/* v0.7.182: Reactions — enhanced emoji explosions with screen shake.
+   Drawn directly on the output canvas so they're baked into the recording. */
 const Reactions = {
   _particles: [],
-  burst(emoji) {
+  _shakeUntil: 0,
+  _shakeIntensity: 0,
+
+  burst(emoji, cx, cy) {
     const cv = Engine.canvas;
     if (!cv) return;
     const w = cv.width, h = cv.height;
-    for (let i = 0; i < 12; i++) {
+    const ox = cx || w * 0.5, oy = cy || h * 0.5;
+    // Big central emoji
+    this._particles.push({
+      emoji, x: ox, y: oy, vx: 0, vy: -1,
+      life: 1, max: 80, age: 0, size: 64,
+    });
+    // Explosion ring
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2;
+      const speed = 3 + Math.random() * 5;
       this._particles.push({
-        emoji,
-        x: w * 0.2 + Math.random() * w * 0.6,
-        y: h + 10,
-        vx: (Math.random() - 0.5) * 2,
-        vy: -(2 + Math.random() * 3),
-        life: 1,
-        max: 120 + Math.random() * 40,  // frames (~2s at 60fps)
-        age: 0,
+        emoji, x: ox, y: oy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2,
+        life: 1, max: 90 + Math.random() * 40, age: 0,
+        size: 20 + Math.random() * 20,
       });
     }
+    // Screen shake
+    this._shakeUntil = Date.now() + 300;
+    this._shakeIntensity = 8;
   },
+
+  getShake() {
+    if (Date.now() > this._shakeUntil) return [0, 0];
+    const t = (this._shakeUntil - Date.now()) / 300;
+    const i = this._shakeIntensity * t;
+    return [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i];
+  },
+
   render(ctx, _width, _height) {
     if (!this._particles.length) return;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '32px sans-serif';
     for (let i = this._particles.length - 1; i >= 0; i--) {
       const p = this._particles[i];
       p.age++;
       p.x += p.vx;
       p.y += p.vy;
-      p.vx += (Math.random() - 0.5) * 0.3;  // random drift
+      p.vy += 0.08; // gentle gravity
+      p.vx *= 0.98; // drag
       p.life = Math.max(0, 1 - p.age / p.max);
+      const scale = p.size * (0.5 + p.life * 0.5);
       ctx.globalAlpha = p.life;
+      ctx.font = `${Math.round(scale)}px sans-serif`;
       ctx.fillText(p.emoji, p.x, p.y);
       if (p.life <= 0) this._particles.splice(i, 1);
     }
@@ -15547,6 +15592,295 @@ const Confetti = {
     };
     tick();
   }
+};
+
+/* v0.7.182: VoiceFx — voice-activated visual effects.
+   Reads MicBoost._lastRms each frame. Triggers effects at thresholds. */
+const VoiceFx = {
+  enabled: false,
+  _lastTrigger: 0,
+  _flashUntil: 0,
+  _flashColor: '',
+
+  toggle() { this.enabled = !this.enabled; },
+
+  tick() {
+    if (!this.enabled) return;
+    const rms = MicBoost._lastRms || 0;
+    const now = Date.now();
+    if (now - this._lastTrigger < 1500) return; // cooldown
+
+    // Shout (loud) → fire flash
+    if (rms > 0.35) {
+      this._lastTrigger = now;
+      this._flashUntil = now + 400;
+      this._flashColor = 'rgba(239,68,68,.2)';
+      Reactions.burst('🔥');
+      return;
+    }
+    // Clap (medium burst) → confetti
+    if (rms > 0.2) {
+      this._lastTrigger = now;
+      Confetti.burst();
+      return;
+    }
+    // Whisper (very low but present) → night vision flash
+    if (rms > 0.005 && rms < 0.03) {
+      this._lastTrigger = now;
+      this._flashUntil = now + 600;
+      this._flashColor = 'rgba(74,222,128,.08)';
+    }
+  },
+
+  renderFlash(ctx, W, H) {
+    if (Date.now() > this._flashUntil) return;
+    const t = (this._flashUntil - Date.now()) / 400;
+    ctx.save();
+    ctx.fillStyle = this._flashColor;
+    ctx.globalAlpha = t;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: SpeedLines — manga-style radial motion lines.
+   Triggered manually (button) or auto by micro:bit shake. */
+const SpeedLines = {
+  _active: false,
+  _until: 0,
+  _duration: 800,
+
+  fire(ms) {
+    this._active = true;
+    this._until = Date.now() + (ms || this._duration);
+  },
+
+  render(ctx, W, H) {
+    if (!this._active) return;
+    const remaining = this._until - Date.now();
+    if (remaining <= 0) { this._active = false; return; }
+    const t = remaining / this._duration;
+    const cx = W / 2, cy = H / 2;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${t * 0.3})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 30; i++) {
+      const angle = (i / 30) * Math.PI * 2 + Date.now() * 0.001;
+      const inner = Math.min(W, H) * 0.3;
+      const outer = Math.max(W, H) * 0.7;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+      ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: XpBar — on-canvas progress bar that fills as the kid records.
+   Every second of recording = 1 XP. Milestones trigger celebrations. */
+const XpBar = {
+  visible: false,
+  _xp: 0,
+  _maxXp: 300,  // 5 minutes for full bar
+  _level: 1,
+  _levelUpUntil: 0,
+
+  toggle() { this.visible = !this.visible; },
+
+  addXp(amount) {
+    this._xp += amount;
+    const newLevel = Math.floor(this._xp / this._maxXp) + 1;
+    if (newLevel > this._level) {
+      this._level = newLevel;
+      this._maxXp = 300 * this._level;
+      this._levelUpUntil = Date.now() + 2000;
+      Confetti.burst();
+      showToast(`⭐ Level ${this._level}!`, 2000);
+    }
+  },
+
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    const barW = 200, barH = 14, barX = W - barW - 20, barY = 20;
+    const pct = Math.min(1, (this._xp % this._maxXp) / this._maxXp);
+
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.fill();
+    // Fill
+    const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    grad.addColorStop(0, '#a3e635');
+    grad.addColorStop(1, '#22c55e');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW * pct, barH, 7); ctx.fill();
+    // Border
+    ctx.strokeStyle = 'rgba(255,255,255,.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.stroke();
+    // Level text
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`LVL ${this._level}`, barX - 6, barY + 1);
+    // XP text
+    ctx.textAlign = 'center';
+    ctx.fillText(`${this._xp % this._maxXp}/${this._maxXp} XP`, barX + barW / 2, barY + 1);
+
+    // Level up flash
+    if (Date.now() < this._levelUpUntil) {
+      const lt = (this._levelUpUntil - Date.now()) / 2000;
+      ctx.globalAlpha = lt * 0.5;
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = `bold ${40 + (1 - lt) * 20}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`⭐ LEVEL ${this._level}!`, W / 2, H / 3);
+    }
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: AchievementPopup — big trophy animation when unlocking badges.
+   Shows a full-screen overlay for 3s with the badge emoji + name. */
+const AchievementPopup = {
+  _queue: [],
+  _current: null,
+  _until: 0,
+
+  show(emoji, name) {
+    this._queue.push({ emoji, name });
+    if (!this._current) this._next();
+  },
+
+  _next() {
+    if (!this._queue.length) { this._current = null; return; }
+    this._current = this._queue.shift();
+    this._until = Date.now() + 3000;
+  },
+
+  render(ctx, W, H) {
+    if (!this._current) return;
+    const remaining = this._until - Date.now();
+    if (remaining <= 0) { this._next(); return; }
+    const t = remaining / 3000; // 1→0
+    const enter = Math.min(1, (3000 - remaining) / 400); // 0→1 over 400ms
+
+    ctx.save();
+    // Dark overlay
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.globalAlpha = t * 0.8;
+    ctx.fillRect(0, 0, W, H);
+
+    // Trophy emoji — bounces in
+    const scale = 0.5 + enter * 0.5;
+    const ey = H * 0.35 - (1 - enter) * 60;
+    ctx.globalAlpha = enter;
+    ctx.font = `${Math.round(80 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this._current.emoji, W / 2, ey);
+
+    // Achievement name
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = `bold ${Math.round(28 * scale)}px 'Righteous', sans-serif`;
+    ctx.fillText(this._current.name, W / 2, ey + 70);
+
+    // "ACHIEVEMENT UNLOCKED" subtitle
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    ctx.font = `${Math.round(14 * scale)}px ui-monospace, monospace`;
+    ctx.fillText('ACHIEVEMENT UNLOCKED', W / 2, ey + 100);
+    ctx.restore();
+  },
+};
+
+/* v0.7.182: SoundPad — clickable audio buttons as HTML overlay on stage.
+   Plays short Web Audio tones/samples. Visible only when toggled. */
+const SoundPad = {
+  _el: null,
+  visible: false,
+
+  toggle() {
+    this.visible = !this.visible;
+    if (this.visible) this._show();
+    else this._hide();
+  },
+
+  _show() {
+    if (this._el) return;
+    const stage = $('tcStage');
+    if (!stage) return;
+    const el = document.createElement('div');
+    el.className = 'tc-soundpad';
+
+    const sounds = [
+      { emoji: '👏', label: 'Clap', freq: 0, type: 'noise' },
+      { emoji: '🥁', label: 'Drum', freq: 100, type: 'triangle' },
+      { emoji: '🎺', label: 'Horn', freq: 440, type: 'sawtooth' },
+      { emoji: '💥', label: 'Boom', freq: 60, type: 'sine' },
+      { emoji: '✨', label: 'Magic', freq: 800, type: 'sine' },
+      { emoji: '🔔', label: 'Bell', freq: 600, type: 'sine' },
+      { emoji: '😂', label: 'LOL', freq: 300, type: 'square' },
+      { emoji: '🚀', label: 'Launch', freq: 150, type: 'sawtooth' },
+    ];
+
+    sounds.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-sp-btn';
+      btn.innerHTML = `<span class="tc-sp-emoji">${s.emoji}</span><span class="tc-sp-label">${s.label}</span>`;
+      btn.addEventListener('click', () => this._playTone(s));
+      el.appendChild(btn);
+    });
+
+    stage.appendChild(el);
+    this._el = el;
+  },
+
+  _hide() {
+    if (!this._el) return;
+    this._el.remove();
+    this._el = null;
+  },
+
+  _playTone(s) {
+    try {
+      const ac = Engine.audioCtx;
+      if (!ac) return;
+      if (ac.state === 'suspended') ac.resume();
+      if (s.type === 'noise') {
+        // White noise burst (clap-like)
+        const buf = ac.createBuffer(1, ac.sampleRate * 0.15, ac.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+        const gain = ac.createGain();
+        gain.gain.value = 0.3;
+        src.connect(gain).connect(ac.destination);
+        src.start();
+        return;
+      }
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = s.type;
+      osc.frequency.value = s.freq;
+      // Sweep for fun sounds
+      if (s.label === 'Launch') osc.frequency.linearRampToValueAtTime(800, ac.currentTime + 0.3);
+      if (s.label === 'Magic') osc.frequency.linearRampToValueAtTime(1600, ac.currentTime + 0.2);
+      if (s.label === 'Boom') osc.frequency.linearRampToValueAtTime(20, ac.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.2, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
+      osc.connect(gain).connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.5);
+      // Visual feedback
+      SpeedLines.fire(300);
+    } catch {}
+  },
 };
 
 function renderTicker() {
