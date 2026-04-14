@@ -15602,9 +15602,20 @@ const LiveCaptions = {
       // Clamp display length
       if (this.current.length > 80) this.current = '…' + this.current.slice(-80);
     };
+    this.recognition.onaudiostart = () => {
+      log('💬 Audio input started — mic is feeding speech recognition', 'info');
+    };
+    this.recognition.onspeechstart = () => {
+      log('💬 Speech detected', 'info');
+    };
+    this.recognition.onspeechend = () => {
+      log('💬 Speech ended', 'info');
+    };
     this.recognition.onerror = (e) => {
       log('💬 caption error: ' + e.error, 'error');
       if (e.error === 'not-allowed') showToast('💬 Mic permission needed — add a mic source first', 3000);
+      else if (e.error === 'network') showToast('💬 Network error — speech recognition requires internet on some browsers', 3000);
+      else if (e.error === 'service-not-allowed') showToast('💬 Speech service not available — check Windows speech settings', 3000);
       else if (e.error === 'no-speech') { /* normal, ignore */ }
       else showToast('💬 Caption error: ' + e.error, 2000);
       if (e.error !== 'no-speech') this.running = false;
@@ -15612,7 +15623,7 @@ const LiveCaptions = {
     this.recognition.onend = () => {
       // Chrome auto-stops after ~50s of silence. Restart if still enabled.
       if (this.running && this.enabled) {
-        try { this.recognition.start(); } catch (e) { log('warn', 'Speech recognition start failed: ' + e.message); }
+        try { this.recognition.start(); } catch (e) { log('💬 Speech recognition restart failed: ' + e.message, 'error'); }
       }
     };
     try {
