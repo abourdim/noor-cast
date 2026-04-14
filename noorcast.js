@@ -6171,6 +6171,8 @@ const SourceSkins = {
     'clapboard', 'livestream', 'circus', 'minaret', 'crescent', 'andalusia',
     'hologram', 'hexgrid', 'portal', 'mech', 'hud', 'dna', 'warp',
     'android', 'forcefield', 'terminal', 'sniper', 'neural',
+    'cube', 'gallery', 'cardboard', 'crystal', 'mirror', 'book',
+    'slotmachine', 'museum', 'floating', 'vortex', 'ice', 'gift',
   ],
   labels: {
     none: '—', tv: '📺 TV', polaroid: '📸 Polaroid', comic: '🗯 Comic', robot: '🤖 Robot',
@@ -6187,6 +6189,10 @@ const SourceSkins = {
     mech: '⚙️ Mech', hud: '📊 HUD', dna: '🧬 DNA', warp: '💫 Warp',
     android: '🤖 Android', forcefield: '🛡 Shield', terminal: '📟 Terminal',
     sniper: '🎯 Scope', neural: '🧠 Neural',
+    cube: '🎲 Cube', gallery: '🖼 Gallery', cardboard: '📦 Box',
+    crystal: '💎 Crystal', mirror: '🪞 Mirror', book: '📖 Book',
+    slotmachine: '🎰 Slots', museum: '🏛 Museum', floating: '🔲 Float',
+    vortex: '🌀 Vortex', ice: '🧊 Ice', gift: '🎁 Gift',
   },
 
   draw(ctx, skin, x, y, w, h) {
@@ -7290,6 +7296,412 @@ const SourceSkins = {
     nodes.forEach(([nx, ny]) => {
       ctx.beginPath(); ctx.arc(nx, ny, 3, 0, Math.PI * 2); ctx.fill();
     });
+  },
+
+  // ═══ 3D DEPTH ═══
+
+  // 🎲 Cube — isometric 3D box, source on front face
+  _draw_cube(ctx, x, y, w, h) {
+    const d = 20; // depth
+    ctx.save();
+    // Top face
+    ctx.fillStyle = '#444';
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + d, y - d); ctx.lineTo(x + w + d, y - d); ctx.lineTo(x + w, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.stroke();
+    // Right face
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.moveTo(x + w, y); ctx.lineTo(x + w + d, y - d); ctx.lineTo(x + w + d, y + h - d); ctx.lineTo(x + w, y + h);
+    ctx.closePath(); ctx.fill();
+    ctx.stroke();
+    // Front face border
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    // Edge highlights
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + d, y - d); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w + d, y - d); ctx.stroke();
+    ctx.restore();
+  },
+
+  // 🖼 Gallery Frame — ornate picture frame with 3D bevels
+  _draw_gallery(ctx, x, y, w, h) {
+    const f = 16; // frame width
+    ctx.save();
+    // Outer frame
+    const outerGrad = ctx.createLinearGradient(x - f, y - f, x + w + f, y + h + f);
+    outerGrad.addColorStop(0, '#c9a040'); outerGrad.addColorStop(0.3, '#e8c860');
+    outerGrad.addColorStop(0.5, '#f0d878'); outerGrad.addColorStop(0.7, '#e8c860');
+    outerGrad.addColorStop(1, '#a08030');
+    ctx.fillStyle = outerGrad;
+    ctx.fillRect(x - f, y - f, w + f * 2, h + f * 2);
+    // Inner bevel (dark)
+    ctx.fillStyle = '#6b5020';
+    ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    // Outer bevel highlights
+    ctx.strokeStyle = 'rgba(255,240,180,.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - f, y - f); ctx.lineTo(x - f + f * 2, y + h + f); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.3)';
+    ctx.beginPath(); ctx.moveTo(x + w + f, y - f); ctx.lineTo(x + w + f, y + h + f); ctx.stroke();
+    // Corner ornaments
+    ctx.fillStyle = '#d4a840';
+    [[x - f + 4, y - f + 4], [x + w + f - 12, y - f + 4], [x - f + 4, y + h + f - 12], [x + w + f - 12, y + h + f - 12]].forEach(([cx, cy]) => {
+      ctx.beginPath(); ctx.arc(cx + 4, cy + 4, 5, 0, Math.PI * 2); ctx.fill();
+    });
+    // Shadow on wall behind
+    ctx.fillStyle = 'rgba(0,0,0,.15)';
+    ctx.fillRect(x - f + 6, y + h + f + 2, w + f * 2, 8);
+    ctx.restore();
+  },
+
+  // 📦 Cardboard Box — open box with flaps
+  _draw_cardboard(ctx, x, y, w, h) {
+    const pad = 10, flap = 18;
+    ctx.save();
+    // Box body — corrugated brown
+    const boxGrad = ctx.createLinearGradient(x, y, x, y + h);
+    boxGrad.addColorStop(0, '#b08050'); boxGrad.addColorStop(0.5, '#a07040'); boxGrad.addColorStop(1, '#906030');
+    ctx.fillStyle = boxGrad;
+    ctx.fillRect(x - pad, y, w + pad * 2, h + pad);
+    // Corrugated lines
+    ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.lineWidth = 0.5;
+    for (let ly = y + 4; ly < y + h + pad; ly += 6) {
+      ctx.beginPath(); ctx.moveTo(x - pad, ly); ctx.lineTo(x + w + pad, ly); ctx.stroke();
+    }
+    // Open flaps (top)
+    ctx.fillStyle = '#b88860';
+    // Left flap
+    ctx.beginPath();
+    ctx.moveTo(x - pad, y); ctx.lineTo(x - pad - 8, y - flap); ctx.lineTo(x + w / 2 - 5, y - flap + 4); ctx.lineTo(x + w / 2 - 5, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#8a6040'; ctx.lineWidth = 1; ctx.stroke();
+    // Right flap
+    ctx.fillStyle = '#c09870';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad, y); ctx.lineTo(x + w + pad + 8, y - flap); ctx.lineTo(x + w / 2 + 5, y - flap + 4); ctx.lineTo(x + w / 2 + 5, y);
+    ctx.closePath(); ctx.fill();
+    ctx.stroke();
+    // Tape strip
+    ctx.fillStyle = 'rgba(200,180,140,.4)';
+    ctx.fillRect(x + w / 2 - 15, y + h + pad - 3, 30, 6);
+    // "THIS SIDE UP" stamp
+    ctx.fillStyle = 'rgba(180,60,60,.3)'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('↑ THIS SIDE UP ↑', x + w / 2, y + h + pad - 8);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 💎 Crystal — faceted gem with prismatic edges
+  _draw_crystal(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    ctx.save();
+    // Faceted outer shape (irregular polygon)
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+      const r = (i % 2 === 0 ? Math.max(w, h) / 2 + 14 : Math.max(w, h) / 2 + 8);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    }
+    // Facet fills with gradient
+    ctx.beginPath(); pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.closePath();
+    const gemGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+    gemGrad.addColorStop(0, 'rgba(200,180,255,.1)'); gemGrad.addColorStop(0.5, 'rgba(180,220,255,.08)');
+    gemGrad.addColorStop(1, 'rgba(255,200,240,.1)');
+    ctx.fillStyle = gemGrad; ctx.fill();
+    ctx.strokeStyle = 'rgba(200,200,255,.5)'; ctx.lineWidth = 2; ctx.stroke();
+    // Internal facet lines
+    ctx.strokeStyle = 'rgba(200,200,255,.15)'; ctx.lineWidth = 0.8;
+    for (let i = 0; i < pts.length; i += 2) {
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+    }
+    // Prismatic rainbow sparkles at edges
+    const sparkles = [[x - 8, y - 8], [x + w + 8, y - 4], [x + w + 4, y + h + 8], [x - 6, y + h + 4]];
+    sparkles.forEach(([sx, sy], i) => {
+      const hue = ((t * 90 + i * 90) % 360);
+      ctx.fillStyle = `hsla(${hue},80%,70%,.5)`;
+      const sr = 3 + Math.sin(t * 4 + i * 2) * 1.5;
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  },
+
+  // 🪞 Magic Mirror — ornate oval with depth bevels
+  _draw_mirror(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2;
+    const rx = w / 2 + 18, ry = h / 2 + 22;
+    ctx.save();
+    // Outer ornate frame
+    const frameGrad = ctx.createRadialGradient(cx, cy, Math.min(rx, ry) * 0.7, cx, cy, Math.max(rx, ry));
+    frameGrad.addColorStop(0, '#c9a040'); frameGrad.addColorStop(0.7, '#a08030'); frameGrad.addColorStop(1, '#806020');
+    ctx.fillStyle = frameGrad;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    // Inner bevel
+    ctx.fillStyle = '#5a4020';
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx - 8, ry - 8, 0, 0, Math.PI * 2); ctx.fill();
+    // Mirror glass edge
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(cx, cy, w / 2 + 2, h / 2 + 2, 0, 0, Math.PI * 2); ctx.stroke();
+    // Reflection glare arc
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx - rx * 0.2, cy - ry * 0.2, rx * 0.4, ry * 0.3, -0.3, 0.3, 1.8); ctx.stroke();
+    // Crown ornament at top
+    ctx.fillStyle = '#d4a840';
+    ctx.beginPath();
+    const ty = cy - ry - 2;
+    ctx.moveTo(cx - 12, ty + 8); ctx.lineTo(cx - 8, ty); ctx.lineTo(cx - 2, ty + 6);
+    ctx.lineTo(cx, ty - 4); ctx.lineTo(cx + 2, ty + 6); ctx.lineTo(cx + 8, ty);
+    ctx.lineTo(cx + 12, ty + 8); ctx.closePath(); ctx.fill();
+    // Sparkle particles
+    const t = Date.now() / 1000;
+    ctx.fillStyle = 'rgba(255,240,200,.4)';
+    for (let i = 0; i < 4; i++) {
+      const sa = t * 1.5 + i * 1.5;
+      const sparkR = rx * 0.8;
+      const sx = cx + Math.cos(sa) * sparkR * 0.9;
+      const sy = cy + Math.sin(sa) * (ry * 0.8);
+      ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // 📖 Open Book — source on right page, spine visible
+  _draw_book(ctx, x, y, w, h) {
+    const pad = 12, spine = 8;
+    ctx.save();
+    // Left page (faint text)
+    ctx.fillStyle = '#f5f0e0';
+    ctx.fillRect(x - pad - w * 0.3, y - pad, w * 0.3 + pad, h + pad * 2);
+    // Text lines on left page
+    ctx.fillStyle = 'rgba(100,80,60,.15)';
+    for (let i = 0; i < 10; i++) {
+      const lw = 20 + Math.random() * (w * 0.25 - 30);
+      ctx.fillRect(x - pad - w * 0.3 + 8, y - pad + 12 + i * (h / 10), lw, 2);
+    }
+    // Spine
+    const spineGrad = ctx.createLinearGradient(x - pad - spine, y, x - pad, y);
+    spineGrad.addColorStop(0, '#8b6914'); spineGrad.addColorStop(0.5, '#6b4c10'); spineGrad.addColorStop(1, '#8b6914');
+    ctx.fillStyle = spineGrad;
+    ctx.fillRect(x - pad - spine, y - pad - 2, spine, h + pad * 2 + 4);
+    // Right page (where video goes)
+    ctx.fillStyle = '#faf5e8';
+    ctx.fillRect(x - pad + 2, y - pad, w + pad * 2 - 2, h + pad * 2);
+    // Page shadow along spine
+    const shadowGrad = ctx.createLinearGradient(x - pad, y, x - pad + 15, y);
+    shadowGrad.addColorStop(0, 'rgba(0,0,0,.15)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowGrad;
+    ctx.fillRect(x - pad, y - pad, 15, h + pad * 2);
+    // Page curl (bottom-right corner)
+    ctx.fillStyle = '#e8e0d0';
+    ctx.beginPath();
+    ctx.moveTo(x + w + pad, y + h + pad);
+    ctx.lineTo(x + w + pad - 16, y + h + pad);
+    ctx.lineTo(x + w + pad, y + h + pad - 16);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.restore();
+  },
+
+  // 🎰 Slot Machine — 3D cabinet with handle
+  _draw_slotmachine(ctx, x, y, w, h) {
+    const pad = 16, cx = x + w / 2;
+    const bx = x - pad, by = y - pad - 20, bw = w + pad * 2, bh = h + pad * 2 + 50;
+    ctx.save();
+    // Cabinet body (red gradient)
+    const cabGrad = ctx.createLinearGradient(bx, by, bx + bw, by);
+    cabGrad.addColorStop(0, '#8b1a1a'); cabGrad.addColorStop(0.5, '#b22222'); cabGrad.addColorStop(1, '#8b1a1a');
+    ctx.fillStyle = cabGrad;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill();
+    // Chrome trim
+    ctx.strokeStyle = '#daa520'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(bx + 2, by + 2, bw - 4, bh - 4, 6); ctx.stroke();
+    // "JACKPOT" text
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px "Righteous", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('★ JACKPOT ★', cx, by + 14);
+    // Screen area
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.roundRect(x - 4, y - 4, w + 8, h + 8, 4); ctx.fill();
+    // Reel symbols below screen
+    ctx.fillStyle = '#222'; ctx.fillRect(bx + 10, y + h + 10, bw - 20, 18);
+    ctx.font = '14px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText('🍒  💎  7️⃣', cx, y + h + 24);
+    // Handle (right side)
+    ctx.fillStyle = '#888'; ctx.fillRect(bx + bw + 2, by + bh * 0.3, 8, bh * 0.4);
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(bx + bw + 6, by + bh * 0.3, 8, 0, Math.PI * 2); ctx.fill();
+    // Coin tray
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.roundRect(bx + 10, by + bh - 16, bw - 20, 10, 3); ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🏛 Museum — glass display case with marble base
+  _draw_museum(ctx, x, y, w, h) {
+    const pad = 10, baseH = 24;
+    ctx.save();
+    // Glass case (transparent outline)
+    ctx.strokeStyle = 'rgba(200,220,240,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 4); ctx.stroke();
+    // Glass reflection
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - pad + 4, y - pad); ctx.lineTo(x - pad + 4, y + h + pad); ctx.stroke();
+    // Marble base
+    const marbleGrad = ctx.createLinearGradient(x - pad - 10, y + h + pad, x + w + pad + 10, y + h + pad);
+    marbleGrad.addColorStop(0, '#999'); marbleGrad.addColorStop(0.3, '#ccc'); marbleGrad.addColorStop(0.5, '#ddd');
+    marbleGrad.addColorStop(0.7, '#ccc'); marbleGrad.addColorStop(1, '#999');
+    ctx.fillStyle = marbleGrad;
+    ctx.fillRect(x - pad - 10, y + h + pad + 2, w + pad * 2 + 20, baseH);
+    // Base edge
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad - 10, y + h + pad + 2, w + pad * 2 + 20, baseH);
+    // Spotlight from above
+    ctx.fillStyle = 'rgba(255,250,220,.04)';
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2 - 10, y - pad - 30);
+    ctx.lineTo(x - pad - 20, y + h + pad);
+    ctx.lineTo(x + w + pad + 20, y + h + pad);
+    ctx.lineTo(x + w / 2 + 10, y - pad - 30);
+    ctx.fill();
+    // Label plaque
+    ctx.fillStyle = '#c9a040'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 25, y + h + pad + 6, 50, 12, 2); ctx.fill();
+    ctx.fillStyle = '#3a2a10'; ctx.font = '7px serif'; ctx.textAlign = 'center';
+    ctx.fillText('EXHIBIT A', x + w / 2, y + h + pad + 15);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  },
+
+  // 🔲 Floating Panel — hovering above shadow
+  _draw_floating(ctx, x, y, w, h) {
+    const lift = 12;
+    ctx.save();
+    // Shadow on "ground"
+    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + lift + 8, w / 2 + 5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Subtle glow under panel
+    ctx.fillStyle = 'rgba(56,189,248,.05)';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + lift + 4, w / 2, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Panel frame (thin bright border)
+    ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(56,189,248,.3)'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, 4); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Corner energy dots
+    ctx.fillStyle = 'rgba(56,189,248,.5)';
+    [[x - 3, y - 3], [x + w + 3, y - 3], [x - 3, y + h + 3], [x + w + 3, y + h + 3]].forEach(([dx, dy]) => {
+      ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  },
+
+  // 🌀 Vortex — spiral tunnel pulling inward
+  _draw_vortex(ctx, x, y, w, h) {
+    const cx = x + w / 2, cy = y + h / 2, t = Date.now() / 1000;
+    const maxR = Math.max(w, h) / 2 + 20;
+    ctx.save();
+    // Spiral rings
+    ctx.strokeStyle = 'rgba(192,132,252,.2)'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const r = maxR - i * (maxR / 6);
+      const startAngle = t * 2 + i * 0.5;
+      ctx.beginPath(); ctx.arc(cx, cy, r, startAngle, startAngle + 4); ctx.stroke();
+    }
+    // Radial streaks converging
+    ctx.strokeStyle = 'rgba(192,132,252,.1)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 + t;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+      ctx.lineTo(cx + Math.cos(a) * (maxR * 0.4), cy + Math.sin(a) * (maxR * 0.4));
+      ctx.stroke();
+    }
+    // Dark vignette at edges
+    const vigGrad = ctx.createRadialGradient(cx, cy, maxR * 0.5, cx, cy, maxR);
+    vigGrad.addColorStop(0, 'rgba(0,0,0,0)'); vigGrad.addColorStop(1, 'rgba(20,10,40,.15)');
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(x - 25, y - 25, w + 50, h + 50);
+    ctx.restore();
+  },
+
+  // 🧊 Ice Block — frozen translucent with cracks + frost
+  _draw_ice(ctx, x, y, w, h) {
+    const pad = 8;
+    ctx.save();
+    // Ice body (translucent blue)
+    ctx.fillStyle = 'rgba(180,220,255,.1)';
+    ctx.fillRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    // Ice border
+    ctx.strokeStyle = 'rgba(180,220,255,.35)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 3); ctx.stroke();
+    // Frost edge (rough white)
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 15; i++) {
+      const side = i % 4;
+      const p = Math.random();
+      let fx, fy, fx2, fy2;
+      if (side === 0) { fx = x - pad + p * (w + pad * 2); fy = y - pad; fx2 = fx + (Math.random() - 0.5) * 10; fy2 = fy - Math.random() * 6; }
+      else if (side === 1) { fx = x + w + pad; fy = y - pad + p * (h + pad * 2); fx2 = fx + Math.random() * 6; fy2 = fy + (Math.random() - 0.5) * 10; }
+      else if (side === 2) { fx = x - pad + p * (w + pad * 2); fy = y + h + pad; fx2 = fx + (Math.random() - 0.5) * 10; fy2 = fy + Math.random() * 6; }
+      else { fx = x - pad; fy = y - pad + p * (h + pad * 2); fx2 = fx - Math.random() * 6; fy2 = fy + (Math.random() - 0.5) * 10; }
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx2, fy2); ctx.stroke();
+    }
+    // Internal cracks
+    ctx.strokeStyle = 'rgba(200,230,255,.12)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x + w * 0.2, y); ctx.lineTo(x + w * 0.35, y + h * 0.4); ctx.lineTo(x + w * 0.15, y + h * 0.7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.7, y + h); ctx.lineTo(x + w * 0.8, y + h * 0.5); ctx.lineTo(x + w * 0.65, y + h * 0.3); ctx.stroke();
+    // Cold blue tint
+    const coldGrad = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, Math.max(w, h) * 0.6);
+    coldGrad.addColorStop(0, 'rgba(100,180,255,0)'); coldGrad.addColorStop(1, 'rgba(100,180,255,.04)');
+    ctx.fillStyle = coldGrad; ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  },
+
+  // 🎁 Gift Box — open present with ribbon
+  _draw_gift(ctx, x, y, w, h) {
+    const pad = 12, lidH = 16;
+    ctx.save();
+    // Box body (wrapping paper)
+    const wrapGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+    wrapGrad.addColorStop(0, '#dc2626'); wrapGrad.addColorStop(0.5, '#ef4444'); wrapGrad.addColorStop(1, '#dc2626');
+    ctx.fillStyle = wrapGrad;
+    ctx.fillRect(x - pad, y, w + pad * 2, h + pad);
+    // Wrapping paper pattern (dots)
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    for (let gx = x - pad; gx < x + w + pad; gx += 16) {
+      for (let gy = y; gy < y + h + pad; gy += 16) {
+        ctx.beginPath(); ctx.arc(gx + 8, gy + 8, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // Lid (tilted open)
+    ctx.fillStyle = '#b91c1c';
+    ctx.beginPath();
+    ctx.moveTo(x - pad - 2, y);
+    ctx.lineTo(x - pad + 6, y - lidH - 8);
+    ctx.lineTo(x + w + pad - 6, y - lidH - 8);
+    ctx.lineTo(x + w + pad + 2, y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 1; ctx.stroke();
+    // Ribbon (vertical + horizontal)
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(x + w / 2 - 5, y, 10, h + pad); // vertical
+    ctx.fillRect(x - pad, y + h / 2 - 4, w + pad * 2, 8); // horizontal
+    // Bow on lid
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.ellipse(x + w / 2 - 10, y - lidH - 4, 10, 6, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + w / 2 + 10, y - lidH - 4, 10, 6, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(x + w / 2, y - lidH - 4, 5, 0, Math.PI * 2); ctx.fill();
+    // Tissue paper peeking out
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.beginPath();
+    ctx.moveTo(x - pad + 8, y); ctx.lineTo(x + 10, y - 10); ctx.lineTo(x + 30, y);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + w - 10, y); ctx.lineTo(x + w + pad - 15, y - 8); ctx.lineTo(x + w + pad - 5, y);
+    ctx.fill();
+    ctx.restore();
   },
 };
 
