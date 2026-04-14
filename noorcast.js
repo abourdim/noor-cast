@@ -3519,7 +3519,20 @@ const Engine = {
      that sits above the selection — never on the canvas, so they can
      never overlap the video itself. */
   _drawSelectedSourceChrome() {
+    // v0.7.180: hover bounding box (subtle accent outline on non-selected hovered source)
+    const hovId = Drag._hoveredSourceId;
     const selId = Drag.selectedSourceId;
+    if (hovId != null && hovId !== selId) {
+      const hs = this.sources.find(x => x.id === hovId);
+      if (hs && hs.type !== 'mic' && hs.visible && !hs.hidden) {
+        this.ctx.save();
+        this.ctx.strokeStyle = (this._accentColor || '#a3e635');
+        this.ctx.globalAlpha = 0.35;
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(hs.x - 2, hs.y - 2, hs.w + 4, hs.h + 4);
+        this.ctx.restore();
+      }
+    }
     if (selId == null) {
       this.sources.forEach(s => { s._chromeDel = null; s._chromeHide = null; });
       // v0.7.138: even without a primary selection, draw multi-select chrome
@@ -3557,27 +3570,29 @@ const Engine = {
     ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
     ctx.setLineDash([]);
 
-    // v0.7.14: visible corner resize handles so users can see where to
-    // grab. Hit-test in Drag._nearCorner uses a 36px canvas-space radius,
-    // so the visual chiclet is 28×28 to match the feel.
-    const hs = 28;
-    const corners = [
-      [x,     y],     // TL
-      [x + w, y],     // TR
-      [x,     y + h], // BL
-      [x + w, y + h], // BR
-    ];
-    corners.forEach(([cx, cy]) => {
-      // White knob with accent border — unmissable
+    // v0.7.180: circular resize handles — corners (12px) + edge midpoints (8px)
+    const drawHandle = (hx, hy, r) => {
+      ctx.beginPath();
+      ctx.arc(hx, hy, r, 0, Math.PI * 2);
       ctx.shadowColor = 'rgba(0,0,0,.55)';
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 6;
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(cx - hs / 2, cy - hs / 2, hs, hs);
+      ctx.fill();
       ctx.shadowBlur = 0;
       ctx.strokeStyle = accent;
-      ctx.lineWidth = 4;
-      ctx.strokeRect(cx - hs / 2, cy - hs / 2, hs, hs);
-    });
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    };
+    // Corner handles (12px radius)
+    drawHandle(x, y, 12);           // 0: TL
+    drawHandle(x + w, y, 12);       // 1: TR
+    drawHandle(x, y + h, 12);       // 2: BL
+    drawHandle(x + w, y + h, 12);   // 3: BR
+    // Edge midpoint handles (8px radius)
+    drawHandle(x + w / 2, y, 8);         // 4: top-center
+    drawHandle(x + w, y + h / 2, 8);     // 5: right-center
+    drawHandle(x + w / 2, y + h, 8);     // 6: bottom-center
+    drawHandle(x, y + h / 2, 8);         // 7: left-center
     ctx.restore();
 
     // v0.7.138: draw selection chrome on all multi-selected sources (except
@@ -7386,12 +7401,13 @@ const Drag = {
     // Uses the same _hitTest as mousedown so the hover layer matches
     // exactly what a click would select. Cleared on mouseleave.
     this.stage.addEventListener('mousemove', (e) => {
-      if (this.state) { LayerBadge.hide(); SourceHud.hide(); return; }
+      if (this.state) { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; return; }
       const [mx, my] = this._stageToCanvas(e);
       const hit = this._hitTest(mx, my);
       if (hit && hit.kind === 'source') {
         const idx = Engine.sources.indexOf(hit.ref);
-        if (idx < 0) { LayerBadge.hide(); SourceHud.hide(); return; }
+        if (idx < 0) { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this.stage.style.cursor = ''; return; }
+        this._hoveredSourceId = hit.ref.id;
         // Layer number from BACK = array index + 1 (index 0 is drawn first = back).
         const total = Engine.sources.filter(s => s.type !== 'mic').length;
         const layerFromBack = Engine.sources
@@ -7400,12 +7416,25 @@ const Drag = {
         LayerBadge.showAt(e.clientX, e.clientY, layerFromBack, total);
         // v0.7.146: source info HUD
         SourceHud.show(hit.ref, e.clientX, e.clientY);
+        // v0.7.180: resize cursors on selected source handles
+        if (hit.ref.id === this.selectedSourceId) {
+          const handle = this._nearCorner(hit.ref, mx, my);
+          if (handle === 0 || handle === 3) this.stage.style.cursor = 'nwse-resize';
+          else if (handle === 1 || handle === 2) this.stage.style.cursor = 'nesw-resize';
+          else if (handle === 4 || handle === 6) this.stage.style.cursor = 'ns-resize';
+          else if (handle === 5 || handle === 7) this.stage.style.cursor = 'ew-resize';
+          else this.stage.style.cursor = 'move';
+        } else {
+          this.stage.style.cursor = 'pointer';
+        }
       } else {
+        this._hoveredSourceId = null;
+        this.stage.style.cursor = '';
         LayerBadge.hide();
         SourceHud.hide();
       }
     });
-    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); });
+    this.stage.addEventListener('mouseleave', () => { LayerBadge.hide(); SourceHud.hide(); this._hoveredSourceId = null; this.stage.style.cursor = ''; });
     // v0.7.53: Ctrl+wheel on the stage = smooth zoom toward the cursor.
     // Without Ctrl, let the page scroll normally.
     this.stage.addEventListener('wheel', (e) => {
@@ -7502,18 +7531,29 @@ const Drag = {
     ];
   },
 
-  /* Returns the nearest corner index (0=TL, 1=TR, 2=BL, 3=BR) if (mx,my)
-     is within CORNER_RADIUS canvas-pixels of one of obj's corners, else -1. */
+  /* Returns handle index if (mx,my) is near a handle, else -1.
+     0=TL, 1=TR, 2=BL, 3=BR (corners),
+     4=top-center, 5=right-center, 6=bottom-center, 7=left-center (edges). */
   _nearCorner(obj, mx, my) {
-    const corners = [
-      [obj.x,            obj.y],
-      [obj.x + obj.w,    obj.y],
-      [obj.x,            obj.y + obj.h],
-      [obj.x + obj.w,    obj.y + obj.h],
+    const handles = [
+      [obj.x,              obj.y],                   // 0: TL
+      [obj.x + obj.w,      obj.y],                   // 1: TR
+      [obj.x,              obj.y + obj.h],            // 2: BL
+      [obj.x + obj.w,      obj.y + obj.h],            // 3: BR
+      [obj.x + obj.w / 2,  obj.y],                   // 4: top-center
+      [obj.x + obj.w,      obj.y + obj.h / 2],        // 5: right-center
+      [obj.x + obj.w / 2,  obj.y + obj.h],            // 6: bottom-center
+      [obj.x,              obj.y + obj.h / 2],         // 7: left-center
     ];
     const r2 = this.CORNER_RADIUS * this.CORNER_RADIUS;
+    // Check corners first (higher priority)
     for (let i = 0; i < 4; i++) {
-      const dx = mx - corners[i][0], dy = my - corners[i][1];
+      const dx = mx - handles[i][0], dy = my - handles[i][1];
+      if (dx * dx + dy * dy < r2) return i;
+    }
+    // Then edge midpoints
+    for (let i = 4; i < 8; i++) {
+      const dx = mx - handles[i][0], dy = my - handles[i][1];
       if (dx * dx + dy * dy < r2) return i;
     }
     return -1;
@@ -7828,34 +7868,46 @@ const Drag = {
       }
     } else {
       // resize
-      // corner: 0=TL, 1=TR, 2=BL, 3=BR
-      const right  = s.corner === 1 || s.corner === 3;
-      const bottom = s.corner === 2 || s.corner === 3;
-      const oppX = right ? s.startX : s.startX + s.startW;
-      const oppY = bottom ? s.startY : s.startY + s.startH;
-      let newW = Math.abs(mx - oppX);
-      let newH = Math.abs(my - oppY);
-      // v0.7.167: shapes get free resize + smaller minimum
+      // handle: 0=TL, 1=TR, 2=BL, 3=BR, 4=top, 5=right, 6=bottom, 7=left
+      const isEdge = s.corner >= 4;
       const isShape = s.ref && s.ref.type === 'shape';
-      // Minimum sizes (shapes can go smaller)
       const minW = isShape ? 20 : 80;
       const minH = isShape ? 20 : 60;
-      newW = Math.max(minW, newW);
-      newH = Math.max(minH, newH);
-      // v0.7.17: sources lock aspect ratio by default (kid-safe). Hold
-      // Shift while dragging the corner to break the lock and resize
-      // freely. Shift state is read live from the move event so the
-      // user can press/release mid-drag.
-      // v0.7.142: per-source aspectLock overrides Shift — ratio always kept.
-      const forceLock = !!(s.ref && s.ref.aspectLock);
-      const freeResize = isShape || !forceLock && (!!e.shiftKey || s.freeResize);
-      if (s.kind === 'source' && !freeResize) {
-        const keepByWidth = newW / s.aspect > newH;
-        if (keepByWidth) newH = newW / s.aspect; else newW = newH * s.aspect;
+      let newW, newH, newX, newY;
+
+      if (isEdge) {
+        // v0.7.180: edge midpoint handles — single-axis resize
+        newW = s.startW; newH = s.startH;
+        newX = s.startX; newY = s.startY;
+        if (s.corner === 4) { // top edge — move top, keep bottom
+          newH = Math.max(minH, (s.startY + s.startH) - my);
+          newY = Math.min(my, s.startY + s.startH - minH);
+        } else if (s.corner === 6) { // bottom edge
+          newH = Math.max(minH, my - s.startY);
+        } else if (s.corner === 7) { // left edge — move left, keep right
+          newW = Math.max(minW, (s.startX + s.startW) - mx);
+          newX = Math.min(mx, s.startX + s.startW - minW);
+        } else if (s.corner === 5) { // right edge
+          newW = Math.max(minW, mx - s.startX);
+        }
+      } else {
+        // Corner resize (existing logic)
+        const right  = s.corner === 1 || s.corner === 3;
+        const bottom = s.corner === 2 || s.corner === 3;
+        const oppX = right ? s.startX : s.startX + s.startW;
+        const oppY = bottom ? s.startY : s.startY + s.startH;
+        newW = Math.max(minW, Math.abs(mx - oppX));
+        newH = Math.max(minH, Math.abs(my - oppY));
+        // Aspect ratio lock (Shift to unlock, per-source override)
+        const forceLock = !!(s.ref && s.ref.aspectLock);
+        const freeResize = isShape || !forceLock && (!!e.shiftKey || s.freeResize);
+        if (s.kind === 'source' && !freeResize) {
+          const keepByWidth = newW / s.aspect > newH;
+          if (keepByWidth) newH = newW / s.aspect; else newW = newH * s.aspect;
+        }
+        newX = right ? s.startX : Math.min(mx, oppX);
+        newY = bottom ? s.startY : Math.min(my, oppY);
       }
-      // New top-left depends on which corner we're dragging
-      const newX = right ? s.startX : Math.min(mx, oppX);
-      const newY = bottom ? s.startY : Math.min(my, oppY);
 
       if (s.kind === 'text') {
         TextOverlays.resizeTo(ref, newW);
