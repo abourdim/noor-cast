@@ -20407,6 +20407,28 @@ function wireEvents() {
     if (e.target.closest('#tcMoreToolsBtn') || e.target.closest('#tcMoreToolsPopup')) return;
     pop.style.display = 'none';
   });
+  // v0.7.190: make More Tools popup draggable
+  const mtPop = $('tcMoreToolsPopup');
+  if (mtPop && !mtPop.querySelector('.tc-ssp-drag-handle')) {
+    const handle = document.createElement('div');
+    handle.className = 'tc-ssp-drag-handle';
+    handle.textContent = '⋯ drag to move ⋯';
+    mtPop.insertBefore(handle, mtPop.firstChild);
+    let dx = 0, dy = 0;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dx = e.clientX - mtPop.offsetLeft;
+      dy = e.clientY - mtPop.offsetTop;
+      const onMove = (ev) => {
+        mtPop.style.left = Math.max(0, Math.min(window.innerWidth - mtPop.offsetWidth, ev.clientX - dx)) + 'px';
+        mtPop.style.top = Math.max(0, ev.clientY - dy) + 'px';
+        mtPop.style.bottom = 'auto';
+      };
+      const onUp = () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  }
   // v0.7.189: Fun popup — dedicated button
   $('tcFunMenuBtn')?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -21237,6 +21259,14 @@ function wireEvents() {
   }
 
   // Trim wiring
+  $('tcCaptionsBtn')?.addEventListener('click', (e) => {
+    LiveCaptions.setEnabled(!LiveCaptions.enabled);
+    e.target.closest('.tc-tool-btn')?.classList.toggle('active', LiveCaptions.enabled);
+    showToast(LiveCaptions.enabled ? '💬 Captions ON' : '💬 Captions OFF', 1200);
+    // Sync the settings checkbox if it exists
+    const capEl = $('tcCaptionsToggle');
+    if (capEl) capEl.checked = LiveCaptions.enabled;
+  });
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
   $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());

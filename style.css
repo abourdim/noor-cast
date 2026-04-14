@@ -2771,6 +2771,7 @@ body.log-open .app {
   font-family: var(--font-mono, monospace);
   border-bottom: 1px solid rgba(255,255,255,.08);
   margin-bottom: 6px; user-select: none;
+  grid-column: 1 / -1;
 }
 .tc-ssp-drag-handle:active { cursor: grabbing; }
 .tc-ssp-section {
