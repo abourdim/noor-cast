@@ -8505,7 +8505,6 @@ const Recorder = {
         this._totalBytes += sz;
         if (sz > 0) {
           if (this._fileWriter) {
-            // Stream directly to disk
             this._fileWriter.write(e.data).catch(() => {});
           } else {
             this.chunks.push(e.data);
@@ -8521,10 +8520,55 @@ const Recorder = {
         showToast(t('recorderError'), 4000);
       };
       this.recorder.onstop = () => this.finish();
-      // 250 ms timeslice so even a 1-second recording buffers multiple chunks.
-      // Firefox has historically been unreliable with the final flush at stop();
-      // smaller slices reduce that risk.
       this.recorder.start(250);
+
+      // v0.7.200: early 0-byte watchdog. If the first ~1.5 s of chunks are
+      // all empty, the encoder is silently broken (common with MP4 on Windows).
+      // Tear down and restart with a known-safe WebM MIME before the user
+      // records minutes of silence.
+      if (!this._watchdogRetry) {
+        this._watchdogTimer = setTimeout(() => {
+          if (this.state !== 'recording' && this.state !== 'paused') return;
+          if (this._totalBytes > 0) return;   // data is flowing — all good
+          const failedMime = this.recorder?.mimeType || mime;
+          log(`⚠ watchdog: 0 bytes after 1.5 s with ${failedMime} — restarting with safe WebM`, 'error');
+          this._watchdogRetry = true;
+          try { this.recorder.stop(); } catch {}
+          this.chunks = [];
+          this._chunkCount = 0;
+          this._totalBytes = 0;
+          const safeMimes = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+          const safeMime = safeMimes.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+          try {
+            this.recorder = new MediaRecorder(stream, safeMime ? { mimeType: safeMime, videoBitsPerSecond: bitrate } : { videoBitsPerSecond: bitrate });
+          } catch {
+            this.recorder = new MediaRecorder(stream);
+          }
+          this.recorder.ondataavailable = e => {
+            this._chunkCount++;
+            const sz = e.data ? e.data.size : 0;
+            this._totalBytes += sz;
+            if (sz > 0) {
+              if (this._fileWriter) {
+                this._fileWriter.write(e.data).catch(() => {});
+              } else {
+                this.chunks.push(e.data);
+              }
+            }
+            if (this._chunkCount <= 3 || this._chunkCount % 20 === 0) {
+              log(`📦 chunk #${this._chunkCount}: ${sz} B (total ${this._totalBytes} B)${this._fileWriter ? ' [disk]' : ''}`, sz > 0 ? 'info' : 'error');
+            }
+          };
+          this.recorder.onerror = (e2) => {
+            const err2 = e2 && e2.error ? e2.error : e2;
+            log(`✗ MediaRecorder error (retry): ${err2 && err2.name || ''} ${err2 && err2.message || err2}`, 'error');
+          };
+          this.recorder.onstop = () => this.finish();
+          this.recorder.start(250);
+          log(`🔄 recorder restarted with ${safeMime || '(browser default)'}`, 'info');
+          showToast(t('recRetryWebm') || '🔄 Switched to WebM — recording continues', 2500);
+        }, 1500);
+      }
       this.startTime = Date.now();
       GhostReplay.startIfReady(); // v0.7.192
       this.pausedDuration = 0;
@@ -8568,9 +8612,9 @@ const Recorder = {
     }
   },
 
+  _isWindows: /Win/.test(navigator.platform),
+
   pickMime() {
-    // User preference: 'mp4', 'webm', or 'auto' (= first supported, MP4-first).
-    // Stored in localStorage via the settings panel.
     let pref = 'auto';
     try { pref = localStorage.getItem('tc-format') || 'auto'; } catch {}
     const mp4 = [
@@ -8579,13 +8623,17 @@ const Recorder = {
       'video/mp4',
     ];
     const webm = [
-      'video/webm;codecs=vp9,opus',
       'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9,opus',
       'video/webm',
     ];
+    // v0.7.200: On Windows, auto prefers WebM because Chromium's MP4
+    // encoder (via Windows Media Foundation) silently produces 0-byte
+    // files on many hardware configs (crbug.com/370072551, 362873381).
     const order = pref === 'mp4' ? [...mp4, ...webm]
                 : pref === 'webm' ? [...webm, ...mp4]
-                : [...mp4, ...webm];  // auto — MP4 first when available
+                : this._isWindows ? [...webm, ...mp4]
+                : [...mp4, ...webm];
     for (const m of order) {
       if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
     }
@@ -8750,8 +8798,8 @@ const Recorder = {
 
   _stopImmediate() {
     if (!this.recorder) return;
-    // Force a final ondataavailable flush before stopping. Firefox has
-    // historically been unreliable with the implicit flush at stop().
+    if (this._watchdogTimer) { clearTimeout(this._watchdogTimer); this._watchdogTimer = null; }
+    this._watchdogRetry = false;
     try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch (e) { log('warn', 'requestData failed: ' + e.message); }
     try { this.recorder.stop(); } catch (e) { log(`✗ recorder.stop: ${e.message}`, 'error'); }
     this.state = 'idle';
@@ -8781,8 +8829,15 @@ const Recorder = {
     // v0.2.1: catch empty recordings loudly instead of silently downloading 0 B.
     // v0.7.193: skip this check if saved to disk (chunks went to file, not array)
     if (blob.size === 0 && !this._savedToDisk) {
-      log('✗ 0-byte recording — pipeline produced no data', 'error');
-      showToast(t('recEmpty'), 5000);
+      const diagMime = this.recorder?.mimeType || mimeType;
+      log(`✗ 0-byte recording — mime=${diagMime}, chunks=${this._chunkCount}, bytes=${this._totalBytes}, platform=${navigator.platform}`, 'error');
+      // v0.7.200: actionable hint on Windows when MP4 was used
+      if (this._isWindows && diagMime.includes('mp4')) {
+        showToast(t('recEmptyWinMp4') || '⚠ Recording empty — MP4 encoder failed. Switch to WebM in Settings → Format.', 7000);
+        log('💡 Windows MP4 encoder failure detected — recommend WebM format (crbug.com/370072551)', 'error');
+      } else {
+        showToast(t('recEmpty'), 5000);
+      }
       this.updateUI();
       this.resetSceneState();
       return;
