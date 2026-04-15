@@ -8419,6 +8419,9 @@ const Recorder = {
   timerId: null, state: 'idle', frozen: false,
   _pulseUntil: 0, _pulseDur: 800,  // marker-pulse animation state (ms)
   _bigFlashUntil: 0,                // v0.7.78: big-marker full-screen flash deadline (perf.now ms)
+  _watchdogTimer: null,
+  _watchdogRetry: false,
+  _suppressNextStopFinish: false,
 
   async start() {
     if (this.state !== 'idle' || this._starting) {
@@ -8522,17 +8525,17 @@ const Recorder = {
       this.recorder.onstop = () => this.finish();
       this.recorder.start(250);
 
-      // v0.7.200: early 0-byte watchdog. If the first ~1.5 s of chunks are
-      // all empty, the encoder is silently broken (common with MP4 on Windows).
-      // Tear down and restart with a known-safe WebM MIME before the user
-      // records minutes of silence.
-      if (!this._watchdogRetry) {
+      // v0.7.201: watchdog only for Windows MP4 sessions. Running this for
+      // every format/platform caused false positives and stop/restart races.
+      const shouldWatchdog = this._isWindows && ((this.recorder?.mimeType || mime || '').includes('mp4'));
+      if (shouldWatchdog && !this._watchdogRetry) {
         this._watchdogTimer = setTimeout(() => {
           if (this.state !== 'recording' && this.state !== 'paused') return;
           if (this._totalBytes > 0) return;   // data is flowing — all good
-          const failedMime = this.recorder?.mimeType || mime;
-          log(`⚠ watchdog: 0 bytes after 1.5 s with ${failedMime} — restarting with safe WebM`, 'error');
+          const failedMime = this.recorder?.mimeType || mime || '(unknown)';
+          log(`⚠ watchdog: 0 bytes after 3.0 s with ${failedMime} — restarting with safe WebM`, 'error');
           this._watchdogRetry = true;
+          this._suppressNextStopFinish = true;
           try { this.recorder.stop(); } catch {}
           this.chunks = [];
           this._chunkCount = 0;
@@ -8567,7 +8570,7 @@ const Recorder = {
           this.recorder.start(250);
           log(`🔄 recorder restarted with ${safeMime || '(browser default)'}`, 'info');
           showToast(t('recRetryWebm') || '🔄 Switched to WebM — recording continues', 2500);
-        }, 1500);
+        }, 3000);
       }
       this.startTime = Date.now();
       GhostReplay.startIfReady(); // v0.7.192
@@ -8800,6 +8803,7 @@ const Recorder = {
     if (!this.recorder) return;
     if (this._watchdogTimer) { clearTimeout(this._watchdogTimer); this._watchdogTimer = null; }
     this._watchdogRetry = false;
+    this._suppressNextStopFinish = false;
     try { if (this.recorder.state !== 'inactive') this.recorder.requestData(); } catch (e) { log('warn', 'requestData failed: ' + e.message); }
     try { this.recorder.stop(); } catch (e) { log(`✗ recorder.stop: ${e.message}`, 'error'); }
     this.state = 'idle';
@@ -8812,6 +8816,10 @@ const Recorder = {
   },
 
   finish() {
+    if (this._suppressNextStopFinish) {
+      this._suppressNextStopFinish = false;
+      return;
+    }
     // v0.7.159: if streaming to disk, close the writer — file is already saved
     if (this._fileWriter) {
       this._fileWriter.close().then(() => {
