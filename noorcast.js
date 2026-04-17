@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.233 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.234 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.233';
+const APP_VERSION = '0.7.234';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2376,6 +2376,31 @@ const SidebarResize = {
 /* v0.7.208: UiFont — global font override for the UI. Overlays theme
    default (--font-b / --font-h CSS vars) without disturbing anything
    else. Stored in tc-ui-font localStorage. Empty string = use theme. */
+/* v0.7.234: RecordQuality — user-pickable bitrate preset for MediaRecorder.
+   Default 'high' (8 Mbps) gives noticeably sharper 1080p recordings than
+   the previous hardcoded 4 Mbps. Stored in tc-rec-quality. */
+const RecordQuality = {
+  presets: {
+    standard: { bitrate: 4_000_000, fps: 30, label: 'Standard — 4 Mbps' },
+    high:     { bitrate: 8_000_000, fps: 30, label: 'High — 8 Mbps (default)' },
+    ultra:    { bitrate: 12_000_000, fps: 30, label: 'Ultra — 12 Mbps (big files)' },
+    max:      { bitrate: 20_000_000, fps: 60, label: 'Max — 20 Mbps 60fps (huge)' },
+  },
+  current: 'high',
+  load() {
+    const v = silentGet('tc-rec-quality', 'high');
+    this.current = (v in this.presets) ? v : 'high';
+  },
+  set(key) {
+    if (!(key in this.presets)) return;
+    this.current = key;
+    silentSet('tc-rec-quality', key);
+    showToast('🎥 ' + this.presets[key].label, 1500);
+  },
+  get bitrate() { return this.presets[this.current].bitrate; },
+  get fps()     { return this.presets[this.current].fps; },
+};
+
 const UiFont = {
   // preset key -> [body-stack, heading-stack]
   presets: {
@@ -4645,8 +4670,17 @@ const Engine = {
 
   async addCamera(deviceId, label) {
     try {
+      // v0.7.234: request 1920×1080 by default (was 1280×720). Browsers
+      // downscale gracefully if the camera can't do 1080p, so this is a
+      // safe upgrade. The canvas is 1920×1080 — matching resolution avoids
+      // scale-up blur on the recorded output.
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: 1280, height: 720 }
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30 },
+        }
       });
       const video = document.createElement('video');
       video.srcObject = stream;
@@ -5089,8 +5123,10 @@ const Engine = {
      track forever. */
   getMasterStream() {
     if (!this._canvasStream) {
-      this._canvasStream = this.canvas.captureStream(30);
-      log(`🎥 canvas stream: ${this._canvasStream.getVideoTracks().length}v ${this._canvasStream.getAudioTracks().length}a`, 'info');
+      // v0.7.234: capture at the user-selected frame rate (30 or 60)
+      const fps = (typeof RecordQuality !== 'undefined') ? RecordQuality.fps : 30;
+      this._canvasStream = this.canvas.captureStream(fps);
+      log(`🎥 canvas stream: ${this._canvasStream.getVideoTracks().length}v ${this._canvasStream.getAudioTracks().length}a @ ${fps}fps`, 'info');
     }
     const videoTrack = this._canvasStream.getVideoTracks()[0];
     const audioTrack = this.audioDest.stream.getAudioTracks()[0];
@@ -8777,7 +8813,9 @@ const Recorder = {
       }
       const mime = this.pickMime();
       log(`🎞 codec: ${mime || '(browser default)'}`, 'info');
-      const bitrate = 4_000_000;
+      // v0.7.234: user-selectable bitrate (was hardcoded 4 Mbps)
+      const bitrate = RecordQuality.bitrate;
+      log(`📶 bitrate: ${(bitrate / 1_000_000).toFixed(0)} Mbps (${RecordQuality.current})`, 'info');
       try {
         this.recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
       } catch (e) {
@@ -21586,10 +21624,23 @@ function wireEvents() {
   // Output format preference (mp4 / webm / auto)
   const fmtEl = $('tcFormatSelect');
   if (fmtEl) {
-    try { fmtEl.value = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    fmtEl.value = silentGet('tc-format', 'auto');
     fmtEl.addEventListener('change', (e) => {
       silentSet('tc-format', e.target.value);
       log(`🎞 format preference: ${e.target.value}`, 'info');
+    });
+  }
+  // v0.7.234: recording quality picker (bitrate + fps)
+  const rqEl = $('tcRecQualitySelect');
+  if (rqEl) {
+    rqEl.value = RecordQuality.current;
+    rqEl.addEventListener('change', (e) => {
+      RecordQuality.set(e.target.value);
+      // Invalidate cached stream so the next recording uses the new FPS
+      if (Engine._canvasStream) {
+        try { Engine._canvasStream.getTracks().forEach(t => t.stop()); } catch {}
+        Engine._canvasStream = null;
+      }
     });
   }
 
@@ -22965,6 +23016,7 @@ async function init() {
   CustomAccent.load();
   // v0.7.208: apply saved UI font (overrides theme --font-b/h if set)
   UiFont.load();
+  RecordQuality.load();
   // v0.7.216: restore saved sidebar width BEFORE any panel is shown
   SidebarResize.load();
   // v0.7.143: load persisted canvas background color
