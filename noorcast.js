@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.210 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.211 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.210';
+const APP_VERSION = '0.7.211';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-17 18:00';
+const BUILD_DATE = '2026-04-17 19:00';
 const $ = (id) => document.getElementById(id);
 
 /* v0.7.180: shared helpers — use in new code to replace 284 empty catches
@@ -22489,6 +22489,14 @@ async function init() {
   // v0.7.208: sync version badges from APP_VERSION — single source of truth
   document.querySelectorAll('.tc-app-ver-badge strong').forEach(el => {
     el.textContent = 'v' + APP_VERSION;
+  });
+  // v0.7.211: show last-updated date next to the version, plus full
+  // version+build string in the tooltip on hover.
+  document.querySelectorAll('.tc-app-ver-badge').forEach(badge => {
+    const dateOnly = (BUILD_DATE || '').split(' ')[0]; // YYYY-MM-DD
+    const small = badge.querySelector('.tc-app-build');
+    if (small && dateOnly) small.textContent = '· ' + dateOnly;
+    badge.title = `NoorCast v${APP_VERSION} — built ${BUILD_DATE}`;
   });
   // Restore prefs
   try {
