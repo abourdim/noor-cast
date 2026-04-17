@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.218 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.219 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.218';
+const APP_VERSION = '0.7.219';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -21948,8 +21948,12 @@ function wireEvents() {
     try { collapsed = localStorage.getItem('tc-rsidebar-collapsed') === '1'; } catch {}
     const apply = () => {
       grid.classList.toggle('rsidebar-collapsed', collapsed);
-      btn.textContent = collapsed ? '▶' : '◀';
-      btn.title = collapsed ? (t('expandSidebar') || 'Expand sidebar') : (t('collapseSidebar') || 'Collapse sidebar');
+      // v0.7.219: bigger arrow glyphs for kid-visibility (▶ → ⮞ etc.).
+      // Also flips position relative to canvas so it stays accessible
+      // when sidebar is collapsed (handled in CSS).
+      btn.textContent = collapsed ? '⟩' : '⟨';
+      btn.title = collapsed ? (t('expandSidebar') || 'Show sidebar') : (t('collapseSidebar') || 'Hide sidebar');
+      btn.setAttribute('aria-label', btn.title);
     };
     apply();
     btn.addEventListener('click', () => {
