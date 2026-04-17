@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.208 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.209 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.208';
+const APP_VERSION = '0.7.209';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 18:00';
@@ -136,7 +136,7 @@ const LANG = {
     tipOfDay_20: "Clique sur un chapitre dans la vidéo finale pour sauter directement à ce moment",
     news: 'Nouveautés',
     activityLog: '📜 Journal', eventsMsg: 'Événements et messages',
-    clear: 'Effacer', copy: 'Copier', theme: 'Thème',
+    clear: 'Effacer', copy: 'Copier', theme: 'Thème', uiFont: '🔤 Police de l\'interface',
     settings: '⚙️ Paramètres', language: 'Langue',
     help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Rechercher…',
@@ -856,7 +856,7 @@ const LANG = {
     tipOfDay_20: "Click a chapter in the final video to jump straight to that moment",
     news: 'News',
     activityLog: '📜 Activity Log', eventsMsg: 'Events & messages',
-    clear: 'Clear', copy: 'Copy', theme: 'Theme',
+    clear: 'Clear', copy: 'Copy', theme: 'Theme', uiFont: '🔤 UI font',
     settings: '⚙️ Settings', language: 'Language',
     help: '❓ Help', faq: 'FAQ', howto: 'How-to', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Search…',
@@ -1571,7 +1571,7 @@ const LANG = {
     tipOfDay_20: "انقر على فصل في الفيديو النهائي للانتقال إلى تلك اللحظة مباشرة",
     news: 'جديد',
     activityLog: '📜 سجل النشاط', eventsMsg: 'الأحداث والرسائل',
-    clear: 'مسح', copy: 'نسخ', theme: 'المظهر',
+    clear: 'مسح', copy: 'نسخ', theme: 'المظهر', uiFont: '🔤 خط الواجهة',
     settings: '⚙️ الإعدادات', language: 'اللغة',
     help: '❓ مساعدة', faq: 'أسئلة', howto: 'كيف', wiki: 'ويكي',
     helpSearchPlaceholder: '🔍 ابحث…',
@@ -2279,6 +2279,47 @@ function setTheme(name) {
     setTimeout(() => Engine.refreshAccent(), 20);
   }
 }
+
+/* v0.7.208: UiFont — global font override for the UI. Overlays theme
+   default (--font-b / --font-h CSS vars) without disturbing anything
+   else. Stored in tc-ui-font localStorage. Empty string = use theme. */
+const UiFont = {
+  // preset key -> [body-stack, heading-stack]
+  presets: {
+    '':          null, // null = defer to theme
+    righteous:   ["'Righteous', 'Tajawal', sans-serif",  "'Righteous', 'Tajawal', sans-serif"],
+    orbitron:    ["'Orbitron', 'Tajawal', sans-serif",   "'Orbitron', 'Tajawal', sans-serif"],
+    bangers:     ["'Bangers', 'Righteous', sans-serif",  "'Bangers', 'Righteous', sans-serif"],
+    amiri:       ["'Amiri', serif",                      "'Amiri', serif"],
+    tajawal:     ["'Tajawal', system-ui, sans-serif",    "'Tajawal', 'Righteous', sans-serif"],
+    system:      ["system-ui, -apple-system, sans-serif", "system-ui, -apple-system, sans-serif"],
+    mono:        ["ui-monospace, SFMono-Regular, Menlo, monospace", "ui-monospace, SFMono-Regular, Menlo, monospace"],
+  },
+  current: '',
+
+  load() {
+    this.current = silentGet('tc-ui-font', '') || '';
+    this.apply();
+  },
+  set(key) {
+    if (!(key in this.presets)) key = '';
+    this.current = key;
+    silentSet('tc-ui-font', key);
+    this.apply();
+  },
+  apply() {
+    const style = document.documentElement.style;
+    const preset = this.presets[this.current];
+    if (!preset) {
+      // Clear overrides — fall back to whatever the active theme defines
+      style.removeProperty('--font-b');
+      style.removeProperty('--font-h');
+    } else {
+      style.setProperty('--font-b', preset[0]);
+      style.setProperty('--font-h', preset[1]);
+    }
+  },
+};
 
 // v0.7.55: custom accent color override — applied on top of the current
 // theme. Stored in tc-custom-accent localStorage. When empty, the theme's
@@ -21005,6 +21046,16 @@ function wireEvents() {
   // Lang & theme
   $('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
   $('themeSelect').addEventListener('change', (e) => setTheme(e.target.value));
+  // v0.7.208: global UI font picker
+  const fontEl = $('tcUiFontSelect');
+  if (fontEl) {
+    fontEl.value = UiFont.current;
+    fontEl.addEventListener('change', (e) => {
+      UiFont.set(e.target.value);
+      const label = e.target.options[e.target.selectedIndex].text.replace(/^[—\s]+/, '').replace(/[—\s]+$/, '');
+      showToast('🔤 ' + label, 1400);
+    });
+  }
 
   // v0.7.79: snapshot resolution multiplier dropdown
   const smEl = $('tcSnapMultSelect');
@@ -22442,6 +22493,8 @@ async function init() {
 
   // v0.7.55: apply any custom accent override on top of the theme restored above
   CustomAccent.load();
+  // v0.7.208: apply saved UI font (overrides theme --font-b/h if set)
+  UiFont.load();
   // v0.7.143: load persisted canvas background color
   CanvasBg.load();
   BgPatterns.load();
