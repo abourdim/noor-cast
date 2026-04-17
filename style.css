@@ -2798,9 +2798,14 @@ body.log-open .app {
 /* v0.7.157: tools bar overflow popup */
 .tc-more-tools-popup {
   position: fixed;
+  /* v0.7.231: user-resizable — drag the bottom-right corner.
+     Native CSS resize works on block elements with overflow !== visible. */
   width: min(440px, 90vw);
-  max-height: 70vh;
-  overflow-y: auto;
+  height: min(620px, 85vh);
+  min-width: 280px; min-height: 200px;
+  max-width: 95vw; max-height: 92vh;
+  resize: both;
+  overflow: auto;
   padding: 14px;
   background: var(--card-bg, #1e293b);
   border: 1px solid rgba(255,255,255,.15);
@@ -2810,6 +2815,21 @@ body.log-open .app {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
+  align-content: start;
+}
+/* v0.7.231: more visible resize grip in the bottom-right corner. The native
+   ::resize handle is nearly invisible on dark backgrounds, so we paint our
+   own diagonal stripes on top. Still 100% native browser resize behavior. */
+.tc-more-tools-popup::after {
+  content: '';
+  position: absolute;
+  right: 2px; bottom: 2px;
+  width: 14px; height: 14px;
+  background:
+    linear-gradient(135deg, transparent 0 40%, var(--accent) 40% 55%, transparent 55% 70%, var(--accent) 70% 85%, transparent 85%);
+  opacity: .6;
+  pointer-events: none;
+  border-radius: 2px;
 }
 .tc-fun-popup { grid-template-columns: 1fr 1fr 1fr; }
 .tc-mtp-group {

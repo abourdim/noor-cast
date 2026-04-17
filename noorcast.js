@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.230 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.231 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.230';
+const APP_VERSION = '0.7.231';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -390,7 +390,7 @@ const LANG = {
     snapGrid: '📐 Aligner sur la grille',
     gridSize: 'Taille grille (px)',
     countdownTimer: '⏳ Minuteur',
-    pianoOverlay: '🎹 Piano',
+    pianoOverlay: 'Piano',
     letterboxBars: '🎬 Barres',
     letterboxLabel: '🎬 Barres cinématiques (letterbox)',
     letterboxHeight: 'Hauteur des barres (%)',
@@ -1110,7 +1110,7 @@ const LANG = {
     snapGrid: '📐 Snap to grid',
     gridSize: 'Grid size (px)',
     countdownTimer: '⏳ Timer',
-    pianoOverlay: '🎹 Piano',
+    pianoOverlay: 'Piano',
     letterboxBars: '🎬 Bars',
     letterboxLabel: '🎬 Cinematic letterbox bars',
     letterboxHeight: 'Bar height (%)',
@@ -1819,7 +1819,7 @@ const LANG = {
     snapGrid: '📐 محاذاة إلى الشبكة',
     gridSize: 'حجم الشبكة (بكسل)',
     countdownTimer: '⏳ مؤقت',
-    pianoOverlay: '🎹 بيانو',
+    pianoOverlay: 'بيانو',
     letterboxBars: '🎬 أشرطة',
     letterboxLabel: '🎬 أشرطة سينمائية (letterbox)',
     letterboxHeight: 'ارتفاع الأشرطة (%)',
@@ -10443,6 +10443,22 @@ const Drag = {
     if (ColorPicker.active && ColorPicker.pick(e)) return;
     if (Whiteboard.on) return;
     const [mx, my] = this._stageToCanvas(e);
+    // v0.7.231: piano overlay takes the click if it lands on a key.
+    // Note is held until pointerup (listened on window below).
+    if (PianoOverlay.visible && typeof PianoOverlay.handlePointerDown === 'function') {
+      const hit = PianoOverlay.handlePointerDown(mx, my, Engine.width, Engine.height);
+      if (hit) {
+        const release = () => {
+          PianoOverlay._stopNote(hit.key);
+          window.removeEventListener('pointerup', release);
+          window.removeEventListener('pointercancel', release);
+        };
+        window.addEventListener('pointerup', release, { once: true });
+        window.addEventListener('pointercancel', release, { once: true });
+        e.preventDefault();
+        return;
+      }
+    }
     // v0.7.21: arm click-vs-drag detector for AutoZoom
     AutoZoom.armDown(mx, my);
 
@@ -15237,6 +15253,12 @@ const PianoOverlay = {
     const btn = $('tcPianoBtn');
     if (btn) btn.classList.toggle('active', this.visible);
     if (!this.visible) this._stopAll();
+    // v0.7.231: visible + audible feedback so kids know the click registered.
+    // Previously the piano renders on canvas but the user might not notice;
+    // this toast explains the controls.
+    showToast(this.visible
+      ? '🎹 Piano ON — press A S D F G H J K L (white) / W E T Y U O P (black)'
+      : '🎹 Piano OFF', this.visible ? 4000 : 1400);
   },
 
   _playNote(keyObj) {
@@ -15287,6 +15309,40 @@ const PianoOverlay = {
     if (!this.visible) return;
     const k = e.key.toLowerCase();
     this._stopNote(k);
+  },
+
+  // v0.7.231: let users play notes by clicking/tapping the on-canvas keyboard.
+  // Called from Drag._onDown when the piano is visible and a click lands on it.
+  handlePointerDown(stageX, stageY, canvasW, canvasH) {
+    if (!this.visible) return null;
+    const keyObj = this._hitTest(stageX, stageY, canvasW, canvasH);
+    if (!keyObj) return null;
+    this._playNote(keyObj);
+    return keyObj;
+  },
+  _hitTest(x, y, W, H) {
+    const whites = this._keys.filter(k => k.type === 'white');
+    const blacks = this._keys.filter(k => k.type === 'black');
+    const numWhite = whites.length;
+    const pianoH = Math.round(H * 0.12);
+    const pianoW = Math.round(W * 0.5);
+    const pianoX = Math.round((W - pianoW) / 2);
+    const pianoY = H - pianoH - 20;
+    const whiteW = Math.floor(pianoW / numWhite);
+    if (y < pianoY || y > pianoY + pianoH) return null;
+    if (x < pianoX || x > pianoX + pianoW) return null;
+    // Black keys first (they overlay whites)
+    const blackH = Math.round(pianoH * 0.6);
+    const blackW = Math.round(whiteW * 0.6);
+    if (y <= pianoY + blackH) {
+      for (const bk of blacks) {
+        const bx = pianoX + (bk.after + 1) * whiteW - blackW / 2 - 1;
+        if (x >= bx && x <= bx + blackW) return bk;
+      }
+    }
+    // White keys
+    const idx = Math.floor((x - pianoX) / whiteW);
+    return whites[Math.max(0, Math.min(numWhite - 1, idx))] || null;
   },
 
   render(ctx, W, H) {
