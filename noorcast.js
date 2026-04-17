@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.209 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.210 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.209';
+const APP_VERSION = '0.7.210';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 18:00';
@@ -16984,16 +16984,21 @@ const Sensors = {
       return;
     }
     // TP:23 / TEMP:23 — temperature
+    // v0.7.210: refresh panel from any telemetry now that firmware uses
+    // change-detection (accel may not arrive when board is still).
     if (line.startsWith('TP:') || line.startsWith('TEMP:')) {
-      this.values.temp = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+      this.values.temp = parseInt(line.slice(line.indexOf(':') + 1), 10);
+      this.updatePanel(); return;
     }
     // L:128 / LIGHT:128 — light level
     if (line.startsWith('L:') || line.startsWith('LIGHT:')) {
-      this.values.light = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+      this.values.light = parseInt(line.slice(line.indexOf(':') + 1), 10);
+      this.updatePanel(); return;
     }
     // S:200 / SOUND:200 — sound level (v2)
     if (line.startsWith('S:') || line.startsWith('SOUND:')) {
-      this.values.sound = parseInt(line.slice(line.indexOf(':') + 1), 10); return;
+      this.values.sound = parseInt(line.slice(line.indexOf(':') + 1), 10);
+      this.updatePanel(); return;
     }
     // LEDS:r0,r1,r2,r3,r4 — sync LED grid from micro:bit (bit-playground format)
     if (line.startsWith('LEDS:')) {
@@ -17005,7 +17010,8 @@ const Sensors = {
     }
     // COMPASS:n — heading (0-360)
     if (line.startsWith('COMPASS:')) {
-      this.values.compass = parseInt(line.slice(8), 10); return;
+      this.values.compass = parseInt(line.slice(8), 10);
+      this.updatePanel(); return;
     }
     // OK — test response
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
