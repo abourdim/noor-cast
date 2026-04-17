@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.219 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.220 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.219';
+const APP_VERSION = '0.7.220';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -10262,6 +10262,12 @@ const Drag = {
     if (Watermark.text && Watermark.w > 0) {
       if (this._insideRect(Watermark, mx, my)) return { kind: 'watermark', ref: Watermark };
     }
+    // 0d. Co-host (draggable + resizable) — v0.7.220
+    if (AICohost.visible && AICohost._w > 0) {
+      // _x/_y are top-left of the bounding box (set in render). Compose a rect.
+      const ch = { x: AICohost._x, y: AICohost._y, w: AICohost._w, h: AICohost._h };
+      if (this._insideRect(ch, mx, my)) return { kind: 'cohost', ref: ch };
+    }
     // 1. Brand slogan (top)
     if (Brand.hasSlogan()) {
       if (this._insideRect(Brand.slogan, mx, my)) return { kind: 'brandSlogan', ref: Brand.slogan };
@@ -10542,6 +10548,8 @@ const Drag = {
         if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPosSoon(); }
         if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._saveSoon(); }
         if (s.kind === 'servoGauge') { ServoGauge.x = nx; ServoGauge.y = ny; ServoGauge._customPos = true; ServoGauge._saveSoon(); }
+        // v0.7.220: Co-host drag — write back to AICohost._x/_y
+        if (s.kind === 'cohost') { AICohost._x = nx; AICohost._y = ny; AICohost._customPos = true; AICohost._saveSoon(); }
       }
     } else {
       // resize
@@ -10609,6 +10617,11 @@ const Drag = {
         ServoGauge.x = newX; ServoGauge.y = newY;
         ServoGauge._scale = Math.max(0.5, Math.min(3, newW / s.startW));
         ServoGauge._customPos = true; ServoGauge._saveSoon();  // v0.7.180: debounced
+      } else if (s.kind === 'cohost') {
+        // v0.7.220: Co-host resize — anchored to corner, scale follows newW
+        AICohost._x = newX; AICohost._y = newY;
+        AICohost._scale = Math.max(0.5, Math.min(4, newW / s.startW));
+        AICohost._customPos = true; AICohost._saveSoon();
       }
     }
     // Save brand position after any brand drag
@@ -10638,6 +10651,7 @@ const Drag = {
       try { Watermark._savePos(); } catch {}
       try { ServoGauge._savePos(); } catch {}
       try { Sensors._saveOverlayPos(); } catch {}
+      try { AICohost._save(); } catch {}  // v0.7.220
     }
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
@@ -19361,7 +19375,9 @@ const AICohost = {
     vmask: '🎭 V Mask', tux: '🐧 Tux', trident: '🔱 Trident',
     redpill: '💊 Pill', globe: '🌐 Globe', cipher: '🔐 Cipher',
   },
-  _x: 0, _y: 0,
+  // v0.7.220: draggable + resizable (was fixed bottom-right)
+  _x: 0, _y: 0, _w: 0, _h: 0,
+  _customPos: false, _scale: 1.0,
   _mood: 'idle',
   _mouthOpen: 0,
   _blinkTimer: 0,
@@ -19392,12 +19408,34 @@ const AICohost = {
     this._save();
     showToast(`${this.charLabels[this.character]} co-host`, 1200);
   },
-  _save() { try { localStorage.setItem('tc-cohost', JSON.stringify({ v: this.visible, c: this.character })); } catch {} },
+  _save() {
+    try {
+      localStorage.setItem('tc-cohost', JSON.stringify({
+        v: this.visible, c: this.character,
+        // v0.7.220: persist user-positioned location + scale
+        x: this._x, y: this._y, scale: this._scale, custom: this._customPos,
+      }));
+    } catch {}
+  },
+  // Debounced variant for drag pointermove (avoids write storm)
+  _saveSoon() {
+    if (typeof debounce !== 'function') { this._save(); return; }
+    if (!this._saveSoonImpl) this._saveSoonImpl = debounce(() => this._save(), 200);
+    this._saveSoonImpl();
+  },
   load() {
     try {
       const raw = localStorage.getItem('tc-cohost');
       if (raw === '1') { this.visible = true; }
-      else if (raw) { const d = JSON.parse(raw); this.visible = !!d.v; this.character = d.c || 'coder'; }
+      else if (raw) {
+        const d = JSON.parse(raw);
+        this.visible = !!d.v;
+        this.character = d.c || 'atom';
+        if (typeof d.x === 'number') this._x = d.x;
+        if (typeof d.y === 'number') this._y = d.y;
+        if (typeof d.scale === 'number') this._scale = Math.max(0.5, Math.min(4, d.scale));
+        if (typeof d.custom === 'boolean') this._customPos = d.custom;
+      }
     } catch {}
   },
 
@@ -19476,8 +19514,20 @@ const AICohost = {
       setTimeout(() => { this._blinking = false; }, 150);
     }
 
-    // Position: bottom-right corner
-    const cx = W - 70, cy = H - 80;
+    // v0.7.220: position — custom-dragged or default bottom-right corner.
+    // Size scales by _scale (default 1.0 → 80×80 px).
+    const sc = this._scale || 1;
+    const halfSize = 40 * sc;
+    let cx, cy;
+    if (this._customPos) {
+      cx = this._x + halfSize;
+      cy = this._y + halfSize;
+    } else {
+      cx = W - 70; cy = H - 80;
+      this._x = cx - halfSize; this._y = cy - halfSize;
+    }
+    // Update bounding box for Drag hit-test (sized by scale, ignores bobY)
+    this._w = halfSize * 2; this._h = halfSize * 2;
     const bobY = Math.sin(t * 2) * 3;
 
     ctx.save();
@@ -19486,11 +19536,11 @@ const AICohost = {
     // Draw SVG character image
     const charImg = this._getSvgImg(this.character);
     if (charImg && charImg.complete && charImg.naturalWidth) {
-      ctx.drawImage(charImg, -40, -40, 80, 80);
+      ctx.drawImage(charImg, -halfSize, -halfSize, halfSize * 2, halfSize * 2);
     } else {
       // Fallback circle
       ctx.fillStyle = '#555';
-      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, 32 * sc, 0, Math.PI * 2); ctx.fill();
     }
 
     // Animated mouth overlay (opens with speech — on top of SVG)
