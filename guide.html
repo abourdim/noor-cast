@@ -2353,6 +2353,146 @@
   <li><strong>Diagnostics</strong> = system info = browser support = capability check</li>
 </ul>
 
+<h3 id="ch28-snapshot">28.24 Snapshots — gallery, multipliers, annotator</h3>
+<p><strong>What.</strong> Save a single frame of the canvas as a PNG image, with optional drawing on top before saving.</p>
+<p><strong>Where.</strong> Toolbar button <code>📷 Snapshot</code> · keyboard <kbd>S</kbd> · gallery strip appears under the stage after the first snap.</p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Click <code>📷</code> (or press <kbd>S</kbd>). The current frame is captured at the canvas resolution.</li>
+  <li>If <em>Snapshot annotator</em> is on (Settings → Comportement), a modal opens — draw arrows / circles / freehand on the snapshot, pick from 5 color swatches, then <code>💾 Save</code>.</li>
+  <li>Each snapshot lands in the <strong>gallery strip</strong> below the stage. Click any thumbnail to re-download. Right-click to delete.</li>
+</ol>
+<p><strong>Snapshot resolution multiplier.</strong> Settings → Général → <code>📐 Résolution capture photo</code>:</p>
+<ul>
+  <li><strong>1× (écran)</strong> — same as the stage (1920×1080 by default). Smaller files.</li>
+  <li><strong>2× HiDPI</strong> — 3840×2160. Sharper for slides, retina print.</li>
+  <li><strong>4× Print</strong> — 7680×4320. Posters, billboards. Slow + huge file.</li>
+</ul>
+<p><strong>Why.</strong> Save key moments without recording video. Useful for lesson handouts, social-media posts, bug screenshots, badge cards, error reports. The annotator is a teacher's red-pen substitute.</p>
+<p><strong>Defaults.</strong> Annotator off · multiplier 1× · gallery shows last 30 snaps · files named <code>noorcast-snap-YYYYMMDD-HHMMSS.png</code>.</p>
+
+<h3 id="ch28-templates">28.25 Templates — lesson / robot / fix / robotcam</h3>
+<p><strong>What.</strong> A pre-baked sequence of 5 scenes that auto-suggests the next step while you record. Pick one, NoorCast switches scene-by-scene at your pace.</p>
+<p><strong>Where.</strong> Bar above the REC button → <code>🎬 Choisir un template</code>. Or shown automatically on first launch after picking Simple/Pro mode.</p>
+<p><strong>The four templates.</strong></p>
+<dl>
+  <dt><strong>📚 Lesson — full course (5 steps)</strong></dt>
+  <dd>Intro → Theory → Demo → Exercise → Conclusion. Best for teaching a single concept end-to-end. Scenes used: <em>you, code, coderobot ×2, you</em>.</dd>
+  <dt><strong>🤖 Robot — robot demo (5 steps)</strong></dt>
+  <dd>Intro → Code → Robot → Sensors → Wrap-up. Built for showing a micro:bit / robotic build with both code and physical view.</dd>
+  <dt><strong>🔧 Fix — debugging walkthrough (5 steps)</strong></dt>
+  <dd>Show code → explain on camera → show fix → run together → wrap. Good for tutoring through bugs.</dd>
+  <dt><strong>🤖 Robotcam — robot + camera follow (5 steps)</strong></dt>
+  <dd>Same as Robot but with the face camera kept large. Ideal when narration matters as much as the device.</dd>
+</dl>
+<p><strong>How.</strong> Pick a template → first scene activates + an intro toast plays. Click step buttons in the strip to jump between steps. Step labels become <strong>chapter markers</strong> in the recorded video automatically.</p>
+<p><strong>Why.</strong> Removes "what now?" paralysis. Kids see the structure of a good tutorial visually — they're never staring at a blank scene wondering what's next. Each step also auto-marks the chapter, so the final video has a clickable timeline.</p>
+<p><strong>Clear.</strong> Click <code>✕</code> on the strip to end the template. You can still record without one.</p>
+
+<h3 id="ch28-mic-check">28.26 Mic check — 3-second auto-test</h3>
+<p><strong>What.</strong> Right after you select a microphone, NoorCast listens for 3 seconds and tells you whether it heard you. Saves the "why is my video silent?" debugging trip after recording.</p>
+<p><strong>Where.</strong> Auto-runs every time the Mic dropdown changes. Status appears as a colored bar above the VU meter.</p>
+<p><strong>What the bar means.</strong></p>
+<dl>
+  <dt><strong>🟡 listening…</strong></dt>
+  <dd>Test in progress — say something normal (3 seconds).</dd>
+  <dt><strong>🟢 mic OK ✓</strong></dt>
+  <dd>NoorCast detected sound above the noise floor (RMS &gt; 0.02). You're good to record. Bar fades after 4s.</dd>
+  <dt><strong>🔴 no sound detected</strong></dt>
+  <dd>Mic is muted, unplugged, or the wrong device is selected. Check Windows mic privacy settings, the cable, or pick another mic from the dropdown to retry.</dd>
+</dl>
+<p><strong>Why.</strong> Browsers don't tell you if a mic is muted in OS settings. By detecting actual signal, this catches the most common "I recorded nothing" mistake before you press REC. The test resumes the AudioContext too (some browsers suspend it until a user gesture).</p>
+<p><strong>Defaults.</strong> Always on; can't be disabled. 3s detection window, 4s display, threshold RMS 0.02.</p>
+
+<h3 id="ch28-global-search">28.27 Global search — Spotlight (Ctrl+K)</h3>
+<p><strong>What.</strong> A Spotlight-style overlay that searches across <em>every</em> setting, scene, skin, background, theme, mascot, source skin, badge, hotkey, and tool. Type any word, click a result, the action runs.</p>
+<p><strong>Where.</strong> Toolbar 🔍 button · <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> · or <kbd>/</kbd> from anywhere.</p>
+<p><strong>What's indexed.</strong></p>
+<ul>
+  <li><strong>Scenes</strong> — all built-in + your custom scenes (search "robot", "you", "code"…)</li>
+  <li><strong>Skins</strong> — neon frame, polaroid, comic… (applies to selected source)</li>
+  <li><strong>Backgrounds</strong> — space, matrix, zellige, arabesque, muqarnas, riad… (sets BgPattern)</li>
+  <li><strong>Themes</strong> — jungle, mosque, andalus, riad… (changes app palette)</li>
+  <li><strong>Mascots</strong> — robot, anonymous, agent, UFO… (toggles canvas critter)</li>
+  <li><strong>Settings</strong> — open Settings → jump to a section</li>
+  <li><strong>Tools</strong> — laser, freeze, whiteboard, teleprompter, snapshot, recorder…</li>
+  <li><strong>Sounds</strong> — every SFX in SoundBoard</li>
+  <li><strong>Badges</strong> — view your trophies</li>
+  <li><strong>Hotkeys</strong> — every keyboard shortcut</li>
+  <li><strong>Languages</strong> — switch FR / EN / AR</li>
+</ul>
+<p><strong>How.</strong> Press <kbd>Ctrl+K</kbd> → start typing → arrow keys to navigate → <kbd>Enter</kbd> to apply → <kbd>Esc</kbd> to close. Fuzzy match on the visible label, case-insensitive.</p>
+<p><strong>Why.</strong> NoorCast has 200+ features. Memorising menu paths is impractical. Search is the universal escape hatch — type what you want, run it.</p>
+<p><strong>Index freshness.</strong> Auto-invalidated when you rename or duplicate a scene; otherwise built once per session for speed.</p>
+
+<h3 id="ch28-cohost-characters">28.28 Co-host characters — full catalog (40)</h3>
+<p><strong>What.</strong> The little SVG buddy in the bottom-right of the canvas that bobs, blinks, opens its mouth when you speak, and claps when you stop. There are <strong>40 characters</strong> in 5 thematic groups.</p>
+<p><strong>Where.</strong> Toolbar <code>😊 Co-host</code> button to toggle. Adjacent dropdown to pick the character. Drag to reposition · resize via corner handle · double-click to reset.</p>
+
+<h4>🔬 Science (6)</h4>
+<ul>
+  <li>⚛️ <strong>Atom</strong> — orbiting electrons, science / chemistry tutorials</li>
+  <li>🧬 <strong>DNA</strong> — double helix, biology / genetics</li>
+  <li>⚗️ <strong>Flask</strong> — bubbling beaker, lab / experiments</li>
+  <li>🔬 <strong>Microscope</strong> — examination / observation</li>
+  <li>🧲 <strong>Magnet</strong> — physics / electromagnetism</li>
+  <li>📡 <strong>Telescope (Dish)</strong> — astronomy / signals</li>
+</ul>
+
+<h4>🚀 Space (9)</h4>
+<ul>
+  <li>🪐 <strong>Saturn</strong> — planet with rings</li>
+  <li>🌍 <strong>Earth</strong> — geography / climate</li>
+  <li>☄️ <strong>Comet</strong> — moving streak</li>
+  <li>🌙 <strong>Moon</strong> — phases / lunar</li>
+  <li>⭐ <strong>Pulsar</strong> — pulsing star</li>
+  <li>🛰 <strong>Satellite (Sat)</strong> — orbital tech</li>
+  <li>🚀 <strong>Rocket</strong> — launches, exciting reveals</li>
+  <li>🌌 <strong>Black Hole (Hole)</strong> — physics, dramatic</li>
+  <li>☀️ <strong>Sun</strong> — energy / solar</li>
+</ul>
+
+<h4>💡 Symbols (9)</h4>
+<ul>
+  <li>💡 <strong>Bulb</strong> — ideas / "got it!" moments</li>
+  <li>🧭 <strong>Compass</strong> — navigation / direction</li>
+  <li>🔋 <strong>Battery</strong> — power / energy</li>
+  <li>☪️ <strong>Crescent</strong> — Islamic / cultural lessons</li>
+  <li>♾️ <strong>Infinity</strong> — math / loops / endless</li>
+  <li>⚡ <strong>Bolt (Lightning)</strong> — speed, electricity</li>
+  <li>💎 <strong>Gem</strong> — value, special, rare</li>
+  <li>🔥 <strong>Flame</strong> — energy, hot topic</li>
+  <li>🌊 <strong>Wave</strong> — fluids, oscillation, audio</li>
+</ul>
+
+<h4>🎭 Characters (6)</h4>
+<ul>
+  <li>💀 <strong>Skull</strong> — debug / "boss fight"</li>
+  <li>🐉 <strong>Dragon</strong> — fantasy lessons</li>
+  <li>👁 <strong>Eye</strong> — focus / attention</li>
+  <li>🖥 <strong>Terminal (Term)</strong> — coding / shell</li>
+  <li>🔓 <strong>Lock</strong> — security / privacy</li>
+  <li>🕷 <strong>Spider</strong> — debugging (literal "bug")</li>
+</ul>
+
+<h4>🏴‍☠️ Pirates &amp; Hackers (10)</h4>
+<ul>
+  <li>☠️ <strong>Jolly Roger</strong> — pirate skull and crossbones</li>
+  <li>⚓ <strong>Anchor</strong> — naval / stable</li>
+  <li>🗡 <strong>Swords</strong> — battle / showdown</li>
+  <li>🏴 <strong>Pirate Flag</strong> — pirate-themed</li>
+  <li>🎭 <strong>V Mask</strong> — anonymity / activism</li>
+  <li>🐧 <strong>Tux</strong> — Linux / open source</li>
+  <li>🔱 <strong>Trident</strong> — sea / power</li>
+  <li>💊 <strong>Red Pill</strong> — Matrix / "the truth"</li>
+  <li>🌐 <strong>Globe</strong> — internet / network</li>
+  <li>🔐 <strong>Cipher</strong> — encryption / secrets</li>
+</ul>
+
+<p><strong>Why so many.</strong> Each lesson has its own vibe — a Quran tafsir doesn't want a Skull bobbing in the corner; a robotics class doesn't want a Crescent. The big catalog lets the teacher pick something thematically right in 2 clicks.</p>
+<p><strong>Behaviors (all characters).</strong> Idle bobbing · blink every 3-5s · mouth opens with mic RMS &gt; 0.03 (speaking) and bigger with RMS &gt; 0.2 (excited) · clap animation 800ms after a speech→silence transition · scene-prompt bubble · timer-buddy nudge.</p>
+<p><strong>Defaults.</strong> Off · character ⚛️ Atom · positioned bottom-right · scale 1.0 · persisted across reloads.</p>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
 </p>
