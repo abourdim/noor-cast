@@ -472,8 +472,11 @@ body {
 
 /* v0.7.226: resize handle for the LEFT studio sidebar (Sources / micro:bit tabs).
    Visible strip on the right edge of the sidebar. */
+/* v0.7.228: default on :root so JS setProperty on :root actually wins.
+   Previously declared on .tc-studio-grid which overrode the inherited
+   :root value — resize handle drag had no visible effect. */
+:root { --studio-left-w: 220px; }
 .tc-studio-grid {
-  --studio-left-w: 220px;
   grid-template-columns: var(--studio-left-w) minmax(0, 1fr) 220px;
 }
 .tc-studio-grid.rsidebar-collapsed {
