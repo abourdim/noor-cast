@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.229 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.230 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.229';
+const APP_VERSION = '0.7.230';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -18542,6 +18542,9 @@ const BgMusic = {
   },
 
   stop() {
+    // v0.7.230: clear the pending loop timer too — otherwise scheduled notes
+    // keep firing into already-disconnected nodes (silent but wasteful).
+    if (this._loopTimer) { clearTimeout(this._loopTimer); this._loopTimer = null; }
     this._nodes.forEach(n => { try { n.stop(); } catch {} try { n.disconnect(); } catch {} });
     this._nodes = [];
     if (this._gain) { try { this._gain.disconnect(); } catch {} this._gain = null; }
@@ -22088,10 +22091,24 @@ function wireEvents() {
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', VoiceCommands.enabled);
     showToast(VoiceCommands.enabled ? '🎙 Voice Commands ON' : '🎙 Voice Commands OFF', 1200);
   });
+  // v0.7.230: track picker — syncs the dropdown to BgMusic._track, and
+  // swapping the track auto-restarts if currently playing.
+  const musicSel = $('tcBgMusicTrackSelect');
+  if (musicSel) {
+    musicSel.value = BgMusic._track || 'chiptune';
+    musicSel.addEventListener('change', (e) => {
+      BgMusic.setTrack(e.target.value);
+      const label = BgMusic.labels[e.target.value] || e.target.value;
+      showToast('🎵 ' + label, 1200);
+    });
+    // Stop click propagation so the surrounding toolbar drag/focus doesn't eat the select
+    musicSel.addEventListener('click', (e) => e.stopPropagation());
+  }
   $('tcBgMusicBtn')?.addEventListener('click', (e) => {
     BgMusic.toggle();
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', BgMusic.playing);
-    showToast(BgMusic.playing ? '🎵 Music ON' : '🎵 Music OFF', 1200);
+    const label = BgMusic.labels[BgMusic._track] || BgMusic._track;
+    showToast(BgMusic.playing ? `🎵 ${label}` : '🎵 Music OFF', 1200);
   });
   $('tcSensorOverlayBtn')?.addEventListener('click', (e) => {
     Sensors._overlayVisible = !Sensors._overlayVisible;
