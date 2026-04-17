@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.177 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.208 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,11 +13,65 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.177';
+const APP_VERSION = '0.7.208';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-12 23:59';
+const BUILD_DATE = '2026-04-17 18:00';
 const $ = (id) => document.getElementById(id);
+
+/* v0.7.180: shared helpers — use in new code to replace 284 empty catches
+   and 234 raw localStorage calls over time. Additive; existing call sites
+   are not codemodded yet. */
+
+// Run fn, swallow exceptions, log context in debug builds.
+// Replaces: try { ... } catch {}
+function safe(fn, ctx) {
+  try { return fn(); } catch (e) {
+    if (typeof APP_VERSION !== 'undefined' && console && console.debug) {
+      console.debug('[safe]', ctx || '', e);
+    }
+  }
+}
+
+// localStorage wrappers — return default on miss/parse error, swallow quota errors.
+function silentGet(key, dflt = null) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? dflt : v;
+  } catch { return dflt; }
+}
+function silentGetJSON(key, dflt = null) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? dflt : JSON.parse(v);
+  } catch { return dflt; }
+}
+function silentSet(key, val) {
+  try { localStorage.setItem(key, val); } catch {}
+}
+function silentSetJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+// Debounce helper — overlays call _savePos() on every pointermove during
+// drag. Without debounce that's a localStorage write storm on touch devices.
+// Usage: const save = debounce(fn, 200); save(); save(); ... // only last fires
+function debounce(fn, ms = 200) {
+  let tid = null;
+  return function (...args) {
+    if (tid) clearTimeout(tid);
+    tid = setTimeout(() => { tid = null; fn.apply(this, args); }, ms);
+  };
+}
+
+// EventBus.on returns a disposer — fixes 503/13 listener ratio asymmetry
+// for code that needs cleanup. Additive helper; existing listeners stay.
+const EventBus = {
+  on(target, evt, fn, opts) {
+    target.addEventListener(evt, fn, opts);
+    return () => target.removeEventListener(evt, fn, opts);
+  },
+};
 
 /* ─────────── 1. i18n ─────────── */
 
@@ -3415,7 +3469,8 @@ const Engine = {
     if (Sensors._overlayVisible) Sensors.drawOverlay(ctx);
 
     // v0.7.177: servo gauge overlay (pan + tilt semicircular gauges)
-    if (ServoGauge.visible) ServoGauge.render(ctx, width, height);
+    // v0.7.180: skip call entirely when disconnected to avoid wasted frame work
+    if (ServoGauge.visible && Sensors.server?.connected) ServoGauge.render(ctx, width, height);
 
     // v0.7.182: resize handles on sensor overlay + servo gauge when hovered
     this._drawOverlayHandles(ctx);
@@ -5182,6 +5237,7 @@ const Scenes = {
     this.presets.push(scene);
     this.saveCustom();
     this.render();
+    try { GlobalSearch.invalidate(); } catch {}  // v0.7.180
     showToast('📋 ' + scene.label, 1400);
   },
 
@@ -5275,6 +5331,8 @@ const Scenes = {
       scene.overrideName = clean;
     }
     this.saveCustom();
+    // v0.7.180: invalidate GlobalSearch index so renamed scene shows up
+    try { GlobalSearch.invalidate(); } catch {}
     // v0.7.139: also persist preset overrides
     this._savePresetOverrides();
     this.render();
@@ -10360,9 +10418,10 @@ const Drag = {
       } else {
         ref.x = nx; ref.y = ny;
         if (s.kind === 'source') { ref.custom = true; Engine.onSourcesChanged(); }
-        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPos(); }
-        if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._savePos(); }
-        if (s.kind === 'servoGauge') { ServoGauge.x = nx; ServoGauge.y = ny; ServoGauge._customPos = true; ServoGauge._savePos(); }
+        // v0.7.180: debounced saves during drag (write-storm mitigation)
+        if (s.kind === 'sensorOverlay') { Sensors._overlayX = nx; Sensors._overlayY = ny; Sensors._saveOverlayPosSoon(); }
+        if (s.kind === 'watermark') { Watermark.x = nx; Watermark.y = ny; Watermark._customPos = true; Watermark._saveSoon(); }
+        if (s.kind === 'servoGauge') { ServoGauge.x = nx; ServoGauge.y = ny; ServoGauge._customPos = true; ServoGauge._saveSoon(); }
       }
     } else {
       // resize
@@ -10425,11 +10484,11 @@ const Drag = {
       } else if (s.kind === 'sensorOverlay') {
         Sensors._overlayX = newX; Sensors._overlayY = newY;
         if (s.mode === 'resize') Sensors._overlayScale = Math.max(0.5, Math.min(3, newW / s.startW));
-        Sensors._saveOverlayPos();
+        Sensors._saveOverlayPosSoon();  // v0.7.180: debounced
       } else if (s.kind === 'servoGauge') {
         ServoGauge.x = newX; ServoGauge.y = newY;
         ServoGauge._scale = Math.max(0.5, Math.min(3, newW / s.startW));
-        ServoGauge._customPos = true; ServoGauge._savePos();
+        ServoGauge._customPos = true; ServoGauge._saveSoon();  // v0.7.180: debounced
       }
     }
     // Save brand position after any brand drag
@@ -10454,6 +10513,11 @@ const Drag = {
     if (wasDragOrResize) {
       LayoutHistory.capture();
       SceneAutoSave.trigger(); // v0.7.127: auto-save scene on drag/resize end
+      // v0.7.180: flush pending debounced overlay saves on mouseup so the
+      // final position is written even if user reloads immediately after.
+      try { Watermark._savePos(); } catch {}
+      try { ServoGauge._savePos(); } catch {}
+      try { Sensors._saveOverlayPos(); } catch {}
     }
     // v0.7.21: fire AutoZoom if this was a real click on a screen source.
     // Runs even when state was null (empty-area clicks) so clicks that
@@ -10875,6 +10939,11 @@ const Watermark = {
       }
     } catch {}
   },
+  // v0.7.180: debounced variant for pointermove write-storm mitigation
+  _saveSoon() {
+    if (!this._saveSoonImpl) this._saveSoonImpl = debounce(() => this._savePos(), 200);
+    this._saveSoonImpl();
+  },
   setText(s) {
     this.text = String(s || '').slice(0, 80);
     try { localStorage.setItem('tc-watermark-text', this.text); } catch {}
@@ -10961,13 +11030,19 @@ const ServoGauge = {
       }));
     } catch {}
   },
+  // v0.7.180: debounced variant for pointermove write-storm mitigation
+  _saveSoon() {
+    if (!this._saveSoonImpl) this._saveSoonImpl = debounce(() => this._savePos(), 200);
+    this._saveSoonImpl();
+  },
 
   render(ctx, W, H) {
+    // v0.7.180: early-out when disconnected — no stale values shown
+    if (!Sensors.server?.connected) return;
     const pan = Sensors._panAngle;
     const tilt = Sensors._tiltAngle;
-    // Only show when servos have been moved from default
-    if (pan === undefined && tilt === undefined) return;
-    if (pan === undefined && tilt === undefined) return;
+    // Only show when servos have actually been moved (numeric value present)
+    if (typeof pan !== 'number' && typeof tilt !== 'number') return;
 
     ctx.save();
     ctx.globalAlpha = this._opacity;
@@ -16559,6 +16634,11 @@ const Sensors = {
   _saveOverlayPos() {
     try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale, visible: this._overlayVisible })); } catch {}
   },
+  // v0.7.180: debounced variant for pointermove write-storm mitigation
+  _saveOverlayPosSoon() {
+    if (!this._saveOverlaySoonImpl) this._saveOverlaySoonImpl = debounce(() => this._saveOverlayPos(), 200);
+    this._saveOverlaySoonImpl();
+  },
   _loadOverlayPos() {
     try {
       const s = JSON.parse(localStorage.getItem('tc-sensor-overlay'));
@@ -20190,9 +20270,13 @@ function applyMode(mode) {
 }
 
 function setupOnboarding() {
-  // Load saved mode (default: simple for new users)
-  const savedMode = localStorage.getItem('tc-mode');
+  // v0.7.180: cache initial onboarding state once — previously read 3x during
+  // setup and again inside each click handler. Writes ('tc-onboarded' = '1')
+  // flip the flag locally so subsequent reads in this function stay consistent.
+  const savedMode = silentGet('tc-mode');
   const modeChosen = savedMode !== null;
+  let isOnboarded = silentGet('tc-onboarded') === '1';
+  const markOnboarded = () => { isOnboarded = true; silentSet('tc-onboarded', '1'); };
 
   if (modeChosen) {
     applyMode(savedMode);
@@ -20207,20 +20291,19 @@ function setupOnboarding() {
   $('tcModeSimpleBtn')?.addEventListener('click', () => {
     applyMode('simple');
     $('tcModePicker').style.display = 'none';
-    // Then show template picker
-    const seen = localStorage.getItem('tc-onboarded');
-    if (!seen) Templates.showPicker();
+    if (!isOnboarded) Templates.showPicker();
   });
   $('tcModeProBtn')?.addEventListener('click', () => {
     applyMode('pro');
     $('tcModePicker').style.display = 'none';
-    const seen = localStorage.getItem('tc-onboarded');
-    if (!seen) Templates.showPicker();
+    if (!isOnboarded) Templates.showPicker();
   });
 
-  // Mode switch — settings button + header badge
+  // Mode switch — settings button + header badge.
+  // Reads tc-mode live because it may have been changed by another handler
+  // since setup (user clicked simple/pro after init).
   const toggleMode = () => {
-    const current = localStorage.getItem('tc-mode') || 'simple';
+    const current = silentGet('tc-mode') || 'simple';
     const next = current === 'simple' ? 'pro' : 'simple';
     applyMode(next);
     showToast(next === 'simple' ? '🎓 Simple mode' : '🚀 Pro mode', 1400);
@@ -20229,19 +20312,18 @@ function setupOnboarding() {
   $('tcModeBadge')?.addEventListener('click', toggleMode);
 
   // Template picker (show if mode already chosen but not onboarded)
-  const seen = localStorage.getItem('tc-onboarded');
-  if (!seen && modeChosen) Templates.showPicker();
+  if (!isOnboarded && modeChosen) Templates.showPicker();
 
   const close = $('tcTemplatesClose');
   if (close) close.addEventListener('click', () => {
     Templates.hidePicker();
-    try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+    markOnboarded();
   });
   // Wire each template card button
   document.querySelectorAll('[data-tpl]').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.tpl;
-      try { localStorage.setItem('tc-onboarded', '1'); } catch {}
+      markOnboarded();
       if (key) {
         Templates.apply(key);
       } else {
@@ -20594,7 +20676,7 @@ function setupHotkeys() {
       }
       // else fall through — let the browser save-page action happen
     }
-    // v0.7.199: Ctrl/Cmd + K opens global search
+    // v0.7.180: Ctrl/Cmd + K opens global search
     if ((e.ctrlKey || e.metaKey) && k === 'k') {
       e.preventDefault(); GlobalSearch.toggle(); return;
     }
@@ -22528,12 +22610,16 @@ if (document.readyState === 'loading') {
   init();
 }
 
-/* v0.7.199: GlobalSearch — Spotlight-style search overlay.
+/* v0.7.180: GlobalSearch — Spotlight-style search overlay.
    Press / or Ctrl+K to open. Searches settings, skins, shortcuts,
    scenes, tools, features. Click a result to navigate/apply. */
 const GlobalSearch = {
   _el: null,
   _items: null,
+
+  // v0.7.180: invalidate the cached index when scenes/skins/badges change
+  // at runtime. Call from code that mutates any of the indexed collections.
+  invalidate() { this._items = null; },
 
   _buildIndex() {
     if (this._items) return;
