@@ -2010,19 +2010,27 @@ body.log-open .app {
 /* v0.7.32: drag-to-reorder scenes */
 .tc-scene-btn[draggable="true"] { cursor: grab; }
 .tc-scene-btn[draggable="true"]:active { cursor: grabbing; }
+/* v0.7.221: grip is now a real drag handle (was pointer-events: none).
+   Bigger, always slightly visible so kids notice it as a draggable thing. */
 .tc-scene-btn .tc-scene-grip {
   position: absolute;
-  top: 4px;
-  left: 5px;
-  font-size: .65rem;
-  opacity: 0;
-  color: rgba(255, 255, 255, .55);
-  letter-spacing: -2px;
+  top: 3px;
+  left: 4px;
+  font-size: .85rem;
+  opacity: .25;
+  color: rgba(255, 255, 255, .8);
+  letter-spacing: -3px;
   font-family: ui-monospace, monospace;
-  pointer-events: none;
-  transition: opacity .15s;
+  cursor: grab;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity .15s, background .15s;
+  user-select: none;
+  -webkit-user-drag: element;
 }
-.tc-scene-btn:hover .tc-scene-grip { opacity: .7; }
+.tc-scene-btn .tc-scene-grip:hover { opacity: 1; background: rgba(0,0,0,.4); }
+.tc-scene-btn .tc-scene-grip:active { cursor: grabbing; }
+.tc-scene-btn:hover .tc-scene-grip { opacity: .65; }
 .tc-scene-btn.dragging {
   opacity: .4;
   transform: scale(.96);

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.220 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.221 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.220';
+const APP_VERSION = '0.7.221';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -6329,7 +6329,13 @@ function renderScenes() {
   Scenes.presets.forEach((s, i) => {
     const btn = document.createElement('button');
     btn.className = 'tc-scene-btn' + (Scenes.active === s.key ? ' active' : '');
-    btn.draggable = true;
+    // v0.7.221: do NOT make the whole button draggable. When the entire
+    // button was draggable=true, any 1-2 px mouse drift between mousedown
+    // and mouseup converted the click into a dragstart and the click
+    // listener never fired — kids had to "try many times" to switch.
+    // Now only the grip handle ⋮⋮ is draggable; click anywhere else =
+    // instant scene switch.
+    btn.draggable = false;
     btn.dataset.sceneKey = s.key;
     const sceneLabel = s.custom ? s.label : (s.overrideName || t('scene_' + s.key));
     btn.innerHTML = `
@@ -6337,7 +6343,7 @@ function renderScenes() {
       <span class="tc-scene-icon">${s.icon}</span>
       <span class="tc-scene-label" title="${t('sceneRenameTip')}">${sceneLabel}</span>
       <kbd class="tc-scene-kbd">${i + 1}</kbd>
-      <span class="tc-scene-grip" aria-hidden="true">⋮⋮</span>
+      <span class="tc-scene-grip" draggable="true" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
       <button class="tc-scene-dup" data-dup="${s.key}" title="Duplicate">📋</button>
       ${s.custom ? '<button class="tc-scene-del" data-del="' + s.key + '" title="Delete">✕</button>' : ''}
     `;
@@ -6399,16 +6405,24 @@ function renderScenes() {
       }
     }
     // v0.7.32: drag-to-reorder via native HTML5 drag API
-    btn.addEventListener('dragstart', (e) => {
-      btn.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/scene', s.key);
-    });
-    btn.addEventListener('dragend', () => {
-      btn.classList.remove('dragging');
-      document.querySelectorAll('.tc-scene-btn.drop-before, .tc-scene-btn.drop-after')
-        .forEach(b => b.classList.remove('drop-before', 'drop-after'));
-    });
+    // v0.7.221: dragstart/dragend live on the grip span only (not the
+    // whole button) so plain clicks elsewhere always register as switch.
+    const grip = btn.querySelector('.tc-scene-grip');
+    if (grip) {
+      grip.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
+        btn.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/scene', s.key);
+      });
+      grip.addEventListener('dragend', () => {
+        btn.classList.remove('dragging');
+        document.querySelectorAll('.tc-scene-btn.drop-before, .tc-scene-btn.drop-after')
+          .forEach(b => b.classList.remove('drop-before', 'drop-after'));
+      });
+      // v0.7.221: clicking the grip itself shouldn't switch the scene
+      grip.addEventListener('click', (e) => e.stopPropagation());
+    }
     btn.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
