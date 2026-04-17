@@ -2092,6 +2092,219 @@
 
 <div class="info">Le script de build nécessite Playwright (déjà dans devDependencies). Il utilise un navigateur headless pour rendre les imprimables HTML en images PNG haute résolution, puis regroupe tout dans un ZIP.</div>
 
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="ch28"><span class="ch-num">28</span> Référence des Réglages &amp; Fonctionnalités (A–Z)</h2>
+
+<p>Ce chapitre est un index plat et cherchable de chaque option, interrupteur, curseur et bouton qui n'a pas son propre chapitre. Tout ce que tu vois dans <strong>Réglages ⚙️</strong>, dans la <strong>barre d'outils</strong>, ou sur le <strong>canvas</strong> doit se trouver ici. Utilise la 🔎 barre de recherche en haut du guide.</p>
+
+<h3 id="ch28-bg-image">28.1 Image de fond / Wallpaper / Canvas BG image</h3>
+<p><strong>Quoi.</strong> Une image qui se place derrière toutes les sources sur le canvas (PNG, JPG, GIF, WebP). Différent des motifs animés et de la couleur de fond unie.</p>
+<p><strong>Où.</strong> Réglages ⚙ → 🌐 Général → sélecteur de fichier "🖼 Image de fond".</p>
+<dl>
+  <dt>Comment</dt><dd>Clique sur le bouton, choisis une image (max 4 Mo, sinon refusée). Choisis un mode d'ajustement et une opacité.</dd>
+  <dt>Modes d'ajustement</dt><dd><strong>Cover</strong> (défaut) remplit tout, peut couper. <strong>Contain</strong> montre l'image entière, peut afficher des barres noires. <strong>Stretch</strong> déforme. <strong>Tile</strong> répète comme du papier peint.</dd>
+  <dt>Opacité</dt><dd>Curseur 0–100%. Baisse-la pour fondre l'image et faire ressortir le premier plan.</dd>
+  <dt>Pourquoi</dt><dd>Marque ta scène avec un blason d'école, une photo de classe, une texture tableau, ou un fond vert.</dd>
+  <dt>Retirer</dt><dd>Clique "🗑 Retirer l'image". L'image est aussi gravée dans l'enregistrement.</dd>
+</dl>
+
+<h3 id="ch28-rec-quality">28.2 Qualité d'enregistrement / Bitrate / Mbps</h3>
+<p><strong>Quoi.</strong> Choisit combien de données par seconde l'enregistreur écrit. Plus haut = plus net mais plus gros fichiers.</p>
+<p><strong>Où.</strong> Réglages ⚙ → 🎬 Enregistrement → 🎥 Capture → "🎞 Qualité d'enregistrement".</p>
+<dl>
+  <dt>Standard — 4 Mbps · 30 ips</dt><dd>Plus petits fichiers. Bien pour les tutos parlés.</dd>
+  <dt>High — 8 Mbps · 30 ips (défaut)</dt><dd>1080p net. Bon équilibre.</dd>
+  <dt>Ultra — 12 Mbps · 30 ips</dt><dd>Texte d'écran net. Plus lourds (~90 Mo / 10 min).</dd>
+  <dt>Max — 20 Mbps · 60 ips</dt><dd>Mouvement ultra-fluide (démos robot). Fichiers <em>énormes</em>.</dd>
+  <dt>Quand</dt><dd>Verrouillé pendant l'enregistrement — change avant d'appuyer sur Record.</dd>
+</dl>
+
+<h3 id="ch28-ui-font">28.3 Police de l'interface / UI Font / Typographie</h3>
+<p><strong>Quoi.</strong> Change la police de toute l'interface (sidebar, popups, boutons). N'affecte pas le canvas/enregistrement.</p>
+<p><strong>Où.</strong> Réglages ⚙ → 🌐 Général → "🔤 Police".</p>
+<dl>
+  <dt>Défaut</dt><dd>Orbitron — futuriste, très lisible, marche en FR/EN/AR.</dd>
+  <dt>Autres choix</dt><dd>Police du thème · Righteous · Bangers · Amiri (serif arabe) · Tajawal (sans arabe) · Système (le plus rapide) · Mono.</dd>
+  <dt>Pourquoi</dt><dd>Choisis ce qui te plaît, ou colle au thème de ta classe. Amiri/Tajawal sont magnifiques en mode arabe.</dd>
+</dl>
+
+<h3 id="ch28-accent">28.4 Couleur d'accent personnalisée</h3>
+<p><strong>Quoi.</strong> Remplace l'accent du thème (lime / or / cyan…) par n'importe quelle couleur hex.</p>
+<p><strong>Où.</strong> Réglages ⚙ → 🌐 Général → palette à côté de "Accent". Clique ✕ pour réinitialiser.</p>
+<p>Affecte les boutons, curseurs, le pointeur laser, les poignées de sélection, et la barre XP.</p>
+
+<h3 id="ch28-watermark">28.5 Filigrane — texte glissable</h3>
+<p><strong>Quoi.</strong> Petit texte gravé dans chaque enregistrement (ton nom, copyright, URL, code de leçon…).</p>
+<p><strong>Où.</strong> Réglages ⚙ → ✍️ Slogan &amp; effet → "Filigrane".</p>
+<dl>
+  <dt>Texte</dt><dd>Jusqu'à 80 caractères. Vide = caché.</dd>
+  <dt>Coin</dt><dd>Haut-gauche / haut-droite / bas-gauche / bas-droite (défaut = bas-droite).</dd>
+  <dt>Opacité</dt><dd>Curseur 0–1. Défaut 0.55 = visible mais discret.</dd>
+  <dt>Glisse-le</dt><dd>Attrape le filigrane sur le canvas et lâche-le où tu veux. Position sauvegardée.</dd>
+  <dt>Réinitialiser</dt><dd>Choisis un autre coin dans le menu — il revient au coin.</dd>
+  <dt>Pourquoi</dt><dd>Empêche qu'on copie ta vidéo sans crédit. Ou signe simplement ton travail.</dd>
+</dl>
+
+<h3 id="ch28-servo-gauge">28.6 Jauges servo (Pan / Tilt sur canvas)</h3>
+<p><strong>Quoi.</strong> Deux jauges en demi-cercle dessinées sur le canvas montrant les angles servo (0–180°). Couleur animée (cyan → lime). Gravées dans l'enregistrement.</p>
+<p><strong>Où.</strong> Barre d'outils → ⋯ Plus → 🎛 Gauges. Toggle.</p>
+<dl>
+  <dt>Quand ça apparaît</dt><dd>Seulement si un micro:bit est connecté <em>et</em> qu'au moins un servo a bougé. Disparaît à la déconnexion.</dd>
+  <dt>Glisse-la</dt><dd>Attrape la boîte sur le canvas et déplace-la. Position sauvegardée.</dd>
+  <dt>Pourquoi</dt><dd>Le public voit exactement où vise ton robot, même en pleine prise.</dd>
+</dl>
+
+<h3 id="ch28-mascots">28.7 Mascottes (anciennement "Pets")</h3>
+<p><strong>Quoi.</strong> Renommé de "Pets" → "Mascots" 🎭 dans la barre d'outils, mais c'est la même fonction documentée au <a class="xref" href="#ch14">Chapitre 14.2</a>. Petits personnages animés qui marchent/flottent sur l'enregistrement.</p>
+<p><strong>Où.</strong> Liste déroulante de la barre d'outils → "🎭 Mascots". Choisis une pour ajouter, choisis-la encore pour retirer. "❌ Tout effacer" les supprime toutes.</p>
+
+<h3 id="ch28-firmware">28.8 Version du firmware micro:bit (vérification auto)</h3>
+<p><strong>Quoi.</strong> Quand un micro:bit se connecte, il signale son firmware <em>nom · version · build</em> (ex. <code>NoorCast V3.5 2026-04</code>). NoorCast vérifie qu'il s'agit de la version attendue.</p>
+<p><strong>Où.</strong> Onglet sidebar micro:bit — apparaît sous le bouton Connect après l'appairage.</p>
+<dl>
+  <dt>À jour</dt><dd>"✅ NoorCast V3.5 · 2026-04" — vert, tout fonctionne.</dd>
+  <dt>Périmé</dt><dd>"⚠ NoorCast V3.4 — flash V3.5 for change-detection" — orange + un toast 5 s te demande de reflasher.</dd>
+  <dt>Pourquoi</dt><dd>Un firmware plus récent ajoute la détection de changement (capteurs envoient seulement quand ça change — économie de batterie), gestes shake, et mappings boutons A/B.</dd>
+  <dt>Comment mettre à jour</dt><dd>Clique "Flash Firmware First" dans la sidebar — ouvre MakeCode avec le dernier <code>makecode.ts</code>.</dd>
+</dl>
+
+<h3 id="ch28-ble-prefix">28.9 Préfixes BLE acceptés</h3>
+<p>La boîte de dialogue d'appairage NoorCast affiche les cartes dont le nom commence par <code>BBC micro:bit</code> <em>ou</em> <code>uBit</code>. Certains clones / firmwares anciens s'annoncent comme <code>uBit</code> seul — les deux sont acceptés. Si la carte n'apparaît pas du tout, ton dongle / navigateur ne supporte pas Web Bluetooth (Chrome/Edge desktop seulement).</p>
+
+<h3 id="ch28-sidebar-resize">28.10 Redimensionner les sidebars</h3>
+<p><strong>Quoi.</strong> Glisse le bord intérieur d'une sidebar pour l'élargir ou la rétrécir. Deux poignées indépendantes :</p>
+<dl>
+  <dt>Sidebar Réglages (droite)</dt><dd>Glisse la fine poignée sur son bord intérieur. Plage : 240 px à 90% de la fenêtre. Sauvegardé sous <code>tc-sidebar-width</code>.</dd>
+  <dt>Rail gauche du studio (Sources / micro:bit)</dt><dd>Glisse la poignée verticale. Plage : 180–420 px. <strong>Double-clic sur la poignée pour réinitialiser</strong> à 220 px. Sauvegardé sous <code>tc-studio-left-w</code>.</dd>
+  <dt>Pourquoi</dt><dd>Élargis la liste de sources si tu en as beaucoup, ou rétrécis sur petit écran.</dd>
+</dl>
+
+<h3 id="ch28-combo-popup">28.11 Désactiver le popup COMBO</h3>
+<p><strong>Quoi.</strong> Les popups dorés volants "COMBO ×3 +15 XP" qui apparaissent quand plusieurs effets sont actifs (voir <a class="xref" href="#ch16">16.3</a>). Distrayants pour certaines vidéos.</p>
+<p><strong>Où.</strong> Réglages ⚙ → 🎬 Enregistrement → ⚙️ Comportement → "⚡ COMBO popup (XP bonus messages)" — décoche pour désactiver. L'XP est toujours attribué silencieusement.</p>
+
+<h3 id="ch28-microbit-behaviors">28.12 Câblage gestes micro:bit (Shake, Bouton A, Tilt)</h3>
+<p>Tous dans Réglages ⚙ → 🎬 Enregistrement → ⚙️ Comportement. Chaque toggle relie un événement micro:bit à une action NoorCast :</p>
+<dl>
+  <dt>🫨 Shake → switch scene</dt><dd>Secoue la carte pour passer à la scène suivante.</dd>
+  <dt>🎉 Shake → confetti</dt><dd>Secoue pour lancer des confettis (super moment d'applaudissement).</dd>
+  <dt>👏 Bouton A → applause SFX</dt><dd>Bouton A joue un son d'applaudissements.</dd>
+  <dt>📈 Live accelerometer graph</dt><dd>Petit graphique X/Y/Z en direct sur le canvas.</dd>
+  <dt>🌈 Motion trail</dt><dd>Le tilt laisse une traînée colorée sur le canvas.</dd>
+  <dt>🌡 Temperature overlay</dt><dd>Température en direct sur le canvas.</dd>
+  <dt>💡 Light level bar</dt><dd>Barre qui croît avec le capteur de lumière.</dd>
+  <dt>🔊 Sound level (v2 mic)</dt><dd>Niveau sonore — micro:bit V2 seulement.</dd>
+  <dt>🎯 Tilt → pan/zoom camera</dt><dd>Inclinaison de la carte panote/zoome la caméra sélectionnée. Cadrage mains-libres.</dd>
+</dl>
+
+<h3 id="ch28-overlays-numeric">28.13 Curseurs d'overlay (Letterbox / Vignette / Snap grid / Auto-advance / Timer / Timelapse / Time goal)</h3>
+<table>
+  <tr><th>Réglage</th><th>Plage</th><th>Quoi</th></tr>
+  <tr><td>Hauteur Letterbox</td><td>5–20%</td><td>Barres noires cinéma. Plus bas = barres fines.</td></tr>
+  <tr><td>Intensité Vignette</td><td>0.1–1.0</td><td>Plus sombres aux coins.</td></tr>
+  <tr><td>Snap grid</td><td>10–100 px</td><td>Sources s'aimantent à une grille invisible.</td></tr>
+  <tr><td>Auto-advance scène</td><td>5–600 s</td><td>Bascule automatique vers la scène suivante.</td></tr>
+  <tr><td>Durée du timer</td><td>1–60 min</td><td>Longueur du compte-à-rebours sur canvas.</td></tr>
+  <tr><td>Compte-à-rebours record</td><td>1–10 s</td><td>3-2-1-go avant l'enregistrement.</td></tr>
+  <tr><td>Multiplicateur Timelapse</td><td>×2 – ×20</td><td>Facteur d'accélération.</td></tr>
+  <tr><td>Time goal</td><td>0.5–60 min</td><td>Durée cible. Arrêt auto optionnel.</td></tr>
+  <tr><td>Snap multiplier</td><td>1× – 8×</td><td>Multiplicateur résolution snapshot.</td></tr>
+</table>
+
+<h3 id="ch28-brand-controls">28.14 Contrôles Logo de marque (filtre / taille / opacité / presets)</h3>
+<p>Réglages ⚙ → 🏷 Logo. En plus du chargement de fichier :</p>
+<dl>
+  <dt>Retirer le fond blanc</dt><dd>Découpe les pixels blancs en transparent.</dd>
+  <dt>Taille</dt><dd>60–500 px sur l'enregistrement.</dd>
+  <dt>Opacité</dt><dd>0–100%.</dd>
+  <dt>Filtre couleur</dt><dd>Aucun / niveaux de gris / inverser. Plus 9 teintes (blanc, jaune, orange, rouge, lime, cyan, rose, noir, aucun) — recolore un PNG pour matcher tout thème.</dd>
+  <dt>Effet</dt><dd>Statique, pulse, spin, glow, shake.</dd>
+  <dt>3 presets de marque</dt><dd>Sauve la combo logo+slogan en preset 1/2/3, rappelle d'un clic.</dd>
+</dl>
+
+<h3 id="ch28-slogan-controls">28.15 Contrôles Slogan</h3>
+<p>Réglages ⚙ → ✍️ Slogan &amp; effet :</p>
+<dl>
+  <dt>Texte</dt><dd>Une ligne sous le logo.</dd>
+  <dt>Police</dt><dd>Sélecteur (mêmes 6+ choix que les overlays texte).</dd>
+  <dt>Taille</dt><dd>Curseur 20–160 px.</dd>
+  <dt>Couleurs</dt><dd>8 teintes rapides.</dd>
+  <dt>URL de marque</dt><dd>URL optionnelle intégrée au flyer + carte de partage.</dd>
+</dl>
+
+<h3 id="ch28-maintenance">28.16 Boutons de Maintenance</h3>
+<dl>
+  <dt>🗑 Réinitialiser badges</dt><dd>Efface tous les badges pour les regagner. XP / niveau intacts.</dd>
+  <dt>💥 Vider le cache</dt><dd>Efface <em>tout</em> ce que NoorCast a sauvé dans ce navigateur. Demande confirmation.</dd>
+  <dt>⌨ Raccourcis clavier</dt><dd>Ouvre le modal de rebind. Clique une touche pour en capturer une nouvelle.</dd>
+  <dt>📦 Exporter la session</dt><dd>Télécharge un JSON de tous les réglages, scènes, historique, badges — pour backup ou changement de machine.</dd>
+  <dt>📥 Importer la session</dt><dd>Inverse de l'export.</dd>
+  <dt>📥 Exporter les paramètres</dt><dd>Réglages seulement (plus petit, pas d'historique).</dd>
+  <dt>🔧 Diagnostics</dt><dd>Déplie pour voir navigateur, audio, GPU, support MediaRecorder — à coller dans les rapports de bug.</dd>
+</dl>
+
+<h3 id="ch28-activity-log">28.17 Journal d'activité (panneau du bas)</h3>
+<p><strong>Quoi.</strong> Console live des événements, trafic BLE, erreurs.</p>
+<dl>
+  <dt>Filtres</dt><dd>Tout · Info · ✓ succès · ✗ erreur · TX (commandes envoyées au micro:bit) · RX (données reçues).</dd>
+  <dt>🧹 Effacer</dt><dd>Vide le journal.</dd>
+  <dt>📋 Copier</dt><dd>Copie tout dans le presse-papiers.</dd>
+  <dt>💾 Exporter</dt><dd>Sauve en .txt.</dd>
+  <dt>Pourquoi</dt><dd>Diagnostiquer "pourquoi le BLE ne répond pas ?" — chaque ligne CMD: et ACC: est ici.</dd>
+</dl>
+
+<h3 id="ch28-fullscreen">28.18 Boutons Plein écran, Recherche, Save Captions</h3>
+<dl>
+  <dt>⛶ Plein écran</dt><dd>Met le canvas en vrai fullscreen (parfait pour démo en classe). <kbd>Esc</kbd> pour sortir.</dd>
+  <dt>🔎 Recherche (<kbd>Ctrl+K</kbd>)</dt><dd>Recherche globale — voir <a class="xref" href="#s137">13.2</a>.</dd>
+  <dt>💾 Save .srt</dt><dd>Apparaît dans la barre d'outils seulement quand les Live Captions tournent. Télécharge un fichier SRT standard avec timestamps.</dd>
+</dl>
+
+<h3 id="ch28-history-search">28.19 Historique des tutos (recherche + filtre étoiles)</h3>
+<p>Réglages ⚙ → 📊 Mes tutos. 10 derniers enregistrements.</p>
+<dl>
+  <dt>🔍 recherche</dt><dd>Filtre par titre.</dd>
+  <dt>Filtre étoiles</dt><dd>All · 1+ · 2+ · 3+ · 4+ · 5 — montre seulement les prises notées au moins N étoiles.</dd>
+  <dt>🗑 Vider l'historique</dt><dd>Supprime toutes les entrées (les enregistrements eux-mêmes étaient déjà téléchargés).</dd>
+</dl>
+
+<h3 id="ch28-diagnostics">28.20 Panneau Diagnostics</h3>
+<p>Réglages ⚙ → 🌐 Général → 🔧 Diagnostics. Rapport en lecture seule : nom + version navigateur, OS, taille écran, état du contexte audio, vendeur/renderer GPU, types MIME MediaRecorder, support Web Bluetooth. Utile pour rapporter un bug.</p>
+
+<h3 id="ch28-pwa">28.21 Hors-ligne / Installer comme app (PWA)</h3>
+<p>NoorCast est une Progressive Web App. Après ta première visite, Chrome/Edge propose "Installer NoorCast" depuis la barre d'URL — s'ouvre comme une app desktop, marche hors-ligne (le service worker <code>sw.js</code> cache tout), apparaît dans le menu Démarrer / Applications. Voir <a class="xref" href="#ch26">26.5</a>.</p>
+
+<h3 id="ch28-keychords">28.22 Combos de touches cachés</h3>
+<table>
+  <tr><th>Combo</th><th>Action</th></tr>
+  <tr><td><kbd>Shift</kbd>+glisser coin</td><td>Redimensionne en gardant le ratio.</td></tr>
+  <tr><td><kbd>Alt</kbd>+glisser</td><td>Contraint le mouvement à un axe.</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+glisser</td><td>Duplique la source glissée.</td></tr>
+  <tr><td><kbd>Shift</kbd>+flèche</td><td>Décale la source de 10 px (au lieu de 1 px).</td></tr>
+  <tr><td><kbd>Shift</kbd>+clic</td><td>Multi-sélection de sources (<a class="xref" href="#ch24">24.7</a>).</td></tr>
+  <tr><td>Double-clic poignée sidebar</td><td>Réinitialise la largeur.</td></tr>
+  <tr><td>Clic droit bouton Co-host</td><td>Cycle entre les personnages Co-host.</td></tr>
+</table>
+
+<h3 id="ch28-search-keywords">28.23 Mots-clés de recherche</h3>
+<p>Même fonction, plein de noms. La 🔎 recherche en haut attrapera n'importe lequel :</p>
+<ul>
+  <li><strong>Mascottes</strong> = pets = animaux = canvas pets = personnages animés</li>
+  <li><strong>Wallpaper</strong> = image de fond = canvas BG = fond PNG</li>
+  <li><strong>Bitrate</strong> = qualité d'enregistrement = Mbps = taille fichier = netteté</li>
+  <li><strong>Police UI</strong> = font = typographie = police de l'interface</li>
+  <li><strong>Filigrane</strong> = watermark = copyright = signature = ©</li>
+  <li><strong>Jauge servo</strong> = pan tilt overlay = angle robot</li>
+  <li><strong>Letterbox</strong> = barres cinéma = barres noires</li>
+  <li><strong>Vignette</strong> = assombrissement coins</li>
+  <li><strong>Ducking</strong> = baisse auto micro = musique douce quand on parle</li>
+  <li><strong>Combo</strong> = bonus XP = streak = multiplicateur</li>
+  <li><strong>Co-host</strong> = personnage IA = mascotte réactive</li>
+  <li><strong>Snap grid</strong> = grille d'alignement = grille magnétique</li>
+  <li><strong>PWA</strong> = installer app = hors-ligne</li>
+  <li><strong>Diagnostics</strong> = info système = capacités navigateur</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Ouvrir NoorCast</a>
 </p>
