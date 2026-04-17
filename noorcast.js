@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.216 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.217 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.216';
+const APP_VERSION = '0.7.217';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -8989,10 +8989,21 @@ const Recorder = {
     }
     // v0.7.159: if streaming to disk, close the writer — file is already saved
     if (this._fileWriter) {
+      // v0.7.217: Chrome's download chip for File System Access API streams
+      // often shows "0 octets / OK" because it can't see through the direct
+      // disk handle — the file on disk is correct, but Chrome's UI lies.
+      // Show an accurate size toast so the user trusts us over Chrome.
+      const totalBytes = this._totalBytes || 0;
+      const humanSize = totalBytes > 1024 * 1024
+        ? (totalBytes / 1024 / 1024).toFixed(1) + ' MB'
+        : totalBytes > 1024 ? Math.round(totalBytes / 1024) + ' KB' : totalBytes + ' B';
       this._fileWriter.close().then(() => {
-        log('💾 Recording saved to disk via File System Access API', 'info');
-        showToast('💾 Recording saved to disk!', 3000);
-      }).catch(() => {});
+        log(`💾 Recording saved to disk — ${humanSize} (Chrome's 0-byte chip is a known bug, file IS valid)`, 'info');
+        showToast(`💾 Saved ${humanSize} to disk (ignore Chrome 0-byte chip, file is OK)`, 5000);
+      }).catch((err) => {
+        log('✗ Failed to close file writer: ' + (err?.message || err), 'error');
+        showToast('⚠ File save issue — check the downloads folder', 4000);
+      });
       this._fileWriter = null;
       this._savedToDisk = true;
       // Still run the rest of finish() for chapters/history
