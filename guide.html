@@ -1346,8 +1346,13 @@
 <h2 id="ch13"><span class="ch-num">13</span> Tools & More Tools</h2>
 
 <h3>13.1 The More Tools Popup</h3>
-<p>Click <strong>⋯ More</strong> in the toolbar. Popup is <strong>scrollable</strong> (max-height 70vh) and <strong>draggable</strong> (grab header). Organized in groups: Canvas, Overlays, Tools, Fun.</p>
-<p>For details on each Fun tool, see <a class="xref" href="#ch14">Chapter 14</a>.</p>
+<p>Click <strong>⋯ More</strong> in the toolbar to open a floating panel with every secondary tool grouped by category.</p>
+<p><strong>Layout.</strong> Three columns by default — <em>Canvas</em>, <em>Overlays</em>, <em>Tools</em> — and a <em>Fun</em> section underneath.</p>
+<p><strong>Movable.</strong> Grab the "⋯ drag to move ⋯" handle at the top to drag the popup anywhere on screen. Position is preserved while the page is open.</p>
+<p><strong>Resizable.</strong> Drag the bottom-right corner (lime diagonal grip) to make the panel bigger or smaller. Range: 280×200 → 95vw×92vh. Useful when there are many tools and you want them all in one column without scrolling.</p>
+<p><strong>Scrollable.</strong> If content exceeds the panel size, an inner scrollbar appears.</p>
+<p><strong>Why it exists.</strong> The horizontal toolbar can't fit 50+ tool buttons. Hot tools live on the toolbar; secondary ones live behind <code>⋯ More</code>. Drag/resize means you can dock it where it doesn't cover your camera or canvas.</p>
+<p>For details on each Fun tool, see <a class="xref" href="#ch14">Chapter 14</a>. For Mascots/Co-host see <a class="xref" href="#ch28-mascots">28.7</a> and <a class="xref" href="#ch28-cohost-characters">28.28</a>.</p>
 
 <h3 id="s137">13.2 Global Search</h3>
 <p><kbd>Ctrl+K</kbd> or click 🔍 Search. Searches across everything:</p>
@@ -1521,22 +1526,55 @@
 <h2 id="ch17"><span class="ch-num">17</span> Audio</h2>
 
 <h3>17.1 Audio Pipeline</h3>
-<p>Mic → MicBoost (gain + noise gate) → analyser → recording destination. Screen audio → VolumeDuck → recording. Music → recording + speakers.</p>
+<p>Every sound NoorCast produces or captures travels this graph:</p>
+<pre style="background:rgba(0,0,0,.3);padding:12px;border-radius:8px;font-size:.85rem;overflow-x:auto">
+Microphone → MicBoost (gain + noise gate) → Analyser → Recording stream
+Screen capture audio → VolumeDuck → Recording stream
+Background music   → Recording stream + Speakers
+Piano / Sound Pad / SFX → Speakers + Recording stream
+</pre>
+<p>All paths converge at <code>Engine.audioDest</code> (a <code>MediaStreamAudioDestinationNode</code>) which feeds the <code>MediaRecorder</code>. The <strong>analyser</strong> taps the raw mic signal pre-gain so the VU meter shows what you're actually saying, not the boosted output.</p>
+<p><strong>Why care?</strong> If something is silent in the recording but audible live (or vice versa), the problem is at one of these nodes — usually the gate level or the duck threshold.</p>
 
-<h3>17.2 Mic Boost & Gate</h3>
-<p><a class="xref" href="#ch20">Settings</a>: Gain (0-4×), Noise gate (-60 to -20 dB). Gate mutes below threshold.</p>
+<h3>17.2 Mic Boost &amp; Gate</h3>
+<p><strong>Where.</strong> Settings → Audio → "🔊 Boost mic" + "🚪 Noise gate".</p>
+<p><strong>Gain (0–4×).</strong> Multiplies the mic signal. Default 1×. Use 2–3× for a quiet headset; never go to 4× unless you're whispering — clipping (red on the LED meter) ruins audio.</p>
+<p><strong>Noise gate (–60 to –20 dB).</strong> Mutes the mic when the signal is quieter than the threshold. Default –40 dB. Raise to –30 dB if you have constant background hum (PC fan, AC). Lower to –50 dB to capture quiet voices.</p>
+<p><strong>Why both?</strong> Gain makes you louder. Gate hides the noise floor between sentences (when nobody's talking but the mic is still on). Together they sound much more "studio" than raw mic input.</p>
+<p><strong>Persisted</strong> as <code>tc-mic-gain</code> and <code>tc-mic-gate-db</code>.</p>
 
 <h3>17.3 Volume Ducking</h3>
-<p>When you speak, screen audio reduced by 12 dB. Toggle in <a class="xref" href="#ch20">Settings</a>.</p>
+<p><strong>What.</strong> When you speak, screen audio (game sounds, music in the captured tab, etc.) automatically lowers by 12 dB so your voice is the focus. Releases when you go silent.</p>
+<p><strong>Where.</strong> Settings → Audio → "🔻 Auto-duck screen audio".</p>
+<p><strong>Detection.</strong> Triggers when mic RMS &gt; 0.05 (after gain + gate). Hold time 800ms before releasing — prevents flicker between words.</p>
+<p><strong>Why.</strong> Tutorial videos with background gameplay or music can drown out commentary. Ducking is the broadcast trick that keeps the talk on top without manual mixing.</p>
+<p><strong>Defaults.</strong> Off · 12 dB attenuation · 800ms release.</p>
 
 <h3>17.4 LED Audio Meter</h3>
-<p>10-segment meter: <span style="color:#4ade80">green</span> (1-6), <span style="color:#fbbf24">yellow</span> (7-8), <span style="color:#ef4444">red</span> (9-10 = clipping).</p>
+<p><strong>What.</strong> 10-segment vertical bar next to the REC button showing live mic level.</p>
+<dl>
+  <dt>🟢 Green (segments 1–6)</dt><dd>Healthy — the mic is hearing you, signal is in the safe zone.</dd>
+  <dt>🟡 Yellow (segments 7–8)</dt><dd>Hot — you're loud, but still OK. Aim for peaks here on the loudest words.</dd>
+  <dt>🔴 Red (segments 9–10 = clipping)</dt><dd>Distorting — the digital signal exceeds 0 dBFS. Lower gain or move further from the mic. Audio recorded while red looks crackly even if it sounded fine to you live.</dd>
+</dl>
+<p><strong>Why.</strong> Pre-flight check before you press REC. Watch the meter while you say a normal sentence — if peaks stay green, raise gain; if they hit red, lower gain.</p>
 
 <h3>17.5 Mic Check</h3>
-<p>Auto-runs on mic selection. 3s test: "🎤 Speak..." → "✅ OK!" or "⚠️ Nothing detected". Resumes AudioContext (Chrome autoplay policy).</p>
+<p>See <a class="xref" href="#ch28-mic-check">28.26</a> for the full breakdown.</p>
+<p>Quick version: every time you change the mic dropdown, NoorCast listens for 3 seconds and shows 🟡 listening → 🟢 OK or 🔴 fail. Catches "I forgot to unmute Windows mic" before you record a silent video.</p>
 
 <h3>17.6 Piano</h3>
-<p>More → Overlays → 🎹 Piano. White keys: <kbd>A</kbd>-<kbd>L</kbd>. Black keys: <kbd>W</kbd>-<kbd>P</kbd>. Sine oscillators, baked into recording. AudioContext auto-resumes.</p>
+<p><strong>What.</strong> An on-canvas 2-octave keyboard (C4–D5) you can play with the keyboard or by clicking. Sine-wave synth, baked into the recording.</p>
+<p><strong>Where.</strong> Toolbar <code>🎹 Piano</code> · keyboard shortcut: see toast on toggle.</p>
+<p><strong>Keys.</strong></p>
+<ul>
+  <li>White (C4 → D5): <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd></li>
+  <li>Black (sharps): <kbd>W</kbd> <kbd>E</kbd> _ <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> _ <kbd>O</kbd> <kbd>P</kbd></li>
+  <li>Mouse/touch: click any key on the canvas → plays while held.</li>
+</ul>
+<p><strong>Why.</strong> Music teachers can demo notes during a lesson. Coding teachers can play a quick "ta-da" between steps. Kids love it as a stress-reliever between recording takes.</p>
+<p><strong>Tech.</strong> Each note is a fresh <code>OscillatorNode</code> with a 0.18 gain envelope and exponential ramp-down on key-up (0.08s release). AudioContext auto-resumes for the Chrome autoplay policy.</p>
+<p><strong>Defaults.</strong> Off · sine wave · gain 0.18 · piano hides on toggle-off.</p>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch18"><span class="ch-num">18</span> Animated Backgrounds (15)</h2>
@@ -2337,20 +2375,33 @@
 <h3 id="ch28-search-keywords">28.23 Search keywords cheat-sheet</h3>
 <p>Same feature, many names. The in-page 🔎 search above will catch any of these:</p>
 <ul>
-  <li><strong>Mascots</strong> = pets = critters = canvas pets = animated characters</li>
-  <li><strong>Wallpaper</strong> = background image = canvas BG = PNG bg = stage background</li>
-  <li><strong>Bitrate</strong> = recording quality = Mbps = file size = video sharpness</li>
-  <li><strong>UI font</strong> = police = typography = sidebar font = interface font</li>
-  <li><strong>Watermark</strong> = copyright = signature = ©</li>
-  <li><strong>Servo gauge</strong> = pan tilt overlay = robot angle display</li>
-  <li><strong>Letterbox</strong> = cinematic bars = black bars = aspect bars</li>
-  <li><strong>Vignette</strong> = corner darkening = edge fade</li>
-  <li><strong>Ducking</strong> = mic auto-lower = music quiet when speaking</li>
-  <li><strong>Combo</strong> = XP bonus = streak = multiplier popup</li>
-  <li><strong>Co-host</strong> = AI character = mascot reactor = SVG buddy</li>
-  <li><strong>Snap grid</strong> = align grid = magnetic grid = source snapping</li>
-  <li><strong>PWA</strong> = install app = offline = standalone app</li>
-  <li><strong>Diagnostics</strong> = system info = browser support = capability check</li>
+  <li><strong>Mascots</strong> = pets = critters = canvas pets = animated characters = wandering creatures</li>
+  <li><strong>Wallpaper</strong> = background image = canvas BG = PNG bg = stage background = backdrop</li>
+  <li><strong>Bitrate</strong> = recording quality = Mbps = file size = video sharpness = encoding quality</li>
+  <li><strong>UI font</strong> = police = typography = sidebar font = interface font = display font</li>
+  <li><strong>Watermark</strong> = copyright = signature = ©  = stamp = corner brand = channel name</li>
+  <li><strong>Servo gauge</strong> = pan tilt overlay = robot angle display = arc gauge = needle indicator</li>
+  <li><strong>Letterbox</strong> = cinematic bars = black bars = aspect bars = movie crop</li>
+  <li><strong>Vignette</strong> = corner darkening = edge fade = vignette filter</li>
+  <li><strong>Ducking</strong> = mic auto-lower = music quiet when speaking = sidechain compression</li>
+  <li><strong>Combo</strong> = XP bonus = streak = multiplier popup = bonus toast</li>
+  <li><strong>Co-host</strong> = AI character = mascot reactor = SVG buddy = animated avatar = atom buddy</li>
+  <li><strong>Snap grid</strong> = align grid = magnetic grid = source snapping = grid snap</li>
+  <li><strong>PWA</strong> = install app = offline = standalone app = desktop install</li>
+  <li><strong>Diagnostics</strong> = system info = browser support = capability check = compatibility</li>
+  <li><strong>Snapshot</strong> = screenshot = photo = frame capture = freeze + save = still image</li>
+  <li><strong>Templates</strong> = lesson template = scene flow = pre-baked = guided steps = tutorial outline</li>
+  <li><strong>Mic check</strong> = mic test = audio test = sound test = listening = pre-flight</li>
+  <li><strong>Global search</strong> = command palette = Spotlight = Ctrl+K = quick action = launcher</li>
+  <li><strong>ChromaKey</strong> = green screen = blue screen = transparent background = key out = matte</li>
+  <li><strong>Whiteboard</strong> = annotation = pen tool = drawing = freehand = scribble = pencil</li>
+  <li><strong>Teleprompter</strong> = script reader = autocue = scrolling text = news anchor</li>
+  <li><strong>Trim</strong> = cut = edit = clip = shorten = post-cut = silence-trim = auto-cut</li>
+  <li><strong>Chapters</strong> = markers = bookmarks = timestamps = waypoints = VTT chapters</li>
+  <li><strong>Mic boost</strong> = mic gain = microphone amplify = volume up</li>
+  <li><strong>Noise gate</strong> = mic gate = silence threshold = noise floor</li>
+  <li><strong>Audio meter</strong> = VU = level meter = LED bar = dBFS</li>
+  <li><strong>Piano</strong> = keyboard = synth = sine wave = music keys</li>
 </ul>
 
 <h3 id="ch28-snapshot">28.24 Snapshots — gallery, multipliers, annotator</h3>
@@ -2492,6 +2543,79 @@
 <p><strong>Why so many.</strong> Each lesson has its own vibe — a Quran tafsir doesn't want a Skull bobbing in the corner; a robotics class doesn't want a Crescent. The big catalog lets the teacher pick something thematically right in 2 clicks.</p>
 <p><strong>Behaviors (all characters).</strong> Idle bobbing · blink every 3-5s · mouth opens with mic RMS &gt; 0.03 (speaking) and bigger with RMS &gt; 0.2 (excited) · clap animation 800ms after a speech→silence transition · scene-prompt bubble · timer-buddy nudge.</p>
 <p><strong>Defaults.</strong> Off · character ⚛️ Atom · positioned bottom-right · scale 1.0 · persisted across reloads.</p>
+
+<h3 id="ch28-chromakey">28.29 Chroma key (green-screen)</h3>
+<p><strong>What.</strong> Make any solid-colored region of a video source <em>transparent</em>, so what's behind shows through. Classic green-screen / blue-screen effect.</p>
+<p><strong>Where.</strong> Right-click any camera/screen source on the canvas → <code>🎨 Chroma</code> menu (also exposed in the source context menu). Currently set programmatically too: <code>Engine.sources[i].chromaKey = { color: '#00ff00', threshold: 60 }</code></p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Have your camera framed against a solid background (green sheet, white wall, blue cloth).</li>
+  <li>Apply chroma — the matching color goes transparent, leaving the subject visible.</li>
+  <li>Tweak <code>threshold</code> (10–120) — higher = more pixels keyed, but spill into the subject.</li>
+  <li>Drop another source (another camera, a screen, a background image) <em>behind</em> the keyed source for the composited look.</li>
+</ol>
+<p><strong>Why.</strong> Same trick used in TV weather forecasts and YouTube tutorials. Lets a kid stand against any background and "appear" inside their lesson screen, on a virtual stage, or composited with a robot demo. Combined with <a class="xref" href="#ch28-bg-image">CanvasBg image</a> you can fake any backdrop.</p>
+<p><strong>Tips.</strong> Even, bright lighting on the green surface — folds and shadows confuse the keyer. Avoid wearing the key color (don't wear green if keying green). A real green-screen sheet beats a wall.</p>
+<p><strong>Defaults.</strong> Off · color <code>#00ff00</code> · threshold 60 · processed every frame on a hidden offscreen canvas (small CPU cost per keyed source).</p>
+
+<h3 id="ch28-whiteboard">28.30 Whiteboard / Annotation overlay</h3>
+<p><strong>What.</strong> Draw freehand lines on the canvas — circles, arrows, underlines, math working — that get baked into the recording.</p>
+<p><strong>Where.</strong> Toolbar <code>✏️ Draw</code> button · keyboard <kbd>D</kbd> · pen color/thickness/eraser picker appears at top of stage when active.</p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Click <code>✏️ Draw</code> (or press <kbd>D</kbd>). The cursor becomes a pen.</li>
+  <li>Hold mouse / pen / finger and drag to draw. Lines persist across frames.</li>
+  <li>Switch <strong>color</strong> from the picker (yellow / red / green / blue / white default).</li>
+  <li>Adjust <strong>thickness</strong> with the slider (2–32 px).</li>
+  <li>Toggle <strong>eraser</strong> mode (rubbing erases what you drew, not the source video).</li>
+  <li>Press <kbd>D</kbd> again or click the button to exit drawing mode.</li>
+</ol>
+<p><strong>Clear.</strong> Click <code>🗑 Clear</code> in the picker to wipe all annotations.</p>
+<p><strong>Why.</strong> Live whiteboarding inside a screen recording — no need for a tablet, OneNote, or external software. Underline a code keyword, circle the right answer, draw an arrow on a diagram. The pen marks bake into the recording so they appear in the final video.</p>
+<p><strong>Defaults.</strong> Off · pen <span style="color:#fbbf24">amber</span> 8px · eraser off · cleared on page reload (not persisted between sessions).</p>
+
+<h3 id="ch28-teleprompter">28.31 Teleprompter — broadcast script reader</h3>
+<p><strong>What.</strong> A scrolling script overlay (like TV news anchors use) that shows your prepared text above the camera so you can read while recording without looking away.</p>
+<p><strong>Where.</strong> Toolbar <code>📜 Teleprompter</code> · keyboard <kbd>T</kbd> · panel slides in from the top of the stage.</p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Open the teleprompter (<kbd>T</kbd>) and paste/type your script.</li>
+  <li>Click <strong>⏵ Play</strong> to scroll, <strong>⏸ Pause</strong> to stop.</li>
+  <li>Adjust scroll <strong>speed</strong> with the slider — slower for complex topics, faster for catch-phrases.</li>
+  <li><strong>A−/A+</strong> change font size. <strong>↔−/↔+</strong> change overlay width.</li>
+  <li><strong>↻ Reset</strong> jumps back to the top of the script.</li>
+  <li>Script is auto-saved (<code>tc-tele-script</code>) — close and reopen, your text is still there.</li>
+</ol>
+<p><strong>Why.</strong> Recording a tutorial without forgetting the next sentence. Specifically designed so you can keep eye contact with the camera (the teleprompter sits above) instead of glancing down at notes.</p>
+<p><strong>Tip.</strong> If your screen has a webcam at the top, position the teleprompter just below it — your eyes look natural on the recording.</p>
+<p><strong>Defaults.</strong> Off · script empty · speed 50 · font 24px · width 700px · all preferences persisted.</p>
+
+<h3 id="ch28-trim">28.32 Trim editor — non-destructive cut</h3>
+<p><strong>What.</strong> After a recording, snip the start and end without re-recording. Two handles on a timeline; everything outside gets discarded into a new file. Original is untouched.</p>
+<p><strong>Where.</strong> After you stop a recording, click <code>✂ Trim</code> in the take panel below the stage. Modal opens with the playable video and a scrubber.</p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Drag the <strong>in handle</strong> (left) to where the cut should start.</li>
+  <li>Drag the <strong>out handle</strong> (right) to where it should end.</li>
+  <li>Optionally click <strong>✂ Auto-cut silences</strong> — scans for &gt; 2s gaps and trims them automatically.</li>
+  <li>Hit <strong>Export</strong> — the trimmed video re-encodes via offscreen canvas + MediaRecorder, chapters re-aligned to the new timeline.</li>
+</ol>
+<p><strong>Keyboard:</strong> <kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> step 1s · <kbd>[</kbd>/<kbd>]</kbd> set in/out at current time · <kbd>Enter</kbd> export · <kbd>Esc</kbd> cancel.</p>
+<p><strong>Why.</strong> "I started recording too early and you can hear me clearing my throat." or "The good content is from 0:30 to 5:00, drop the rest." Common kid-tutorial problem solved without leaving NoorCast.</p>
+<p><strong>Defaults.</strong> No silences threshold (manual handles only); silence-trim button only appears if the auto-scan found ≥ 2s of silence.</p>
+
+<h3 id="ch28-chapters">28.33 Chapters — clickable timeline markers</h3>
+<p><strong>What.</strong> Named timestamps inside the recording. Each chapter shows up as a clickable button under the final video — one click jumps to that moment. Also exported as a <code>.vtt</code> sidecar so YouTube / VLC / video players show them as a playable timeline.</p>
+<p><strong>Where.</strong> During recording: toolbar <code>🏷 Marker</code> button or keyboard <kbd>M</kbd>. Each press adds a chapter at the current elapsed time. After recording: chapter strip below the take video.</p>
+<p><strong>How — three ways to add chapters.</strong></p>
+<ol>
+  <li><strong>Manual:</strong> press <kbd>M</kbd> any time during recording → prompted for label → marker added at <code>Recorder.elapsed()</code>.</li>
+  <li><strong>Templates:</strong> if you used a Lesson template (<a class="xref" href="#ch28-templates">28.25</a>), each step transition <em>auto-adds</em> a chapter labelled with the step name.</li>
+  <li><strong>Scene switches:</strong> when you press <kbd>1</kbd>-<kbd>9</kbd> mid-recording to change scene, NoorCast can also add a chapter automatically (Settings → Comportement).</li>
+</ol>
+<p><strong>Export format.</strong> WebVTT — same standard YouTube uses for chapters. Drop the <code>.vtt</code> alongside your <code>.mp4</code>/<code>.webm</code> on YouTube, Vimeo, or any modern player.</p>
+<p><strong>Why.</strong> Long tutorials become navigable — viewers jump to "Step 3: Wiring" without scrubbing. Boost watch-time + completion. Free SEO on YouTube.</p>
+<p><strong>Defaults.</strong> Cleared at recording start · chapter time = elapsed seconds since recording began · file named like the take.</p>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
