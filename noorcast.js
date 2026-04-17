@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.225 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.226 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.225';
+const APP_VERSION = '0.7.226';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2290,9 +2290,16 @@ function setTheme(name) {
    [240, 90vw]. */
 const SidebarResize = {
   MIN: 240,
+  // v0.7.226: independent studio-left-sidebar resize (Sources / micro:bit tab).
+  // Different from the flyout .sidebar — this one lives in the studio grid.
+  STUDIO_LEFT_MIN: 180,
+  STUDIO_LEFT_MAX: 420,
   load() {
     const n = parseInt(silentGet('tc-sidebar-width', '280'), 10);
     if (isFinite(n) && n >= this.MIN) this._apply(n);
+    // v0.7.226: restore studio left sidebar width
+    const lw = parseInt(silentGet('tc-studio-left-w', '220'), 10);
+    if (isFinite(lw)) this._applyStudioLeft(lw);
   },
   _apply(px) {
     const maxW = Math.round(window.innerWidth * 0.9);
@@ -2300,7 +2307,13 @@ const SidebarResize = {
     document.documentElement.style.setProperty('--sidebar-width', clamped + 'px');
     return clamped;
   },
+  _applyStudioLeft(px) {
+    const clamped = Math.max(this.STUDIO_LEFT_MIN, Math.min(this.STUDIO_LEFT_MAX, px));
+    document.documentElement.style.setProperty('--studio-left-w', clamped + 'px');
+    return clamped;
+  },
   setup() {
+    // Flyout settings sidebar handle (right-side panel)
     document.querySelectorAll('.tc-sidebar-resize').forEach(handle => {
       const panel = handle.closest('.sidebar');
       handle.addEventListener('pointerdown', (e) => {
@@ -2309,8 +2322,6 @@ const SidebarResize = {
         panel?.classList.add('resizing');
         const isRtl = document.documentElement.dir === 'rtl';
         const onMove = (ev) => {
-          // Sidebar is inset-inline-end: 0 — in LTR that's the right side,
-          // so new width = window.innerWidth - pointerX. In RTL, flip.
           const x = ev.clientX;
           const newW = isRtl ? x : (window.innerWidth - x);
           this._apply(newW);
@@ -2327,6 +2338,38 @@ const SidebarResize = {
         window.addEventListener('pointerup', onUp, { once: true });
       });
     });
+    // v0.7.226: studio LEFT sidebar resize handle
+    const lhandle = document.getElementById('tcStudioLeftResize');
+    if (lhandle) {
+      lhandle.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        lhandle.classList.add('dragging');
+        const grid = document.querySelector('.tc-studio-grid');
+        const gridRect = grid?.getBoundingClientRect();
+        if (!gridRect) return;
+        const isRtl = document.documentElement.dir === 'rtl';
+        const onMove = (ev) => {
+          // Width = pointerX minus grid's left edge (LTR) / grid right minus pointerX (RTL)
+          const rel = isRtl ? (gridRect.right - ev.clientX) : (ev.clientX - gridRect.left - 14 /* grid padding */);
+          this._applyStudioLeft(rel);
+        };
+        const onUp = () => {
+          lhandle.classList.remove('dragging');
+          const current = getComputedStyle(document.documentElement).getPropertyValue('--studio-left-w').trim();
+          silentSet('tc-studio-left-w', parseInt(current, 10) || 220);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp, { once: true });
+      });
+      // Double-click to reset to default
+      lhandle.addEventListener('dblclick', () => {
+        this._applyStudioLeft(220);
+        silentSet('tc-studio-left-w', '220');
+        showToast('↔ Sidebar reset to default', 1200);
+      });
+    }
   },
 };
 

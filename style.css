@@ -439,19 +439,78 @@ body {
   transition: transform .35s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
 }
-/* v0.7.216: drag handle on the inner (leading) edge of the settings sidebar */
+/* v0.7.216 + v0.7.226: drag handle on the inner edge of the settings sidebar.
+   Bigger + visible affordance (kids couldn't find the 6px transparent version). */
 .tc-sidebar-resize {
   position: absolute; inset-inline-start: 0; top: 0; bottom: 0;
-  width: 6px; cursor: ew-resize;
-  background: transparent;
-  transition: background .15s ease;
+  width: 10px; cursor: ew-resize;
+  /* Subtle always-visible stripe so kids see a handle exists */
+  background: linear-gradient(90deg, rgba(163,230,53,.12), rgba(163,230,53,.04) 50%, transparent);
+  transition: background .15s ease, width .15s ease;
   z-index: 951;
   touch-action: none;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Vertical dots icon inside — drawn in CSS, no emoji dependency */
+.tc-sidebar-resize::before {
+  content: '';
+  width: 2px; height: 36px;
+  background: currentColor; color: var(--accent);
+  border-radius: 2px; opacity: .6;
+  box-shadow: -4px 0 0 currentColor, 4px 0 0 currentColor;
+  transition: opacity .15s, box-shadow .15s;
 }
 .tc-sidebar-resize:hover,
-.tc-sidebar-resize.dragging { background: rgba(163,230,53,.35); }
+.tc-sidebar-resize.dragging {
+  background: rgba(163,230,53,.35);
+  width: 14px;
+}
+.tc-sidebar-resize:hover::before,
+.tc-sidebar-resize.dragging::before { opacity: 1; }
 /* Disable the transform transition while the user is actively dragging */
 .sidebar.resizing { transition: none; }
+
+/* v0.7.226: resize handle for the LEFT studio sidebar (Sources / micro:bit tabs).
+   Visible strip on the right edge of the sidebar. */
+.tc-studio-grid {
+  --studio-left-w: 220px;
+  grid-template-columns: var(--studio-left-w) minmax(0, 1fr) 220px;
+}
+.tc-studio-grid.rsidebar-collapsed {
+  grid-template-columns: var(--studio-left-w) minmax(0, 1fr) 0 !important;
+}
+.tc-studio-lresize {
+  position: absolute;
+  top: 10px; bottom: 10px;
+  /* Sit just to the right of the left sidebar, inside the gap */
+  left: calc(14px + var(--studio-left-w) - 2px);
+  width: 10px;
+  cursor: ew-resize;
+  z-index: 15;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(90deg, rgba(163,230,53,.08), rgba(163,230,53,.16) 50%, rgba(163,230,53,.08));
+  border-radius: 4px;
+  opacity: .55;
+  transition: opacity .15s, background .15s;
+  touch-action: none;
+}
+.tc-studio-lresize::before {
+  content: '';
+  width: 2px; height: 30px;
+  background: var(--accent);
+  border-radius: 2px;
+  box-shadow: -4px 0 0 var(--accent), 4px 0 0 var(--accent);
+  opacity: .7;
+}
+.tc-studio-lresize:hover, .tc-studio-lresize.dragging {
+  opacity: 1;
+  background: rgba(163,230,53,.4);
+}
+.tc-studio-lresize:hover::before, .tc-studio-lresize.dragging::before { opacity: 1; }
+/* Hide on narrow screens where the grid collapses to one column */
+@media (max-width: 1080px) {
+  .tc-studio-lresize { display: none; }
+}
 [dir="rtl"] .sidebar {
   transform: translateX(-105%);
 }
@@ -1435,9 +1494,8 @@ body.log-open .app {
   display: grid;
   /* minmax(0, 1fr) is critical: without it, the grid item refuses to
      shrink below the canvas's intrinsic size and the layout blows out. */
-  /* v0.7.12: sidebars 240 → 220, gap 16 → 12, padding 14/18 → 10/14.
-     Gives ~60 px more to the stage width without cramping the sidebars. */
-  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  /* v0.7.226: grid-template-columns is now defined above with the
+     --studio-left-w var so the left sidebar is user-resizable. */
   gap: 12px;
   padding: 10px 14px;
   align-items: start;
@@ -1487,9 +1545,7 @@ body.log-open .app {
 .tc-studio-grid.rsidebar-collapsed .tc-sidebar-scenes {
   display: none;
 }
-.tc-studio-grid.rsidebar-collapsed {
-  grid-template-columns: 220px minmax(0, 1fr) 0 !important;
-}
+/* v0.7.226: rsidebar-collapsed rule moved next to the --studio-left-w declaration */
 
 /* ─── REC indicator ─── */
 /* v0.7.18: same styles work for .tc-rec-indicator OR .tc-rec-timer
