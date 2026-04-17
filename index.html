@@ -1558,15 +1558,16 @@
           <!-- v0.7.208: global UI font picker — overrides theme --font-b/h -->
           <div class="sidebar-group">
             <label class="sidebar-label" data-i18n="uiFont">🔤 Police de l'interface</label>
+            <!-- v0.7.223: Orbitron is the default (first launch) -->
             <select id="tcUiFontSelect" class="sidebar-select" aria-label="UI font">
-              <option value="">— Par défaut (Tajawal) —</option>
+              <option value="orbitron" selected style="font-family:'Orbitron',sans-serif">Orbitron (défaut)</option>
               <option value="righteous" style="font-family:'Righteous',sans-serif">Righteous</option>
-              <option value="orbitron" style="font-family:'Orbitron',sans-serif">Orbitron</option>
               <option value="bangers" style="font-family:'Bangers',sans-serif">Bangers</option>
               <option value="amiri" style="font-family:'Amiri',serif">Amiri (Arabic)</option>
               <option value="tajawal" style="font-family:'Tajawal',sans-serif">Tajawal</option>
               <option value="system" style="font-family:system-ui,sans-serif">System default</option>
               <option value="mono" style="font-family:ui-monospace,monospace">Monospace</option>
+              <option value="">— Theme default —</option>
             </select>
           </div>
           <!-- v0.7.79: snapshot resolution multiplier (1× / 2× HiDPI / 4× Print) -->

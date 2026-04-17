@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.222 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.223 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.222';
+const APP_VERSION = '0.7.223';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2345,10 +2345,14 @@ const UiFont = {
     system:      ["system-ui, -apple-system, sans-serif", "system-ui, -apple-system, sans-serif"],
     mono:        ["ui-monospace, SFMono-Regular, Menlo, monospace", "ui-monospace, SFMono-Regular, Menlo, monospace"],
   },
-  current: '',
+  // v0.7.223: Orbitron is the default on first launch (was '' = theme font).
+  // Existing users keep whatever they chose via silentGet fallback.
+  current: 'orbitron',
 
   load() {
-    this.current = silentGet('tc-ui-font', '') || '';
+    this.current = silentGet('tc-ui-font', 'orbitron') || 'orbitron';
+    // If the saved value isn't a known preset, fall back to orbitron.
+    if (!(this.current in this.presets)) this.current = 'orbitron';
     this.apply();
   },
   set(key) {
