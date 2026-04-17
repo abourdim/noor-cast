@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.211 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.212 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.211';
+const APP_VERSION = '0.7.212';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 19:00';
@@ -2833,8 +2833,22 @@ const BgPatterns = {
 };
 
 const logHistory = [];
+// v0.7.212: dedup state — collapse identical consecutive lines into "(×N)"
+// so old micro:bit firmware that spams TP:23/L:0/S:0 every tick doesn't
+// flood the log with hundreds of duplicate entries.
+let _logLastMsg = null, _logLastEl = null, _logLastCount = 1;
+
 function log(msg, type = 'info') {
   const c = $('logContainer'); if (!c) return;
+  // v0.7.212: collapse identical consecutive messages
+  if (msg === _logLastMsg && _logLastEl) {
+    _logLastCount++;
+    const time = new Date().toLocaleTimeString();
+    _logLastEl.textContent = `[${time}] ${msg} (×${_logLastCount})`;
+    c.scrollTop = c.scrollHeight;
+    return;
+  }
+  _logLastMsg = msg; _logLastCount = 1;
   const d = document.createElement('div');
   // v0.7.189: tag TX/RX for filtering
   const isTx = msg.startsWith('→');
@@ -2844,6 +2858,7 @@ function log(msg, type = 'info') {
   if (isRx) d.dataset.dir = 'rx';
   d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
   c.appendChild(d);
+  _logLastEl = d;
   c.scrollTop = c.scrollHeight;
   logHistory.push({ msg, type, time: Date.now() });
   if (logHistory.length > 500) logHistory.shift();
