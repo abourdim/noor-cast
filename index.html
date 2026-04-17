@@ -2016,10 +2016,15 @@
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
       </div>
       <pre class="tc-fw-code" id="tcMicrobitCode">/**
- * NoorCast — micro:bit BLE Firmware V3.3
+ * NoorCast — micro:bit BLE Firmware V3.4
  *
  * UART over Bluetooth LE
  * Compatible with NoorCast + bit-playground
+ *
+ * v3.4: Servo LED bars only redraw when pan/tilt actually change.
+ * Previously they were redrawn every 100ms (after 2s CMD cooldown),
+ * which erased any arrow icon shown via CMD:LEFT/UP/etc. with
+ * identical bars. Now the LEDs hold whatever was last drawn.
  *
  * v3.3: VERSION REPORT on connect — sends "VER:NoorCast,V3.3,YYYY-MM-DD"
  * so the browser can show which firmware is actually flashed and warn
@@ -2061,7 +2066,7 @@
 // FW_NAME stays "NoorCast" so other apps using the same protocol can
 // tell if a board is running NoorCast firmware vs. something else.
 const FW_NAME = "NoorCast"
-const FW_VERSION = "V3.3"
+const FW_VERSION = "V3.4"
 const FW_BUILD = "2026-04-17"
 
 bluetooth.startUartService()
@@ -2226,8 +2231,15 @@ basic.forever(() => {
         bluetooth.uartWriteLine("COMPASS:" + ch); prevC = ch
     }
     burst = false  // burst is one-shot
-    // Show servo positions on LEDs only when no recent CMD icon (2s cooldown)
-    if ((s1Active || s2Active) && (input.runningTime() - lastCmdAt > 2000)) {
+    // v3.4: Only redraw servo bars when the angle ACTUALLY changed.
+    // Previously the bars were drawn every 100ms after the 2s CMD
+    // cooldown, which overwrote any other LED content (e.g. the arrow
+    // from CMD:LEFT) with identical bars on every tick. Now the bars
+    // only refresh when pan/tilt move, so the arrow stays put and the
+    // LEDs hold whatever was last drawn.
+    if ((s1Active || s2Active)
+        && (input.runningTime() - lastCmdAt > 2000)
+        && (pan != prevPan || tilt != prevTilt)) {
         // Row 0-1: servo 1 bar, Row 3-4: servo 2 bar, Row 2: separator
         for (let c = 0; c < 5; c++) {
             let s1on = s1Active && c < Math.round(pan / 180 * 5)
@@ -2236,6 +2248,8 @@ basic.forever(() => {
             if (s2on) { led.plot(c, 3); led.plot(c, 4) } else { led.unplot(c, 3); led.unplot(c, 4) }
             led.unplot(c, 2) // separator row
         }
+        prevPan = pan
+        prevTilt = tilt
         ledsDirty = true
     }
     // LED sync
