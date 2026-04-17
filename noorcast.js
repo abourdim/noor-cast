@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.215 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.216 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.215';
+const APP_VERSION = '0.7.216';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-17 20:00';
+const BUILD_DATE = '2026-04-17 21:30';
 const $ = (id) => document.getElementById(id);
 
 /* v0.7.180: shared helpers — use in new code to replace 284 empty catches
@@ -2255,6 +2255,9 @@ function setLanguage(lang) {
   renderScenes();
   renderTextPresets();
   renderBadges();
+  // v0.7.216: swap the flag icon to match the new language
+  const flag = $('tcLangFlag');
+  if (flag) flag.src = './flags/' + lang + '.svg';
   log(`🌐 ${lang.toUpperCase()}`, 'info');
 }
 
@@ -2279,6 +2282,53 @@ function setTheme(name) {
     setTimeout(() => Engine.refreshAccent(), 20);
   }
 }
+
+/* v0.7.216: SidebarResize — lets the user drag the inner edge of any
+   .sidebar (Settings / Help / Events panel) to change its width.
+   Width is persisted in tc-sidebar-width localStorage and applied via
+   the --sidebar-width CSS custom property on :root. Clamped to
+   [240, 90vw]. */
+const SidebarResize = {
+  MIN: 240,
+  load() {
+    const n = parseInt(silentGet('tc-sidebar-width', '280'), 10);
+    if (isFinite(n) && n >= this.MIN) this._apply(n);
+  },
+  _apply(px) {
+    const maxW = Math.round(window.innerWidth * 0.9);
+    const clamped = Math.max(this.MIN, Math.min(maxW, px));
+    document.documentElement.style.setProperty('--sidebar-width', clamped + 'px');
+    return clamped;
+  },
+  setup() {
+    document.querySelectorAll('.tc-sidebar-resize').forEach(handle => {
+      const panel = handle.closest('.sidebar');
+      handle.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        handle.classList.add('dragging');
+        panel?.classList.add('resizing');
+        const isRtl = document.documentElement.dir === 'rtl';
+        const onMove = (ev) => {
+          // Sidebar is inset-inline-end: 0 — in LTR that's the right side,
+          // so new width = window.innerWidth - pointerX. In RTL, flip.
+          const x = ev.clientX;
+          const newW = isRtl ? x : (window.innerWidth - x);
+          this._apply(newW);
+        };
+        const onUp = () => {
+          handle.classList.remove('dragging');
+          panel?.classList.remove('resizing');
+          const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
+          silentSet('tc-sidebar-width', parseInt(current, 10) || 280);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp, { once: true });
+      });
+    });
+  },
+};
 
 /* v0.7.208: UiFont — global font override for the UI. Overlays theme
    default (--font-b / --font-h CSS vars) without disturbing anything
@@ -2882,12 +2932,15 @@ function showToast(msg, ms = 2000) {
 function openPanel(id) {
   const p = $(id); if (!p) return;
   p.classList.add('open');
-  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.add('show');
+  // v0.7.216: fix — CSS rule is .sidebar-overlay.open (not .show). Previous
+  // mismatch meant the overlay never got pointer-events, so clicks outside
+  // the panel passed through to the page instead of closing the panel.
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.add('open');
 }
 function closePanel(id) {
   const p = $(id); if (!p) return;
   p.classList.remove('open');
-  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('show');
+  const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('open');
 }
 function closeAllPanels() {
   ['helpPanel', 'settingsPanel', 'logPanel'].forEach(closePanel);
@@ -17054,7 +17107,7 @@ const Sensors = {
   // v0.7.214: expected firmware version — bump when makecode.ts changes.
   // If the connected board reports an older version, the user is shown a
   // gentle "please reflash" hint instead of a hard error.
-  EXPECTED_FW: 'V3.4',
+  EXPECTED_FW: 'V3.5',
   firmware: null,
 
   _renderFirmwareInfo() {
@@ -21070,7 +21123,18 @@ function wireEvents() {
   $('helpCloseBtn').addEventListener('click', () => closePanel('helpPanel'));
   $('settingsCloseBtn').addEventListener('click', () => closePanel('settingsPanel'));
   $('logCloseBtn').addEventListener('click', () => closePanel('logPanel'));
-  ['helpOverlay', 'settingsOverlay'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', closeAllPanels); });
+  // v0.7.216: include logOverlay (newly added HTML element) so clicking
+  // outside the Activity Log panel closes it too.
+  ['helpOverlay', 'settingsOverlay', 'logOverlay'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', closeAllPanels); });
+  // v0.7.216: wire the sidebar resize handles (drag inner edge to resize)
+  SidebarResize.setup();
+  // v0.7.216: ESC also closes any open panel (keyboard shortcut)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !e.target.matches('input,textarea,select,[contenteditable]')) {
+      const anyOpen = ['helpPanel', 'settingsPanel', 'logPanel'].some(id => $(id)?.classList.contains('open'));
+      if (anyOpen) { closeAllPanels(); e.preventDefault(); }
+    }
+  });
 
   // Log controls
   $('clearLogBtn').addEventListener('click', () => { $('logContainer').innerHTML = ''; log(t('logCleared'), 'info'); });
@@ -21202,9 +21266,8 @@ function wireEvents() {
     if (f) SettingsIO.importAll(f);
     e.target.value = '';
   });
-  // Build timestamp chip — static text + i18n label
-  const bm = $('tcBuildMeta');
-  if (bm) bm.textContent = `${t('buildMeta')} : v${APP_VERSION} · ${BUILD_DATE}`;
+  // v0.7.216: build timestamp was removed from Settings — redundant with
+  // the version badge in the sidebar footer (shows same info, always visible).
 
   // Sound effects toggle
   const sndEl = $('soundToggle');
@@ -22559,11 +22622,16 @@ async function init() {
     const theme = localStorage.getItem('tc-theme'); if (theme) setTheme(theme);
   } catch {}
   $('langSelect').value = currentLang;
+  // v0.7.216: set the initial flag icon to match the restored language
+  const initFlag = $('tcLangFlag');
+  if (initFlag) initFlag.src = './flags/' + currentLang + '.svg';
 
   // v0.7.55: apply any custom accent override on top of the theme restored above
   CustomAccent.load();
   // v0.7.208: apply saved UI font (overrides theme --font-b/h if set)
   UiFont.load();
+  // v0.7.216: restore saved sidebar width BEFORE any panel is shown
+  SidebarResize.load();
   // v0.7.143: load persisted canvas background color
   CanvasBg.load();
   BgPatterns.load();

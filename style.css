@@ -426,7 +426,8 @@ body {
 .sidebar {
   position: fixed; top: 0; bottom: 0;
   inset-inline-end: 0;
-  width: 280px; max-width: 80vw;
+  /* v0.7.216: width driven by --sidebar-width CSS var (persisted in LS) */
+  width: var(--sidebar-width, 280px); max-width: 90vw; min-width: 240px;
   z-index: 950;
   display: flex; flex-direction: column;
   background:
@@ -438,6 +439,19 @@ body {
   transition: transform .35s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
 }
+/* v0.7.216: drag handle on the inner (leading) edge of the settings sidebar */
+.tc-sidebar-resize {
+  position: absolute; inset-inline-start: 0; top: 0; bottom: 0;
+  width: 6px; cursor: ew-resize;
+  background: transparent;
+  transition: background .15s ease;
+  z-index: 951;
+  touch-action: none;
+}
+.tc-sidebar-resize:hover,
+.tc-sidebar-resize.dragging { background: rgba(163,230,53,.35); }
+/* Disable the transform transition while the user is actively dragging */
+.sidebar.resizing { transition: none; }
 [dir="rtl"] .sidebar {
   transform: translateX(-105%);
 }
@@ -657,6 +671,15 @@ body {
 .tc-app-build { opacity: .55; font-weight: 400; margin-left: 2px; letter-spacing: .02em; font-size: .92em; }
 /* v0.7.214: firmware version readout in micro:bit sidebar */
 .tc-fw-info.tc-fw-outdated { color: #fbbf24; opacity: .85; cursor: help; }
+/* v0.7.216: language flag icon next to the FR/EN/AR select */
+.tc-lang-row { display: flex; align-items: center; gap: 8px; }
+.tc-lang-row .sidebar-select { flex: 1; }
+.tc-lang-flag {
+  display: block; width: 28px; height: 20px;
+  border-radius: 3px; border: 1px solid var(--border);
+  object-fit: cover; flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    BUTTONS

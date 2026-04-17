@@ -1,8 +1,14 @@
 /**
- * NoorCast — micro:bit BLE Firmware V3.4
+ * NoorCast — micro:bit BLE Firmware V3.5
  *
  * UART over Bluetooth LE
  * Compatible with NoorCast + bit-playground
+ *
+ * v3.5: REMOVED compass telemetry. Calling input.compassHeading()
+ * triggers MakeCode's "tilt to fill circle" calibration game on the
+ * LEDs the first time it's used — confusing for kids. Cleaner to
+ * skip compass entirely. JS still parses COMPASS: lines if they
+ * arrive (backward-compatible with V3.4 and older firmware).
  *
  * v3.4: Servo LED bars only redraw when pan/tilt actually change.
  * Previously they were redrawn every 100ms (after 2s CMD cooldown),
@@ -27,8 +33,8 @@
  *   TP:n            temperature (°C)
  *   L:n             light (0-255)
  *   S:n             sound (0-255, V2)
- *   COMPASS:n       heading (0-360)
  *   LEDS:r0,r1,r2,r3,r4  LED sync
+ *   (compass intentionally omitted — avoids calibration prompt)
  *
  * COMMANDS (browser → micro:bit):
  *   P:angle         pan servo P1 (0-180)
@@ -49,7 +55,7 @@
 // FW_NAME stays "NoorCast" so other apps using the same protocol can
 // tell if a board is running NoorCast firmware vs. something else.
 const FW_NAME = "NoorCast"
-const FW_VERSION = "V3.4"
+const FW_VERSION = "V3.5"
 const FW_BUILD = "2026-04-17"
 
 bluetooth.startUartService()
@@ -183,9 +189,13 @@ input.onButtonPressed(Button.B, () => { if (btConnected) bluetooth.uartWriteLine
 let prevLeds = ""
 basic.forever(() => {
     if (!btConnected) {
-        // Pulsing dot = "waiting for connection"
-        led.plot(2, 2); basic.pause(300)
-        led.unplot(2, 2); basic.pause(300)
+        // v3.5: pulsing X = "waiting for connection" (was a pulsing dot).
+        // X is unambiguously "disconnected" — parents/kids instantly
+        // understand without needing context.
+        basic.showIcon(IconNames.No)
+        basic.pause(600)
+        basic.clearScreen()
+        basic.pause(400)
         return
     }
     // v3.2: change-detection — only send when value changed enough.
@@ -209,10 +219,10 @@ basic.forever(() => {
     if (burst || Math.abs(sv - prevS) >= 5) {
         bluetooth.uartWriteLine("S:" + sv); prevS = sv
     }
-    let ch = input.compassHeading()
-    if (burst || Math.abs(ch - prevC) >= 5) {
-        bluetooth.uartWriteLine("COMPASS:" + ch); prevC = ch
-    }
+    // v3.5: compass intentionally NOT read — input.compassHeading()
+    // forces MakeCode's "tilt to fill the circle" calibration game on
+    // first call, which is confusing for kids. If you want compass back,
+    // call input.calibrateCompass() once then read heading freely.
     burst = false  // burst is one-shot
     // v3.4: Only redraw servo bars when the angle ACTUALLY changed.
     // Previously the bars were drawn every 100ms after the 2s CMD
