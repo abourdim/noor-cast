@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.223 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.224 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.223';
+const APP_VERSION = '0.7.224';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -21882,7 +21882,7 @@ function wireEvents() {
   }
   $('tcPetSelect')?.addEventListener('change', (e) => {
     const type = e.target.value;
-    if (type === '_clear') { CanvasPets.active = []; CanvasPets._save(); showToast('🐾 All pets cleared', 1200); }
+    if (type === '_clear') { CanvasPets.active = []; CanvasPets._save(); showToast('🎭 All mascots cleared', 1200); }
     else if (type) { CanvasPets.toggle(type); }
     e.target.value = '';
   });
@@ -22987,7 +22987,7 @@ const GlobalSearch = {
     AICohost.characters.forEach(c => add('Co-host', AICohost.charLabels[c] || c, () => { AICohost.character = c; AICohost._save(); showToast(AICohost.charLabels[c], 1200); }));
 
     // Canvas pets
-    CanvasPets.types.forEach(t => add('Pet', CanvasPets.labels[t] || t, () => CanvasPets.toggle(t)));
+    CanvasPets.types.forEach(t => add('Mascot', CanvasPets.labels[t] || t, () => CanvasPets.toggle(t)));
   },
 
   open() {
