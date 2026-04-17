@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.213 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.214 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,10 +13,10 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.213';
+const APP_VERSION = '0.7.214';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-17 19:00';
+const BUILD_DATE = '2026-04-17 20:00';
 const $ = (id) => document.getElementById(id);
 
 /* v0.7.180: shared helpers — use in new code to replace 284 empty catches
@@ -16568,6 +16568,12 @@ const Sensors = {
     if (s) { s.textContent = statusText; s.style.color = connected ? '#a3e635' : '#ef4444'; }
     if (cb) cb.style.display = connected ? 'none' : '';
     if (db) db.style.display = connected ? '' : 'none';
+    // v0.7.214: clear firmware identity readout on disconnect so stale info doesn't linger
+    if (!connected) {
+      this.firmware = null;
+      this._fwWarned = false;
+      this._renderFirmwareInfo();
+    }
   },
 
   async connect() {
@@ -17032,6 +17038,40 @@ const Sensors = {
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
     // INFO: / SERVO: / EVENT: — bit-playground ack (ignore silently)
     if (line.startsWith('INFO:') || line.startsWith('SERVO') || line.startsWith('EVENT:') || line.startsWith('TAB:')) return;
+    // v0.7.214: VER:appname,version,build — firmware identity (V3.3+)
+    if (line.startsWith('VER:')) {
+      const parts = line.slice(4).split(',');
+      this.firmware = {
+        name: parts[0] || '?',
+        version: parts[1] || '?',
+        build: parts[2] || '?',
+      };
+      this._renderFirmwareInfo();
+      return;
+    }
+  },
+
+  // v0.7.214: expected firmware version — bump when makecode.ts changes.
+  // If the connected board reports an older version, the user is shown a
+  // gentle "please reflash" hint instead of a hard error.
+  EXPECTED_FW: 'V3.3',
+  firmware: null,
+
+  _renderFirmwareInfo() {
+    const el = $('tcMicrobitFirmwareInfo');
+    if (!el) return;
+    if (!this.firmware) { el.textContent = ''; el.title = ''; return; }
+    const f = this.firmware;
+    const outdated = f.version && f.version !== this.EXPECTED_FW;
+    el.textContent = outdated
+      ? `⚠ ${f.name} ${f.version} (${f.build}) — flash ${this.EXPECTED_FW} for change-detection`
+      : `✅ ${f.name} ${f.version} · ${f.build}`;
+    el.title = `Firmware reported by micro:bit. Expected: ${this.EXPECTED_FW}`;
+    el.classList.toggle('tc-fw-outdated', !!outdated);
+    if (outdated && !this._fwWarned) {
+      this._fwWarned = true;
+      showToast(`⚠ micro:bit firmware ${f.version} — reflash to ${this.EXPECTED_FW}`, 5000);
+    }
   },
 
   // v0.7.172: sync the web LED grid from micro:bit telemetry

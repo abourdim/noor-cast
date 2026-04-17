@@ -1,8 +1,12 @@
 /**
- * NoorCast — micro:bit BLE Firmware V3.2
+ * NoorCast — micro:bit BLE Firmware V3.3
  *
  * UART over Bluetooth LE
  * Compatible with NoorCast + bit-playground
+ *
+ * v3.3: VERSION REPORT on connect — sends "VER:NoorCast,V3.3,YYYY-MM-DD"
+ * so the browser can show which firmware is actually flashed and warn
+ * if it's older than expected. Bump FW_BUILD on every reflash.
  *
  * v3.2: CHANGE-DETECTION on all telemetry — only sends a line when
  * the value actually changes (with thresholds for noisy sensors).
@@ -33,7 +37,16 @@
  *   TEST            checkmark + reply "OK"
  *   HELLO           heart on connect — also forces telemetry burst
  *   BYE             clean disconnect (show X, stop telemetry)
+ *   VER?            re-send VER:… line (browser can poll on demand)
  */
+
+// v3.3: firmware identity — bump FW_BUILD when you reflash this code.
+// FW_NAME stays "NoorCast" so other apps using the same protocol can
+// tell if a board is running NoorCast firmware vs. something else.
+const FW_NAME = "NoorCast"
+const FW_VERSION = "V3.3"
+const FW_BUILD = "2026-04-17"
+
 bluetooth.startUartService()
 let pan = 90, tilt = 90, ledsDirty = false, lastCmdAt = 0
 let prevPan = -1, prevTilt = -1
@@ -45,11 +58,17 @@ let prevAx = -9999, prevAy = -9999, prevAz = -9999
 let prevTp = -9999, prevL = -9999, prevS = -9999, prevC = -9999
 let burst = true  // set true on (re)connect to force one full snapshot
 
+// v3.3: helper — send firmware identity in a single line
+function sendVer() {
+    bluetooth.uartWriteLine("VER:" + FW_NAME + "," + FW_VERSION + "," + FW_BUILD)
+}
+
 bluetooth.onBluetoothConnected(() => {
     btConnected = true
     burst = true   // re-send all telemetry once on (re)connect
     basic.showIcon(IconNames.Yes)
     bluetooth.uartWriteLine("INFO:CONNECTED")
+    sendVer()  // v3.3: announce identity right after CONNECTED
 })
 bluetooth.onBluetoothDisconnected(() => {
     btConnected = false
@@ -84,7 +103,11 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
     if (cmd == "HELLO") {
         basic.showIcon(IconNames.Heart)
         burst = true   // v3.2: re-send full telemetry snapshot
+        sendVer()      // v3.3: re-announce identity
         basic.pause(300); basic.clearScreen(); return
+    }
+    if (cmd == "VER?") {  // v3.3: on-demand version query
+        sendVer(); return
     }
     if (cmd == "BYE") {
         btConnected = false
