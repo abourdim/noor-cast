@@ -22429,6 +22429,10 @@ function wireEvents() {
 }
 
 async function init() {
+  // v0.7.208: sync version badges from APP_VERSION — single source of truth
+  document.querySelectorAll('.tc-app-ver-badge strong').forEach(el => {
+    el.textContent = 'v' + APP_VERSION;
+  });
   // Restore prefs
   try {
     const lang = localStorage.getItem('tc-lang'); if (lang) currentLang = lang;
