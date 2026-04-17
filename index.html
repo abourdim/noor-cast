@@ -1603,6 +1603,23 @@
             </select>
             <label class="sidebar-label" data-i18n="canvasBgColor">🎨 Couleur de fond du canvas</label>
             <input type="color" id="tcCanvasBgColor" value="#000000" />
+            <!-- v0.7.225: user-uploaded background image (PNG/JPG ≤4MB) -->
+            <label class="sidebar-label" style="margin-top:10px">🖼 Image de fond</label>
+            <label class="tc-file-btn" for="tcCanvasBgImageInput">
+              📁 <span>Choisir une image (PNG, JPG)</span>
+            </label>
+            <input type="file" id="tcCanvasBgImageInput" accept="image/*" style="display:none" />
+            <button id="tcCanvasBgImageClear" class="tc-btn-full" style="margin-top:4px;font-size:.72rem;opacity:.75">🗑 Retirer l'image</button>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <select id="tcCanvasBgImageFit" class="sidebar-select" style="flex:1">
+                <option value="cover">Cover (remplir)</option>
+                <option value="contain">Contain (ajuster)</option>
+                <option value="stretch">Stretch (étirer)</option>
+                <option value="tile">Tile (répéter)</option>
+              </select>
+            </div>
+            <label class="sidebar-label" style="margin-top:6px;font-size:.7rem">💧 Opacité</label>
+            <input type="range" id="tcCanvasBgImageOpacity" min="0" max="100" step="5" value="100" style="width:100%" />
           </div>
           <div class="sidebar-group">
             <label class="sidebar-label">🖼 Background pattern</label>

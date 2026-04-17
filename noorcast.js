@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.224 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.225 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.224';
+const APP_VERSION = '0.7.225';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2430,11 +2430,28 @@ const CustomAccent = {
 /* v0.7.143: canvas background color — persisted in localStorage, default black */
 const CanvasBg = {
   current: '#000000',
+  // v0.7.225: user-uploaded image background
+  image: null,          // HTMLImageElement (decoded)
+  imageDataUrl: null,   // persisted base64 data URL
+  imageFit: 'cover',    // 'cover' | 'contain' | 'stretch' | 'tile'
+  imageOpacity: 1,      // 0-1
 
   load() {
     try {
       const v = localStorage.getItem('tc-canvas-bg');
       if (v && /^#[0-9a-fA-F]{6}$/.test(v)) this.current = v;
+      // v0.7.225: restore image + options
+      const dataUrl = localStorage.getItem('tc-canvas-bg-image');
+      if (dataUrl && dataUrl.startsWith('data:image/')) {
+        this.imageDataUrl = dataUrl;
+        const img = new Image();
+        img.onload = () => { this.image = img; };
+        img.src = dataUrl;
+      }
+      const fit = localStorage.getItem('tc-canvas-bg-image-fit');
+      if (fit && ['cover', 'contain', 'stretch', 'tile'].includes(fit)) this.imageFit = fit;
+      const op = parseFloat(localStorage.getItem('tc-canvas-bg-image-opacity'));
+      if (!isNaN(op)) this.imageOpacity = Math.max(0, Math.min(1, op));
     } catch {}
   },
 
@@ -2442,6 +2459,79 @@ const CanvasBg = {
     if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
     this.current = hex;
     try { localStorage.setItem('tc-canvas-bg', hex); } catch {}
+  },
+
+  // v0.7.225: load a File/Blob as background image. Rejects >4MB to keep
+  // localStorage happy (quota is ~5MB). Resolves to true on success.
+  async setImageFromFile(file) {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      showToast('⚠ Not an image file', 2000); return false;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('⚠ Image too big (>4MB) — try a smaller one', 3000); return false;
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(file);
+    }).catch(() => null);
+    if (!dataUrl) return false;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        this.image = img;
+        this.imageDataUrl = dataUrl;
+        try { localStorage.setItem('tc-canvas-bg-image', dataUrl); } catch {
+          showToast('⚠ Image too big for storage', 2500);
+        }
+        showToast(`🖼 Background image: ${img.naturalWidth}×${img.naturalHeight}`, 2000);
+        resolve(true);
+      };
+      img.onerror = () => { showToast('⚠ Failed to decode image', 2000); resolve(false); };
+      img.src = dataUrl;
+    });
+  },
+
+  clearImage() {
+    this.image = null;
+    this.imageDataUrl = null;
+    try { localStorage.removeItem('tc-canvas-bg-image'); } catch {}
+    showToast('🗑 Background image removed', 1500);
+  },
+
+  setImageFit(fit) {
+    if (!['cover', 'contain', 'stretch', 'tile'].includes(fit)) return;
+    this.imageFit = fit;
+    try { localStorage.setItem('tc-canvas-bg-image-fit', fit); } catch {}
+  },
+
+  setImageOpacity(v) {
+    this.imageOpacity = Math.max(0, Math.min(1, parseFloat(v) || 0));
+    try { localStorage.setItem('tc-canvas-bg-image-opacity', String(this.imageOpacity)); } catch {}
+  },
+
+  // v0.7.225: draw the image onto ctx at canvas (W×H) using the current fit mode
+  drawImage(ctx, W, H) {
+    if (!this.image || !this.image.complete || !this.image.naturalWidth) return;
+    ctx.save();
+    ctx.globalAlpha = this.imageOpacity;
+    const iw = this.image.naturalWidth, ih = this.image.naturalHeight;
+    if (this.imageFit === 'stretch') {
+      ctx.drawImage(this.image, 0, 0, W, H);
+    } else if (this.imageFit === 'tile') {
+      const p = ctx.createPattern(this.image, 'repeat');
+      if (p) { ctx.fillStyle = p; ctx.fillRect(0, 0, W, H); }
+    } else {
+      // cover (default) or contain — preserve aspect ratio
+      const scale = this.imageFit === 'contain'
+        ? Math.min(W / iw, H / ih)
+        : Math.max(W / iw, H / ih);
+      const dw = iw * scale, dh = ih * scale;
+      const dx = (W - dw) / 2, dy = (H - dh) / 2;
+      ctx.drawImage(this.image, dx, dy, dw, dh);
+    }
+    ctx.restore();
   },
 };
 
@@ -3531,6 +3621,9 @@ const Engine = {
     // background (v0.7.143: user-configurable canvas background color)
     ctx.fillStyle = CanvasBg.current;
     ctx.fillRect(0, 0, width, height);
+    // v0.7.225: optional user-uploaded background image (over the color fill,
+    // under decorative patterns) — supports cover/contain/stretch/tile
+    CanvasBg.drawImage(ctx, width, height);
     // v0.7.180: decorative background pattern
     BgPatterns.render(ctx, width, height);
     // v0.7.192: ghost of previous take (behind sources)
@@ -21293,6 +21386,27 @@ function wireEvents() {
   if (cbg) {
     cbg.value = CanvasBg.current;
     cbg.addEventListener('input', (e) => CanvasBg.set(e.target.value));
+  }
+  // v0.7.225: background image controls
+  const bgImgInput = $('tcCanvasBgImageInput');
+  if (bgImgInput) {
+    bgImgInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) await CanvasBg.setImageFromFile(file);
+      e.target.value = ''; // allow re-selecting the same file later
+    });
+  }
+  const bgImgClear = $('tcCanvasBgImageClear');
+  if (bgImgClear) bgImgClear.addEventListener('click', () => CanvasBg.clearImage());
+  const bgImgFit = $('tcCanvasBgImageFit');
+  if (bgImgFit) {
+    bgImgFit.value = CanvasBg.imageFit;
+    bgImgFit.addEventListener('change', (e) => CanvasBg.setImageFit(e.target.value));
+  }
+  const bgImgOp = $('tcCanvasBgImageOpacity');
+  if (bgImgOp) {
+    bgImgOp.value = Math.round(CanvasBg.imageOpacity * 100);
+    bgImgOp.addEventListener('input', (e) => CanvasBg.setImageOpacity(e.target.value / 100));
   }
   // v0.7.180: background pattern picker + opacity
   const bgpSel = $('tcBgPattern');
