@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.226 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.227 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.226';
+const APP_VERSION = '0.7.227';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -20126,12 +20126,29 @@ const UnlockGallery = {
 /* v0.7.192: ComboSystem — use multiple features in a row for bonus XP.
    Tracks active features each frame. 3+ simultaneous = COMBO! */
 const ComboSystem = {
+  // v0.7.227: opt-out toggle — was always on and annoying when kids focus
+  // on the actual recording. Default on for the playful vibe, off-switch
+  // now in Settings > Behavior.
+  enabled: true,
   _lastCombo: 0,
   _comboCount: 0,
   _displayUntil: 0,
   _displayText: '',
 
+  load() {
+    const v = silentGet('tc-combo-enabled');
+    // Default true; explicit "0" disables
+    this.enabled = v !== '0';
+  },
+  toggle() {
+    this.enabled = !this.enabled;
+    silentSet('tc-combo-enabled', this.enabled ? '1' : '0');
+    if (!this.enabled) { this._displayUntil = 0; this._comboCount = 0; }
+    showToast(this.enabled ? '⚡ Combos ON' : '⚡ Combos OFF', 1400);
+  },
+
   tick() {
+    if (!this.enabled) return;   // v0.7.227: opt-out gate
     if (Recorder.state !== 'recording') return;
     const now = Date.now();
     if (now - this._lastCombo < 5000) return; // 5s cooldown
@@ -20167,6 +20184,7 @@ const ComboSystem = {
   },
 
   render(ctx, W, H) {
+    if (!this.enabled) return;   // v0.7.227
     if (Date.now() > this._displayUntil) { this._comboCount = 0; return; }
     const t = (this._displayUntil - Date.now()) / 2500;
     ctx.save();
@@ -22627,6 +22645,16 @@ function wireEvents() {
       try { localStorage.setItem('tc-auto-pause', e.target.checked ? '1' : '0'); } catch {}
     });
   }
+  // v0.7.227: COMBO popup toggle — canvas-distracting XP bonus messages
+  const comboEl = $('tcComboToggle');
+  if (comboEl) {
+    comboEl.checked = ComboSystem.enabled;
+    comboEl.addEventListener('change', (e) => {
+      ComboSystem.enabled = !!e.target.checked;
+      silentSet('tc-combo-enabled', ComboSystem.enabled ? '1' : '0');
+      if (!ComboSystem.enabled) { ComboSystem._displayUntil = 0; ComboSystem._comboCount = 0; }
+    });
+  }
   // v0.7.54: opt-in snapshot annotation modal before saving
   const saEl = $('tcSnapAnnotToggle');
   if (saEl) {
@@ -22915,6 +22943,7 @@ async function init() {
   GhostReplay.load();      // v0.7.192
   CanvasPets.load();       // v0.7.197
   AICohost.load();        // v0.7.188
+  ComboSystem.load();     // v0.7.227
   XpBar.load();      // v0.7.182
   SoundPad.load();   // v0.7.182
   BrandPresets.setup();  // v0.7.82: 3 numbered brand preset slots
