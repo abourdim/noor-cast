@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.228 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.229 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.228';
+const APP_VERSION = '0.7.229';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -5132,22 +5132,12 @@ const Engine = {
     }
   },
 
-  async enumerateDevices() {
-    // Prompt for permission first (blank getUserMedia) so labels are populated
-    try { await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(s => s.getTracks().forEach(t => t.stop())); } catch {}
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const cams = devices.filter(d => d.kind === 'videoinput');
-    const mics = devices.filter(d => d.kind === 'audioinput');
-    const camSel = $('camSelect'), micSel = $('micSelect');
-    if (camSel) {
-      camSel.innerHTML = `<option value="">${t('selectCam')}</option>`;
-      cams.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Camera ${d.deviceId.slice(0, 4)}`; camSel.appendChild(o); });
-    }
-    if (micSel) {
-      micSel.innerHTML = `<option value="">${t('selectMic')}</option>`;
-      mics.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Mic ${d.deviceId.slice(0, 4)}`; micSel.appendChild(o); });
-    }
-  },
+  // v0.7.229: REMOVED Engine.enumerateDevices() — duplicate of refreshDeviceList
+  // that contained a blank getUserMedia({audio:true,video:true}) call. No caller
+  // in the codebase, but if ever accidentally invoked it would light up the
+  // camera + mic briefly. Use refreshDeviceList() instead — it only calls
+  // navigator.mediaDevices.enumerateDevices() which NEVER activates hardware.
+  // (Device labels populate after a *real* addCamera/setMic grant, correct.)
 };
 
 /* ─────────── Scenes Manager ─────────── */
