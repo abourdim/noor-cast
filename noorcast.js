@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.217 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.218 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.217';
+const APP_VERSION = '0.7.218';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -11125,7 +11125,9 @@ const Watermark = {
    persisted in localStorage. Only visible when micro:bit connected
    and at least one servo is active. */
 const ServoGauge = {
-  visible: true,
+  // v0.7.218: default hidden on first launch — user opts in via toolbar.
+  // load() overrides this from tc-servo-gauge-visible localStorage.
+  visible: false,
   _customPos: false, x: 0, y: 0, w: 0, h: 0,
   _scale: 1.0,
   _opacity: 0.85,
@@ -16746,7 +16748,7 @@ const Sensors = {
     const vals = $('tcSensorVals');
     if (vals) {
       vals.textContent = `X:${(v.x||0).toFixed(1)} Y:${(v.y||0).toFixed(1)} Z:${(v.z||0).toFixed(1)}` +
-        (v.temp != null ? ` ${v.temp}°` : '') + (v.compass != null ? ` 🧭${v.compass}°` : '') +
+        (v.temp != null ? ` ${v.temp}°` : '') +
         (v.sound != null ? ` 🔊${v.sound}` : '');
     }
   },
@@ -16755,7 +16757,8 @@ const Sensors = {
   _overlayX: null, _overlayY: null, _overlayW: 0, _overlayH: 0,
   _overlayOpacity: 0.85,
   _overlayScale: 1.0,
-  _overlayVisible: true,
+  // v0.7.218: default hidden on first launch — user opts in via 📊 toolbar
+  _overlayVisible: false,
 
   _saveOverlayPos() {
     try { localStorage.setItem('tc-sensor-overlay', JSON.stringify({ x: this._overlayX, y: this._overlayY, opacity: this._overlayOpacity, scale: this._overlayScale, visible: this._overlayVisible })); } catch {}
@@ -16787,7 +16790,7 @@ const Sensors = {
     // Build value string
     ctx.font = `600 ${fs}px ui-monospace, monospace`;
     const valText = `X:${(v.x??0).toFixed(1)} Y:${(v.y??0).toFixed(1)} Z:${(v.z??0).toFixed(1)}`
-      + (v.temp != null ? `  ${v.temp}°` : '') + (v.compass != null ? `  🧭${v.compass}°` : '')
+      + (v.temp != null ? `  ${v.temp}°` : '')
       + (v.sound != null ? `  🔊${v.sound}` : '');
     const valW = ctx.measureText(valText).width;
     const bw = Math.max(graphW, valW) + px * 2 + ledBlock;
@@ -17035,6 +17038,10 @@ const Sensors = {
   // v0.7.171: parse all incoming UART lines (unified protocol)
   _handleUartLine(line) {
     if (!line || line.startsWith('ECHO:') || line.startsWith('LOG:')) return;
+    // v0.7.218: drop COMPASS: silently — we don't use heading anywhere and
+    // old firmware (<V3.5) still sends it with 5° change-detection, spamming
+    // the log. Handled before the log() call so it never appears at all.
+    if (line.startsWith('COMPASS:')) return;
     log('← ' + line, 'warn');
     this.values = this.values || {};
     // ACC:x,y,z (bit-playground format) or A:x,y,z (NoorCast format)
@@ -17094,10 +17101,7 @@ const Sensors = {
       return;
     }
     // COMPASS:n — heading (0-360)
-    if (line.startsWith('COMPASS:')) {
-      this.values.compass = parseInt(line.slice(8), 10);
-      this.updatePanel(); return;
-    }
+    // v0.7.218: COMPASS: is dropped at the top of this function (unused)
     // OK — test response
     if (line === 'OK') { showToast('micro:bit says OK!', 1500); return; }
     // INFO: / SERVO: / EVENT: — bit-playground ack (ignore silently)
