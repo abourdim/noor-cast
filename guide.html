@@ -1399,10 +1399,35 @@
 <p>20 stickers from Ajouter → Stickers. Each gets random animation: bounce, spin, pulse, wiggle, float. Permanent, draggable, baked in.</p>
 
 <h3>14.4 Sound Pad</h3>
-<p>More → Fun → 🎵 Sounds. 8 buttons: Clap (noise burst), Drum (100Hz), Horn (440Hz), Boom (60→20Hz), Magic (800→1600Hz), Bell (600Hz), LOL (300Hz), Launch (150→800Hz). Web Audio oscillators.</p>
+<p><strong>What.</strong> 8 quick-fire sound effects you can trigger with one click during a recording, like a radio DJ's pad.</p>
+<p><strong>Where.</strong> More → Fun → <code>🎵 Sounds</code>. Each button plays its sample to the recorded stream and to the speakers.</p>
+<dl>
+  <dt><strong>👏 Clap</strong></dt><dd>White-noise burst — celebrates an answer, marks a transition.</dd>
+  <dt><strong>🥁 Drum</strong></dt><dd>100 Hz thump — emphasis or "let's go" intro.</dd>
+  <dt><strong>📯 Horn</strong></dt><dd>440 Hz blast — annoying, attention-grabbing, on purpose.</dd>
+  <dt><strong>💥 Boom</strong></dt><dd>60 Hz → 20 Hz sweep — explosion, "drop", reveal.</dd>
+  <dt><strong>✨ Magic</strong></dt><dd>800 Hz → 1600 Hz rising sweep — surprise / new feature reveal.</dd>
+  <dt><strong>🛎 Bell</strong></dt><dd>600 Hz tone — "ding" for new step / correct answer.</dd>
+  <dt><strong>😂 LOL</strong></dt><dd>300 Hz wobble — comedic moment.</dd>
+  <dt><strong>🚀 Launch</strong></dt><dd>150 Hz → 800 Hz rising — start of a demo, takeoff.</dd>
+</dl>
+<p><strong>Why.</strong> Pure energy. Kids love them. Tutorials gain personality. All baked into the recording — you don't need an external soundboard.</p>
+<p><strong>Tech.</strong> Pure Web Audio oscillators with frequency ramps and noise nodes. Zero external samples = zero file weight, zero copyright issues.</p>
 
 <h3>14.5 Background Music</h3>
-<p>More → Fun → 🎵 Music. 5 procedural 8-bit tracks: Chiptune (square), Lo-fi (triangle), Epic (sawtooth), Chill (sine), Retro (square+triangle bass). Baked into recording.</p>
+<p><strong>What.</strong> 5 procedural 8-bit chiptune loops generated entirely in JavaScript — no audio files, no copyright concerns. Plays continuously while enabled and bakes into the recording.</p>
+<p><strong>Where.</strong> Toolbar <code>🎵 Music</code> button to toggle on/off. Adjacent dropdown to pick the track. Volume in Settings → Audio.</p>
+<p><strong>Tracks.</strong></p>
+<dl>
+  <dt><strong>🎮 Chiptune (default)</strong></dt><dd>Square-wave NES vibe — energetic, retro-game tutorials.</dd>
+  <dt><strong>☕ Lo-fi</strong></dt><dd>Triangle-wave mellow chillhop — coding sessions, slow walkthroughs.</dd>
+  <dt><strong>⚔️ Epic</strong></dt><dd>Sawtooth-wave deeper bass line — big reveals, robotics demos.</dd>
+  <dt><strong>🌊 Chill</strong></dt><dd>Sine-wave soothing — meditation, slow lesson, demo recap.</dd>
+  <dt><strong>📼 Retro</strong></dt><dd>Square + triangle bass — '80s synth feel, fun mid-tempo.</dd>
+</dl>
+<p><strong>Why no MP3s?</strong> Royalty issues, bandwidth, file weight. Procedural music is infinite (loops forever without repeat), copyright-clear (you wrote the patterns), and adds zero KB to the app.</p>
+<p><strong>Defaults.</strong> Off · track Chiptune · volume 0.15 (low so it doesn't overpower voice) · Settings → Audio to change volume.</p>
+<p><strong>Tip.</strong> Pair with <a class="xref" href="#ch17">VolumeDuck</a> — when you talk, the music auto-quiets so your voice carries.</p>
 
 <h3>14.6 Other Fun Tools</h3>
 <table>
@@ -1426,7 +1451,21 @@
 </table>
 
 <h3>15.2 Smart Scene Switcher</h3>
-<p>More → Fun → 🧠 Smart. Auto-switches scenes on keywords: "code"→Code, "robot"→Robot, "camera"→Solo, "pilot"→Pilot. 3s cooldown.</p>
+<p><strong>What.</strong> Listens to your voice via SpeechRecognition and automatically switches scenes when you mention certain keywords — so you never have to reach for the keyboard mid-explanation.</p>
+<p><strong>Where.</strong> More → Fun → <code>🧠 Smart</code> button to toggle.</p>
+<p><strong>Trigger words (per scene).</strong></p>
+<table>
+  <tr><th>Say…</th><th>Switches to</th></tr>
+  <tr><td>"code", "show the code", "let's see the code"</td><td>📝 Code scene</td></tr>
+  <tr><td>"robot", "the robot", "look at the robot"</td><td>🤖 Robot scene</td></tr>
+  <tr><td>"camera", "look at me", "back to me"</td><td>👤 Solo (face) scene</td></tr>
+  <tr><td>"pilot", "let me drive", "joystick"</td><td>🎮 Pilot scene</td></tr>
+  <tr><td>"sensors", "data", "graph"</td><td>📊 Sensors scene</td></tr>
+</table>
+<p><strong>How.</strong> Toggle on → speak naturally during recording → scene transitions happen seamlessly within ~500ms of detection. 3-second cooldown between switches prevents flicker if you say "code, code, code" for emphasis.</p>
+<p><strong>Why.</strong> Solo creators with a script don't want to memorize "scene 3 = code". Just talking your way through the lesson is enough — the app does the directing for you. Particularly powerful when paired with <a class="xref" href="#ch28-templates">Templates</a>.</p>
+<p><strong>Multilingual.</strong> Trigger words are localized (FR, EN, AR). The active app language determines which keywords are listened for.</p>
+<p><strong>Defaults.</strong> Off · 3s cooldown · listens whenever the recorder is running.</p>
 
 <h3>15.3 Live Captions</h3>
 <p>Toggle via 💬 button in toolbar or <kbd>C</kbd>. Uses browser SpeechRecognition API.</p>
@@ -2616,6 +2655,117 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 <p><strong>Export format.</strong> WebVTT — same standard YouTube uses for chapters. Drop the <code>.vtt</code> alongside your <code>.mp4</code>/<code>.webm</code> on YouTube, Vimeo, or any modern player.</p>
 <p><strong>Why.</strong> Long tutorials become navigable — viewers jump to "Step 3: Wiring" without scrubbing. Boost watch-time + completion. Free SEO on YouTube.</p>
 <p><strong>Defaults.</strong> Cleared at recording start · chapter time = elapsed seconds since recording began · file named like the take.</p>
+
+<h3 id="ch28-voice-commands">28.34 Voice Commands — hands-free control</h3>
+<p><strong>What.</strong> Speak commands and NoorCast performs them — start/stop recording, switch scene, take a snapshot, freeze, fire — all without touching the keyboard.</p>
+<p><strong>Where.</strong> Toolbar <code>🎙 Voice</code> · or More → Fun → 🎙 Voice. Requires Chrome or Edge (uses the browser SpeechRecognition API). Cooldown 1.5s between commands.</p>
+<p><strong>Commands by language.</strong></p>
+<dl>
+  <dt>Recording control</dt><dd><em>"record"</em> / <em>"stop"</em> / <em>"pause"</em> — start/stop/pause the recording.</dd>
+  <dt>Scene switching</dt><dd><em>"scene 3"</em> (number 1–9) jumps to that scene by index.</dd>
+  <dt>Tools</dt><dd><em>"laser"</em>, <em>"freeze"</em>, <em>"zoom"</em>, <em>"screenshot"</em>, <em>"fire"</em> (sends CMD:FIRE to micro:bit).</dd>
+  <dt>Multilingual</dt><dd>Recognized in French, English, and Arabic — uses the active app language.</dd>
+</dl>
+<p><strong>Why.</strong> Recording with both hands on the robot/code/instrument? Hands-free is the only way. Also great accessibility: a kid with motor impairment can drive the whole app by voice.</p>
+<p><strong>Defaults.</strong> Off · cooldown 1500ms · matches loose: "let's record now" still triggers <em>"record"</em>.</p>
+<p><strong>Caveat.</strong> SpeechRecognition stops listening after long silences — re-toggle if it goes idle.</p>
+
+<h3 id="ch28-voice-fx">28.35 Voice FX — sound-activated effects</h3>
+<p><strong>What.</strong> Visual effects that fire automatically based on what your microphone hears. Yelling triggers fire bursts; clapping launches confetti; whispering enables a night-vision look.</p>
+<p><strong>Where.</strong> Toolbar <code>🗣 Voice FX</code> · More → Fun → Voice FX.</p>
+<p><strong>Triggers.</strong></p>
+<ul>
+  <li><strong>🔥 Shout</strong> — sustained loud volume (RMS &gt; 0.4) → flame overlay, screen shake.</li>
+  <li><strong>🎉 Clap</strong> — sharp transient (high RMS spike followed by silence) → confetti burst.</li>
+  <li><strong>🌙 Whisper</strong> — sustained quiet voice (very low RMS but above gate) → green night-vision tint over the canvas.</li>
+</ul>
+<p><strong>Why.</strong> Pure entertainment value for kids — recording becomes a performance. Adds drama to robotics tutorials, magic-trick reveals, science demos.</p>
+<p><strong>Defaults.</strong> Off · all three triggers active when enabled · effects baked into the recording.</p>
+
+<h3 id="ch28-quiz-card">28.36 Quiz Card — interactive lesson check</h3>
+<p><strong>What.</strong> A modal multiple-choice question that pops onto the canvas mid-recording. Useful for "comprehension check" moments in tutorial videos.</p>
+<p><strong>Where.</strong> More → Tools → ❓ Quiz, or via the GlobalSearch ("quiz").</p>
+<p><strong>How.</strong> Type the question + 4 answer options + mark which is correct → display on canvas → say "the answer was…" and reveal. The card fades in/out so it's polished in playback.</p>
+<p><strong>Why.</strong> Tutorials with short interactive checks have measurably higher completion rates. Kids watching a recorded lesson can mentally answer before you reveal.</p>
+<p><strong>Defaults.</strong> No saved questions · single-question mode · displays for as long as you choose.</p>
+
+<h3 id="ch28-sticky-notes">28.37 Sticky notes — teacher-only canvas pinboard</h3>
+<p><strong>What.</strong> Yellow Post-it style notes you drop on the canvas to remind yourself what to say or do next. <strong>NOT recorded</strong> — they're a HTML overlay above the canvas, visible only to the teacher.</p>
+<p><strong>Where.</strong> More → Tools → 📌 Sticky note (or via GlobalSearch).</p>
+<p><strong>How.</strong> Click to add — drag anywhere — type into it — Esc to deselect. Right-click → delete. Persisted in <code>tc-sticky-notes</code>.</p>
+<p><strong>Why.</strong> "Don't forget to mention the formula", "switch to the camera scene at this point", "show the bug here". Like having a script taped to the side of your monitor, but on top of NoorCast itself.</p>
+<p><strong>Defaults.</strong> No notes · yellow · visible across reloads · invisible in recordings (separate DOM layer above the canvas).</p>
+
+<h3 id="ch28-auto-zoom">28.38 Auto-Zoom — click-to-focus on screen</h3>
+<p><strong>What.</strong> Click any point on a captured screen source — the preview zooms smoothly to that area for ~1.5 seconds, then returns. Great for "focus on this paragraph / button / line of code" moments without interrupting the recording.</p>
+<p><strong>Where.</strong> Toolbar <code>🎯 Zoom auto</code>. When ON, plain clicks on screen sources trigger the zoom. Click anywhere else to dismiss.</p>
+<p><strong>How.</strong></p>
+<ol>
+  <li>Toggle Auto-Zoom on (a click chip indicator appears).</li>
+  <li>During recording, click on the part of the screen you want to highlight.</li>
+  <li>The canvas pans + zooms to that point (centered, 2× by default), holds 1.5s, then animates back.</li>
+  <li>Click again somewhere else to chain zooms.</li>
+</ol>
+<p><strong>Why.</strong> No more "let me zoom in" + Ctrl+scroll moments. The smooth zoom plus the brief hold reads like a deliberate film cut. Auto-revert means you don't lose your overview.</p>
+<p><strong>Defaults.</strong> Off · 2× zoom factor · 1.5s hold · 0.4s ease in/out.</p>
+
+<h3 id="ch28-lesson-guide">28.39 Lesson Guide + Tutorial Score</h3>
+<p><strong>What.</strong> Two complementary "are you doing a good job?" features.</p>
+<p><strong>Lesson Guide</strong> — a corner badge that prompts you with the next coaching tip ("Show your face for human connection", "Use the laser to point", "Take a screenshot of the result"). Updates every minute or so during recording.</p>
+<p><strong>Tutorial Score</strong> — after you stop, scores the take 0–100 based on objective signals: did you switch scenes? did you use markers? was audio clean? was the recording too short / too long? Result appears in the take panel.</p>
+<p><strong>Where.</strong> Both auto-engage when recording — no toggle needed. Settings → Comportement to disable Lesson Guide hints if they distract.</p>
+<p><strong>Why.</strong> Self-coaching for solo creators. Kids learn what makes a good tutorial without a teacher next to them.</p>
+<p><strong>Defaults.</strong> Both on · score thresholds: &lt; 40 needs work, 40–80 OK, ≥ 80 great (triggers confetti).</p>
+
+<h3 id="ch28-layout-history">28.40 Layout history — undo / redo (Ctrl+Z)</h3>
+<p><strong>What.</strong> Every time you move, resize, rotate, or restyle a source, NoorCast snapshots the layout. You can undo / redo through the last 10 changes.</p>
+<p><strong>Where.</strong> Keyboard <kbd>Ctrl/Cmd+Z</kbd> = undo, <kbd>Ctrl/Cmd+Y</kbd> or <kbd>Ctrl+Shift+Z</kbd> = redo. Works <em>outside</em> recording. During recording, <kbd>Ctrl+Z</kbd> instead marks the last 30s as a "retry" segment (see <a class="xref" href="#ch28-retry">28.41</a>).</p>
+<p><strong>What's tracked.</strong> Source x/y/w/h/rotation/shape/skin/style. Brand position/size. Scene changes. Not tracked: text overlay edits (those undo their own way), recordings (immutable), settings.</p>
+<p><strong>Why.</strong> Misaligned a webcam mid-recording? Accidentally deleted a source? Undo, instead of dragging it back manually.</p>
+<p><strong>Defaults.</strong> Always on · 10-step ring buffer · clears on page reload (in-memory only).</p>
+
+<h3 id="ch28-retry">28.41 Retry 30s — soft rewind during recording</h3>
+<p><strong>What.</strong> Press <kbd>Ctrl+Z</kbd> while recording to flag the last 30 seconds as a "retry" segment. The recording continues uninterrupted; the flagged region just gets an orange marker on the timeline.</p>
+<p><strong>Where.</strong> Keyboard only. Visible as an orange retry chip near the elapsed timer.</p>
+<p><strong>How.</strong> Mess up a sentence? Don't stop and restart — just press <kbd>Ctrl+Z</kbd>, take a breath, say it again. After recording, the Trim editor (<a class="xref" href="#ch28-trim">28.32</a>) can auto-cut the flagged retry region.</p>
+<p><strong>Why.</strong> Restarting a recording loses the take's flow. Soft rewind lets you keep going and clean up later.</p>
+<p><strong>Defaults.</strong> 30-second window · multiple retries allowed (each with its own marker) · auto-cleared at recording start.</p>
+
+<h3 id="ch28-pip">28.42 PiP Popout — Picture-in-Picture window</h3>
+<p><strong>What.</strong> Eject any single source (camera, screen, image) into a floating browser-level Picture-in-Picture window that stays on top of every app.</p>
+<p><strong>Where.</strong> Right-click a source → <code>📺 PiP</code> · or via Source toolbar.</p>
+<p><strong>How.</strong> Click → browser PiP window opens with that source. Drag/resize the PiP normally. Close PiP to return the source to the main canvas.</p>
+<p><strong>Why.</strong> Demo something in a different app while keeping your face cam visible — the PiP camera floats over Chrome, your IDE, anything. Also great for "preview" mode where you can watch yourself while looking at a different window.</p>
+<p><strong>Defaults.</strong> Browser-default size (typically 320×240) · only one PiP at a time (browser limitation) · only video sources (not shapes / text).</p>
+
+<h3 id="ch28-daily">28.43 Daily Goal + Daily Challenges + Take Rating</h3>
+<p><strong>What.</strong> Three light-touch motivation features.</p>
+<dl>
+  <dt><strong>Daily Goal</strong></dt>
+  <dd>Tracks recordings made today. Default goal: 1 recording/day. Goal-met badge fires when you hit it. View in Settings → Tes stats.</dd>
+  <dt><strong>Daily Challenges</strong></dt>
+  <dd>Each day a small task is suggested ("use 3 different scenes today", "record for at least 5 minutes", "use the whiteboard"). Complete it for a XP bonus + confetti.</dd>
+  <dt><strong>Take Rating</strong></dt>
+  <dd>After each recording, the take panel shows ⭐ ⭐ ⭐ ⭐ ⭐ — click to rate. Stored alongside the take in tutorial history; useful for filtering "show only my best".</dd>
+</dl>
+<p><strong>Why.</strong> Solo creators thrive on streaks. Kids practice tutorials more when there's a goal to hit.</p>
+<p><strong>Defaults.</strong> Daily goal: 1 take · challenges: 1/day · rating: not required (just enabling).</p>
+
+<h3 id="ch28-canvas-effects">28.44 Live canvas micro-effects (cursor trail, ripples, source pulse, speed lines, reactions)</h3>
+<p>Five small "feel-alive" effects that bake into the recording.</p>
+<dl>
+  <dt><strong>Cursor Trail</strong></dt>
+  <dd>Toolbar <code>🌟 Trail</code>. A short fading neon trail follows your mouse on the canvas. 8-segment polyline with alpha falloff. Great for "watch where I'm pointing" demos.</dd>
+  <dt><strong>Click Ripples</strong></dt>
+  <dd>Toolbar <code>💧 Ripples</code>. Every click on the canvas spawns a 600ms expanding circle from the click point. Classic UX feedback, subtle on the recording.</dd>
+  <dt><strong>Source Pulse</strong></dt>
+  <dd>Auto: when you switch scenes or first add a source, the source briefly pulses (scale 100% → 105% → 100%, 250ms). No toggle. Just a polish detail.</dd>
+  <dt><strong>Speed Lines</strong></dt>
+  <dd>Manga-style radial burst (white lines streaking out from center) for ~800ms. Fires on COMBO, FIRE button, and a few other "wow" moments. Settings → Comportement to disable if too busy.</dd>
+  <dt><strong>Reactions</strong></dt>
+  <dd>Toolbar <code>😀 React</code> dropdown. Pick an emoji → 20-particle explosion at the canvas center + small screen shake (300ms). 12 emoji to choose from.</dd>
+</dl>
+<p><strong>Why.</strong> Modern tutorials feel sluggish without ambient motion. These add subtle "alive" cues without distracting from the content. All can be turned off if you want a clinical look.</p>
 
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
