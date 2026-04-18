@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.11 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.12 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.11';
+const APP_VERSION = '0.9.12';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -2308,7 +2308,20 @@ function dismissSplash() {
 $('splash')?.addEventListener('click', dismissSplash);
 $('tcSplashCredit')?.addEventListener('click', (e) => e.stopPropagation());
 
+// v0.9.12: list of themes that actually exist in style.css. If anyone
+// (including a future callsite) tries to set an unknown theme, fall
+// back to 'jungle' instead of leaving CSS variables undefined and
+// breaking every panel that depends on --panel/--border/--accent.
+const KNOWN_THEMES_LIST = ['mosque-gold','zellige','andalus','space','jungle','robot','riad','medina','retro'];
 function setTheme(name) {
+  if (!KNOWN_THEMES_LIST.includes(name)) {
+    // Heal a previously persisted bad value (v0.9.11 shipped 'cyberpunk'
+    // which doesn't exist — fall back + clear so this only runs once).
+    if (name) {
+      try { console.warn('[setTheme] unknown theme', name, '→ falling back to jungle'); } catch {}
+    }
+    name = 'jungle';
+  }
   document.documentElement.dataset.theme = name;
   silentSet('tc-theme', name);
   // v0.7.55: after the base theme applies, overlay any custom accent
@@ -21481,10 +21494,17 @@ function applyMode(mode) {
   const grid = document.querySelector('.tc-studio-grid');
   if (grid) grid.classList.toggle('rsidebar-collapsed', mode === 'simple');
   // v0.9.11: kids mode auto-applies a fun theme + font on first switch.
-  // Don't override if the user already picked theme/font themselves.
+  // v0.9.12 fix: 'cyberpunk' theme doesn't exist in style.css → setting
+  // data-theme="cyberpunk" matched no rules, leaving --panel/--border/
+  // --accent undefined and breaking the Settings panel render. Switch to
+  // 'robot' (which exists and matches the geek vibe), with a defensive
+  // KNOWN_THEMES guard so future renames can't ship the same regression.
+  const KNOWN_THEMES = ['mosque-gold','zellige','andalus','space','jungle','robot','riad','medina','retro'];
   if (mode === 'simple' && silentGet('tc-kids-vibe-applied') !== '1') {
     try {
-      if (typeof setTheme === 'function' && !silentGet('tc-theme')) setTheme('cyberpunk');
+      if (typeof setTheme === 'function' && !silentGet('tc-theme')) {
+        setTheme(KNOWN_THEMES.includes('robot') ? 'robot' : 'jungle');
+      }
       if (typeof UiFont !== 'undefined' && !silentGet('tc-ui-font-user-set')) UiFont.set('orbitron');
       silentSet('tc-kids-vibe-applied', '1');
     } catch {}
