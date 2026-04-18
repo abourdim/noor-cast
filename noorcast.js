@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.12 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.13 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.12';
+const APP_VERSION = '0.9.13';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -11594,21 +11594,30 @@ const Watermark = {
     else { bx = W - pad - tw; by = H - pad - th; }
     // Update hit-test dimensions
     this.x = bx; this.y = by; this.w = tw; this.h = th;
-    // Rounded background
-    ctx.fillStyle = 'rgba(0, 0, 0, .45)';
+    // Rounded background — Android-style pill, visible on any canvas color
+    // v0.9.13: bumped fill to .65 + green accent border + text shadow so the
+    // watermark pops on a black canvas (was invisible: black-on-black at .45).
+    ctx.fillStyle = 'rgba(0, 0, 0, .65)';
     ctx.beginPath();
-    const r = 8;
+    const r = 12;  // Android-style rounded
     ctx.moveTo(bx + r, by);
     ctx.lineTo(bx + tw - r, by); ctx.quadraticCurveTo(bx + tw, by, bx + tw, by + r);
     ctx.lineTo(bx + tw, by + th - r); ctx.quadraticCurveTo(bx + tw, by + th, bx + tw - r, by + th);
     ctx.lineTo(bx + r, by + th); ctx.quadraticCurveTo(bx, by + th, bx, by + th - r);
     ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by);
     ctx.fill();
-    // Text
+    // 1.5px accent border for contrast on dark backgrounds
+    ctx.strokeStyle = 'rgba(163, 230, 53, .85)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Text — white with dark drop shadow for legibility on light backgrounds too
+    ctx.shadowColor = 'rgba(0,0,0,.85)';
+    ctx.shadowBlur = 4;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.text, bx + 10, by + th / 2);
+    ctx.shadowBlur = 0;
     ctx.restore();
   },
 };
@@ -18639,7 +18648,11 @@ const KidsMode = {
           silentSet('tc-handle-picked', '1');
         } catch {}
         m.remove();
-        showToast('🥷 Welcome, @' + h + '!', 1800);
+        showToast('🥷 @' + h + ' set as your watermark — bottom-right of every recording. Edit in Settings → Slogan.', 4500);
+        // v0.9.13: also force a render so the new watermark appears immediately
+        // even before the user adds their first source (otherwise the canvas
+        // is black and they think nothing happened).
+        try { Engine?.render?.(); } catch {}
       });
       grid.appendChild(b);
     });
