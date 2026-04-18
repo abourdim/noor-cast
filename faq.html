@@ -125,6 +125,168 @@
   <div><p>Close other browser tabs. Reduce the canvas resolution (Settings → Recording → Stage Format). Disable overlays you're not using (clock, vignette, audio visualizer, FPS counter). Try USB instead of Wi-Fi for phone cameras.</p></div>
 </details>
 
+<details>
+  <summary>The recorded video looks blurry / soft</summary>
+  <div>
+    <p>Two things to check:</p>
+    <p><strong>1. Bitrate.</strong> Settings → Enregistrement → <code>📶 Qualité vidéo</code>. Default is <strong>High (8 Mbps)</strong>. For motion-heavy or detailed content, bump to <strong>Ultra (12 Mbps)</strong> or <strong>Max (20 Mbps @ 60fps)</strong>. Standard (4 Mbps) is OK for talking heads but not screen text.</p>
+    <p><strong>2. Camera resolution.</strong> Cameras are now requested at 1920×1080. If your webcam can't do 1080p, the browser falls back automatically — but old USB webcams may report 1080p and deliver blurry upscaling. Check <code>Engine.sources[i].video.videoWidth</code> in DevTools to see what you actually got.</p>
+  </div>
+</details>
+
+<details>
+  <summary>The download chip says "0 octets" — but VLC opens the file fine?</summary>
+  <div>
+    <p>Chrome bug. When NoorCast streams long recordings to disk via the <strong>File System Access API</strong>, Chrome's download chip can't see the file size and shows "0 bytes" even though the file is correct.</p>
+    <p>NoorCast now shows its own toast right after the recording closes: <em>"💾 Saved 13.4 MB to disk (ignore Chrome 0-byte chip, file is OK)"</em>. The byte count comes from our internal counter, which is accurate.</p>
+    <p><strong>Bottom line:</strong> trust the NoorCast toast, ignore Chrome's chip.</p>
+  </div>
+</details>
+
+<details>
+  <summary>I can't see any micro:bit when I click Connect</summary>
+  <div>
+    <p><strong>Most common causes (in order):</strong></p>
+    <ol>
+      <li><strong>Bluetooth dongle doesn't support BLE.</strong> Open <code>chrome://bluetooth-internals</code> → click "Start Scan". If your micro:bit doesn't appear there either, the dongle is Classic-only. Get a Bluetooth 4.0+ (BLE) USB dongle.</li>
+      <li><strong>chrome://bluetooth-internals is open.</strong> Close it — it can hold the BLE scan and prevent Web Bluetooth's pairing dialog from working.</li>
+      <li><strong>micro:bit firmware not running.</strong> The board should show a pulsing X (firmware V3.5) or a center dot (older). If it shows nothing, reflash via the firmware modal.</li>
+      <li><strong>Browser doesn't support Web Bluetooth.</strong> Chrome / Edge desktop only. Firefox and Safari don't have it.</li>
+    </ol>
+    <p><strong>NoorCast accepts both</strong> <code>BBC micro:bit</code> and <code>uBit</code> name prefixes — so older firmware that advertises as "uBit" still pairs.</p>
+  </div>
+</details>
+
+<details>
+  <summary>The micro:bit shows the "tilt to fill the circle" calibration thing</summary>
+  <div>
+    <p>That was the compass calibration prompt, fired by <code>input.compassHeading()</code>. NoorCast firmware <strong>V3.5</strong> removes the compass read entirely so this prompt never fires. Reflash via Settings → micro:bit → "Flash firmware first".</p>
+  </div>
+</details>
+
+<details>
+  <summary>The log is full of "← TP:23 ← L:0 ← S:0" spam</summary>
+  <div>
+    <p>Old micro:bit firmware (V3.1 or earlier) sends every telemetry value every 100ms regardless of change. <strong>v0.7.212</strong> added a JS-side log dedup that collapses identical lines into <code>(× N)</code>, and <strong>v0.7.218</strong> drops <code>COMPASS:</code> spam silently. Reload NoorCast (Ctrl+Shift+R to bypass cache).</p>
+    <p>For the actual fix: reflash to firmware <strong>V3.5</strong> which uses change-detection — only sends a value when it crosses a threshold. Cuts BLE traffic ~10× when the board sits idle.</p>
+  </div>
+</details>
+
+<details>
+  <summary>The COMBO xN popup is distracting in my videos</summary>
+  <div>
+    <p>Settings → Comportement → uncheck <code>⚡ COMBO popup (XP bonus messages)</code>. The popup goes away immediately and never appears again until you re-enable it. Detection is also disabled so no wasted CPU per frame.</p>
+  </div>
+</details>
+
+<details>
+  <summary>I want a different background — solid color, image, or pattern?</summary>
+  <div>
+    <p>NoorCast supports <strong>three background layers</strong> stacked under your sources:</p>
+    <ol>
+      <li><strong>Solid color</strong> (Settings → Apparence → 🎨 Couleur de fond) — the base layer, always visible.</li>
+      <li><strong>PNG/JPG image</strong> (Settings → Apparence → 🖼 Image de fond) — your own wallpaper, with cover/contain/stretch/tile fit and opacity slider. Max 4MB.</li>
+      <li><strong>Animated pattern</strong> (Settings → Apparence → 🖼 Background pattern) — 15 procedural patterns (Space, Matrix, Zellige, Arabesque…). Renders over the image.</li>
+    </ol>
+    <p>All three coexist — color first, image on top, pattern over both.</p>
+  </div>
+</details>
+
+<details>
+  <summary>How do I make the sidebar wider?</summary>
+  <div>
+    <p>Drag the lime grip on the inner edge of either sidebar:</p>
+    <ul>
+      <li><strong>Left studio sidebar</strong> (Sources / micro:bit tabs): grip between the sidebar and the canvas. Range 180–420 px. Double-click to reset to 220px default.</li>
+      <li><strong>Settings flyout sidebar</strong>: grip on its left edge. Range 240–95% viewport.</li>
+    </ul>
+    <p>Both widths are persisted across reloads.</p>
+  </div>
+</details>
+
+<details>
+  <summary>I can't find the global font / language flag / version date</summary>
+  <div>
+    <p>All recently added — visible in the app:</p>
+    <ul>
+      <li><strong>UI font picker</strong> — Settings → Général → 🔤 Police de l'interface. 7 fonts (Orbitron is default).</li>
+      <li><strong>Language flags</strong> — next to the language dropdown. SVG flags (FR/UK/Algerian) — work on Windows where emoji flags fail.</li>
+      <li><strong>Build date</strong> — sidebar footer, next to the version badge. Hover for full timestamp.</li>
+    </ul>
+  </div>
+</details>
+
+<details>
+  <summary>How do I save my logo / settings to use on another computer?</summary>
+  <div>
+    <p>Settings → Maintenance → <code>📦 Exporter la session</code>. Downloads a JSON file (~50–500 KB) containing every setting, badge, brand logo (base64 inline), watermark, scene customizations, theme, etc.</p>
+    <p>On the other computer: same panel → <code>📥 Importer une session</code> → pick the JSON → confirm. Page reloads with everything restored including your logo.</p>
+    <p>Recordings and snapshot files are NOT in the bundle — those are downloaded files on disk.</p>
+  </div>
+</details>
+
+<details>
+  <summary>The Pets / Mascots dropdown — what's the difference?</summary>
+  <div>
+    <p>Same feature, just renamed. The little animated characters (Robot, Skull, UFO, Bug, Drone…) that walk/fly across your recording were called "Pets" — now <strong>"Mascots"</strong> (🎭) since most of them aren't animals. Internally still <code>CanvasPets</code>.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Why is the Co-host stuck in the bottom-right corner?</summary>
+  <div>
+    <p>Since <strong>v0.7.220</strong> the Co-host (😊 little SVG buddy) is fully draggable and resizable. Click and drag it anywhere on the canvas. Drag a corner to resize. Position and size persist in localStorage. Bottom-right is just the default — first launch only.</p>
+  </div>
+</details>
+
+<details>
+  <summary>I clicked a scene and nothing happened — clicked again, still nothing</summary>
+  <div>
+    <p>Fixed in <strong>v0.7.221</strong>. The whole scene card used to be HTML5-draggable, which Chrome cancels click events on if the mouse moves even 1-2 px between mousedown and mouseup. With a jittery trackpad, kids had to click many times.</p>
+    <p>Now: the whole card registers click instantly. Drag-to-reorder is moved to the small <strong>⋮⋮ grip</strong> in the top-left of each scene card.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Where do I find a feature by name?</summary>
+  <div>
+    <p>Three ways to search:</p>
+    <ol>
+      <li><strong>In-app:</strong> press <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> (or click 🔍) for the Spotlight overlay. Searches scenes, skins, backgrounds, themes, mascots, settings, tools, sounds, badges, hotkeys. Click a result, the action runs.</li>
+      <li><strong>In the user guide:</strong> open <a href="guide.html">guide.html</a> → press <kbd>Ctrl+F</kbd>. The synonym cheat-sheet at the bottom of <a href="guide.html#ch28-search-keywords">Chapter 28</a> lists alternative names so any search term lands on the right section.</li>
+      <li><strong>In the cheat sheet:</strong> <a href="cheatsheet.html">cheatsheet.html</a> for keyboard shortcuts.</li>
+    </ol>
+  </div>
+</details>
+
+<details>
+  <summary>The Settings panel doesn't close when I click outside</summary>
+  <div>
+    <p>Fixed in <strong>v0.7.216</strong>. Bug was a CSS class-name mismatch — JS added <code>'show'</code> but CSS expected <code>'open'</code>, so the overlay never became interactive. Reload (Ctrl+Shift+R) to pick up the fix.</p>
+    <p>Now: click the dimmed area outside the panel, OR press <kbd>Esc</kbd>, OR click the ✕ button — all three close the panel.</p>
+  </div>
+</details>
+
+<details>
+  <summary>The Servo gauges or Sensor overlay show on first launch — I want a clean canvas</summary>
+  <div>
+    <p>Fixed in <strong>v0.7.218</strong>. Both the Sensor overlay (📊) and the Servo gauge (🎛) now default to <strong>HIDDEN</strong> on first launch. Toggle on via the toolbar buttons when you actually want them.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Which firmware version is on my micro:bit?</summary>
+  <div>
+    <p>NoorCast asks the micro:bit when it connects. Look at the small text under the Connect button in the micro:bit sidebar:</p>
+    <ul>
+      <li><span style="color:#a3e635">✅ NoorCast V3.5 · 2026-04-17</span> — match · all good.</li>
+      <li><span style="color:#fbbf24">⚠ NoorCast V3.1 (2026-04-12) — flash V3.5 for change-detection</span> — outdated, reflash recommended.</li>
+      <li>(empty) — firmware too old to report (V3.2 or below). Reflash to V3.3+.</li>
+    </ul>
+    <p>You can also re-query at any time from DevTools console: <code>Sensors.sendUart('VER?')</code>.</p>
+  </div>
+</details>
+
 <div class="links">
   <a href="guide.html">📖 Full User Guide</a>
   <a href="cheatsheet.html">📋 Cheat Sheet</a>
