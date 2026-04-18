@@ -28,6 +28,14 @@ const checks = [
   ['WhatsNew.maybeShow exists', /const WhatsNew[\s\S]*?maybeShow\(\)/.test(src)],
   ['WhatsNew wired into init',  /WhatsNew\.maybeShow\(\)/.test(src)],
   ['WhatsNew compares semver',  /_olderThan\(a, b\)/.test(src)],
+  // v0.9.11 Kids mode
+  ['KidsMode module exists',    /const KidsMode = \{/.test(src)],
+  ['KidsMode konami sequence wired', /seq = \['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'\]/.test(src)],
+  ['KidsMode boot seq init wired',   /KidsMode\.bootSeq\(\)/.test(src)],
+  ['KidsMode handle picker wired',   /KidsMode\.maybePickHandle\(\)/.test(src)],
+  ['KIDS_TICKER trilingual',     /KIDS_TICKER = \{[\s\S]*en:[\s\S]*fr:[\s\S]*ar:/.test(src)],
+  ['data-mode replaces nth-of-type', !/\.tc-set-section:nth-of-type/.test(fs.readFileSync(path.join(__dirname,'..','style.css'),'utf8'))],
+  ['FOUC head guard exists',     /tc-mode.*localStorage|localStorage.*tc-mode/.test(fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8'))],
 
   // After the helper block, no raw localStorage calls should remain
   ['no raw localStorage.getItem after helpers',

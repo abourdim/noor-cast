@@ -20,6 +20,20 @@
 
   <!-- v0.7.159: self-hosted fonts (previously Google Fonts CDN) -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- v0.9.11: FOUC guard — read tc-mode synchronously and apply the kids
+       class to <html> BEFORE first paint, so Pro-only buttons don't flash
+       visible for 50–200 ms while the bundle parses. Idempotent + tiny. -->
+  <script>
+    (function(){
+      try {
+        var m = localStorage.getItem('tc-mode');
+        if (m === 'simple' || m === null) {
+          document.documentElement.classList.add('tc-simple', 'tc-kids');
+        }
+      } catch(_) {}
+    })();
+  </script>
 </head>
 
 <body>
@@ -84,20 +98,20 @@
       <div class="card tc-mode-picker" id="tcModePicker" style="display:none">
         <div class="card-header">
           <div>
-            <div class="card-title"><span class="icon">🎬</span> How do you want to start?</div>
-            <div class="card-subtitle">You can switch anytime in Settings</div>
+            <div class="card-title"><span class="icon">👋</span> Who's using NoorCast today?</div>
+            <div class="card-subtitle">Switch any time from the header badge or Settings</div>
           </div>
         </div>
-        <div class="tc-tpl-grid" style="grid-template-columns:1fr 1fr;max-width:400px;margin:0 auto">
+        <div class="tc-tpl-grid" style="grid-template-columns:1fr 1fr;max-width:480px;margin:0 auto">
           <button class="tc-tpl-card" id="tcModeSimpleBtn">
-            <div class="tc-tpl-card-icon">🎓</div>
-            <div class="tc-tpl-card-title">Simple</div>
-            <div class="tc-tpl-card-desc">I'm new — show me the basics</div>
+            <div class="tc-tpl-card-icon">🧒</div>
+            <div class="tc-tpl-card-title">Kids</div>
+            <div class="tc-tpl-card-desc">Funny + geeky.<br>Big buttons, sound FX,<br>safe defaults.</div>
           </button>
           <button class="tc-tpl-card" id="tcModeProBtn">
-            <div class="tc-tpl-card-icon">🚀</div>
-            <div class="tc-tpl-card-title">Pro</div>
-            <div class="tc-tpl-card-desc">I know what I'm doing</div>
+            <div class="tc-tpl-card-icon">🧑‍🏫</div>
+            <div class="tc-tpl-card-title">Teacher / Pro</div>
+            <div class="tc-tpl-card-desc">Every tool unlocked.<br>Pause, markers, sensors,<br>recording quality, more.</div>
           </button>
         </div>
       </div>
@@ -1743,7 +1757,7 @@
         </div>
       </details>
 
-      <details class="tc-set-section">
+      <details class="tc-set-section" data-mode="pro">
         <summary class="tc-set-summary">🎬 <span data-i18n="setSecRecording">Enregistrement</span></summary>
         <div class="tc-set-body">
 
@@ -1980,7 +1994,7 @@
         </div>
       </details>
 
-      <details class="tc-set-section">
+      <details class="tc-set-section" data-mode="pro">
         <summary class="tc-set-summary">📰 <span data-i18n="setSecTicker">Ticker</span></summary>
         <div class="tc-set-body">
           <label class="sidebar-label" data-i18n="tickerCustomLabel">📰 Messages du ticker (un par ligne)</label>

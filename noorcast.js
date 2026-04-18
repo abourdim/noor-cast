@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.10 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.11 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.10';
+const APP_VERSION = '0.9.11';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -18532,6 +18532,157 @@ const TipOfDay = {
    feel intrusive on relaunch; a toast that mentions the new toolbar
    button is enough discoverability. Marks itself seen via
    tc-last-seen-version so it never shows twice for the same arc. */
+/* v0.9.11 — KidsMode: the funny+geeky vibe layer.
+   - Boot sequence: 3-second fake terminal scroll on first Kids launch
+     each session (skipped in Teacher mode and after the first run/day).
+   - Hacker handle picker: 6 random pre-generated nicks; choice fills
+     the Watermark text + persists.
+   - Konami easter egg: ↑ ↑ ↓ ↓ ← → ← → B A → 5-second Matrix-rain
+     overlay + glitch SFX. Always armed regardless of mode.
+   All three skip silently in Teacher mode. Pure additive — does not
+   touch the existing app shell wiring. */
+const KidsMode = {
+  isKids() { return silentGet('tc-mode') !== 'pro'; },
+
+  // ── 1. Boot sequence ───────────────────────────────────────────────
+  bootSeq() {
+    if (!this.isKids()) return;
+    // Once per browser session — don't bore returning kids.
+    if (sessionStorage.getItem('tc-kids-boot') === '1') return;
+    try { sessionStorage.setItem('tc-kids-boot', '1'); } catch {}
+    setTimeout(() => this._showBoot(), 600);
+  },
+  _showBoot() {
+    if (document.getElementById('tcKidsBoot')) return;
+    const lines = [
+      '> NoorCast OS v9000.exe',
+      '> mounting cameras......... ✓',
+      '> loading robot brain..... ✓',
+      '> calibrating awesomeness. ✓',
+      '> READY. Press REC to begin transmission.',
+    ];
+    const m = document.createElement('div');
+    m.id = 'tcKidsBoot';
+    m.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99998;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,Consolas,monospace;color:#4ade80;text-shadow:0 0 8px rgba(74,222,128,.6);transition:opacity .4s;cursor:pointer';
+    const card = document.createElement('div');
+    card.style.cssText = 'min-width:360px;padding:20px 28px;border:2px solid #4ade80;background:rgba(0,20,0,.8);box-shadow:0 0 36px rgba(74,222,128,.4);border-radius:6px;font-size:15px;line-height:1.7';
+    m.appendChild(card);
+    document.body.appendChild(m);
+    let i = 0;
+    const tick = () => {
+      if (i >= lines.length) {
+        setTimeout(() => {
+          m.style.opacity = '0';
+          setTimeout(() => m.remove(), 450);
+        }, 900);
+        return;
+      }
+      const ln = document.createElement('div');
+      ln.textContent = lines[i++];
+      card.appendChild(ln);
+      setTimeout(tick, 380);
+    };
+    tick();
+    // Click to skip
+    m.addEventListener('click', () => { m.style.opacity = '0'; setTimeout(() => m.remove(), 250); });
+  },
+
+  // ── 2. Hacker handle picker ────────────────────────────────────────
+  HANDLES: ['CyberPanda42', 'RobotBoss99', 'PixelNinja', 'QuantumKid', 'LaserSheep', 'DataDoge', 'NeonBee', 'HexFox', 'BinaryBunny', 'CircuitCat', 'PlasmaPup', 'GlitchGoose'],
+  maybePickHandle() {
+    if (!this.isKids()) return;
+    if (silentGet('tc-handle-picked') === '1') return;
+    // Wait for the boot sequence to clear.
+    setTimeout(() => this._showHandlePicker(), 4500);
+  },
+  _showHandlePicker() {
+    if (document.getElementById('tcKidsHandle')) return;
+    const pool = this.HANDLES.slice().sort(() => Math.random() - 0.5).slice(0, 6);
+    const m = document.createElement('div');
+    m.id = 'tcKidsHandle';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99997;display:flex;align-items:center;justify-content:center';
+    m.innerHTML = `
+      <div style="background:#0a0a0a;border:2px solid #4ade80;border-radius:10px;padding:24px 28px;max-width:420px;color:#4ade80;font-family:ui-monospace,Menlo,Consolas,monospace;box-shadow:0 0 36px rgba(74,222,128,.4)">
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">🥷 Pick your hacker handle</div>
+        <div style="font-size:12px;opacity:.7;margin-bottom:14px">It'll show as your watermark on every recording.<br>You can change it later in Settings → Slogan.</div>
+        <div id="tcKidsHandleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+        <button id="tcKidsHandleSkip" style="margin-top:14px;background:none;border:1px solid rgba(74,222,128,.3);color:#4ade80;padding:6px 12px;border-radius:6px;font-family:inherit;cursor:pointer;font-size:12px">Skip — pick my own later</button>
+      </div>
+    `;
+    document.body.appendChild(m);
+    const grid = m.querySelector('#tcKidsHandleGrid');
+    pool.forEach(h => {
+      const b = document.createElement('button');
+      b.textContent = '@' + h;
+      b.style.cssText = 'background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);color:#4ade80;padding:8px 10px;border-radius:6px;font-family:inherit;cursor:pointer;font-size:13px;text-align:left';
+      b.addEventListener('mouseenter', () => b.style.background = 'rgba(74,222,128,.2)');
+      b.addEventListener('mouseleave', () => b.style.background = 'rgba(74,222,128,.08)');
+      b.addEventListener('click', () => {
+        try {
+          if (typeof Watermark !== 'undefined') {
+            Watermark.text = '@' + h;
+            silentSet('tc-watermark-text', '@' + h);
+          }
+          silentSet('tc-handle-picked', '1');
+        } catch {}
+        m.remove();
+        showToast('🥷 Welcome, @' + h + '!', 1800);
+      });
+      grid.appendChild(b);
+    });
+    m.querySelector('#tcKidsHandleSkip').addEventListener('click', () => {
+      silentSet('tc-handle-picked', '1');
+      m.remove();
+    });
+  },
+
+  // ── 3. Konami easter egg ───────────────────────────────────────────
+  konamiInit() {
+    const seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let pos = 0;
+    document.addEventListener('keydown', (e) => {
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (k === seq[pos]) {
+        pos++;
+        if (pos === seq.length) { pos = 0; this._matrixRain(); }
+      } else {
+        // Allow restart from current key matching seq[0]
+        pos = (k === seq[0]) ? 1 : 0;
+      }
+    });
+  },
+  _matrixRain() {
+    if (document.getElementById('tcMatrix')) return;
+    const cv = document.createElement('canvas');
+    cv.id = 'tcMatrix';
+    cv.style.cssText = 'position:fixed;inset:0;z-index:99996;pointer-events:none';
+    cv.width = window.innerWidth; cv.height = window.innerHeight;
+    document.body.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const cols = Math.floor(cv.width / 14);
+    const drops = Array(cols).fill(0).map(() => Math.random() * cv.height);
+    const chars = '01ノルカAスNト0123456789';
+    showToast('🟢 KONAMI UNLOCKED', 2000);
+    try { Sfx?.play?.('glitch'); } catch {}
+    const t0 = performance.now();
+    const tick = () => {
+      const elapsed = performance.now() - t0;
+      ctx.fillStyle = 'rgba(0,0,0,0.07)';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '14px monospace';
+      for (let i = 0; i < drops.length; i++) {
+        const ch = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(ch, i * 14, drops[i]);
+        drops[i] = drops[i] > cv.height && Math.random() > 0.96 ? 0 : drops[i] + 14;
+      }
+      if (elapsed < 5000) requestAnimationFrame(tick);
+      else { cv.style.transition = 'opacity .5s'; cv.style.opacity = '0'; setTimeout(() => cv.remove(), 600); }
+    };
+    tick();
+  },
+};
+
 const WhatsNew = {
   // Compare semver-ish "a.b.c" — return true if version `a` is older than `b`.
   _olderThan(a, b) {
@@ -21224,10 +21375,68 @@ const ExportFlyer = {
   },
 };
 
+// v0.9.11: Kids-mode ticker pool — robot/coder/space jokes + science nuggets.
+// Trilingual (en/fr/ar). Pulled in by renderTicker() when Kids mode is on
+// AND no user-custom messages are set.
+const KIDS_TICKER = {
+  en: [
+    "🤖 Why did the robot break up? They had no spark.",
+    "💾 Did you know? micro:bit V2 has 256 KB of RAM. That's like 256,000 emojis.",
+    "🌍 Earth weighs 5.972 × 10²⁴ kg. Your microphone does not.",
+    "⌨ Press R to record. Press R again to stop. You're welcome.",
+    "🚀 The Voyager 1 probe runs on 8 KB of memory. You have more in a single emoji.",
+    "🦈 A shark detects a heartbeat from 1 km away. Your camera detects you from 30 cm.",
+    "🛰 GPS satellites lose 38 microseconds per day to Einstein. Your tutorial doesn't.",
+    "🎨 Canvas can draw a million pixels in 0.016 sec. Don't make it draw two million.",
+    "🤓 Bug fixed today: the V100 splash. It was haunting the app since v0.7.100.",
+    "📱 Reels mode? Settings → 9:16. Watermark stays in the safe zone automatically.",
+    "🐢 The slowest bug to fix is the one that only happens on Wednesday.",
+    "🔋 Your micro:bit can run for 1 month on 2× AAA. Your phone can't.",
+    "🎬 Pro tip: hit the FIRE button mid-recording. The video literally explodes.",
+    "🧠 Octopuses have 9 brains. You have 1. Use it well.",
+    "📦 Try the Konami code. ↑↑↓↓←→←→ B A. We dare you.",
+  ],
+  fr: [
+    "🤖 Pourquoi le robot a rompu ? Pas d'étincelle.",
+    "💾 Le savais-tu ? Le micro:bit V2 a 256 Ko de RAM. C'est 256 000 emojis.",
+    "🌍 La Terre pèse 5,972 × 10²⁴ kg. Pas ton micro.",
+    "⌨ Tape R pour enregistrer. Re-tape R pour arrêter. De rien.",
+    "🚀 La sonde Voyager 1 tourne sur 8 Ko de mémoire. Tu as plus dans un emoji.",
+    "🦈 Un requin détecte un battement de cœur à 1 km. Ta caméra te détecte à 30 cm.",
+    "🛰 Les satellites GPS perdent 38 µs par jour à cause d'Einstein. Pas ton tuto.",
+    "🎨 Canvas peut dessiner 1 million de pixels en 0,016 s. N'en mets pas 2 millions.",
+    "🤓 Bug corrigé : le splash V100 hantait l'app depuis v0.7.100.",
+    "📱 Mode Reels ? Réglages → 9:16. Le watermark reste dans la safe zone.",
+    "🐢 Le bug le plus lent à corriger : celui qui n'apparaît que le mercredi.",
+    "🔋 Le micro:bit tient 1 mois sur 2 piles AAA. Ton téléphone, non.",
+    "🎬 Astuce : appuie sur FIRE pendant l'enregistrement. La vidéo explose.",
+    "🧠 Les pieuvres ont 9 cerveaux. Toi 1. Utilise-le bien.",
+    "📦 Essaie le code Konami. ↑↑↓↓←→←→ B A. Vraiment.",
+  ],
+  ar: [
+    "🤖 لماذا انفصل الروبوت؟ لم تكن هناك شرارة.",
+    "💾 هل تعلم؟ micro:bit V2 يحتوي على 256 ك.ب من الذاكرة العشوائية.",
+    "🌍 وزن الأرض 5.972 × 10²⁴ كجم. ميكروفونك ليس كذلك.",
+    "⌨ اضغط R للتسجيل. اضغط R مجدداً للإيقاف. لا شكر على واجب.",
+    "🚀 مسبار Voyager 1 يعمل على 8 ك.ب فقط من الذاكرة.",
+    "🦈 يكتشف القرش نبضة قلب من 1 كم. كاميرتك تكتشفك من 30 سم.",
+    "🛰 أقمار GPS تفقد 38 ميكروثانية يومياً بسبب آينشتاين.",
+    "🎨 Canvas يرسم مليون بكسل في 0.016 ثانية. لا تجعلها مليونين.",
+    "🤓 إصلاح اليوم: شاشة V100 كانت تطارد التطبيق منذ v0.7.100.",
+    "📱 وضع Reels؟ الإعدادات → 9:16. العلامة المائية تبقى في المنطقة الآمنة.",
+    "🐢 أبطأ خطأ في الإصلاح هو الذي يظهر يوم الأربعاء فقط.",
+    "🔋 micro:bit يعمل شهراً كاملاً على بطاريتي AAA.",
+    "🎬 نصيحة: اضغط FIRE أثناء التسجيل. الفيديو ينفجر فعلاً.",
+    "🧠 الأخطبوط لديه 9 أدمغة. أنت لديك 1. استخدمه جيداً.",
+    "📦 جرّب كود Konami. ↑↑↓↓←→←→ B A.",
+  ],
+};
+
 function renderTicker() {
   const el = $('tcTickerTrack'); if (!el) return;
   // v0.7.8: prefer user-defined custom messages from localStorage (one per
   // line). Falls back to the 10 built-in tip_* translations if empty.
+  // v0.9.11: in Kids mode (and no custom set), use the geek-jokes pool.
   let items = [];
   try {
     const custom = silentGet('tc-ticker-custom') || '';
@@ -21235,7 +21444,12 @@ function renderTicker() {
     if (lines.length) items = lines;
   } catch {}
   if (!items.length) {
-    for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+    const kidsMode = silentGet('tc-mode') !== 'pro';
+    if (kidsMode && typeof currentLang === 'string' && KIDS_TICKER[currentLang]) {
+      items = KIDS_TICKER[currentLang].slice();
+    } else {
+      for (let i = 1; i <= 10; i++) items.push(t('tip_' + i));
+    }
   }
   // v0.7.17: SINGLE-pass ticker — user feedback "just one". No JS-side
   // duplication. Each message appears exactly once per loop. The CSS
@@ -21250,15 +21464,31 @@ function renderTicker() {
 
 // v0.7.166: Simple/Pro mode system
 function applyMode(mode) {
+  // v0.7.166 + v0.9.11: mode key stays 'simple' / 'pro' in localStorage for
+  // backward compat with existing users; only the LABELS change here.
+  // 'simple' → 🧒 Kids (funny + geeky preset), 'pro' → 🧑‍🏫 Teacher (everything).
   document.body.classList.toggle('tc-simple', mode === 'simple');
+  document.body.classList.toggle('tc-kids', mode === 'simple');  // alias for new CSS
+  // v0.9.11: keep <html> class in sync with the FOUC guard (head script)
+  document.documentElement.classList.toggle('tc-simple', mode === 'simple');
+  document.documentElement.classList.toggle('tc-kids', mode === 'simple');
   silentSet('tc-mode', mode);
   const btn = $('tcModeSwitchBtn');
-  if (btn) btn.textContent = mode === 'simple' ? '🚀 Switch to Pro mode' : '🎓 Switch to Simple mode';
+  if (btn) btn.textContent = mode === 'simple' ? '🧑\u200d🏫 Switch to Teacher mode' : '🧒 Switch to Kids mode';
   const badge = $('tcModeBadge');
-  if (badge) badge.textContent = mode === 'simple' ? '🎓 Simple' : '🚀 Pro';
-  // v0.7.179: collapse right sidebar in simple mode for a cleaner canvas
+  if (badge) badge.textContent = mode === 'simple' ? '🧒 Kids' : '🧑\u200d🏫 Teacher';
+  // v0.7.179: collapse right sidebar in kids mode for a cleaner canvas
   const grid = document.querySelector('.tc-studio-grid');
   if (grid) grid.classList.toggle('rsidebar-collapsed', mode === 'simple');
+  // v0.9.11: kids mode auto-applies a fun theme + font on first switch.
+  // Don't override if the user already picked theme/font themselves.
+  if (mode === 'simple' && silentGet('tc-kids-vibe-applied') !== '1') {
+    try {
+      if (typeof setTheme === 'function' && !silentGet('tc-theme')) setTheme('cyberpunk');
+      if (typeof UiFont !== 'undefined' && !silentGet('tc-ui-font-user-set')) UiFont.set('orbitron');
+      silentSet('tc-kids-vibe-applied', '1');
+    } catch {}
+  }
 }
 
 /* v0.7.254: SettingsState — remember which Settings sub-sections the user
@@ -21334,7 +21564,7 @@ function setupOnboarding() {
     const current = silentGet('tc-mode') || 'simple';
     const next = current === 'simple' ? 'pro' : 'simple';
     applyMode(next);
-    showToast(next === 'simple' ? '🎓 Simple mode' : '🚀 Pro mode', 1400);
+    showToast(next === 'simple' ? '🧒 Kids mode' : '🧑\u200d🏫 Teacher mode', 1400);
   };
   $('tcModeSwitchBtn')?.addEventListener('click', toggleMode);
   $('tcModeBadge')?.addEventListener('click', toggleMode);
@@ -23752,6 +23982,10 @@ async function init() {
   TipOfDay.maybeShow();
   V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
   WhatsNew.maybeShow();         // v0.9.5: discoverability for upgraders
+  // v0.9.11: Kids-mode vibe layer — boot sequence, handle picker, Konami
+  KidsMode.konamiInit();
+  KidsMode.bootSeq();
+  KidsMode.maybePickHandle();
   GuidedTour.maybeAutoStart();
   setupHelpTabs();
   // v0.7.172: sidebar icon tabs

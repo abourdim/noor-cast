@@ -893,6 +893,32 @@ details.collapsible > .card { margin-top: 8px; }
 .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,.2); border-top-color: var(--bg); border-radius: 50%; animation: spin .8s linear infinite; }
 .toast-text { color: var(--bg); font-weight: 700; font-size: .85rem; }
 
+/* v0.9.11: terminal-style toast in Kids mode — green-on-black monospace
+   with a > prompt prefix. Sets the geek vibe across every notification
+   without changing a single showToast() call site. */
+.tc-kids .toast-indicator {
+  background: #000;
+  border: 2px solid #4ade80;
+  box-shadow: 0 0 24px rgba(74,222,128,.55), inset 0 0 12px rgba(74,222,128,.15);
+  border-radius: 8px;
+  padding: 10px 18px;
+}
+.tc-kids .toast-text {
+  color: #4ade80;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(74,222,128,.5);
+}
+.tc-kids .toast-text::before {
+  content: "> ";
+  color: #a3e635;
+  margin-right: 2px;
+}
+.tc-kids .spinner {
+  border-color: rgba(74,222,128,.3);
+  border-top-color: #4ade80;
+}
+
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
@@ -3034,37 +3060,37 @@ body.log-open .app {
   vertical-align: middle;
 }
 .tc-mode-badge:hover { opacity: 0.8; }
-body.tc-simple .tc-mode-badge { background: rgba(163,230,53,.15); color: #a3e635; }
+.tc-simple .tc-mode-badge { background: rgba(163,230,53,.15); color: #a3e635; }
 body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #fb923c; }
 
 /* ═══════════════════════════════════════════════════════════════════
-   v0.7.166: Simple mode — hide advanced features via body.tc-simple
+   v0.7.166: Simple mode — hide advanced features via .tc-simple
    ═══════════════════════════════════════════════════════════════════ */
 /* Tools bar: hide More menu, keep only Laser/Freeze/Draw/Snapshot/Fullscreen */
-body.tc-simple #tcMoreToolsBtn,
-body.tc-simple #tcMoreToolsPopup { display: none !important; }
+.tc-simple #tcMoreToolsBtn,
+.tc-simple #tcMoreToolsPopup { display: none !important; }
 /* Source toolbar: hide Style popup button */
-body.tc-simple #tcSrcStyleBtn,
-body.tc-simple #tcSrcStylePopup { display: none !important; }
-/* Settings: hide Recording/Logo/Slogan/Ticker sections */
-/* Simple mode: hide Recording + Ticker, keep Logo + Slogan visible */
-body.tc-simple .tc-set-section:nth-of-type(2) { display: none !important; }
-body.tc-simple .tc-set-section:nth-of-type(5) { display: none !important; }
+.tc-simple #tcSrcStyleBtn,
+.tc-simple #tcSrcStylePopup { display: none !important; }
+/* v0.9.11: Kids mode hides anything tagged data-mode="pro" — semantic +
+   refactor-safe (was :nth-of-type(2) / :nth-of-type(5) which silently
+   broke when section order changed). Currently tags Recording + Ticker. */
+.tc-simple [data-mode="pro"] { display: none !important; }
 /* Right sidebar: hide save/reset buttons, text section */
-body.tc-simple #tcResetLayoutBtn,
-body.tc-simple #tcSaveSceneBtn { display: none !important; }
+.tc-simple #tcResetLayoutBtn,
+.tc-simple #tcSaveSceneBtn { display: none !important; }
 /* micro:bit visible in all modes */
 /* Rec bar: hide Pause and Marker */
-body.tc-simple #tcPauseBtn,
-body.tc-simple #tcMarkBtn { display: none !important; }
+.tc-simple #tcPauseBtn,
+.tc-simple #tcMarkBtn { display: none !important; }
 /* Help panel: hide advanced tabs */
-body.tc-simple [data-tab="wiki"],
-body.tc-simple [data-tab="news"],
-body.tc-simple [data-tab="cameras"],
-body.tc-simple [data-tab="hotkeys"] { display: none !important; }
+.tc-simple [data-tab="wiki"],
+.tc-simple [data-tab="news"],
+.tc-simple [data-tab="cameras"],
+.tc-simple [data-tab="hotkeys"] { display: none !important; }
 /* Hide badges/stats/dashboard sections */
-body.tc-simple .tc-badges-section,
-body.tc-simple .tc-dashboard-section { display: none !important; }
+.tc-simple .tc-badges-section,
+.tc-simple .tc-dashboard-section { display: none !important; }
 
 /* v0.7.172: sidebar icon tabs */
 .tc-side-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
