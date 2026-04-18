@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.24 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.25 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.24';
+const APP_VERSION = '0.9.25';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -3194,8 +3194,13 @@ function showToast(msg, ms = 2000) {
   }, ms);
 }
 
+// v0.9.25: remember the element that triggered each panel open so we can
+// restore focus to it when the panel closes — standard a11y modal pattern.
+const _panelOpener = {};
 function openPanel(id) {
   const p = $(id); if (!p) return;
+  // v0.9.25: remember opener for focus restore on close
+  try { _panelOpener[id] = document.activeElement; } catch {}
   p.classList.add('open');
   // v0.7.216: fix — CSS rule is .sidebar-overlay.open (not .show). Previous
   // mismatch meant the overlay never got pointer-events, so clicks outside
@@ -3206,12 +3211,25 @@ function openPanel(id) {
   // log panel always overlapped the canvas + scenes. Add it here so the
   // app reflows margin-inline-end to clear the log width.
   if (id === 'logPanel') document.body.classList.add('log-open');
+  // v0.9.25: focus the close button after the slide-in transition lands.
+  // Lets keyboard users immediately Tab through the panel content, and
+  // ESC (already wired) closes from anywhere inside.
+  setTimeout(() => {
+    const close = p.querySelector('[id$="CloseBtn"], .btn-icon-only[aria-label="Close"]');
+    try { close?.focus({ preventScroll: true }); } catch {}
+  }, 380);  // matches .35 s slide transition
 }
 function closePanel(id) {
   const p = $(id); if (!p) return;
   p.classList.remove('open');
   const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('open');
   if (id === 'logPanel') document.body.classList.remove('log-open');
+  // v0.9.25: restore focus to whatever opened the panel (the toolbar btn).
+  try {
+    const opener = _panelOpener[id];
+    if (opener && document.body.contains(opener)) opener.focus({ preventScroll: true });
+    delete _panelOpener[id];
+  } catch {}
 }
 function closeAllPanels() {
   ['helpPanel', 'settingsPanel', 'logPanel'].forEach(closePanel);
