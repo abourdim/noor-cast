@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.10.4 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.5 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.10.4';
+const APP_VERSION = '0.10.5';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -24785,7 +24785,7 @@ async function init() {
   try {
     const epLink = $('tcEtsyPlaybookLink');
     if (epLink && typeof currentLang === 'string') {
-      const map = { fr: './etsy-playbook-fr.html', ar: './etsy-playbook-ar.html', en: './etsy-playbook.html' };
+      const map = { fr: './docs/etsy-playbook-fr.html', ar: './docs/etsy-playbook-ar.html', en: './docs/etsy-playbook.html' };
       epLink.href = map[currentLang] || map.en;
     }
   } catch {}
@@ -24996,7 +24996,7 @@ const GlobalSearch = {
     add('Settings', 'Open settings', () => { const p = $('settingsPanel'); if (p) { p.classList.add('open'); const ov = $('settingsOverlay'); if (ov) ov.classList.add('show'); } });
     add('Settings', 'Language', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
     add('Settings', 'Theme', () => { const p = $('settingsPanel'); if (p) p.classList.add('open'); });
-    add('Settings', 'Help / User guide', () => window.open('./guide.html', '_blank'));
+    add('Settings', 'Help / User guide', () => window.open('./docs/guide.html', '_blank'));
 
     // Co-host characters
     AICohost.characters.forEach(c => add('Co-host', AICohost.charLabels[c] || c, () => { AICohost.character = c; AICohost._save(); showToast(AICohost.charLabels[c], 1200); }));

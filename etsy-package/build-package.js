@@ -117,7 +117,7 @@ async function main() {
   const appFiles = [
     'index.html', 'noorcast.js', 'style.css', 'sw.js',
     'icon.svg', 'assets/logo.svg', 'manifest.json',
-    'guide.html', 'cheatsheet.html', 'faq.html', 'start.html',
+    'docs/guide.html', 'docs/cheatsheet.html', 'docs/faq.html', 'docs/start.html',
     'firmware/makecode.ts', 'assets/workshop-diy-logo.svg'
   ];
   for (const f of appFiles) {

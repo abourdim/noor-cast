@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NoorCast — Playbook Hollywood Etsy 60 s</title>
+<link rel="stylesheet" href="etsy-playbook.css">
+<style>
+  /* ========== Theme (inline so the file is standalone) ========== */
+  :root {
+    --bg: #0a0e0a; --panel: #0f1610; --panel2: #131c14;
+    --ink: #e8f2e0; --muted: #8aa18e; --accent: #a3e635;
+    --accent2: #4ade80; --hook: #fb923c; --demo: #38bdf8;
+    --payoff: #4ade80; --cta: #ef4444; --beige: #d4b896;
+    --border: rgba(163,230,53,.15);
+    --shadow: 0 4px 24px rgba(0,0,0,.45);
+    --mono: ui-monospace, "SF Mono", Consolas, Menlo, monospace;
+    --serif: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Bangers", "Righteous", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.55; }
+  body { max-width: 1080px; margin: 0 auto; padding: 24px 18px 80px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed rgba(163,230,53,.4); }
+  a:hover { color: #fff; border-bottom-color: var(--accent); }
+  .lang-switch { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; z-index: 60; }
+  .lang-switch a { background: rgba(15,22,16,.85); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: var(--mono); border-bottom: 1px solid var(--border); }
+  .lang-switch a.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .slate { background: radial-gradient(ellipse at top right, rgba(163,230,53,.12), transparent 60%), linear-gradient(180deg, var(--panel2), var(--panel)); border: 2px solid var(--border); border-radius: 18px; padding: 36px 28px 28px; text-align: center; margin-bottom: 22px; box-shadow: var(--shadow); position: relative; }
+  .slate-clap { font-size: 56px; line-height: 1; margin-bottom: 8px; filter: drop-shadow(0 0 18px rgba(163,230,53,.4)); }
+  .slate h1 { font-family: var(--display); font-size: 2.2rem; letter-spacing: 1.2px; margin: 6px 0 4px; color: var(--accent); }
+  .slate .tag { color: var(--muted); font-size: .92rem; letter-spacing: .8px; text-transform: uppercase; }
+  .slate .meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; font-size: .82rem; color: var(--muted); flex-wrap: wrap; }
+  .slate .meta b { color: var(--ink); font-weight: 700; }
+  .toc { position: sticky; top: 0; z-index: 50; background: rgba(15,22,16,.92); backdrop-filter: blur(8px); border: 1px solid var(--border); border-radius: 14px; padding: 8px 12px; margin-bottom: 22px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .toc a { background: rgba(163,230,53,.06); border: 1px solid rgba(163,230,53,.22); border-radius: 10px; padding: 6px 12px; font-size: .82rem; font-weight: 600; border-bottom: none; }
+  .toc a:hover { background: rgba(163,230,53,.18); color: var(--accent); }
+  .slug { font-family: var(--mono); text-transform: uppercase; letter-spacing: 1.2px; font-size: .78rem; color: var(--accent); background: linear-gradient(90deg, rgba(163,230,53,.12), transparent); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 26px 0 14px; border-radius: 0 8px 8px 0; }
+  h2 { font-family: var(--display); letter-spacing: 1px; color: var(--accent); margin: 8px 0 12px; font-size: 1.7rem; }
+  h3 { color: var(--ink); margin-top: 18px; font-size: 1.15rem; }
+  h4 { color: var(--accent2); font-size: 1rem; margin: 14px 0 6px; }
+  p { margin: 8px 0; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin: 12px 0; box-shadow: var(--shadow); }
+  .card-tight { padding: 10px 14px; }
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 8px; transition: background .15s; cursor: pointer; user-select: none; }
+  .checklist li:hover { background: rgba(163,230,53,.06); }
+  .checklist input[type=checkbox] { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .checklist li.checked label { color: var(--muted); text-decoration: line-through; opacity: .65; }
+  .checklist label { cursor: pointer; flex: 1; }
+  .checklist .where { color: var(--muted); font-size: .82rem; display: block; margin-top: 2px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tab { flex: 1; padding: 12px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; color: var(--muted); font-family: var(--display); letter-spacing: 1px; cursor: pointer; text-align: center; transition: all .15s; }
+  .tab:hover { color: var(--ink); background: rgba(163,230,53,.06); }
+  .tab.active { background: linear-gradient(180deg, rgba(163,230,53,.18), rgba(163,230,53,.05)); color: var(--accent); border-color: var(--accent); box-shadow: 0 -2px 0 var(--accent); }
+  .tab-num { font-size: 1.4rem; line-height: 1; display: block; }
+  .tab-title { font-size: .82rem; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .tab-body { background: var(--panel); border: 1px solid var(--accent); border-radius: 0 0 14px 14px; padding: 16px; box-shadow: var(--shadow); }
+  .scene { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--border); border-radius: 14px; margin: 14px 0; overflow: hidden; }
+  .scene-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(0,0,0,.25); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: .78rem; text-transform: uppercase; letter-spacing: 1.4px; flex-wrap: wrap; gap: 8px; }
+  .scene-head .scene-time { color: var(--accent); font-weight: 700; font-size: 1.05rem; }
+  .scene-head .scene-phase { padding: 3px 10px; border-radius: 999px; font-size: .68rem; font-weight: 800; }
+  .phase-hook { background: rgba(251,146,60,.18); color: var(--hook); border: 1px solid rgba(251,146,60,.4); }
+  .phase-demo { background: rgba(56,189,248,.18); color: var(--demo); border: 1px solid rgba(56,189,248,.4); }
+  .phase-payoff { background: rgba(74,222,128,.18); color: var(--payoff); border: 1px solid rgba(74,222,128,.4); }
+  .phase-cta { background: rgba(239,68,68,.18); color: var(--cta); border: 1px solid rgba(239,68,68,.4); }
+  .phase-end { background: rgba(212,184,150,.18); color: var(--beige); border: 1px solid rgba(212,184,150,.4); }
+  .scene-body { padding: 14px 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .say { background: rgba(0,0,0,.25); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 12px 14px; position: relative; }
+  .say-label { font-family: var(--mono); font-size: .68rem; letter-spacing: 1.5px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .say-text { font-family: var(--serif); font-size: 1.18rem; color: #fff; line-height: 1.45; font-style: italic; }
+  .say-text::before { content: '«\u00A0'; opacity: .5; }
+  .say-text::after { content: '\u00A0»'; opacity: .5; }
+  .paren { color: var(--muted); font-size: .82rem; font-style: italic; display: block; margin: 4px 0 0; }
+  .do { background: rgba(56,189,248,.04); border-left: 3px solid var(--demo); border-radius: 0 10px 10px 0; padding: 10px 14px; }
+  .do-label { font-family: var(--mono); font-size: .68rem; letter-spacing: 1.5px; color: var(--demo); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .do-text { color: var(--ink); font-size: .92rem; }
+  .do-text kbd { background: #0a0a0a; border: 1px solid rgba(255,255,255,.18); border-radius: 4px; padding: 1px 7px; font-family: var(--mono); font-size: .82rem; color: var(--accent); box-shadow: 0 2px 0 rgba(0,0,0,.5); }
+  .do-text .ui { background: rgba(163,230,53,.12); color: var(--accent); padding: 1px 7px; border-radius: 4px; font-weight: 600; font-size: .88rem; }
+  .vis { background: rgba(212,184,150,.04); border-left: 3px solid var(--beige); border-radius: 0 10px 10px 0; padding: 10px 14px; color: var(--ink); font-size: .9rem; }
+  .vis-label { font-family: var(--mono); font-size: .68rem; letter-spacing: 1.5px; color: var(--beige); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .vis em { color: var(--beige); font-style: normal; font-weight: 700; }
+  .actions { display: flex; gap: 6px; margin-left: auto; }
+  .btn { background: rgba(163,230,53,.1); border: 1px solid rgba(163,230,53,.3); color: var(--accent); border-radius: 6px; padding: 4px 10px; font-size: .72rem; font-family: var(--sans); font-weight: 700; cursor: pointer; transition: all .12s; }
+  .btn:hover { background: rgba(163,230,53,.25); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn.copied { background: rgba(74,222,128,.4); color: #fff; }
+  .transition { text-align: right; font-family: var(--mono); font-size: .82rem; color: var(--muted); letter-spacing: 2px; margin: 2px 6px; text-transform: uppercase; }
+  .transition::before { content: '✂  '; color: var(--accent); }
+  .ascii { background: #000; color: var(--accent2); font-family: var(--mono); font-size: .82rem; padding: 14px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; line-height: 1.4; white-space: pre; }
+  .tip { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .92rem; }
+  .tip::before { content: '💡 '; }
+  .warn { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .92rem; }
+  .warn::before { content: '⚠ '; }
+  .pro { background: rgba(168,85,247,.08); border: 1px solid rgba(168,85,247,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .92rem; }
+  .pro::before { content: '🎬 '; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .9rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { color: var(--accent); font-family: var(--mono); font-size: .76rem; text-transform: uppercase; letter-spacing: 1px; }
+  .storyboard { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 14px 0; }
+  .storyboard .frame { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; aspect-ratio: 9/16; padding: 8px 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; transition: transform .15s, border-color .15s; text-decoration: none; }
+  .storyboard .frame:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .storyboard .frame .t { font-family: var(--mono); font-size: .72rem; color: var(--accent); font-weight: 700; }
+  .storyboard .frame .icon { font-size: 1.8rem; margin: 4px 0; }
+  .storyboard .frame .what { font-size: .68rem; color: var(--muted); line-height: 1.2; }
+  .teleprompter-dock { position: fixed; bottom: 18px; right: 18px; background: var(--panel2); border: 2px solid var(--accent); border-radius: 12px; padding: 12px; z-index: 100; box-shadow: 0 12px 28px rgba(0,0,0,.5); max-width: 320px; font-size: .9rem; }
+  .teleprompter-dock .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .teleprompter-dock .title { font-family: var(--display); color: var(--accent); letter-spacing: 1px; font-size: .9rem; }
+  .teleprompter-dock .copy-all-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; }
+  .teleprompter-dock .copy-all-btn:hover { background: var(--accent2); }
+  .teleprompter-dock .hint { color: var(--muted); font-size: .76rem; line-height: 1.4; }
+  @media (max-width: 720px) { .teleprompter-dock { display: none; } }
+  .glossary dt { color: var(--accent); font-weight: 700; margin-top: 8px; font-family: var(--mono); font-size: .88rem; }
+  .glossary dd { margin: 2px 0 0 14px; color: var(--ink); font-size: .92rem; }
+  .footer { text-align: center; color: var(--muted); font-size: .82rem; margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); }
+  @media print {
+    body { background: #fff; color: #000; max-width: 100%; padding: 12px; }
+    .toc, .teleprompter-dock, .actions, .lang-switch { display: none !important; }
+    .card, .scene, .slate { box-shadow: none; border-color: #999; background: #fff; color: #000; }
+    .say-text { color: #000; }
+    .say { background: #f5f5f5; }
+    .do { background: #eef7ff; }
+    .vis { background: #fcf5ea; }
+    h2, .slug, .scene-head .scene-time { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="lang-switch" aria-label="Langue">
+  <a href="etsy-playbook.html">EN</a>
+  <a href="etsy-playbook-fr.html" class="active">FR</a>
+  <a href="etsy-playbook-ar.html">AR</a>
+</nav>
+
+<!-- ═════════════════ ARDOISE TITRE ═════════════════ -->
+<div class="slate">
+  <div class="slate-clap">🎬</div>
+  <h1>Le Playbook Etsy 60 secondes</h1>
+  <div class="tag">Un script de tournage style Hollywood pour NoorCast</div>
+  <div class="meta">
+    <span><b>Tourné avec :</b> NoorCast v0.10.x</span>
+    <span><b>Durée :</b> 60 sec exactes</span>
+    <span><b>Format :</b> 9:16 vertical (Reels)</span>
+    <span><b>Codec :</b> MP4 H.264 8 Mbps</span>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#what">📋 C'est quoi</a>
+  <a href="#preflight">✈ Pré-vol</a>
+  <a href="#layout">🗺 Carte NoorCast</a>
+  <a href="#storyboard">🎞 Storyboard</a>
+  <a href="#scripts">🎭 Les 3 scripts</a>
+  <a href="#director">🎬 Astuces réa</a>
+  <a href="#after">🎁 Après STOP</a>
+  <a href="#troubles">🚨 Pannes</a>
+  <a href="#glossary">📖 Lexique</a>
+</nav>
+
+<div class="slug">PROLOGUE — ce que tu tiens entre les mains</div>
+<h2 id="what">📋 C'est quoi ce truc</h2>
+<div class="card">
+  <p>C'est un <b>script de tournage</b>, le genre qu'un réalisateur Hollywood donne aux acteurs avant une scène. Il te dit <b>EXACTEMENT</b> trois choses, ligne par ligne :</p>
+  <ol>
+    <li><b>DIS</b> — les mots exacts à prononcer (italique, entre guillemets). Chaque ligne a un bouton <span class="btn" style="display:inline-block">📋 Copier</span> pour les coller dans le téléprompteur de NoorCast.</li>
+    <li><b>FAIS</b> — le bouton exact à cliquer dans NoorCast ou la touche à presser au clavier.</li>
+    <li><b>VISUEL</b> — ce que ton visage / tes mains / la caméra doivent faire (sourire, regard, geste).</li>
+  </ol>
+  <p>Plus : une <b>checklist pré-vol</b> pour ne rater aucun réglage, un <b>storyboard</b> pour visualiser les 60 sec d'un coup, des <b>astuces de réa</b> pour l'énergie et le rythme, et un <b>guide de pannes</b> pour quand ça part en sucette.</p>
+  <div class="tip">Si tu n'as jamais filmé de vidéo, <b>lis le script deux fois en silence d'abord</b>. Ensuite lis-le une fois à voix haute. Puis lance le pré-vol. Quand tu appuies sur REC, tu connaîtras tes répliques.</div>
+  <div class="pro">Utilise le <b>quai téléprompteur flottant</b> en bas à droite. Il a un bouton <b>« 📤 Copier toutes les répliques »</b> — copie chaque ligne dans ton presse-papier pour coller direct dans le téléprompteur intégré de NoorCast (touche <kbd>T</kbd>).</div>
+</div>
+
+<div class="slug">ACTE ZÉRO — avant d'appuyer sur ENREGISTRER</div>
+<h2 id="preflight">✈ Checklist pré-vol</h2>
+<div class="card">
+  <p>Coche chaque case. Chaque coche est sauvegardée automatiquement — ferme la page, reviens plus tard, ton avancée reste. Clique la case OU la ligne entière.</p>
+  <h4>La pièce</h4>
+  <ul class="checklist" data-storage="pre-room-fr">
+    <li><input type="checkbox"><label>Pièce silencieuse. Téléphone face contre table. Notifs coupées. Porte fermée.<span class="where">Si tu entends le frigo ou la rue, ta vidéo aussi.</span></label></li>
+    <li><input type="checkbox"><label>Lumière sur ton visage par devant, pas par derrière.<span class="where">Mets-toi face à une fenêtre, JAMAIS dos à la fenêtre. Contre-jour = silhouette = nul.</span></label></li>
+    <li><input type="checkbox"><label>Bureau rangé dans le cadre caméra.<span class="where">Même un coin en désordre se voit. Range pendant 30 secondes — ça compte.</span></label></li>
+  </ul>
+  <h4>Le matos</h4>
+  <ul class="checklist" data-storage="pre-hw-fr">
+    <li><input type="checkbox"><label>Webcam branchée (ou caméra du laptop prête).</label></li>
+    <li><input type="checkbox"><label>Micro testé. <span class="where">Réglages → 🎤 Sources → la jauge verte bouge quand tu parles.</span></label></li>
+    <li><input type="checkbox"><label>Chargeur branché. <span class="where">L'enregistrement consomme ~30 % de plus que la navigation. Pas de panne en plein milieu.</span></label></li>
+    <li><input type="checkbox"><label>Autres onglets FERMÉS dans ce navigateur. <span class="where">Ils volent du CPU et font chuter ton framerate. Garde uniquement NoorCast + ce playbook.</span></label></li>
+  </ul>
+  <h4>Réglages NoorCast</h4>
+  <ul class="checklist" data-storage="pre-nc-fr">
+    <li><input type="checkbox"><label>Ouvre <span class="ui">⚙ Réglages</span> (icône engrenage en haut à droite). Trouve <span class="ui">📐 Format de la scène</span>. Choisis <b>9:16 — 1080×1920</b>.<span class="where">Un toast affiche « 📱 Mode Reels — guide safe-zone ON ». Le canvas bascule en vertical.</span></label></li>
+    <li><input type="checkbox"><label>Regarde la barre d'outils au-dessus du canvas. Clique <span class="ui">📱 Reels</span>. Il s'illumine en lime quand actif.<span class="where">Un overlay rouge+vert apparaît. La boîte verte = ce que les viewers VERRONT. Garde l'important dedans.</span></label></li>
+    <li><input type="checkbox"><label>Trouve <span class="ui">⚙ Réglages → 🎬 Enregistrement → 💬 Sous-titres live</span>. Coche les deux : « Sous-titres » ET « 🔥 Marquer dans la vidéo ».<span class="where">Etsy joue les vidéos en MUET dans le feed. Les sous-titres = ta voix. Le burn-in les rend persistants.</span></label></li>
+    <li><input type="checkbox"><label>Trouve <span class="ui">⚙ Réglages → 🎥 Capture → 🎙 Sauter le silence d'intro</span>. Coche.<span class="where">Après le compte à rebours, NoorCast attend ton premier mot avant d'enregistrer. Pas de bla-bla mort en début.</span></label></li>
+    <li><input type="checkbox"><label>Trouve <span class="ui">⚙ Réglages → 🎬 Enregistrement → Qualité</span>. Confirme <b>High — 8 Mbps</b>.<span class="where">Etsy compresse les uploads. Enregistrer à 8 Mbps = fichier final net après leur compression.</span></label></li>
+  </ul>
+  <h4>Les sources</h4>
+  <ul class="checklist" data-storage="pre-src-fr">
+    <li><input type="checkbox"><label>Ajoute au moins une caméra. <span class="ui">+ Caméra</span> dans la sidebar gauche. Choisis ta webcam, clique <span class="ui">+</span>.<span class="where">Ton visage apparaît sur le canvas comme calque draggable et redimensionnable.</span></label></li>
+    <li><input type="checkbox"><label>Clique sur ta caméra. La barre source apparaît. Ouvre <span class="ui">🎨 Style</span>. Trouve <b>🎯 Cadrage intelligent</b>. Clique <span class="ui">🎯 Auto-cadrage</span>.<span class="where">Toast : « 🎯 Auto-cadrage ON — visage centré ». Maintenant si tu te penches, la source pan pour te garder centré. Magique.</span></label></li>
+    <li><input type="checkbox"><label>(Si demo on-screen) Ajoute une source écran. <span class="ui">+ Écran</span>. Choisis la fenêtre/onglet à partager.</label></li>
+    <li><input type="checkbox"><label>Glisse ta caméra à la position voulue. <span class="where">Pour Etsy : face-cam généralement en haut (au-dessus de la zone caption), démo en bas.</span></label></li>
+    <li><input type="checkbox"><label>Regarde la <b>barre de statut au-dessus de REC</b>. Devrait afficher :<br><code>🟢 Prêt · 2 sources · 9:16 📱 Reels · 8 Mbps</code><span class="where">Si quelque chose cloche — corrige avant REC.</span></label></li>
+  </ul>
+  <h4>L'acteur (toi)</h4>
+  <ul class="checklist" data-storage="pre-you-fr">
+    <li><input type="checkbox"><label>Lis le script choisi DEUX fois en silence.</label></li>
+    <li><input type="checkbox"><label>Lis-le UNE fois à voix haute. Chronomètre. Doit faire 50–55 sec (5 sec de marge).</label></li>
+    <li><input type="checkbox"><label>Souris. Étire ton visage. Détends ta mâchoire. <span class="where">Ça paraît bête. Ça aide. Énergie caméra = double l'énergie réelle.</span></label></li>
+    <li><input type="checkbox"><label>Assieds-toi / mets-toi debout pour les 5 prochaines prises.</label></li>
+  </ul>
+  <p style="text-align:center;margin:14px 0 4px;color:var(--muted);font-size:.85rem">Toutes les cases cochées ? Tu es prêt. <b style="color:var(--accent)">Appuie <kbd style="background:#000;padding:1px 8px;border-radius:4px;color:var(--accent);font-family:var(--mono)">R</kbd> dans NoorCast.</b></p>
+</div>
+
+<div class="slug">ACCESSOIRES — connais tes outils</div>
+<h2 id="layout">🗺 La carte NoorCast</h2>
+<div class="card">
+  <p>Qu'est-ce qui est où à l'écran. (Approximatif — varie selon viewport.)</p>
+<pre class="ascii">
+┌────────────────────────────────────────────────────────────────────┐
+│ ❓ ⚙ 📜 ⛶ 🧒 Kids                                                    │  ← En-tête
+├────────────────────────────────────────────────────────────────────┤
+│ 1 PRÉPARER  2 RÉGLER  3 ENREGISTRER  4 PARTAGER                    │  ← Onglets workflow
+├────────────────────────────────────────────────────────────────────┤
+│ ↩ ↪ │ 🔴 Laser ❄ Geler ✏ Dessiner 📸 Photo │ 💬 Sous-tit ⋯ Plus    │  ← Barre d'outils
+│                                          📊 Capteurs 📱 Reels        │
+├──────────┬───────────────────────────────────────────┬─────────────┤
+│ ✨ AJOUTER│                                           │             │
+│  UNE      │                                           │ 🎬 Scènes   │
+│  SOURCE   │              CANVAS / SCÈNE               │ ┌─┐ ┌─┐ ┌─┐ │
+│ ┌──────┐ │              (9:16 portrait)              │ │1│ │2│ │3│ │
+│ │Écran │ │                                           │ └─┘ └─┘ └─┘ │
+│ │+ Add │ │              [ton visage ici]             │ ┌─┐ ┌─┐ ┌─┐ │
+│ └──────┘ │                                           │ │4│ │5│ │6│ │
+│ ┌──────┐ │              [ta démo ici]                │ └─┘ └─┘ └─┘ │
+│ │Cam ▼ │ │                                           │             │
+│ │  +   │ │                                           │             │
+│ └──────┘ │                                           │             │
+│ ┌──────┐ │                                           │             │
+│ │Mic ▼ │ │                                           │             │
+│ └──────┘ │                                           │             │
+├──────────┴───────────────────────────────────────────┴─────────────┤
+│ 🟢 Prêt · 2 sources · 9:16 📱 Reels · 8 Mbps · @PixelNinja          │  ← Barre de statut
+├────────────────────────────────────────────────────────────────────┤
+│            [ ⏺  ENREGISTRER  R ]   00:00   ⏸ Pause  🏷 Marker       │  ← Barre REC
+└────────────────────────────────────────────────────────────────────┘
+</pre>
+  <h4>Boutons que tu vas le plus utiliser</h4>
+  <table>
+    <tr><th>Quoi</th><th>Où</th><th>Touche</th><th>Effet</th></tr>
+    <tr><td><span class="ui">⏺ ENREGISTRER</span></td><td>Gros bouton rouge, bas centre</td><td><kbd>R</kbd></td><td>Démarrer / arrêter</td></tr>
+    <tr><td><span class="ui">🏷 Marker</span></td><td>Droite de REC, pendant l'enreg</td><td><kbd>M</kbd></td><td>Marqueur de chapitre</td></tr>
+    <tr><td><span class="ui">🔴 Laser</span></td><td>Barre d'outils</td><td><kbd>L</kbd></td><td>Point rouge qui suit la souris</td></tr>
+    <tr><td><span class="ui">❄ Geler</span></td><td>Barre d'outils</td><td><kbd>F</kbd></td><td>Gèle le canvas 1 sec — emphase</td></tr>
+    <tr><td><span class="ui">📸 Photo</span></td><td>Barre d'outils</td><td><kbd>S</kbd></td><td>Capture d'écran PNG</td></tr>
+    <tr><td><span class="ui">Tuile scène</span></td><td>Sidebar droite</td><td><kbd>1</kbd>–<kbd>9</kbd></td><td>Bascule layout instantanément</td></tr>
+    <tr><td><span class="ui">📜 Tele</span></td><td>Barre → ⋯ Plus</td><td><kbd>T</kbd></td><td>Téléprompteur</td></tr>
+  </table>
+</div>
+
+<div class="slug">PRÉ-VIS — les 60 secondes en un coup d'œil</div>
+<h2 id="storyboard">🎞 Le storyboard</h2>
+<div class="card">
+  <p>Six images. L'arc complet de ta vidéo. Clique sur une image pour aller à sa scène.</p>
+  <div class="storyboard">
+    <a href="#scene-1" class="frame"><span class="t">0–3 s</span><span class="icon">😊</span><span class="what"><b>HOOK</b><br>Grand sourire<br>Tiens le produit</span></a>
+    <a href="#scene-2" class="frame"><span class="t">3–10 s</span><span class="icon">🎯</span><span class="what"><b>CONTEXTE</b><br>Montre le<br>problème</span></a>
+    <a href="#scene-3" class="frame"><span class="t">10–35 s</span><span class="icon">⚙</span><span class="what"><b>DÉMO</b><br>Fais le truc<br>étape par étape</span></a>
+    <a href="#scene-4" class="frame"><span class="t">35–50 s</span><span class="icon">🎉</span><span class="what"><b>RÉSULTAT</b><br>Montre + souris<br>+ pause</span></a>
+    <a href="#scene-5" class="frame"><span class="t">50–55 s</span><span class="icon">🛍</span><span class="what"><b>CTA</b><br>Lien Etsy<br>callout</span></a>
+    <a href="#scene-6" class="frame"><span class="t">55–60 s</span><span class="icon">🎬</span><span class="what"><b>FIN</b><br>Garde le sourire<br>pour la boucle</span></a>
+  </div>
+  <div class="tip">Etsy <b>boucle</b> ta vidéo dans le feed. La dernière image devient la couverture. Si tu finis sur un sourire propre + ton logo, la boucle est invisible — les viewers regardent 2-3 fois avant de réaliser.</div>
+</div>
+
+<div class="slug">ACTE UN — choisis ton script</div>
+<h2 id="scripts">🎭 Les 3 scripts</h2>
+<div class="card card-tight">
+  <p>Trois saveurs. Choisis celle proche de ton listing. Chaque script complet 60 sec avec <b>DIS / FAIS / VISUEL</b> pour chaque beat. Bouton <span class="btn" style="display:inline-block">📋 Copier</span> sur chaque ligne pour copier le texte exact. <span class="btn" style="display:inline-block">▶ Lire</span> joue la ligne à voix haute (voix du navigateur) pour entendre la cadence.</p>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" data-tab="creator" role="tab"><span class="tab-num">A</span><span class="tab-title">« J'ai fait ça »</span></button>
+  <button class="tab" data-tab="tutorial" role="tab"><span class="tab-num">B</span><span class="tab-title">« Comment l'utiliser »</span></button>
+  <button class="tab" data-tab="robot" role="tab"><span class="tab-num">C</span><span class="tab-title">« Démo robot »</span></button>
+</div>
+
+<!-- ━━━━━━━━━━━━━━ MODÈLE A : CRÉATEUR ━━━━━━━━━━━━━━ -->
+<div class="tab-pane active" data-pane="creator">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Cas d'usage :</b> tu montres un produit que tu fabriques (poterie, bijoux, art, kit, n'importe quoi de physique ou digital). Le format vidéo Etsy le plus courant.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Copier toutes les répliques (coller dans le téléprompteur NoorCast)</button>
+
+<div class="scene" id="scene-1">
+  <div class="scene-head"><span>Scène 1 — INT. STUDIO – JOUR · PLAN D'OUVERTURE</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">HOOK</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS <span class="paren">(grosse énergie, regard caméra)</span> <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Trois secondes — voilà ce que je viens de faire.</div><span class="paren">(Ton : punchy, comme si tu arrêtais quelqu'un dans la rue. Ne traîne pas.)</span></div>
+    <div class="do"><div class="do-label">FAIS</div><div class="do-text">Tu enregistres déjà. <b>Ne touche à rien.</b> Tiens le produit au niveau du menton, centré dans la safe-zone. Si la caméra a le produit avec toi, scène <span class="ui">👋 You</span> (touche <kbd>1</kbd>) suffit — face en grand.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div><em>Grand sourire, vrai.</em> Regarde directement l'objectif (pas l'écran). Tiens le produit clairement visible. <em>Ne bouge pas la tête</em> — laisse le produit faire le mouvement.</div>
+  </div>
+</div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene" id="scene-2">
+  <div class="scene-head"><span>Scène 2 — CONTEXTE · LE PROBLÈME</span><span class="scene-time">⏱ 0:03 → 0:10</span><span class="scene-phase phase-hook">CONTEXTE</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">La plupart des gens en achètent et ne savent pas que ça fait ce truc bizarre.</div><span class="paren">(Remplace « ce truc bizarre » par ton vrai hook — la fonction surprise. Moins de 12 mots.)</span></div>
+    <div class="do"><div class="do-label">FAIS</div><div class="do-text">Si la démo est sur écran : appuie <kbd>2</kbd> pour scène <span class="ui">💻 Code</span> (plein écran). Si physique : reste face-cam. <b>Appuie <kbd>M</kbd></b> sur le mot « truc » — marqueur « Hook reveal ».</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div>Yeux qui s'ouvrent sur « bizarre ». <em>Léger pench de tête.</em> Si tu tiens le produit, penche-le légèrement vers la caméra sur « ça ».</div>
+  </div>
+</div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene" id="scene-3">
+  <div class="scene-head"><span>Scène 3 — LA DÉMO · FAIS LE TRUC</span><span class="scene-time">⏱ 0:10 → 0:35</span><span class="scene-phase phase-demo">DÉMO</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS · BEAT 1 <span class="paren">(0:10–0:18, ralentis ici)</span> <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Regarde — je te montre en un mouvement.</div></div>
+    <div class="do"><div class="do-label">FAIS · BEAT 1</div><div class="do-text">Fais l'action. <b>Appuie <kbd>L</kbd></b> si besoin de pointer — laser. <b>Appuie <kbd>F</kbd></b> au climax — gèle 1 sec, donne le temps au viewer d'absorber.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div>Ralentis tes mains de 30 %. On rush toujours les démos. <em>Si tes mains sont floues, t'es allé trop vite.</em></div>
+  </div>
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say"><div class="say-label">DIS · BEAT 2 <span class="paren">(0:18–0:28)</span> <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Et voici comment ça marche derrière.</div></div>
+    <div class="do"><div class="do-label">FAIS · BEAT 2</div><div class="do-text">Bascule en scène multi-source — <kbd>5</kbd> = <span class="ui">🎬 Studio</span> (split). Utilise <span class="ui">🔴 Laser</span> pour pointer.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div>Coup d'œil au laser, puis retour caméra. Ne fixe PAS l'écran. <em>Tu parles à une personne, pas à un texte.</em></div>
+  </div>
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say"><div class="say-label">DIS · BEAT 3 <span class="paren">(0:28–0:35)</span> <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Ça prend environ 30 secondes, et t'as besoin de rien d'autre que ce qu'il y a dans le kit.</div></div>
+    <div class="do"><div class="do-label">FAIS · BEAT 3</div><div class="do-text"><b>Appuie <kbd>M</kbd></b> après « kit » — marqueur « Réassurance ». Reste sur la scène multi-source.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div><em>Calme, sincère.</em> C'est le beat de confiance. Ne sur-vends pas. Regarde l'objectif.</div>
+  </div>
+</div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene" id="scene-4">
+  <div class="scene-head"><span>Scène 4 — LE RÉSULTAT · MONTRE LE FRUIT</span><span class="scene-time">⏱ 0:35 → 0:50</span><span class="scene-phase phase-payoff">RÉSULTAT</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">…et le résultat, c'est ça.</div><span class="paren">(Pause de 2 secondes COMPLÈTES après « ça ». C'est LE silence le plus important de toute la vidéo. Ne le remplis pas.)</span></div>
+    <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>1</kbd> pour face-cam plein écran (<span class="ui">👋 You</span>). Tiens le produit fini visible. <b>2 secondes de pause</b> — compte « un Mississippi, deux Mississippi » dans ta tête. Ne mets pas de « euh ».</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div><em>Sourire lent et vrai.</em> Tiens le résultat près du visage pour avoir les deux dans le cadre. Ce silence de 2 sec, c'est quand les viewers DÉCIDENT s'ils le veulent. Laisse-les.</div>
+  </div>
+</div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene" id="scene-5">
+  <div class="scene-head"><span>Scène 5 — APPEL À L'ACTION · ENVOIE-LES SUR ETSY</span><span class="scene-time">⏱ 0:50 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Tu peux en chopper un dans ma boutique Etsy — le lien est juste en dessous.</div><span class="paren">(Conversationnel. Comme si tu recommandais l'endroit d'un ami. PAS commercial.)</span></div>
+    <div class="do"><div class="do-label">FAIS</div><div class="do-text">Reste face-cam plein écran. <b>Ne change pas de scène</b> — les viewers ont besoin de tes yeux pour le CTA. Ton watermark (@tonpseudo) parle pour la marque.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div><em>Regard objectif.</em> Léger hochement sur « en dessous ». Petit hochement confiant, pas une dodeline. <em>Ne souris pas trop large ici</em> — ça lit comme du désespoir. Reste chaleureux, pas affamé.</div>
+  </div>
+</div>
+<div class="transition">FADE TO :</div>
+
+<div class="scene" id="scene-6">
+  <div class="scene-head"><span>Scène 6 — IMAGE DE FIN · LA SOUDURE DE BOUCLE</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">FIN</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Merci d'avoir regardé.</div><span class="paren">(Doux. Presque chuchoté. Puis SILENCE 3 secondes complètes.)</span></div>
+    <div class="do"><div class="do-label">FAIS</div><div class="do-text">Ne bouge pas. Ne cligne pas vite. <em>Garde une expression calme et chaleureuse 3 secondes.</em> Ce frame devient ta couverture vidéo ET la soudure de boucle. Puis appuie <kbd>R</kbd> pour STOP.</div></div>
+    <div class="vis"><div class="vis-label">VISUEL</div><em>Composition du dernier frame :</em> visage tiers haut, watermark visible, aucun mouvement. C'est l'image qu'Etsy montre quand la vidéo n'autoplay pas. <em>Fais-en une image que tu serais content de voir en pause.</em></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ━━━━━━━━━━━━━━ MODÈLE B : TUTORIEL ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="tutorial">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Cas d'usage :</b> « Voici comment ça marche. » Tu dis à l'acheteur ce qu'il va savoir faire. Idéal pour kits créatifs, cours, templates.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Copier toutes les répliques</button>
+
+<div class="scene"><div class="scene-head"><span>Scène 1 — HOOK</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">HOOK</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">60 secondes pour apprendre ça. Prêt ?</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>L</kbd> pour le laser au moment où tu dis « ça ». Pointe l'élément le plus intéressant. Sois sur scène <span class="ui">💻 Code</span> (touche <kbd>2</kbd>) pour avoir l'écran en grand.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Grosse énergie. Sourcils relevés rapide sur « Prêt ? »</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 2 — ÉTAPE 1</span><span class="scene-time">⏱ 0:03 → 0:10</span><span class="scene-phase phase-demo">ÉTAPE 1</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Étape un — ouvre l'outil. Clique ici.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Bouge le laser sur la cible un beat AVANT « ici ». Clique l'élément. <b>Appuie <kbd>M</kbd></b> juste après — chapitre « Étape 1 ».</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Ne laisse pas le clic être passif — pause une demi-seconde après pour que les viewers voient le résultat.</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 3 — ÉTAPES 2 + 3</span><span class="scene-time">⏱ 0:10 → 0:30</span><span class="scene-phase phase-demo">ÉTAPES 2–3</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS · ÉTAPE 2 <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Étape deux — choisis l'option que tu veux, ici.</div></div>
+  <div class="do"><div class="do-label">FAIS · ÉTAPE 2</div><div class="do-text">Laser → clic → <kbd>M</kbd>.</div></div>
+  <div class="say"><div class="say-label">DIS · ÉTAPE 3 <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Étape trois — et maintenant tu appuies sur le gros bouton.</div></div>
+  <div class="do"><div class="do-label">FAIS · ÉTAPE 3</div><div class="do-text">Laser cercle le bouton. <b>Appuie <kbd>F</kbd></b> en cliquant — gèle pour souligner que C'EST le moment.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>L'étape 3 est le climax. Ralentis. Laisse le freeze opérer. <em>Ne parle pas par-dessus le freeze.</em></div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 4 — RÉSULTAT</span><span class="scene-time">⏱ 0:30 → 0:45</span><span class="scene-phase phase-payoff">RÉSULTAT</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Et comme ça — fini. Trois étapes.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>5</kbd> pour <span class="ui">🎬 Studio</span> (split multi-source) — les viewers voient ton visage RÉAGIR. Grand sourire.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div><em>Vraie réaction « j'adore ça ».</em> Même si tu l'as fait 100 fois, fake l'émerveillement de la première fois. Les gens copient ton énergie.</div>
+</div></div>
+<div class="transition">FADE TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 5 — CTA</span><span class="scene-time">⏱ 0:45 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Le kit complet est dans ma boutique Etsy. Lien juste en dessous.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>1</kbd> face-cam plein écran. Regard objectif, pas de changement de scène.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Hochement confiant. Pas suppliant. <em>T'as fait ça. T'en es fier. Ils ont de la chance de tomber dessus.</em></div>
+</div></div>
+
+<div class="scene"><div class="scene-head"><span>Scène 6 — FIN</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">FIN</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">J'espère que tu vas faire un truc génial.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Tiens sourire + face-cam 3 secondes en silence. Appuie <kbd>R</kbd>.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Image finale : expression chaleureuse, généreuse. Le genre de visage qu'on voudrait avoir comme ami.</div>
+</div></div>
+</div></div>
+
+<!-- ━━━━━━━━━━━━━━ MODÈLE C : ROBOT ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="robot">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Cas d'usage :</b> projet micro:bit / robot — listings Etsy ciblés enfants. Joue sur la spécialité de NoorCast.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Copier toutes les répliques</button>
+
+<div class="scene"><div class="scene-head"><span>Scène 1 — HOOK</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">HOOK</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Mon robot fait ça — regarde !</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>3</kbd> pour scène <span class="ui">🤖 Robot</span> (firstCam = vue robot). Assure-toi que <span class="ui">📊 Capteurs</span> est ON dans la barre d'outils pour la data live.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Robot centré. <em>Pas besoin d'être dans le plan</em> — laisse la vedette au robot.</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 2 — DÉMO GAUCHE/DROITE</span><span class="scene-time">⏱ 0:03 → 0:18</span><span class="scene-phase phase-demo">CONTRÔLE</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Je lui dis gauche… puis droite… et les servos bougent en direct.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie bouton A sur micro:bit OU drag le slider <span class="ui">Servo 1 (Pan)</span> — slider envoie UART live. Puis bouton B / drag <span class="ui">Servo 2 (Tilt)</span>. <b>Appuie <kbd>M</kbd></b> après chaque mouvement — chapitres « Gauche » / « Droite ».</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Caméra reste sur le robot. Montre les jauges de servos qui répondent. <em>Pan lent</em> pour suivre le mouvement.</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 3 — SECOUE</span><span class="scene-time">⏱ 0:18 → 0:28</span><span class="scene-phase phase-demo">CAPTEURS</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Secoue le cerveau pour le faire péter un câble.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Prends le micro:bit et secoue 2 sec. La courbe accéléromètre spike. Appuie <kbd>F</kbd> au pic — gèle. Appuie <kbd>M</kbd> chapitre « Câble pété ».</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div><em>Léger sourire</em> en secouant. Les enfants adorent voir « la data réagir ». La courbe est la star.</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 4 — LE CODE</span><span class="scene-time">⏱ 0:28 → 0:42</span><span class="scene-phase phase-demo">CODE</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Tout est codé avec environ 20 blocs MakeCode. Pas grand-chose.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>2</kbd> pour scène <span class="ui">💻 Code</span> (écran prend tout). Aie ton MakeCode visible. <kbd>L</kbd> pour pointer 2-3 blocs clés. N'explique pas tout — <em>highlight</em> juste 2 trucs.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Ne traîne pas le laser. <em>Tape, pause, tape, pause.</em> Comme si tu soulignais des mots importants au tableau.</div>
+</div></div>
+<div class="transition">CUT TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 5 — KIT CTA</span><span class="scene-time">⏱ 0:42 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Tu peux en construire un aussi. Le kit complet, le code, les instructions sont dans ma boutique Etsy — lien en dessous.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Appuie <kbd>5</kbd> pour <span class="ui">🎬 Studio</span> (split : visage + vue robot). Tiens le robot pour avoir visage ET robot dans le cadre. <em>Deux vedettes dans le plan final.</em></div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Sourire confiant. Robot à hauteur de poitrine. <em>Les enfants viewers doivent s'imaginer le tenir.</em></div>
+</div></div>
+<div class="transition">FADE TO :</div>
+
+<div class="scene"><div class="scene-head"><span>Scène 6 — FIN + HASHTAG</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">FIN</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">DIS <div class="actions"><button class="btn copy-line">📋 Copier</button><button class="btn read-line">▶ Lire</button></div></div><div class="say-text">Tagge-moi avec #MonRobot quand tu construis le tien.</div></div>
+  <div class="do"><div class="do-label">FAIS</div><div class="do-text">Tiens scène studio (visage + robot). Sourire. 3 sec silence. Appuie <kbd>R</kbd>.</div></div>
+  <div class="vis"><div class="vis-label">VISUEL</div>Image finale = couverture : visage + robot + watermark. <em>Vérifie que ton @pseudo et #hashtag sont lisibles</em> — c'est par là que les viewers trouvent ta boutique.</div>
+</div></div>
+</div></div>
+
+<div class="slug">CHAISE DU RÉA — secrets que les pros utilisent</div>
+<h2 id="director">🎬 Astuces de réa</h2>
+
+<div class="card"><h4>La règle des 5 prises (la plus importante)</h4>
+<p><b>Ne publie jamais ta première prise. Prévois-en 5.</b> Chaque prise s'auto-sauvegarde dans l'historique. Bouton header <span class="ui">🎬 Dernière prise</span> pour y revenir.</p>
+<table>
+  <tr><th>Prise</th><th>Objectif</th><th>À corriger</th></tr>
+  <tr><td><b>1</b></td><td>Lis le script littéralement.</td><td>Trouve les phrases bizarres. Marque-les.</td></tr>
+  <tr><td><b>2</b></td><td>Corrige les bizarreries.</td><td>Moins de lecture, plus de parole.</td></tr>
+  <tr><td><b>3</b></td><td>Lâche complètement le script.</td><td>Parle à un ami, pas à une caméra.</td></tr>
+  <tr><td><b>4</b></td><td>Ralentis 10 %. Ajoute 1 pause volontaire.</td><td>Trouve le rythme.</td></tr>
+  <tr><td><b>5</b></td><td>Ta gardée.</td><td>Sourire, ship.</td></tr>
+</table></div>
+
+<div class="card"><h4>Le truc « regarde l'objectif, pas l'écran »</h4>
+<p>Les débutants fixent la preview. Tes yeux regardent VERS LE BAS dans la vidéo. <b>Colle un mini sticker à côté de l'objectif</b> — un smiley suffit. Parle au sticker. Ton regard caméra passe de « creepy » à « magnétique » en une prise.</p></div>
+
+<div class="card"><h4>La pause de 3 secondes = confiance</h4>
+<p>Après ton CTA, tiens 3 secondes complètes de silence avant STOP. Les débutants trouvent ça gênant. <b>Les viewers le ressentent comme de l'assurance.</b> La boucle Etsy démarre proprement. La soudure disparaît.</p></div>
+
+<div class="card"><h4>Le truc téléprompteur</h4>
+<p>NoorCast a un téléprompteur intégré (Barre → ⋯ Plus → 📜 Tele, ou touche <kbd>T</kbd>). Clique <span class="btn" style="display:inline-block">📤 Copier toutes les répliques</span> sur chaque onglet de script. Puis dans NoorCast, ouvre le téléprompteur, colle, vitesse de scroll <b>30–40 mots/min</b>, lance l'enreg. <b>Regarde l'objectif, pas le téléprompteur</b> — laisse les mots scroller en vision périphérique.</p></div>
+
+<div class="card"><h4>Le multiplicateur d'énergie</h4>
+<p><b>Quelle que soit l'énergie que tu apportes, le viewer en reçoit la MOITIÉ.</b> Si tu te sens « normal », le viewer ressent « fatigué ». Si tu te sens « 150 % », le viewer ressent « bon ». Donc surjoue toujours. Grand sourire. Grands yeux. Grands gestes. <em>Tu reverras la prise et penseras « yikes, c'est trop » — et le viewer pensera « naturel et chaleureux ».</em></p></div>
+
+<div class="card"><h4>L'audio = 60 % de la qualité perçue</h4>
+<p>Micro nul + super caméra = amateur. Micro nul + super micro = pro. <b>Si tu n'investis que dans une chose, prends un micro-cravate à 30 €.</b> La qualité audio inspire la confiance plus vite que la 4K.</p></div>
+
+<div class="card"><h4>La technique du marqueur de chapitre</h4>
+<p>Appuie <kbd>M</kbd> à chaque moment intéressant. Après STOP, dans la modal de prise, clique <span class="btn" style="display:inline-block">✨ Chapitres auto depuis le transcript</span> — AJOUTE plus de chapitres depuis ta voix. Tu finis avec une vidéo parfaitement segmentée + sommaire intégré.</p></div>
+
+<div class="card"><h4>Le freeze sur résultat</h4>
+<p>Appuie <kbd>F</kbd> juste quand le résultat apparaît. Le canvas gèle 1 sec — souligne que C'EST le moment. Particulièrement puissant pour les unboxings, transformations, révélations.</p></div>
+
+<div class="slug">POST-PROD — après la prise</div>
+<h2 id="after">🎁 Après STOP</h2>
+<div class="card">
+  <p>Au moment où tu appuies sur STOP, NoorCast ouvre la <b>modal de prise</b> — overlay plein écran avec ta vidéo à gauche et TOUS les outils post à droite. Descends la colonne droite dans cet ordre :</p>
+  <ol>
+    <li><b>Regarde la lecture une fois.</b> En entier. Yeux hors script. Ça fonctionne ? Sinon clique <span class="ui">🎬 Nouveau tuto</span> et refais.</li>
+    <li><b>Si la prise dépasse 60 sec :</b> clique <span class="ui">📱 Couper à 90 s pour Reels</span>. Re-encode in-browser temps réel. Output nommé <code>&lt;nom&gt;-reels.mp4</code>.</li>
+    <li><b>Clique ✨ Chapitres auto depuis le transcript</b>. Ajoute des marqueurs intelligents depuis ta voix.</li>
+    <li><b>Lis la carte MISSION COMPLETE</b> (mode Kids). Cool factor &lt; 60 ? Tu as besoin de plus d'énergie / scènes / chapitres. Refais.</li>
+    <li><b>Tape un titre propre</b> dans le champ filename. Genre <code>etsy-listing-poterie-cotiere-2026.mp4</code>.</li>
+    <li><b>Note la prise</b> (widget 5 étoiles). T'aide à te souvenir de la gardée si tu refais plus tard.</li>
+    <li><b>Clique 📥 Télécharger</b> (gros bouton vert). Sauve le MP4 dans téléchargements.</li>
+    <li><b>Clique 💬 Sous-titres (.srt)</b>. Sauve les sous-titres. Tu les colleras dans la description Etsy pour le SEO.</li>
+    <li><b>Clique 🖼 Thumbnail (.png)</b>. Sauve la première image. Bon pour les photos produit Etsy.</li>
+    <li><b>Ferme la modal</b> (X ou ESC). NoorCast retient — bouton header <span class="ui">🎬 Dernière prise</span> pour rouvrir si besoin.</li>
+  </ol>
+  <div class="tip">Pour ajuster AVANT upload : ouvre la modal trim in-browser (bouton <span class="ui">✂️ Couper</span>) — scrubbers in/out, viz scène-bandes, exporte un clip réencodé même qualité.</div>
+</div>
+
+<div class="card"><h4>Checklist upload Etsy</h4>
+<ol>
+  <li>Etsy → ta boutique → l'annonce → section Photos &amp; Vidéo.</li>
+  <li>Clique <b>+ Ajouter une vidéo</b>. Upload ton MP4. Etsy compresse (inévitable — c'est pour ça qu'on enregistre à 8 Mbps).</li>
+  <li>Utilise le <b>texte des sous-titres</b> (du fichier SRT) dans la <b>description</b>. La recherche Etsy lit les descriptions. Les mots dits dans la vidéo deviennent trouvables.</li>
+  <li>Le <b>titre de l'annonce</b> doit matcher les premiers mots de ta vidéo. Si tu as dit « 60 secondes pour apprendre le macramé », le titre c'est « Apprendre le macramé en 60 secondes — kit complet + tuto vidéo ».</li>
+  <li>Tagge l'annonce avec les mots que tu as réellement dits.</li>
+  <li>Sauve. Prévisualise comme acheteur. <b>Regarde ta vidéo COMME UN ACHETEUR le ferait.</b> Ça arrête ton scroll ?</li>
+</ol></div>
+
+<div class="slug">URGENCES — quand ça part en vrille</div>
+<h2 id="troubles">🚨 Pannes</h2>
+<div class="card">
+  <table>
+    <tr><th>Symptôme</th><th>Cause probable</th><th>Solution</th></tr>
+    <tr><td>Caméra = carré noir</td><td>Permission refusée</td><td>Barre d'adresse → 🔒 → Caméra → Autoriser. Recharge.</td></tr>
+    <tr><td>Enregistre mais fichier 0 octets</td><td>Bug encodeur Windows MP4 (rare)</td><td>Réglages → Format → switch en WebM. Refais.</td></tr>
+    <tr><td>Audio coupe en plein milieu</td><td>Micro débranché / téléphone a pris la main</td><td>Réglages → 🎤 → re-pick le micro. Vérifie la jauge.</td></tr>
+    <tr><td>Sous-titres absents</td><td>Browser bloque SpeechRecognition / pas de net</td><td>Chrome a besoin d'internet pour live captions au 1er run.</td></tr>
+    <tr><td>Auto-cadrage tremble</td><td>Background avec couleurs peau</td><td>Bouge l'encombrement. Ou désactive auto-cadrage.</td></tr>
+    <tr><td>Prise trop longue (&gt;60 sec)</td><td>Trop dit</td><td>Clique « 📱 Couper à 90 s ». Pour finer trim, ffmpeg.</td></tr>
+    <tr><td>Prise muette à la lecture</td><td>Oublié d'ajouter une source micro</td><td>Refais. Ajoute Mic AVANT REC.</td></tr>
+    <tr><td>Barre d'outils disparue</td><td>T'es en PRÉPARER ou PARTAGER</td><td>Clique <span class="ui">2 RÉGLER</span> ou <span class="ui">3 ENREGISTRER</span>.</td></tr>
+    <tr><td>Framerate chute</td><td>Trop d'autres tabs/apps</td><td>Ferme tout sauf NoorCast. Le CPU est le goulot.</td></tr>
+    <tr><td>Watermark invisible</td><td>Contraste noir-sur-noir</td><td>Réglages → Slogan → texte. v0.9.13 ajoute bordure lime.</td></tr>
+    <tr><td>Fichier trop gros pour Etsy</td><td>Trop long en haute qualité</td><td>Trim à 60 sec. Sinon Réglages → Standard (4 Mbps) + refais.</td></tr>
+  </table>
+</div>
+
+<div class="slug">DICTIONNAIRE — ce que les mots veulent dire</div>
+<h2 id="glossary">📖 Lexique débutant</h2>
+<div class="card"><dl class="glossary">
+  <dt>SOURCE</dt><dd>Un calque d'entrée sur ton canvas. Caméra, partage d'écran, micro, image. Tu peux en avoir plusieurs.</dd>
+  <dt>SCÈNE</dt><dd>Un arrangement sauvé de sources. Clique une tuile dans la sidebar droite pour switcher. <kbd>1</kbd>–<kbd>9</kbd>.</dd>
+  <dt>CANVAS</dt><dd>Le grand rectangle au milieu. Ce qui est enregistré. Hors-canvas = ignoré.</dd>
+  <dt>SAFE ZONE</dt><dd>La boîte verte pointillée en mode 9:16. Là où le viewer va VRAIMENT voir — l'UI Etsy/FB/TikTok couvre les zones rouges.</dd>
+  <dt>MARQUEUR DE CHAPITRE</dt><dd>Un label horodaté dans la vidéo. <kbd>M</kbd> pour drop. Sauvegardé dans le .vtt sidecar.</dd>
+  <dt>WATERMARK</dt><dd>Petit overlay texte/logo dans le coin de chaque enregistrement. Réglages → Slogan. Ton « tampon ».</dd>
+  <dt>ÉTAPE WORKFLOW</dt><dd>Les 4 onglets au-dessus de la barre d'outils (PRÉPARER / RÉGLER / ENREGISTRER / PARTAGER). Auto-avance.</dd>
+  <dt>BARRE DE STATUT</dt><dd>Ligne unique au-dessus de REC. État, sources, format, bitrate, ton handle. Cliquable.</dd>
+  <dt>PRISE</dt><dd>Une tentative d'enregistrement. NoorCast sauve toutes — bouton header <span class="ui">🎬 Dernière prise</span>.</dd>
+  <dt>BURN-IN CAPTIONS</dt><dd>Sous-titres peints sur les pixels de la vidéo (pas piste séparée). Survit la compression réseau.</dd>
+  <dt>HOOK</dt><dd>Les 3 premières secondes. Le segment le plus important. Hook raté = tout le reste sans valeur.</dd>
+  <dt>CTA</dt><dd>« Call To Action » — la ligne qui dit au viewer quoi faire (« lien en dessous », « tagge-moi »). Vers la fin, jamais au milieu.</dd>
+  <dt>END FRAME / SOUDURE DE BOUCLE</dt><dd>Dernière image. Sur Etsy/Reels = couverture ET point de continuation de boucle. Visuellement propre.</dd>
+  <dt>B-ROLL</dt><dd>Visuels de fond pendant ta voix off. NoorCast = scènes multi-source.</dd>
+  <dt>TÉLÉPROMPTEUR</dt><dd>Overlay script qui scroll pendant que tu regardes la caméra. <kbd>T</kbd> pour toggler.</dd>
+</dl></div>
+
+<div class="footer">
+  <p><b>Le Playbook Hollywood Etsy 60 secondes</b> · pour NoorCast v0.10.x</p>
+  <p>Imprime sur A4 (ou A3 pour le mur). Print-friendly — couleurs désaturées, dock caché.</p>
+  <p style="margin-top:14px"><a href="../index.html">← Retour à NoorCast</a> · <a href="./guide-fr.html">Guide complet</a></p>
+</div>
+
+<aside class="teleprompter-dock" aria-label="Quai téléprompteur">
+  <div class="head"><span class="title">📜 Quai téléprompteur</span></div>
+  <button class="copy-all-btn" id="dockCopyAll">📤 Copier toutes les répliques</button>
+  <div class="hint" style="margin-top:8px">Copie toutes les répliques DIS de l'onglet actif. Puis dans NoorCast : <kbd>T</kbd> → coller → <kbd>R</kbd>.</div>
+</aside>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const target = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === target));
+    });
+  });
+  document.querySelectorAll('.checklist').forEach(list => {
+    const key = 'playbook-' + list.dataset.storage;
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+    list.querySelectorAll('li').forEach((li, i) => {
+      const cb = li.querySelector('input[type=checkbox]');
+      if (state[i]) { cb.checked = true; li.classList.add('checked'); }
+      const sync = () => { li.classList.toggle('checked', cb.checked); state[i] = cb.checked; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} };
+      cb.addEventListener('change', sync);
+      li.addEventListener('click', e => { if (e.target.tagName === 'INPUT') return; cb.checked = !cb.checked; sync(); });
+    });
+  });
+  document.querySelectorAll('.copy-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      navigator.clipboard?.writeText(sayText).then(() => {
+        btn.textContent = '✓ Copié'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 Copier'; btn.classList.remove('copied'); }, 1400);
+      }).catch(() => { btn.textContent = '⚠ Bloqué'; });
+    });
+  });
+  document.querySelectorAll('.read-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(sayText);
+        u.lang = 'fr-FR'; u.rate = 0.95; u.pitch = 1.0;
+        speechSynthesis.speak(u);
+        btn.textContent = '🔊 Lecture…';
+        u.onend = () => { btn.textContent = '▶ Lire'; };
+      } catch { btn.textContent = '⚠ N/A'; }
+    });
+  });
+  function copyAllForActiveScript() {
+    const active = document.querySelector('.tab-pane.active');
+    if (!active) return 0;
+    const lines = Array.from(active.querySelectorAll('.say-text')).map(s => s.textContent.trim());
+    navigator.clipboard?.writeText(lines.join('\n\n'));
+    return lines.length;
+  }
+  document.querySelectorAll('.copy-all-script').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = copyAllForActiveScript();
+      btn.textContent = `✓ ${n} répliques copiées — colle dans NoorCast Téléprompteur (T)`;
+      setTimeout(() => { btn.textContent = '📤 Copier toutes les répliques (coller dans le téléprompteur NoorCast)'; }, 3000);
+    });
+  });
+  document.getElementById('dockCopyAll')?.addEventListener('click', () => {
+    const n = copyAllForActiveScript();
+    const b = document.getElementById('dockCopyAll');
+    b.textContent = `✓ ${n} répliques copiées`;
+    setTimeout(() => { b.textContent = '📤 Copier toutes les répliques'; }, 2400);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') speechSynthesis.cancel?.(); });
+</script>
+</body>
+</html>
