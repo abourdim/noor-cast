@@ -866,6 +866,22 @@
              snapshot taken during the session. Hidden when empty. -->
         <div class="tc-snapshot-strip" id="tcSnapshotStrip" style="display:none"></div>
 
+        <!-- v0.9.28: Stage status bar — single line of "status-as-language"
+             that consolidates 5 scattered indicators (state pill, source
+             count, format, bitrate, handle). Each chunk is clickable and
+             jumps to the relevant setting. Self-documenting. -->
+        <div class="tc-stage-status" id="tcStageStatus" role="status" aria-live="polite">
+          <span class="tc-ss-chunk tc-ss-state"   id="tcSsState"  title="Recorder state">🟢 <span data-i18n="ssReady">Ready</span></span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-sources" id="tcSsSources" title="Click to open the Sources sidebar">0 <span data-i18n="ssSources">sources</span></span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-format"  id="tcSsFormat"  title="Click to change canvas format (Settings → Stage format)">16:9</span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-quality" id="tcSsQuality" title="Click to change recording quality">8 Mbps</span>
+          <span class="tc-ss-sep tc-ss-handle-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-handle"  id="tcSsHandle"  title="Your hacker handle"></span>
+        </div>
+
         <!-- REC BAR (template strip moved inline) -->
         <div class="tc-rec-bar">
           <div class="tc-template-strip" id="tcTemplateStrip" style="margin:0"></div>

@@ -3173,6 +3173,74 @@ body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #
 .tc-simple .tc-dashboard-section { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   v0.9.28: Stage status bar — status-as-language single line
+   ═══════════════════════════════════════════════════════════════════ */
+.tc-stage-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 14px;
+  margin: 6px 0 4px;
+  background: linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.18));
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  font-family: var(--font-h, system-ui);
+  font-size: .82rem;
+  color: var(--text-muted);
+  letter-spacing: .3px;
+}
+.tc-ss-chunk {
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.tc-ss-chunk:hover {
+  background: rgba(163, 230, 53, .12);
+  color: var(--accent);
+}
+.tc-ss-state {
+  font-weight: 700;
+  cursor: default;
+}
+.tc-ss-state:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+.tc-ss-state.tc-ss-recording { color: #ef4444; }
+.tc-ss-state.tc-ss-paused    { color: #f59e0b; }
+.tc-ss-sep {
+  color: rgba(255,255,255,.18);
+  user-select: none;
+  padding: 0 2px;
+}
+.tc-ss-handle {
+  color: #4ade80;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+.tc-ss-handle:empty,
+.tc-ss-handle:empty + .tc-ss-sep,
+.tc-ss-handle-sep:has(+ .tc-ss-handle:empty) { display: none; }
+/* Kids mode: chunkier, brighter */
+.tc-kids .tc-stage-status {
+  font-size: .9rem;
+  padding: 10px 16px;
+  border-width: 2px;
+  border-color: rgba(163,230,53,.2);
+}
+/* Brief glow when status-bar chunk routes the user to a sidebar */
+.tc-flash-hint {
+  animation: tcFlashHint .9s ease-out;
+}
+@keyframes tcFlashHint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); }
+  20%      { box-shadow: 0 0 0 6px rgba(163,230,53,.5); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    v0.9.26: Workflow step tabs (SETUP · TUNE · RECORD · SHARE)
    ═══════════════════════════════════════════════════════════════════ */
 .tc-step-tabs {
