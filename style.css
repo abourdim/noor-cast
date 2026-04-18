@@ -3092,6 +3092,170 @@ body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #
 .tc-simple .tc-badges-section,
 .tc-simple .tc-dashboard-section { display: none !important; }
 
+/* ═══════════════════════════════════════════════════════════════════
+   v0.9.15: Kids-mode visual upgrade — chunky, playful, bouncy.
+   Additive on top of base styles; Teacher mode stays clean.
+   Activates via .tc-kids (set on <html> by the FOUC head script and
+   on <body> by applyMode), so rules cascade through the whole tree.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Toolbar buttons — bigger, chunkier, more clickable for kids */
+.tc-kids .tc-tool-btn {
+  padding: 10px 16px;
+  font-size: .88rem;
+  border-radius: 14px;
+  border-width: 2px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.1),
+    0 2px 0 rgba(0,0,0,.4),
+    0 4px 12px rgba(0,0,0,.25);
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .12s ease,
+              background .15s ease;
+}
+.tc-kids .tc-tool-btn .tc-tool-icon { font-size: 1.15rem; }
+.tc-kids .tc-tool-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    0 5px 0 rgba(0,0,0,.45),
+    0 8px 18px rgba(163,230,53,.25);
+}
+.tc-kids .tc-tool-btn:active {
+  transform: translateY(1px) scale(.98);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 1px 0 rgba(0,0,0,.4);
+}
+.tc-kids .tc-tool-btn.active {
+  background: linear-gradient(180deg, rgba(163,230,53,.35), rgba(163,230,53,.15));
+  border-color: rgba(163,230,53,.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    0 0 18px rgba(163,230,53,.5),
+    0 2px 0 rgba(0,0,0,.4);
+}
+.tc-kids .tc-tools-bar { padding: 12px 14px; gap: 8px; }
+.tc-kids .tc-tools-sep { height: 28px; }
+
+/* REC button — unmissable hero element. Pulsing "ready" glow when idle,
+   chunky press feedback, larger touch surface. */
+.tc-kids .tc-rec-btn {
+  padding: 18px 32px;
+  font-size: 1.25rem;
+  letter-spacing: 1.2px;
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,.15);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.18),
+    0 6px 0 rgba(120,0,0,.55),
+    0 10px 24px rgba(239,68,68,.4),
+    0 0 0 0 rgba(239,68,68,.5);
+  animation: kidsRecReadyPulse 2.4s ease-in-out infinite;
+}
+.tc-kids .tc-rec-btn .tc-rec-icon { font-size: 1.4rem; }
+@keyframes kidsRecReadyPulse {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 6px 0 rgba(120,0,0,.55), 0 10px 24px rgba(239,68,68,.4), 0 0 0 0 rgba(239,68,68,.5); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 6px 0 rgba(120,0,0,.55), 0 10px 24px rgba(239,68,68,.4), 0 0 0 12px rgba(239,68,68,0); }
+}
+.tc-kids .tc-rec-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.12);
+}
+.tc-kids .tc-rec-btn.recording {
+  animation: none;  /* the recording-state pulse takes over from base CSS */
+}
+
+/* Stage hint — bigger, friendlier, with bounce animation while empty */
+.tc-kids .tc-stage-hint {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: rgba(163,230,53,.85);
+  text-shadow: 0 0 24px rgba(163,230,53,.35);
+  animation: kidsHintBob 2.8s ease-in-out infinite;
+}
+@keyframes kidsHintBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* Source-add buttons in the left sidebar — make + Ajouter chunky too */
+.tc-kids .tc-source-add-btn,
+.tc-kids #tcAddScreen,
+.tc-kids #tcAddCam,
+.tc-kids #tcAddMic {
+  padding: 12px 14px;
+  font-size: .95rem;
+  font-weight: 800;
+  border-radius: 14px;
+  border-width: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 3px 0 rgba(0,0,0,.4);
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s;
+}
+.tc-kids .tc-source-add-btn:hover,
+.tc-kids #tcAddScreen:hover,
+.tc-kids #tcAddCam:hover,
+.tc-kids #tcAddMic:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    0 5px 0 rgba(0,0,0,.45),
+    0 8px 16px rgba(163,230,53,.2);
+}
+.tc-kids .tc-source-add-btn:active,
+.tc-kids #tcAddScreen:active,
+.tc-kids #tcAddCam:active,
+.tc-kids #tcAddMic:active {
+  transform: translateY(1px) scale(.98);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.4);
+}
+
+/* Scene grid cards — slightly chunkier with bounce on hover */
+.tc-kids .tc-scene-btn {
+  border-width: 2px;
+  border-radius: 12px;
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+}
+.tc-kids .tc-scene-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 8px 20px rgba(163,230,53,.25);
+}
+.tc-kids .tc-scene-btn.active {
+  border-color: rgba(163,230,53,.8);
+  box-shadow: 0 0 18px rgba(163,230,53,.45), inset 0 0 0 1px rgba(255,255,255,.15);
+}
+
+/* Mode badge — bigger and clearer in Kids mode (was tiny + easy to miss) */
+.tc-kids .tc-mode-badge {
+  font-size: .82rem;
+  padding: 5px 12px;
+  border-radius: 14px;
+  opacity: .75;
+  font-weight: 800;
+  letter-spacing: .4px;
+  border: 1.5px solid rgba(163,230,53,.4);
+  background: rgba(163,230,53,.18);
+  box-shadow: 0 2px 8px rgba(163,230,53,.18);
+}
+.tc-kids .tc-mode-badge:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(163,230,53,.35);
+}
+
+/* Toast in Kids mode (already styled in v0.9.11) — make it bouncier */
+.tc-kids .toast-indicator.show {
+  animation: kidsToastIn .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes kidsToastIn {
+  0%   { transform: translateX(-50%) translateY(-40px) scale(.85); opacity: 0; }
+  60%  { transform: translateX(-50%) translateY(4px) scale(1.05); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
 /* v0.7.172: sidebar icon tabs */
 .tc-side-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
 /* v0.7.222 + v0.7.249: clearer active-tab state — inactive tabs heavily
