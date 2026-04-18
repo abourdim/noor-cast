@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.16 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.17 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.16';
+const APP_VERSION = '0.9.17';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -9585,6 +9585,8 @@ const Recorder = {
     SilenceTrim.checkLastTake();
     // v0.9.3: in 9:16 mode, surface a Reels trim button when the take exceeds 90 s
     try { ReelsTrim.checkLastTake(); } catch {}
+    // v0.9.17: Kids-mode MISSION COMPLETE stats card — fun + informative.
+    try { KidsMode.renderMissionCard?.(blob, this.elapsed()); } catch {}
 
     // v0.6.0: snapshot stats for the BadgeCard generator
     BadgeCard.capture(blob, this.elapsed());
@@ -9713,6 +9715,7 @@ const Recorder = {
 
   startTimer() {
     this._reels90Warned = false;  // v0.9.2: reset Reels-cap warning each recording
+    if (typeof Sfx !== 'undefined') Sfx._playCount = 0;  // v0.9.17: per-take SFX count
     this.timerId = setInterval(() => this.updateTimer(), 500);
   },
   stopTimer() {
@@ -18244,6 +18247,8 @@ const Sfx = {
   },
   play(kind) {
     if (!this.enabled) return;
+    // v0.9.17: track play count for the Kids-mode MISSION COMPLETE card
+    this._playCount = (this._playCount || 0) + 1;
     try {
       const ac = this.ctx();
       const o = ac.createOscillator();
@@ -18677,6 +18682,55 @@ const KidsMode = {
   },
 
   // ── 3. Konami easter egg ───────────────────────────────────────────
+  // ── 4. MISSION COMPLETE stats card (Kids mode, post-record) ──────
+  // v0.9.17: shown at the top of the take panel after every recording in
+  // Kids mode. Pure injected DOM — no markup change, easy to remove.
+  renderMissionCard(blob, elapsedMs) {
+    if (!this.isKids()) return;
+    const take = $('tcTake');
+    if (!take) return;
+    // Replace any previous card from this session
+    const prev = document.getElementById('tcKidsMissionCard');
+    if (prev) prev.remove();
+
+    const durSec = Math.max(1, Math.round((elapsedMs || 0) / 1000));
+    const mm = String(Math.floor(durSec / 60)).padStart(2, '0');
+    const ss = String(durSec % 60).padStart(2, '0');
+    const sizeMb = blob && blob.size ? (blob.size / 1024 / 1024).toFixed(1) : '0.0';
+    const fps = (typeof RecordQuality !== 'undefined' && RecordQuality.fps) || 30;
+    const frames = (durSec * fps).toLocaleString();
+    const scenes = (typeof Badges !== 'undefined' && Badges.scenesUsed?.size) || 1;
+    const sounds = (typeof Sfx !== 'undefined' && (Sfx._playCount || 0)) || 0;
+    const chapters = (typeof Chapters !== 'undefined' && Chapters.items?.length) || 0;
+    // Cool-factor heuristic: longer take + more scenes + more chapters = cooler.
+    // Caps at 99% so there's always room to grow.
+    const coolPct = Math.min(99, 30 + Math.min(40, durSec / 2) + scenes * 5 + chapters * 4);
+    const bars = Math.round(coolPct / 10);
+    const meter = '█'.repeat(bars) + '░'.repeat(10 - bars);
+
+    const card = document.createElement('div');
+    card.id = 'tcKidsMissionCard';
+    card.style.cssText = 'margin:14px 0 18px;padding:14px 18px;background:#000;border:2px solid #4ade80;border-radius:10px;color:#4ade80;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.7;text-shadow:0 0 6px rgba(74,222,128,.45);box-shadow:0 0 24px rgba(74,222,128,.25);white-space:pre';
+    // Build the ASCII-art card
+    const pad = (s, n) => String(s).padEnd(n, ' ');
+    const lines = [
+      '╔══════════════════════════════════════════╗',
+      '║  🎬 MISSION COMPLETE                     ║',
+      '║  ──────────────────────────────────────  ║',
+      `║  ${pad('Frames hacked:',     20)}${pad(frames + '',  18)}║`,
+      `║  ${pad('Time on screen:',    20)}${pad(mm + ':' + ss, 18)}║`,
+      `║  ${pad('File size:',         20)}${pad(sizeMb + ' MB', 18)}║`,
+      `║  ${pad('Scenes used:',       20)}${pad(scenes + '',  18)}║`,
+      `║  ${pad('Chapters dropped:',  20)}${pad(chapters + '', 18)}║`,
+      `║  ${pad('Sounds dropped:',    20)}${pad(sounds + '',  18)}║`,
+      `║  ${pad('Cool factor:',       20)}${pad(meter + ' ' + Math.round(coolPct) + '%', 18)}║`,
+      '╚══════════════════════════════════════════╝',
+    ];
+    card.textContent = lines.join('\n');
+    // Insert at the very top of the take panel, above the video
+    take.insertBefore(card, take.firstChild);
+  },
+
   konamiInit() {
     const seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
     let pos = 0;
