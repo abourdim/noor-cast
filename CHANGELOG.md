@@ -3,6 +3,80 @@
 All notable changes to **NoorCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.8.0 — 2026-04-18 (Maturity milestone — first major release)
+
+After a 78-version stabilization run from v0.7.176 → v0.7.254, NoorCast is
+ready for its first major bump. No new features in this release — it's a
+versioning moment that signals "this is mature now" to teachers, schools,
+and Etsy buyers. Everything below already shipped during the v0.7.x run
+and is now consolidated under the v0.8.0 banner.
+
+### Highlights since v0.7.176
+
+**Major new features**
+- 🖼 Background image (PNG/JPG) with cover/contain/stretch/tile fit modes
+- 📶 Recording quality picker (Standard 4 / High 8 / Ultra 12 / Max 20 Mbps)
+- 🔤 UI font picker (7 fonts, Orbitron default)
+- 🇩🇿 SVG language flags next to the language dropdown
+- ↔ Resizable sidebars (both studio left + Settings flyout)
+- 🎛 Servo gauges (pan/tilt) on canvas, draggable + resizable
+- 🎭 Mascots (was Pets) — same dropdown, kid-friendlier name
+- 😊 Co-host draggable + 40 SVG characters in 5 themed groups
+- ⚡ COMBO popup off-switch (Settings → Comportement)
+- 🎵 5 procedural music tracks selector
+
+**micro:bit firmware → V3.6**
+- V3.2: change-detection telemetry (~10× less BLE traffic at idle)
+- V3.3: VER:NoorCast,V3.6,YYYY-MM-DD identity report on connect
+- V3.4: servo-bar LED redraws only on actual angle change
+- V3.5: compass calibration removed (no more "tilt to fill the circle")
+- V3.6: solid X icon when disconnected (basic.showLeds, never queued)
+
+**Saving / recording**
+- Real on-disk size verification — toast tells the truth (no more "Saved 13 MB" lies when the file was 0 bytes)
+- File System Access streaming opt-in (default off → Chrome chip accurate)
+- 12 unit tests for save-verification logic in `tests/save-verification.cjs`
+
+**UI polish**
+- Sidebar tabs: visible labels + custom micro:bit board SVG icon
+- Settings sub-section open/closed state persisted across reloads
+- "What's new" toast on version upgrade
+- Settings sub-section markers redesigned: clean CSS plus/minus boxes
+- Source toolbar hides when source becomes hidden
+- Fullscreen layout fix (handles + toggle hidden when maximized)
+- Click-outside-to-close fix on Settings/Help/Log panels (CSS class mismatch)
+- Backdrop is now invisible — canvas + studio sidebars stay visible
+- Firmware modal: 📥 Download .hex button (skip MakeCode entirely)
+
+**Documentation overhaul**
+- guide.html: 2113 → 3261 lines (+54%) with new Chapter 28 "Settings & Feature Reference (A–Z)" — 44 entries with What/Where/How/Why/Defaults
+- FAQ doubled from 15 → 31 entries covering every recent confusion
+- Cheatsheet: 11 new keyboard shortcuts + "Recently added" section
+- guide-fr.html + guide-ar.html mirror Chapter 28
+- GUIDE.md synced with full v0.7.x changelog
+- 27 synonym groups in Chapter 28's search keywords cheat-sheet
+- Onboarding tour copy updated with v0.8.0 features (FR/EN/AR)
+
+**Architecture / quality**
+- safe()/silentGet/silentSet/silentGetJSON/silentSetJSON/debounce/EventBus helpers (v0.7.208)
+- 86 raw localStorage try/catch sites codemodded to use helpers (v0.7.233)
+- Empty catch count: ~290 → ~205
+- ServoGauge perf fix (skip render when disconnected)
+- Overlay drag write-storms eliminated (200ms debounce)
+- GlobalSearch invalidation hook
+- window.onerror + unhandledrejection handlers
+- BLE disconnect listener
+- Version drift fixed (APP_VERSION + sw.js header + CACHE_NAME aligned)
+
+### Known follow-ups (deferred to v0.9 / v1.0)
+- ES module split of noorcast.js (24k LOC in one file)
+- Settings facade with typed schema + migration story
+- Cross-platform Playwright record→stop tests
+- Mobile/touch experience refinements (currently desktop-only)
+- CI pipeline (lint + test gate on PR)
+
+---
+
 ## v0.7.176 — 2026-04-13 (Draggable watermark + Workshop DIY branding + BLE filter fix)
 
 ### Added

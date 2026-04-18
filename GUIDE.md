@@ -676,4 +676,4 @@ This Markdown reference is a high-level tour. For deep coverage, the full HTML g
 
 ---
 
-*NoorCast v0.7.243 — A professional tool for teachers who code with robots*
+*NoorCast v0.8.0 — A professional tool for teachers who code with robots*

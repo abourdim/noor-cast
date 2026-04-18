@@ -1,5 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.254 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.0 — kids-friendly multi-cam screen recorder
+   ════════════════════════════════════════════════════════════════════
+   First major release after v0.7.176 → v0.7.254 stabilization run.
+   Documented in guide.html Chapter 28 + GUIDE.md "What's new".
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.254';
+const APP_VERSION = '0.8.0';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -764,17 +767,17 @@ const LANG = {
     customAccentReset: '🎨 Couleur par défaut restaurée',
     // v0.7.143: canvas background color picker
     canvasBgColor: '🎨 Couleur de fond du canvas',
-    // v0.7.36: first-time guided tour
+    // v0.7.36 + v0.8.0: first-time guided tour
     tour_1_title: '📹 Sources',
-    tour_1_body: 'Commence par ajouter une source — écran, caméra ou micro.',
+    tour_1_body: 'Commence par ajouter une source — écran, caméra ou micro. Tu peux aussi mettre une image PNG comme fond dans Réglages → Apparence.',
     tour_2_title: '🎬 Stage',
-    tour_2_body: 'Compose ta scène ici — drag-drop, redimensionne, change de forme.',
+    tour_2_body: 'Compose ta scène ici — drag-drop, redimensionne, change de forme. Le filigrane et le copilote (😊 Co-host) sont aussi déplaçables.',
     tour_3_title: '🎭 Scènes',
-    tour_3_body: 'Change de layout en 1 clic — touches 1-9 aussi.',
+    tour_3_body: 'Change de layout en 1 clic — touches 1-9 aussi. Drag la poignée ⋮⋮ pour réordonner.',
     tour_4_title: '🔴 Enregistre',
-    tour_4_body: 'Clique pour démarrer — R au clavier aussi.',
-    tour_5_title: '⌨ Raccourcis',
-    tour_5_body: 'Touche ? pour voir tous les raccourcis clavier.',
+    tour_4_body: 'Clique pour démarrer — R au clavier aussi. La qualité vidéo est réglable dans Réglages → Enregistrement (4 niveaux : Standard à Max).',
+    tour_5_title: '🔍 Recherche universelle (Ctrl+K)',
+    tour_5_body: 'Ctrl+K (ou /) ouvre la recherche : tape n\'importe quel terme — scène, mascotte, son, raccourci — et clique. La touche ? affiche tous les raccourcis clavier.',
     tour_skip: 'Passer', tour_back: '← Retour', tour_next: 'Suivant →', tour_done: 'Terminé ✓',
     // v0.7.43: rich hover tooltips on tools bar buttons
     tip_laser: 'Pointeur laser rouge qui suit ta souris',
@@ -1481,17 +1484,17 @@ const LANG = {
     customAccentReset: '🎨 Default color restored',
     // v0.7.143: canvas background color picker
     canvasBgColor: '🎨 Canvas background color',
-    // v0.7.36: first-time guided tour
+    // v0.7.36 + v0.8.0: first-time guided tour
     tour_1_title: '📹 Sources',
-    tour_1_body: 'Start by adding a source — screen, camera, or mic.',
+    tour_1_body: 'Start by adding a source — screen, camera, or mic. You can also drop a PNG as the canvas background in Settings → Appearance.',
     tour_2_title: '🎬 Stage',
-    tour_2_body: 'Compose your scene here — drag-drop, resize, change shape.',
+    tour_2_body: 'Compose your scene here — drag-drop, resize, change shape. The watermark and the Co-host (😊) are draggable too.',
     tour_3_title: '🎭 Scenes',
-    tour_3_body: 'Switch layout in one click — 1-9 hotkeys too.',
+    tour_3_body: 'Switch layout in one click — 1-9 hotkeys too. Drag the ⋮⋮ grip to reorder.',
     tour_4_title: '🔴 Record',
-    tour_4_body: 'Click to start — R keyboard shortcut too.',
-    tour_5_title: '⌨ Shortcuts',
-    tour_5_body: 'Press ? to see all keyboard shortcuts.',
+    tour_4_body: 'Click to start — R keyboard shortcut too. Video quality is adjustable in Settings → Recording (4 tiers: Standard to Max).',
+    tour_5_title: '🔍 Universal search (Ctrl+K)',
+    tour_5_body: 'Ctrl+K (or /) opens search: type any term — scene, mascot, sound, shortcut — and click. Press ? for the full keyboard shortcut list.',
     tour_skip: 'Skip', tour_back: '← Back', tour_next: 'Next →', tour_done: 'Done ✓',
     // v0.7.43: rich hover tooltips on tools bar buttons
     tip_laser: 'Red laser pointer that follows your mouse',
@@ -2184,17 +2187,17 @@ const LANG = {
     customAccentReset: '🎨 تم استعادة اللون الافتراضي',
     // v0.7.143: canvas background color picker
     canvasBgColor: '🎨 لون خلفية اللوحة',
-    // v0.7.36: first-time guided tour
+    // v0.7.36 + v0.8.0: first-time guided tour
     tour_1_title: '📹 المصادر',
-    tour_1_body: 'ابدأ بإضافة مصدر — شاشة، كاميرا، أو ميكروفون.',
+    tour_1_body: 'ابدأ بإضافة مصدر — شاشة، كاميرا، أو ميكروفون. يمكنك أيضًا استخدام صورة PNG كخلفية في الإعدادات → المظهر.',
     tour_2_title: '🎬 المسرح',
-    tour_2_body: 'قم بتأليف مشهدك هنا — سحب، إفلات، تغيير الحجم والشكل.',
+    tour_2_body: 'قم بتأليف مشهدك هنا — سحب، إفلات، تغيير الحجم والشكل. العلامة المائية و Co-host (😊) قابلان للسحب أيضًا.',
     tour_3_title: '🎭 المشاهد',
-    tour_3_body: 'بدّل التخطيط بنقرة واحدة — أو بمفاتيح 1-9.',
+    tour_3_body: 'بدّل التخطيط بنقرة واحدة — أو بمفاتيح 1-9. اسحب المقبض ⋮⋮ لإعادة الترتيب.',
     tour_4_title: '🔴 سجّل',
-    tour_4_body: 'انقر للبدء — أو اضغط R.',
-    tour_5_title: '⌨ الاختصارات',
-    tour_5_body: 'اضغط ? لرؤية جميع الاختصارات.',
+    tour_4_body: 'انقر للبدء — أو اضغط R. جودة الفيديو قابلة للتعديل في الإعدادات → التسجيل (4 مستويات).',
+    tour_5_title: '🔍 بحث شامل (Ctrl+K)',
+    tour_5_body: 'Ctrl+K (أو /) يفتح البحث: اكتب أي مصطلح — مشهد، تميمة، صوت، اختصار — وانقر. اضغط ? لرؤية جميع الاختصارات.',
     tour_skip: 'تخطي', tour_back: '← رجوع', tour_next: 'التالي →', tour_done: 'انتهى ✓',
     // v0.7.43: rich hover tooltips on tools bar buttons
     tip_laser: 'مؤشر ليزر أحمر يتبع الفأرة',
