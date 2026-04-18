@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.3 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.4 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.3';
+const APP_VERSION = '0.8.4';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -4653,6 +4653,7 @@ const Engine = {
       video.muted = true;
       await video.play();
       const src = {
+        // v0.8.4: Android-style rounded corners by default (20px) — was 0
         id: this.nextId++, type: 'screen', stream, video,
         label: t('sourceScreen'),
         x: 0, y: 0, w: this.width, h: this.height,
@@ -4664,7 +4665,7 @@ const Engine = {
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false, aspectLock: false,
         rotation: 0,
-        cornerRadius: 0,
+        cornerRadius: 20,
         badgeText: '',
         badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
@@ -4712,13 +4713,28 @@ const Engine = {
       video.muted = true;
       await video.play();
       const n = this.sources.filter(s => s.type === 'cam').length;
-      // stagger placements
+      // v0.8.4: 4 corner positions + diagonal cascade beyond — no overlap.
+      // Was 3 positions cycling; the 4th cam landed exactly on the 1st.
+      const W = 440, H = 280, M = 40;
       const positions = [
-        { x: 1440, y: 760, w: 440, h: 280 },  // bottom-right
-        { x: 40, y: 760, w: 440, h: 280 },    // bottom-left
-        { x: 40, y: 40, w: 440, h: 280 },     // top-left
+        { x: Engine.width - W - M,  y: Engine.height - H - M },  // bottom-right
+        { x: M,                     y: Engine.height - H - M },  // bottom-left
+        { x: M,                     y: M },                       // top-left
+        { x: Engine.width - W - M,  y: M },                       // top-right
       ];
-      const pos = positions[n % 3];
+      let pos;
+      if (n < positions.length) {
+        pos = { x: positions[n].x, y: positions[n].y, w: W, h: H };
+      } else {
+        // 5th camera onwards: cascade diagonally from bottom-right by 36px steps,
+        // so each new cam is clearly visible alongside the older ones.
+        const step = 36 * (n - positions.length + 1);
+        pos = {
+          x: Math.max(M, Engine.width  - W - M - step),
+          y: Math.max(M, Engine.height - H - M - step),
+          w: W, h: H,
+        };
+      }
       const src = {
         id: this.nextId++, type: 'cam', stream, video,
         label: label || `Camera ${n + 1}`,
@@ -4731,7 +4747,7 @@ const Engine = {
         shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
         locked: false, aspectLock: false,
         rotation: 0,
-        cornerRadius: 0,
+        cornerRadius: 20,
         badgeText: '',
         badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
       };
@@ -4784,7 +4800,7 @@ const Engine = {
           shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
           locked: false, aspectLock: false,
           rotation: 0,
-          cornerRadius: 0,
+          cornerRadius: 20,
           badgeText: '',
           badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
         };
@@ -4825,7 +4841,7 @@ const Engine = {
       shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 5, shadowOffsetY: 5,
       locked: false, aspectLock: false,
       rotation: 0,
-      cornerRadius: 0,
+      cornerRadius: 20,
       badgeText: '',
       badgeColor: '#e74c3c', avatarMode: false, privacyBlur: false,
     };
