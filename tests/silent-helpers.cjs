@@ -25,6 +25,9 @@ const checks = [
   ['safe() helper exists',     /function safe\(fn, ctx\)/.test(src)],
   ['debounce() helper exists', /function debounce\(fn,/.test(src)],
   ['EventBus.on exists',       /EventBus = \{[\s\S]*?on\(target, evt, fn/.test(src)],
+  ['WhatsNew.maybeShow exists', /const WhatsNew[\s\S]*?maybeShow\(\)/.test(src)],
+  ['WhatsNew wired into init',  /WhatsNew\.maybeShow\(\)/.test(src)],
+  ['WhatsNew compares semver',  /_olderThan\(a, b\)/.test(src)],
 
   // After the helper block, no raw localStorage calls should remain
   ['no raw localStorage.getItem after helpers',

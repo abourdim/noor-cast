@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.4 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.5 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.4';
+const APP_VERSION = '0.9.5';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -18511,6 +18511,42 @@ const TipOfDay = {
 
 /* v0.7.100: One-shot milestone splash for the 100th version bump. Shown
    exactly once on the first launch of v0.7.100, gated by tc-v100-seen. */
+/* v0.9.5 — WhatsNew: surfaces a one-shot toast pointing at the new
+   Reels-mode features when an existing user (last seen < 0.9.0) opens
+   a v0.9.x build for the first time. Lightweight on purpose — modals
+   feel intrusive on relaunch; a toast that mentions the new toolbar
+   button is enough discoverability. Marks itself seen via
+   tc-last-seen-version so it never shows twice for the same arc. */
+const WhatsNew = {
+  // Compare semver-ish "a.b.c" — return true if version `a` is older than `b`.
+  _olderThan(a, b) {
+    const pa = a.split('.').map(n => parseInt(n, 10));
+    const pb = b.split('.').map(n => parseInt(n, 10));
+    for (let i = 0; i < 3; i++) {
+      if ((pa[i] || 0) < (pb[i] || 0)) return true;
+      if ((pa[i] || 0) > (pb[i] || 0)) return false;
+    }
+    return false;
+  },
+  maybeShow() {
+    const last = silentGet('tc-last-seen-version', null);
+    // First-ever launch: just record current version, don't bother the user.
+    if (!last) {
+      silentSet('tc-last-seen-version', APP_VERSION);
+      return;
+    }
+    if (last === APP_VERSION) return;
+    // Returning user — was the previous arc < 0.9.0? If so, point at Reels.
+    if (this._olderThan(last, '0.9.0') && !this._olderThan(APP_VERSION, '0.9.0')) {
+      // Wait for splash / onboarding to settle.
+      setTimeout(() => {
+        showToast('📱 New in v0.9: Reels mode! Settings → Stage format → 9:16 + the new 📱 toolbar button.', 7000);
+      }, 4000);
+    }
+    silentSet('tc-last-seen-version', APP_VERSION);
+  },
+};
+
 const V100Celebration = {
   maybeShow() {
     // v0.8.5: this splash was a one-shot for the v0.7.100 release. We're
@@ -23667,6 +23703,7 @@ async function init() {
   } catch {}
   TipOfDay.maybeShow();
   V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
+  WhatsNew.maybeShow();         // v0.9.5: discoverability for upgraders
   GuidedTour.maybeAutoStart();
   setupHelpTabs();
   // v0.7.172: sidebar icon tabs
