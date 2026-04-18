@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.8 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.0 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.8';
+const APP_VERSION = '0.9.0';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -3179,9 +3179,24 @@ const StageAspect = {
       showToast(t('aspectLockedDuringRec') || '⚠ Impossible de changer pendant un enregistrement', 2500);
       return;
     }
+    const prev = this.current;
     this.current = key;
     silentSet('tc-stage-aspect', key);
     this.apply(key, false);
+    // v0.9.0: when user first switches to a vertical preset (Reels/TikTok/Shorts),
+    // turn the safe-zone guide on so they immediately see where the platform UI
+    // will cover the video. One-shot — flip back to landscape once and the guide
+    // stays where the user left it.
+    if (key === '9:16' && prev !== '9:16' && silentGet('tc-safezone-introduced', '0') !== '1') {
+      try {
+        if (typeof SafeZone !== 'undefined') {
+          SafeZone.visible = true;
+          silentSet('tc-safezone', '1');
+        }
+        silentSet('tc-safezone-introduced', '1');
+        showToast('📱 Reels mode — safe-zone guide ON. Toggle in Fun popup.', 3500);
+      } catch {}
+    }
   },
 
   apply(key, initial) {
@@ -3798,6 +3813,9 @@ const Engine = {
 
     // v0.7.98: stage watermark text overlay (corner stamp)
     Watermark.render(ctx, width, height);
+
+    // v0.9.0: Reels safe-zone guide (editor-only — never recorded)
+    SafeZone.render(ctx, width, height);
 
     // v0.7.46: grid overlay — shown only while Alt-drag is active
     if (Drag._gridVisible) {
@@ -11442,6 +11460,56 @@ const Watermark = {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.text, bx + 10, by + th / 2);
+    ctx.restore();
+  },
+};
+
+/* v0.9.0 — SafeZone: editor-only guide for vertical (9:16) recordings
+   so users see exactly where Reels/TikTok/Shorts UI will cover the
+   video. Draws semi-transparent red masks over:
+     - Top 13%   (Reels header / back arrow)
+     - Bottom 31% (caption + username + music tag)
+     - Right 14% (action buttons column)
+   NEVER renders into the recording — gated on Recorder.state. Only
+   meaningful in 9:16 portrait; silent otherwise.
+   Toggle via Fun popup button or auto-on first time user picks 9:16. */
+const SafeZone = {
+  visible: false,
+  load() {
+    this.visible = silentGet('tc-safezone', '0') === '1';
+  },
+  toggle() {
+    this.visible = !this.visible;
+    silentSet('tc-safezone', this.visible ? '1' : '0');
+  },
+  render(ctx, W, H) {
+    if (!this.visible) return;
+    // Don't bake into recording — editor-only guide
+    if (typeof Recorder !== 'undefined' && Recorder.state === 'recording') return;
+    // Only meaningful for vertical canvases (9:16, 4:5, etc.)
+    if (H <= W) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+    // Top header zone (13% of height)
+    ctx.fillRect(0, 0, W, H * 0.13);
+    // Bottom caption + buttons zone (31% of height)
+    ctx.fillRect(0, H * 0.69, W, H * 0.31);
+    // Right action column (14% of width, between top and bottom zones)
+    ctx.fillRect(W * 0.86, H * 0.13, W * 0.14, H * 0.56);
+    // Outline the safe area
+    ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+    ctx.setLineDash([10, 6]);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(W * 0.02, H * 0.135, W * 0.84 - W * 0.02, H * 0.69 - H * 0.135);
+    // Label
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.font = 'bold 28px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('📱 REELS SAFE ZONE', W / 2, H * 0.42);
+    ctx.font = '16px system-ui, sans-serif';
+    ctx.fillText('Keep important content inside the green box', W / 2, H * 0.46);
+    ctx.fillText('Red areas will be covered by the FB/TikTok UI', W / 2, H * 0.49);
     ctx.restore();
   },
 };
@@ -22410,6 +22478,22 @@ function wireEvents() {
     e.target.closest('.tc-tool-btn')?.classList.toggle('active', ServoGauge.visible);
     showToast(ServoGauge.visible ? '🎛 Gauges ON' : '🎛 Gauges OFF', 1200);
   });
+  // v0.9.0: Reels safe-zone guide toggle (editor-only, never recorded)
+  (() => {
+    const btn = $('tcSafeZoneBtn');
+    if (!btn) return;
+    btn.classList.toggle('active', SafeZone.visible);
+    btn.addEventListener('click', () => {
+      SafeZone.toggle();
+      btn.classList.toggle('active', SafeZone.visible);
+      const isPortrait = (typeof StageAspect !== 'undefined') && StageAspect.current === '9:16';
+      if (SafeZone.visible && !isPortrait) {
+        showToast('📱 Safe-zone ON — switch to 9:16 in Settings to see it', 2400);
+      } else {
+        showToast(SafeZone.visible ? '📱 Reels safe-zone ON' : '📱 Reels safe-zone OFF', 1500);
+      }
+    });
+  })();
   $('tcSnapBtn').addEventListener('click', () => snapshot());
 
   // Rec bar
@@ -23245,6 +23329,7 @@ async function init() {
   Brand.load();
   Watermark.load();  // v0.7.98
   ServoGauge.load(); // v0.7.177
+  SafeZone.load();   // v0.9.0 — Reels safe-zone guide visibility
   VoiceFx.load();    // v0.7.182
   BgMusic.load();    // v0.7.184
   VoiceCommands.load(); // v0.7.185
