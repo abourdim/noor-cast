@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.17 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.18 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.17';
+const APP_VERSION = '0.9.18';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -18682,7 +18682,51 @@ const KidsMode = {
   },
 
   // ── 3. Konami easter egg ───────────────────────────────────────────
-  // ── 4. MISSION COMPLETE stats card (Kids mode, post-record) ──────
+  // ── 4. Empty-canvas drop-zone hint (Kids mode) ───────────────────
+  // v0.9.18: replace the small bobbing "👆 Add a source" text with three
+  // chunky clickable buttons that DO the thing on click. Way more
+  // discoverable for kids who don't read instructions.
+  installStageHint() {
+    if (!this.isKids()) return;
+    const hint = $('tcStageHint');
+    if (!hint || hint.dataset.kidsInstalled === '1') return;
+    hint.dataset.kidsInstalled = '1';
+    hint.innerHTML = '';
+    hint.style.pointerEvents = 'auto';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:center';
+    const make = (icon, label, sub, onClick) => {
+      const b = document.createElement('button');
+      b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 28px;background:linear-gradient(180deg,rgba(163,230,53,.12),rgba(163,230,53,.04));border:2px dashed rgba(163,230,53,.5);border-radius:18px;color:#a3e635;font-family:inherit;cursor:pointer;min-width:160px;transition:transform .15s cubic-bezier(.34,1.56,.64,1),background .15s,border-color .15s';
+      b.innerHTML = `<div style="font-size:48px;line-height:1">${icon}</div><div style="font-size:1.1rem;font-weight:800;letter-spacing:.5px">${label}</div><div style="font-size:.75rem;opacity:.7;font-weight:500">${sub}</div>`;
+      b.addEventListener('mouseenter', () => {
+        b.style.transform = 'translateY(-4px) scale(1.04)';
+        b.style.background = 'linear-gradient(180deg,rgba(163,230,53,.22),rgba(163,230,53,.08))';
+        b.style.borderColor = 'rgba(163,230,53,.85)';
+      });
+      b.addEventListener('mouseleave', () => {
+        b.style.transform = '';
+        b.style.background = 'linear-gradient(180deg,rgba(163,230,53,.12),rgba(163,230,53,.04))';
+        b.style.borderColor = 'rgba(163,230,53,.5)';
+      });
+      b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+      return b;
+    };
+    wrap.appendChild(make('📺', 'Screen', 'Capture a window or your whole desktop', () => $('srcScreenBtn')?.click()));
+    wrap.appendChild(make('🎥', 'Camera', 'Webcam, phone, or any USB cam', () => {
+      const sel = $('camSelect');
+      if (sel && sel.value) $('srcCamBtn')?.click();
+      else { sel?.focus(); showToast('🎥 Pick a camera in the left sidebar first', 2400); }
+    }));
+    wrap.appendChild(make('🎤', 'Mic', 'Add your voice', () => {
+      const sel = $('micSelect');
+      sel?.focus();
+      showToast('🎤 Pick a mic in the left sidebar — voice gets added automatically', 2800);
+    }));
+    hint.appendChild(wrap);
+  },
+
+  // ── 5. MISSION COMPLETE stats card (Kids mode, post-record) ──────
   // v0.9.17: shown at the top of the take panel after every recording in
   // Kids mode. Pure injected DOM — no markup change, easy to remove.
   renderMissionCard(blob, elapsedMs) {
@@ -24087,6 +24131,7 @@ async function init() {
   KidsMode.konamiInit();
   KidsMode.bootSeq();
   KidsMode.maybePickHandle();
+  KidsMode.installStageHint();  // v0.9.18: chunky empty-canvas drop-zones
   // v0.9.16: SFX feedback on every Kids-mode click. Delegated so it works
   // for dynamically-added buttons (scene cards, source rows). One listener
   // for the whole document. Fires only when in Kids mode AND user actually

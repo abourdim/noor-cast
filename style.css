@@ -3167,17 +3167,16 @@ body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #
   animation: none;  /* the recording-state pulse takes over from base CSS */
 }
 
-/* Stage hint — bigger, friendlier, with bounce animation while empty */
+/* Stage hint — Kids mode: container for the 3 drop-zone buttons (built
+   by KidsMode.installStageHint). Dropped the bobbing animation since
+   the buttons themselves animate on hover. Container fades in on first
+   render so it doesn't pop in jarringly. */
 .tc-kids .tc-stage-hint {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: rgba(163,230,53,.85);
-  text-shadow: 0 0 24px rgba(163,230,53,.35);
-  animation: kidsHintBob 2.8s ease-in-out infinite;
+  animation: kidsHintFadeIn .5s ease-out;
 }
-@keyframes kidsHintBob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+@keyframes kidsHintFadeIn {
+  from { opacity: 0; transform: scale(.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* Source-add buttons in the left sidebar — make + Ajouter chunky too.
