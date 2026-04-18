@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.251 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.252 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.251';
+const APP_VERSION = '0.7.252';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -8841,21 +8841,24 @@ const Recorder = {
       this._chunkCount = 0;
       this._totalBytes = 0;
       this._fileWriter = null; // v0.7.159: File System Access API writer
+      this._fileHandle = null; // v0.7.252: kept so we can verify size after close
+      this._fileWriteErrors = 0; // v0.7.252: count failed writes (was swallowed)
 
       // v0.7.159: try to open a writable file handle for streaming long recordings
       // to disk instead of accumulating all chunks in RAM.
       if (typeof showSaveFilePicker === 'function') {
         try {
           const ext = this.recorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
-          const handle = await showSaveFilePicker({
+          this._fileHandle = await showSaveFilePicker({
             suggestedName: `noorcast-${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.${ext}`,
             types: [{ description: 'Video', accept: { [`video/${ext}`]: [`.${ext}`] } }],
           });
-          this._fileWriter = await handle.createWritable();
+          this._fileWriter = await this._fileHandle.createWritable();
           log('💾 Streaming to disk via File System Access API', 'info');
         } catch {
           // User cancelled or API unavailable — fall back to RAM chunks
           this._fileWriter = null;
+          this._fileHandle = null;
         }
       }
 
@@ -8865,7 +8868,14 @@ const Recorder = {
         this._totalBytes += sz;
         if (sz > 0) {
           if (this._fileWriter) {
-            this._fileWriter.write(e.data).catch(() => {});
+            // v0.7.252: log write failures instead of swallowing. Each failed
+            // write means the on-disk file is missing data.
+            this._fileWriter.write(e.data).catch((err) => {
+              this._fileWriteErrors++;
+              if (this._fileWriteErrors <= 3) {
+                log(`✗ disk write #${this._chunkCount} failed: ${err?.message || err}`, 'error');
+              }
+            });
           } else {
             this.chunks.push(e.data);
           }
@@ -8910,7 +8920,13 @@ const Recorder = {
             this._totalBytes += sz;
             if (sz > 0) {
               if (this._fileWriter) {
-                this._fileWriter.write(e.data).catch(() => {});
+                // v0.7.252: same write-error tracking as the main path
+                this._fileWriter.write(e.data).catch((err) => {
+                  this._fileWriteErrors++;
+                  if (this._fileWriteErrors <= 3) {
+                    log(`✗ disk write #${this._chunkCount} failed (watchdog path): ${err?.message || err}`, 'error');
+                  }
+                });
               } else {
                 this.chunks.push(e.data);
               }
@@ -9177,24 +9193,48 @@ const Recorder = {
       this._suppressNextStopFinish = false;
       return;
     }
-    // v0.7.159: if streaming to disk, close the writer — file is already saved
+    // v0.7.252: real verification of on-disk size after close (was a lie before).
+    // The previous "Saved X MB to disk" toast just printed _totalBytes — what
+    // the recorder PROMISED to write, NOT what actually landed on disk. If the
+    // writes were silently failing (permission, disk full, drive disconnected,
+    // codec emitting 0-byte chunks), the user got a happy "saved!" toast but
+    // had a 0-byte file. Now we re-open the saved file via the kept handle
+    // and check its actual size; the toast tells the truth.
     if (this._fileWriter) {
-      // v0.7.217: Chrome's download chip for File System Access API streams
-      // often shows "0 octets / OK" because it can't see through the direct
-      // disk handle — the file on disk is correct, but Chrome's UI lies.
-      // Show an accurate size toast so the user trusts us over Chrome.
-      const totalBytes = this._totalBytes || 0;
-      const humanSize = totalBytes > 1024 * 1024
-        ? (totalBytes / 1024 / 1024).toFixed(1) + ' MB'
-        : totalBytes > 1024 ? Math.round(totalBytes / 1024) + ' KB' : totalBytes + ' B';
-      this._fileWriter.close().then(() => {
-        log(`💾 Recording saved to disk — ${humanSize} (Chrome's 0-byte chip is a known bug, file IS valid)`, 'info');
-        showToast(`💾 Saved ${humanSize} to disk (ignore Chrome 0-byte chip, file is OK)`, 5000);
+      const promisedBytes = this._totalBytes || 0;
+      const writeErrors = this._fileWriteErrors || 0;
+      const handle = this._fileHandle;
+      this._fileWriter.close().then(async () => {
+        let actualBytes = -1; // -1 = couldn't verify (handle.getFile not available)
+        try {
+          if (handle && typeof handle.getFile === 'function') {
+            const f = await handle.getFile();
+            actualBytes = f.size;
+          }
+        } catch (e) {
+          log('⚠ Could not verify on-disk size: ' + (e?.message || e), 'error');
+        }
+        const fmt = (b) => b > 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' MB'
+                       : b > 1024 ? Math.round(b / 1024) + ' KB' : b + ' B';
+        if (actualBytes === 0) {
+          // The blocking bug. File on disk is empty.
+          log(`✗ ON-DISK SIZE IS 0 BYTES. recorder promised ${promisedBytes} B, write errors: ${writeErrors}. The file is broken.`, 'error');
+          showToast(`❌ Save failed — file is 0 bytes! ${writeErrors > 0 ? '(disk write errors)' : '(recorder produced no data)'} Try again with a different format / location.`, 8000);
+        } else if (actualBytes > 0) {
+          // Real success.
+          log(`💾 Recording saved — ${fmt(actualBytes)} on disk (recorder said ${fmt(promisedBytes)}, ${writeErrors} write errors)`, 'info');
+          showToast(`💾 Saved ${fmt(actualBytes)} to disk ✓`, 4000);
+        } else {
+          // Couldn't verify (very old browser?). Fall back to the recorder count.
+          log(`💾 Recording saved (size unverified). Recorder reported ${fmt(promisedBytes)}.`, 'info');
+          showToast(`💾 Saved ~${fmt(promisedBytes)} to disk`, 4000);
+        }
       }).catch((err) => {
         log('✗ Failed to close file writer: ' + (err?.message || err), 'error');
-        showToast('⚠ File save issue — check the downloads folder', 4000);
+        showToast('⚠ File save error — recording may be incomplete. Check the saved file.', 6000);
       });
       this._fileWriter = null;
+      this._fileHandle = null;
       this._savedToDisk = true;
       // Still run the rest of finish() for chapters/history
     }
