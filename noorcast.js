@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.31 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.0 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.31';
+const APP_VERSION = '0.10.0';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -265,6 +265,7 @@ const LANG = {
     ssSource: 'source', ssSources: 'sources',
     addASource: 'Ajouter une source',
     replayTour: 'Revoir la visite de 30 s',
+    autoFrame: 'Auto-cadrage', autoFrameTitle: 'Cadrage intelligent',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -999,6 +1000,7 @@ const LANG = {
     ssSource: 'source', ssSources: 'sources',
     addASource: 'Add a source',
     replayTour: 'Replay 30-sec tour',
+    autoFrame: 'Auto-frame', autoFrameTitle: 'Smart frame',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1722,6 +1724,7 @@ const LANG = {
     ssSource: 'مصدر', ssSources: 'مصادر',
     addASource: 'أضف مصدراً',
     replayTour: 'إعادة جولة الـ 30 ثانية',
+    autoFrame: 'تأطير تلقائي', autoFrameTitle: 'تأطير ذكي',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
@@ -3876,7 +3879,15 @@ const Engine = {
     } else {
       // draw visible sources (filter non-video, respect manual hide)
       const visible = this.sources.filter(s => s.type !== 'mic' && s.visible !== false && !s.hidden && (s.type === 'shape' || s.type === 'image' || (s.video && s.video.readyState >= 2)));
-      visible.forEach(src => this.drawSource(src));
+      visible.forEach(src => {
+        // v0.10.0: AutoFrame — probe + lerp crop values BEFORE draw so the
+        // existing crop logic in drawSource picks them up automatically.
+        if (src.autoFrame && src.type === 'cam') {
+          AutoFrame.probe(src);
+          AutoFrame.applyLerp(src);
+        }
+        this.drawSource(src);
+      });
     }
 
     if (zoomed) ctx.restore();
@@ -11599,6 +11610,97 @@ const Brand = {
   },
 };
 
+/* v0.10.0 — AutoFrame: skin-tone-based "Center Stage" tracking that pans
+   the visible crop of a cam source to keep the speaker's face roughly
+   centered. Pure JS, no dependency, no network. ~5 fps detection (every
+   200 ms), smooth lerp toward target so the source doesn't jitter.
+
+   Algorithm
+   - Sample the cam <video> element into a 60×40 offscreen canvas.
+   - For each pixel, classify as skin-tone using the well-known
+     R>95, G>40, B>20, R>G, R>B, max-min>15 heuristic (Kovac et al.).
+   - Compute the centroid of the skin-tone pixels.
+   - Convert to a target {cropLeft, cropRight, cropTop, cropBottom} that
+     pushes the centroid toward (0.5, 0.5) of the visible window.
+   - In drawSource (every frame), lerp the source's actual crop values
+     toward the target by factor 0.08 — feels organic, not jumpy.
+
+   Privacy: 100% local. Skin-tone detection runs on the video pixels in
+   the same tab; nothing crosses any network boundary. Toggle per source. */
+const AutoFrame = {
+  PROBE_W: 60, PROBE_H: 40,
+  PROBE_INTERVAL_MS: 200,
+  LERP: 0.08,
+  MAX_CROP: 0.30,  // never crop more than 30% from any one side
+  _scratch: null,
+
+  _scratchCtx() {
+    if (!this._scratch) {
+      this._scratch = document.createElement('canvas');
+      this._scratch.width = this.PROBE_W; this._scratch.height = this.PROBE_H;
+    }
+    return this._scratch.getContext('2d', { willReadFrequently: true });
+  },
+
+  // Run a detection pass on src.video → updates src._afTarget = {cx, cy} ∈ [0,1].
+  probe(src) {
+    if (!src.autoFrame || !src.video || src.video.videoWidth === 0) return;
+    const now = performance.now();
+    if (src._afLastProbe && now - src._afLastProbe < this.PROBE_INTERVAL_MS) return;
+    src._afLastProbe = now;
+    const ctx = this._scratchCtx();
+    try {
+      ctx.drawImage(src.video, 0, 0, this.PROBE_W, this.PROBE_H);
+    } catch { return; }
+    let img;
+    try { img = ctx.getImageData(0, 0, this.PROBE_W, this.PROBE_H); } catch { return; }
+    const d = img.data;
+    let sumX = 0, sumY = 0, count = 0;
+    for (let y = 0; y < this.PROBE_H; y++) {
+      for (let x = 0; x < this.PROBE_W; x++) {
+        const i = (y * this.PROBE_W + x) << 2;
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        // Kovac et al. skin-tone heuristic (uniform daylight RGB).
+        if (r > 95 && g > 40 && b > 20 &&
+            r > g && r > b &&
+            Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
+            Math.abs(r - g) > 15) {
+          sumX += x; sumY += y; count++;
+        }
+      }
+    }
+    // Need a credible blob — at least 1.5% of the probe (≈36 px out of 2400)
+    if (count < 36) return;
+    const cx = (sumX / count) / this.PROBE_W;
+    const cy = (sumY / count) / this.PROBE_H;
+    src._afTarget = { cx, cy };
+  },
+
+  // Compute desired crop values to centre the detected centroid, then
+  // lerp current crops toward them. Called from drawSource every frame.
+  applyLerp(src) {
+    if (!src.autoFrame || !src._afTarget) return;
+    const { cx, cy } = src._afTarget;
+    // To pull a centroid at cx → 0.5, crop the OPPOSITE side.
+    // If cx < 0.5 (face left of centre), crop right by (0.5-cx)*2 (visible window then has cx at centre).
+    // Symmetric for cy / top / bottom.
+    let tCropLeft   = Math.max(0, (cx - 0.5) * 2);
+    let tCropRight  = Math.max(0, (0.5 - cx) * 2);
+    let tCropTop    = Math.max(0, (cy - 0.5) * 2);
+    let tCropBottom = Math.max(0, (0.5 - cy) * 2);
+    // Soft cap so the source doesn't completely zoom into a tiny window.
+    tCropLeft   = Math.min(this.MAX_CROP, tCropLeft);
+    tCropRight  = Math.min(this.MAX_CROP, tCropRight);
+    tCropTop    = Math.min(this.MAX_CROP, tCropTop);
+    tCropBottom = Math.min(this.MAX_CROP, tCropBottom);
+    const lerp = (a, b) => a + (b - a) * this.LERP;
+    src.cropLeft   = lerp(src.cropLeft   || 0, tCropLeft);
+    src.cropRight  = lerp(src.cropRight  || 0, tCropRight);
+    src.cropTop    = lerp(src.cropTop    || 0, tCropTop);
+    src.cropBottom = lerp(src.cropBottom || 0, tCropBottom);
+  },
+};
+
 /* v0.7.98 — Stage watermark text overlay: a monospace text stamp.
    v0.7.176: now draggable on canvas (position persisted in localStorage).
    Defaults to corner-based position; drag to place anywhere. */
@@ -14279,6 +14381,24 @@ const SourceToolbar = {
       s.privacyBlur = !s.privacyBlur;
       if (s.privacyBlur) s.avatarMode = false;
       showToast(s.privacyBlur ? '🔲 Blur ON' : '🔲 Blur OFF', 1200);
+      SceneAutoSave.trigger();
+    });
+    // v0.10.0: AutoFrame toggle (Center Stage clone, cam sources only)
+    $('tcSrcAutoFrameBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const s = sel(); if (!s) return;
+      if (s.type !== 'cam') {
+        showToast('🎯 Auto-frame only works on camera sources.', 2200);
+        return;
+      }
+      s.autoFrame = !s.autoFrame;
+      if (!s.autoFrame) {
+        // Reset crops + tracking state when disabling so the source snaps back
+        s.cropLeft = s.cropRight = s.cropTop = s.cropBottom = 0;
+        s._afTarget = null; s._afLastProbe = 0;
+      }
+      e.target.closest('button')?.classList.toggle('active', s.autoFrame);
+      showToast(s.autoFrame ? '🎯 Auto-frame ON — face stays centered' : '🎯 Auto-frame OFF', 1800);
       SceneAutoSave.trigger();
     });
     // v0.7.118: flip buttons
