@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.1 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.2 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.1';
+const APP_VERSION = '0.8.2';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -140,6 +140,11 @@ const LANG = {
     news: 'Nouveautés',
     activityLog: '📜 Journal', eventsMsg: 'Événements et messages',
     clear: 'Effacer', copy: 'Copier', theme: 'Thème', uiFont: '🔤 Police de l\'interface',
+    // v0.8.2: caption button label + tooltip — was falling back to hard-coded
+    // "Sous-titres" in HTML even in English/Arabic. Now properly localized.
+    // "Légendes" is the accurate French term for live speech-to-text (vs.
+    // "sous-titres" which means video subtitles).
+    captionsBtn: 'Légendes', captionsTitle: 'Légendes en direct (reconnaissance vocale) — touche C',
     settings: '⚙️ Paramètres', language: 'Langue',
     help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Rechercher…',
@@ -860,6 +865,8 @@ const LANG = {
     news: 'News',
     activityLog: '📜 Activity Log', eventsMsg: 'Events & messages',
     clear: 'Clear', copy: 'Copy', theme: 'Theme', uiFont: '🔤 UI font',
+    // v0.8.2: properly localized caption button (was leaking French in EN UI)
+    captionsBtn: 'Captions', captionsTitle: 'Live captions of your voice (speech recognition) — press C',
     settings: '⚙️ Settings', language: 'Language',
     help: '❓ Help', faq: 'FAQ', howto: 'How-to', wiki: 'Wiki',
     helpSearchPlaceholder: '🔍 Search…',
@@ -1575,6 +1582,8 @@ const LANG = {
     news: 'جديد',
     activityLog: '📜 سجل النشاط', eventsMsg: 'الأحداث والرسائل',
     clear: 'مسح', copy: 'نسخ', theme: 'المظهر', uiFont: '🔤 خط الواجهة',
+    // v0.8.2: properly localized caption button
+    captionsBtn: 'ترجمة فورية', captionsTitle: 'ترجمة فورية لصوتك (تعرّف على الكلام) — مفتاح C',
     settings: '⚙️ الإعدادات', language: 'اللغة',
     help: '❓ مساعدة', faq: 'أسئلة', howto: 'كيف', wiki: 'ويكي',
     helpSearchPlaceholder: '🔍 ابحث…',
@@ -2238,6 +2247,11 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const k = el.dataset.i18nPlaceholder;
     if (s[k] != null) el.setAttribute('placeholder', s[k]);
+  });
+  // v0.8.2: translate data-i18n-title attributes (button tooltips etc.)
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const k = el.dataset.i18nTitle;
+    if (s[k] != null) el.setAttribute('title', s[k]);
   });
   document.title = `${s.title} — ${s.slogan}`;
   document.documentElement.lang = currentLang;
