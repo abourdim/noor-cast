@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.5 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.6 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.5';
+const APP_VERSION = '0.9.6';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -258,6 +258,9 @@ const LANG = {
     removeSilence: 'Retirer les silences',
     reelsTrim: 'Couper à 90 s pour Reels',
     skipIntro: '🎙 Sauter le silence d\'intro (démarrer au premier mot)',
+    safeZoneTitle: '📱 ZONE SÛRE REELS',
+    safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
+    safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
     silenceExported: 'Silences retirés',
     silenceChip: 'Tu es silencieux…',
@@ -982,6 +985,9 @@ const LANG = {
     removeSilence: 'Remove silences',
     reelsTrim: 'Cut to 90 s for Reels',
     skipIntro: '🎙 Skip silent intro (start on first word)',
+    safeZoneTitle: '📱 REELS SAFE ZONE',
+    safeZoneTip1: 'Keep important content inside the green box',
+    safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
     silenceExported: 'Silences removed',
     silenceChip: 'You\'re silent…',
@@ -1695,6 +1701,9 @@ const LANG = {
     removeSilence: 'إزالة فترات الصمت',
     reelsTrim: 'قص إلى 90 ثانية لـ Reels',
     skipIntro: '🎙 تخطّي الصمت الافتتاحي (ابدأ عند أول كلمة)',
+    safeZoneTitle: '📱 منطقة Reels الآمنة',
+    safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
+    safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
     silenceExported: 'تمت إزالة الصمت',
     silenceChip: 'أنت صامت…',
@@ -2330,7 +2339,7 @@ const SidebarResize = {
     // v0.8.6: restore log panel width (uses its own --log-width var)
     const lgw = parseInt(silentGet('tc-log-width', '280'), 10);
     if (isFinite(lgw) && lgw >= 200) {
-      const maxLg = Math.round(window.innerWidth * 0.6);
+      const maxLg = Math.round(window.innerWidth * 0.4);
       document.documentElement.style.setProperty('--log-width', Math.min(maxLg, lgw) + 'px');
     }
   },
@@ -2360,7 +2369,7 @@ const SidebarResize = {
       const cssVar = isLog ? '--log-width' : '--sidebar-width';
       const lsKey  = isLog ? 'tc-log-width' : 'tc-sidebar-width';
       const minW   = isLog ? 200 : this.MIN;
-      const maxW   = isLog ? Math.round(window.innerWidth * 0.6) : Math.round(window.innerWidth * 0.9);
+      const maxW   = isLog ? Math.round(window.innerWidth * 0.4) : Math.round(window.innerWidth * 0.9);
       const apply = (px) => {
         const clamped = Math.max(minW, Math.min(maxW, px));
         document.documentElement.style.setProperty(cssVar, clamped + 'px');
@@ -3149,11 +3158,17 @@ function openPanel(id) {
   // mismatch meant the overlay never got pointer-events, so clicks outside
   // the panel passed through to the page instead of closing the panel.
   const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.add('open');
+  // v0.9.6: log panel push-aside — the CSS `body.log-open .app` rule has
+  // been there since at least v0.7.x but the class was never set, so the
+  // log panel always overlapped the canvas + scenes. Add it here so the
+  // app reflows margin-inline-end to clear the log width.
+  if (id === 'logPanel') document.body.classList.add('log-open');
 }
 function closePanel(id) {
   const p = $(id); if (!p) return;
   p.classList.remove('open');
   const ov = $(id.replace('Panel', 'Overlay')); if (ov) ov.classList.remove('open');
+  if (id === 'logPanel') document.body.classList.remove('log-open');
 }
 function closeAllPanels() {
   ['helpPanel', 'settingsPanel', 'logPanel'].forEach(closePanel);
@@ -11627,10 +11642,10 @@ const SafeZone = {
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.font = 'bold 28px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('📱 REELS SAFE ZONE', W / 2, H * 0.42);
+    ctx.fillText(t('safeZoneTitle') || '📱 REELS SAFE ZONE', W / 2, H * 0.42);
     ctx.font = '16px system-ui, sans-serif';
-    ctx.fillText('Keep important content inside the green box', W / 2, H * 0.46);
-    ctx.fillText('Red areas will be covered by the FB/TikTok UI', W / 2, H * 0.49);
+    ctx.fillText(t('safeZoneTip1') || 'Keep important content inside the green box', W / 2, H * 0.46);
+    ctx.fillText(t('safeZoneTip2') || 'Red areas will be covered by the FB/TikTok UI', W / 2, H * 0.49);
     ctx.restore();
   },
 };

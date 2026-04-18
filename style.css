@@ -1140,7 +1140,10 @@ input[type="text"], .select-ctrl, .control-section, .status-pill,
    DOCKED LOG PANEL (pushes content, no overlay)
    ═══════════════════════════════════════════════════════════════════ */
 
-#logPanel { z-index: 940; width: var(--log-width, 280px); max-width: 60vw; min-width: 200px; }
+/* v0.9.6: max-width capped at 40vw (was 60vw) so resizing the log never
+   eats more than 40% of the viewport — leaves room for the canvas + scenes
+   even when the user drags the resize handle aggressively. */
+#logPanel { z-index: 940; width: var(--log-width, 280px); max-width: 40vw; min-width: 200px; }
 #settingsPanel { z-index: 960; }
 
 /* ── Resize handle ── */

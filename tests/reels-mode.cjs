@@ -56,6 +56,10 @@ const checks = [
     /reelsTrim:[\s\S]*?reelsTrim:[\s\S]*?reelsTrim:/],
   ['skipIntro i18n in fr/en/ar',
     /skipIntro:[\s\S]*?skipIntro:[\s\S]*?skipIntro:/],
+  ['safeZoneTitle/tip1/tip2 i18n triple in all langs',
+    /safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:[\s\S]*?safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:[\s\S]*?safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:/],
+  ['SafeZone.render uses t() for label',
+    /t\('safeZoneTitle'\)/],
 ];
 
 console.log('── Reels-mode invariants (regex on noorcast.js) ──');
