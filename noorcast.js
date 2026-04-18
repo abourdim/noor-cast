@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.5 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.6 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.5';
+const APP_VERSION = '0.8.6';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -22243,11 +22243,18 @@ function wireEvents() {
   });
   // Fun popup button handlers
   const funToggle = (btnId, obj, prop, label) => {
-    $(btnId)?.addEventListener('click', (e) => {
+    const btn = $(btnId);
+    if (!btn) return;
+    // v0.8.6: sync initial .active class so the button reflects restored
+    // state (e.g. Sensors overlay was on before refresh). Without this,
+    // the toggle looks "off" even though the feature is on.
+    const target = btn.classList.contains('tc-tool-btn') ? btn : btn.closest('.tc-tool-btn') || btn;
+    try { target.classList.toggle('active', !!obj[prop]); } catch {}
+    btn.addEventListener('click', (e) => {
       if (typeof obj.toggle === 'function') obj.toggle();
       else obj[prop] = !obj[prop];
       const val = obj[prop];
-      e.target.closest('.tc-tool-btn')?.classList.toggle('active', val);
+      (e.target.closest('.tc-tool-btn') || target).classList.toggle('active', !!val);
       showToast(`${label} ${val ? 'ON' : 'OFF'}`, 1200);
     });
   };
