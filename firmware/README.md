@@ -3,13 +3,26 @@
 Drop pre-compiled `.hex` files here, named like `noorcast-v3.6.hex`, so the
 **📥 Download .hex** button in the firmware modal works.
 
-## Build a fresh .hex
+## Build a fresh .hex (one-time, ~3 minutes)
 
-1. Open `makecode.ts` from the project root in [MakeCode](https://makecode.microbit.org/)
-   (JavaScript mode → paste).
-2. Click **Download** → MakeCode generates a `.hex` for micro:bit V2.
-3. Rename to `noorcast-v3.6.hex` (match the `FW_VERSION` constant) and drop here.
-4. Commit. The `📥 Download .hex` button will serve it.
+1. **Open MakeCode**: <https://makecode.microbit.org/#editor>
+2. Switch to **JavaScript mode** — top-right toggle (`{ }` icon).
+3. Paste the entire contents of `../makecode.ts` over the default code
+   (`Ctrl+A` then `Ctrl+V`).
+4. Click **Download** in the bottom-left of MakeCode — your browser
+   downloads `microbit-NoorCast.hex` (or similar).
+5. Rename to **`noorcast-v3.6.hex`** (must match the `FW_VERSION`
+   constant in `makecode.ts`) and drop the file here in `firmware/`.
+6. Commit + push. The **📥 Download .hex** button in the firmware
+   modal will probe-and-reveal itself automatically — no app code
+   change needed.
+
+### When firmware version bumps
+
+If you change `FW_VERSION` in `makecode.ts` (e.g. V3.6 → V3.7), also
+update the filename pattern in `index.html` (`tcFwDownloadHex` href +
+download attr) and in this README. The probe in `noorcast.js`
+(`probeFwHex`) reads the href, so it follows automatically.
 
 ## Why .hex matters
 

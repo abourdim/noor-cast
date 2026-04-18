@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.9 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.10 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.9';
+const APP_VERSION = '0.9.10';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -22262,8 +22262,29 @@ function wireEvents() {
   });
   // v0.7.162: copy micro:bit firmware code to clipboard
   // v0.7.172: firmware modal (inspired by bit-playground)
+  // v0.9.10: probe for firmware/noorcast-vX.Y.hex on first modal open;
+  // reveal the Download .hex button only if the file actually exists.
+  // Result is cached per session so repeated opens don't HEAD-request
+  // every time. When you commit a fresh .hex, this lights up automatically.
+  let _fwHexProbed = false;
+  const probeFwHex = async () => {
+    if (_fwHexProbed) return;
+    _fwHexProbed = true;
+    const dl = $('tcFwDownloadHex');
+    const note = $('tcFwHexNote');
+    if (!dl) return;
+    try {
+      const url = dl.getAttribute('href') || './firmware/noorcast-v3.6.hex';
+      const r = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      if (r.ok) {
+        dl.style.display = '';
+        if (note) note.textContent = '✅ Pre-built .hex available — click below for the 5-second drag-and-drop flash. MakeCode steps still work if you prefer.';
+      }
+    } catch { /* offline / file missing — leave button hidden */ }
+  };
   $('tcFwModalBtn')?.addEventListener('click', () => {
     $('tcFwModal').style.display = '';
+    probeFwHex();
   });
   $('tcFwCloseBtn')?.addEventListener('click', () => {
     $('tcFwModal').style.display = 'none';

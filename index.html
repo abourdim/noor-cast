@@ -2091,8 +2091,9 @@
         <li>Select all (<kbd>Ctrl+A</kbd>) and paste (<kbd>Ctrl+V</kbd>)</li>
         <li>Click <strong>Download</strong> in MakeCode — drag the .hex onto the <code>MICROBIT</code> drive</li>
       </ol>
-      <p style="opacity:.7;font-size:.85em">A pre-built <code>noorcast-v3.6.hex</code> isn't shipped with this build yet. Once you've flashed once, your micro:bit keeps the firmware until you re-flash — you don't need to repeat this.</p>
+      <p id="tcFwHexNote" style="opacity:.7;font-size:.85em">A pre-built <code>noorcast-v3.6.hex</code> isn't shipped with this build yet. Once you've flashed once, your micro:bit keeps the firmware until you re-flash — you don't need to repeat this.</p>
       <div class="tc-fw-modal-btns">
+        <a href="./firmware/noorcast-v3.6.hex" download="noorcast-v3.6.hex" id="tcFwDownloadHex" class="tc-fw-btn-open" style="display:none;background:rgba(163,230,53,.22);border-color:rgba(163,230,53,.55)">📥 Download .hex (5-sec flash)</a>
         <button class="tc-fw-btn-copy" id="tcFwCopyBtn" style="background:rgba(163,230,53,.18);border-color:rgba(163,230,53,.5)">📋 Copy Code</button>
         <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-fw-btn-open">🔗 Open MakeCode</a>
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
