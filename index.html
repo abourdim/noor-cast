@@ -334,8 +334,37 @@
 
             <!-- Tab strip -->
             <div class="tc-side-tabs">
-              <button class="tc-side-tab active" data-stab="sources" title="Sources">📹</button>
-              <button class="tc-side-tab" data-stab="microbit" title="micro:bit">🤖</button>
+              <!-- v0.7.249: tabs now stack icon + visible label so kids
+                   instantly know what each tab is. micro:bit gets a
+                   stylized SVG of the actual board (PCB + 5x5 LED grid +
+                   two buttons) instead of an ambiguous robot emoji. -->
+              <button class="tc-side-tab active" data-stab="sources" title="Sources audio + vidéo">
+                <span class="tc-side-tab-icon">📹</span>
+                <span class="tc-side-tab-label">Sources</span>
+              </button>
+              <button class="tc-side-tab" data-stab="microbit" title="Connecter une carte micro:bit">
+                <span class="tc-side-tab-icon" aria-hidden="true">
+                  <svg viewBox="0 0 32 22" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:20px;display:block">
+                    <!-- Board outline (rounded rect, micro:bit's signature shape) -->
+                    <rect x="0.5" y="0.5" width="31" height="21" rx="3" ry="3"
+                      fill="#0a1628" stroke="currentColor" stroke-width="1.2"/>
+                    <!-- 5x5 LED grid (centered) -->
+                    <g fill="#ef4444">
+                      <circle cx="11" cy="6" r="0.9"/><circle cx="13.5" cy="6" r="0.9"/><circle cx="16" cy="6" r="0.9"/><circle cx="18.5" cy="6" r="0.9"/><circle cx="21" cy="6" r="0.9"/>
+                      <circle cx="11" cy="9" r="0.9"/><circle cx="13.5" cy="9" r="0.9"/><circle cx="16" cy="9" r="0.9"/><circle cx="18.5" cy="9" r="0.9"/><circle cx="21" cy="9" r="0.9"/>
+                      <circle cx="11" cy="12" r="0.9"/><circle cx="13.5" cy="12" r="0.9"/><circle cx="16" cy="12" r="0.9"/><circle cx="18.5" cy="12" r="0.9"/><circle cx="21" cy="12" r="0.9"/>
+                      <circle cx="11" cy="15" r="0.9"/><circle cx="13.5" cy="15" r="0.9"/><circle cx="16" cy="15" r="0.9"/><circle cx="18.5" cy="15" r="0.9"/><circle cx="21" cy="15" r="0.9"/>
+                      <circle cx="11" cy="18" r="0.9"/><circle cx="13.5" cy="18" r="0.9"/><circle cx="16" cy="18" r="0.9"/><circle cx="18.5" cy="18" r="0.9"/><circle cx="21" cy="18" r="0.9"/>
+                    </g>
+                    <!-- Two buttons (A and B) on the sides -->
+                    <circle cx="4" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text x="4" y="12.5" font-size="3" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">A</text>
+                    <circle cx="28" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text x="28" y="12.5" font-size="3" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">B</text>
+                  </svg>
+                </span>
+                <span class="tc-side-tab-label">micro:bit</span>
+              </button>
             </div>
 
             <!-- Panel 1: Sources -->
