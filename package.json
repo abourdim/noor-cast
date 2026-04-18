@@ -7,6 +7,9 @@
   "scripts": {
     "lint": "eslint noorcast.js",
     "lint:fix": "eslint noorcast.js --fix",
+    "test:syntax": "node --check noorcast.js && node --check sw.js",
+    "test:cjs": "node tests/save-verification.cjs && node tests/silent-helpers.cjs && node tests/reels-mode.cjs && node tests/ux-arc.cjs && node tests/check-links.cjs",
+    "check": "npm run test:syntax && npm run lint && npm run test:cjs",
     "test": "npx playwright test",
     "test:update": "npx playwright test --update-snapshots"
   },

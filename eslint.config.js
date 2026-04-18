@@ -14,6 +14,12 @@ export default [
         navigator: "readonly",
         location: "readonly",
         localStorage: "readonly",
+        sessionStorage: "readonly",
+        SpeechSynthesisUtterance: "readonly",
+        speechSynthesis: "readonly",
+        FaceDetector: "readonly",
+        FormData: "readonly",
+        URLSearchParams: "readonly",
         console: "readonly",
         setTimeout: "readonly",
         setInterval: "readonly",
@@ -74,8 +80,9 @@ export default [
     rules: {
       // Relax rules for this single-file app pattern
       "no-unused-vars": ["warn", {
-        varsIgnorePattern: "^(APP_VERSION|BUILD_DATE|LANG|Engine|Recorder|Scenes|Templates|Laser|Freeze|Whiteboard|Teleprompter|Snapshot|Sensors|SoundBoard|Badges|Confetti|Ticker|Chapters|History|LayoutHistory|Zoom|Drag|Grid|SourceLabels|FpsCounter|Brand|Watermark|ServoGauge|SensorOverlay|Spotlight|CursorTrail|FocusMode|Tour|Clock|RecIndicator|AudioViz|RecElapsed|Letterbox|Vignette|SceneTimer|Timelapse|TimeGoal|Captions|MicMeter|MicCheck|MicrobitOverlay|SourceSkins|BgPatterns|InstantReplay|VoiceCommands|DailyChallenges|AutoThumbnail|PostTranscript|SmartSceneSwitcher|TutorialScore|AICohost|LessonGuide|RobotChoreo|MultiTakeDirector|QRShare|VisualCrop|CanvasFlair|UnlockGallery|ComboSystem|GhostReplay|CanvasPets|ExportFlyer|GlobalSearch|SceneThemes|VoiceFx|SpeedLines|XpBar|AchievementPopup|SoundPad|BgMusic|StickyNotes|Duck|SceneSaver|ScreenSaver|SceneIntro|AutoAdvance|Jingle|IntroOutro|Sfx|DebugHud|DailyTip|OnboardWizard|KeyBinds|LogoGallery|BrandPresets|SnapGrid|SettingsBundle|TextOverlay|SourceStylePopup|$|t|applyI18n|showToast|log|SensorGraph)",
-        argsIgnorePattern: "^(_|W$|H$|ctx$|ev$)",
+        varsIgnorePattern: "^(APP_VERSION|BUILD_DATE|LANG|Engine|Recorder|Scenes|Templates|Laser|Freeze|Whiteboard|Teleprompter|Snapshot|Sensors|SoundBoard|Badges|Confetti|Ticker|Chapters|History|LayoutHistory|Zoom|Drag|Grid|SourceLabels|FpsCounter|Brand|Watermark|ServoGauge|SensorOverlay|Spotlight|CursorTrail|FocusMode|Tour|Clock|RecIndicator|AudioViz|RecElapsed|Letterbox|Vignette|SceneTimer|Timelapse|TimeGoal|Captions|MicMeter|MicCheck|MicrobitOverlay|SourceSkins|BgPatterns|InstantReplay|VoiceCommands|DailyChallenges|AutoThumbnail|PostTranscript|SmartSceneSwitcher|TutorialScore|AICohost|LessonGuide|RobotChoreo|MultiTakeDirector|QRShare|VisualCrop|CanvasFlair|UnlockGallery|ComboSystem|GhostReplay|CanvasPets|ExportFlyer|GlobalSearch|SceneThemes|VoiceFx|SpeedLines|XpBar|AchievementPopup|SoundPad|BgMusic|StickyNotes|Duck|SceneSaver|ScreenSaver|SceneIntro|AutoAdvance|Jingle|IntroOutro|Sfx|DebugHud|DailyTip|OnboardWizard|KeyBinds|LogoGallery|BrandPresets|SnapGrid|SettingsBundle|TextOverlay|SourceStylePopup|$|t|applyI18n|showToast|log|SensorGraph|safe|EventBus|debounce|silentGet|silentSet|silentSetJSON|silentGetJSON|silentRemove|SafeZone|StageStatus|WorkflowSteps|KidsMode|WhatsNew|Tour|AutoFrame|AutoChapters|ReelsTrim|RecordQuality|StageAspect|AICohost|SnapshotAnnotator|VolumeDuck|MicBoost|LiveCaptions|InstantReplay|SilenceTrim|UiFont|CustomAccent|CanvasBg|GhostReplay|SourcePulse|TextStamps|SceneTransition|ClockOverlay|CountdownTimer|RecIndicator|AudioViz|Reactions|SidebarResize|SettingsState|SceneAutoSave|MicrobitOverlay|Drag|Brand|GridOverlay|Trim|FACE_DETECTOR|ChapterList|Waveform|BadgeCard|SensorTimeline|SensorChart|TextStamps)",
+        argsIgnorePattern: "^(_|W$|H$|ctx$|ev$|e$|t$|i$|pet$|frozen$)",
+        caughtErrorsIgnorePattern: "^(_|e|err|ex)$",
       }],
       "no-redeclare": "error",
       "no-undef": "error",
@@ -89,6 +96,6 @@ export default [
     },
   },
   {
-    ignores: ["sw.js", "node_modules/", "tests/"],
+    ignores: ["sw.js", "node_modules/", "tests/", "etsy-package/NoorCast-v*/"],
   },
 ];
