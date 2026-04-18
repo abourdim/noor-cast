@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.8 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.9 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.8';
+const APP_VERSION = '0.9.9';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -22322,9 +22322,22 @@ function wireEvents() {
     let isDrawing = false;
     let drawMode = true; // true = paint ON, false = erase
     const cells = [];
+    // v0.9.9: pack the 25-bit grid into a 5-byte row mask + push to the
+    // micro:bit. Throttled to ~10/s via debounce so a fast drag-paint
+    // doesn't flood the BLE link (board can't keep up with mouseenter).
+    const sendLedsLive = debounce(() => {
+      const bytes = [0, 0, 0, 0, 0];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (ledState[row * 5 + col]) bytes[row] |= (1 << (4 - col));
+        }
+      }
+      Sensors.setLeds(bytes);
+    }, 100);
     const setLed = (i, on) => {
       ledState[i] = on;
       cells[i].style.background = on ? '#ef4444' : 'rgba(255,255,255,.08)';
+      sendLedsLive();
     };
     for (let i = 0; i < 25; i++) {
       const cell = document.createElement('div');
@@ -22377,15 +22390,6 @@ function wireEvents() {
     });
     ledGrid.parentElement.insertBefore(presetRow, ledGrid.nextSibling);
 
-    $('tcLedSend')?.addEventListener('click', () => {
-      const bytes = [0, 0, 0, 0, 0];
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-          if (ledState[row * 5 + col]) bytes[row] |= (1 << (4 - col));
-        }
-      }
-      Sensors.setLeds(bytes);
-    });
     $('tcLedClear')?.addEventListener('click', () => {
       ledState.fill(false);
       cells.forEach(c => c.style.background = 'rgba(255,255,255,.08)');
