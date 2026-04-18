@@ -1810,6 +1810,10 @@
             <summary>⚙️ Comportement</summary>
             <!-- v0.7.227: opt-out for the on-canvas COMBO xN popup -->
             <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcComboToggle" class="checkbox-ctrl" /><span>⚡ COMBO popup (XP bonus messages)</span></label></div>
+            <!-- v0.7.253: opt-in to File System Access streaming (long recordings).
+                 Off by default because Chrome's download chip shows "0 octets"
+                 for FSA writes. On = saves RAM during very long recordings. -->
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcFsaStreamToggle" class="checkbox-ctrl" /><span>💾 Streamer les longs enregistrements vers le disque <span style="opacity:.6;font-size:.7rem">(Chrome chip "0 octets" mais OK)</span></span></label></div>
             <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcAutoPauseToggle" class="checkbox-ctrl" /><span data-i18n="autoPauseLabel">⏸ Pause auto (changement d'onglet)</span></label></div>
             <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSensorOverlayToggle" class="checkbox-ctrl" /><span data-i18n="sensorOverlayLabel">🤖 Overlay capteur auto</span></label></div>
             <!-- v0.7.163: micro:bit feature toggles -->

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.252 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.253 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.252';
+const APP_VERSION = '0.7.253';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -8846,7 +8846,15 @@ const Recorder = {
 
       // v0.7.159: try to open a writable file handle for streaming long recordings
       // to disk instead of accumulating all chunks in RAM.
-      if (typeof showSaveFilePicker === 'function') {
+      // v0.7.253: NOW OPT-IN via setting (default OFF). Reason: Chrome's
+      // download chip shows "0 octets" for FSA writes — it can't see
+      // through the direct disk handle. Users kept thinking their files
+      // were broken. The blob-download path makes Chrome's chip accurate
+      // (shows real size). Power users with hour-long recordings can
+      // re-enable streaming via Settings → Comportement → "💾 Streamer
+      // les longs enregistrements".
+      const fsaEnabled = silentGet('tc-fsa-stream', '0') === '1';
+      if (fsaEnabled && typeof showSaveFilePicker === 'function') {
         try {
           const ext = this.recorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
           this._fileHandle = await showSaveFilePicker({
@@ -9221,9 +9229,11 @@ const Recorder = {
           log(`✗ ON-DISK SIZE IS 0 BYTES. recorder promised ${promisedBytes} B, write errors: ${writeErrors}. The file is broken.`, 'error');
           showToast(`❌ Save failed — file is 0 bytes! ${writeErrors > 0 ? '(disk write errors)' : '(recorder produced no data)'} Try again with a different format / location.`, 8000);
         } else if (actualBytes > 0) {
-          // Real success.
+          // Real success — file IS on disk at the verified size.
+          // v0.7.253: explicit Chrome-chip-is-wrong note in the toast since
+          // users keep doubting the success message when Chrome's chip lies.
           log(`💾 Recording saved — ${fmt(actualBytes)} on disk (recorder said ${fmt(promisedBytes)}, ${writeErrors} write errors)`, 'info');
-          showToast(`💾 Saved ${fmt(actualBytes)} to disk ✓`, 4000);
+          showToast(`💾 Saved ${fmt(actualBytes)} ✓ (Chrome's "0 octets" chip is wrong — file IS ${fmt(actualBytes)})`, 6000);
         } else {
           // Couldn't verify (very old browser?). Fall back to the recorder count.
           log(`💾 Recording saved (size unverified). Recorder reported ${fmt(promisedBytes)}.`, 'info');
@@ -22829,6 +22839,17 @@ function wireEvents() {
       ComboSystem.enabled = !!e.target.checked;
       silentSet('tc-combo-enabled', ComboSystem.enabled ? '1' : '0');
       if (!ComboSystem.enabled) { ComboSystem._displayUntil = 0; ComboSystem._comboCount = 0; }
+    });
+  }
+  // v0.7.253: File System Access streaming opt-in
+  const fsaEl = $('tcFsaStreamToggle');
+  if (fsaEl) {
+    fsaEl.checked = silentGet('tc-fsa-stream', '0') === '1';
+    fsaEl.addEventListener('change', (e) => {
+      silentSet('tc-fsa-stream', e.target.checked ? '1' : '0');
+      showToast(e.target.checked
+        ? '💾 Streaming activé (Chrome chip "0 octets" mais OK)'
+        : '💾 Téléchargement classique activé', 2500);
     });
   }
   // v0.7.54: opt-in snapshot annotation modal before saving
