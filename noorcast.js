@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.2 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.3 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.2';
+const APP_VERSION = '0.9.3';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -252,6 +252,8 @@ const LANG = {
     confirmDeleteCustomScene: 'Supprimer cette scène ?',
     downloadCsv: 'Capteurs (.csv)',
     removeSilence: 'Retirer les silences',
+    reelsTrim: 'Couper à 90 s pour Reels',
+    skipIntro: '🎙 Sauter le silence d\'intro (démarrer au premier mot)',
     silenceEncoding: '🔇 Encodage sans silences…',
     silenceExported: 'Silences retirés',
     silenceChip: 'Tu es silencieux…',
@@ -974,6 +976,8 @@ const LANG = {
     confirmDeleteCustomScene: 'Delete this scene?',
     downloadCsv: 'Sensors (.csv)',
     removeSilence: 'Remove silences',
+    reelsTrim: 'Cut to 90 s for Reels',
+    skipIntro: '🎙 Skip silent intro (start on first word)',
     silenceEncoding: '🔇 Encoding without silences…',
     silenceExported: 'Silences removed',
     silenceChip: 'You\'re silent…',
@@ -1685,6 +1689,8 @@ const LANG = {
     confirmDeleteCustomScene: 'حذف هذا المشهد؟',
     downloadCsv: 'المستشعرات (.csv)',
     removeSilence: 'إزالة فترات الصمت',
+    reelsTrim: 'قص إلى 90 ثانية لـ Reels',
+    skipIntro: '🎙 تخطّي الصمت الافتتاحي (ابدأ عند أول كلمة)',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
     silenceExported: 'تمت إزالة الصمت',
     silenceChip: 'أنت صامت…',
@@ -8845,6 +8851,51 @@ const Recorder = {
   _watchdogRetry: false,
   _suppressNextStopFinish: false,
 
+  /* v0.9.3: skip-intro helper — opens an AnalyserNode on any available
+     mic source and resolves as soon as RMS crosses ~0.05 (a quiet "hey"
+     is plenty), or after timeoutMs as a safety fallback so we never hang. */
+  async _waitForFirstPeak(timeoutMs = 5000) {
+    if (typeof Engine === 'undefined' || !Engine.audioCtx) return;
+    const micSrc = Engine.sources?.find(s => s.type === 'mic' && s.stream);
+    if (!micSrc) {
+      log('skip-intro: no mic source — proceeding immediately', 'info');
+      return;
+    }
+    showToast('🎙 Waiting for first word…', 1800);
+    const ac = Engine.audioCtx;
+    const node = ac.createMediaStreamSource(micSrc.stream);
+    const an = ac.createAnalyser();
+    an.fftSize = 1024;
+    node.connect(an);
+    const buf = new Uint8Array(an.fftSize);
+    const start = performance.now();
+    return new Promise((resolve) => {
+      const tick = () => {
+        an.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) {
+          const v = (buf[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / buf.length);
+        if (rms > 0.05) {
+          try { node.disconnect(); } catch {}
+          log(`🎙 skip-intro: peak RMS=${rms.toFixed(3)} after ${Math.round(performance.now() - start)}ms`, 'info');
+          resolve();
+          return;
+        }
+        if (performance.now() - start > timeoutMs) {
+          try { node.disconnect(); } catch {}
+          log('🎙 skip-intro: timeout reached, starting anyway', 'info');
+          resolve();
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+  },
+
   async start() {
     if (this.state !== 'idle' || this._starting) {
       log('✗ start() called while already starting/recording — ignored', 'error');
@@ -8866,6 +8917,14 @@ const Recorder = {
       if ($('tcCountdownEnabled').checked) {
         await this.countdown();
       }
+      // v0.9.3: skip-intro — wait up to 5 s for first audio peak from any
+      // active mic source before kicking off MediaRecorder. Lets users say
+      // "let me reach for the mouse… ok GO" and not record the dead air.
+      try {
+        if ($('tcSkipIntro')?.checked) {
+          await this._waitForFirstPeak(5000);
+        }
+      } catch (e) { log('skip-intro error: ' + e.message, 'info'); }
       // v0.7.95: re-create the capture stream with timelapse fps if needed.
       // The cached _canvasStream from earlier sessions is dropped here so the
       // next getMasterStream() rebuilds it at Timelapse.getCaptureFps().
@@ -9492,6 +9551,8 @@ const Recorder = {
     const silenceBtn = $('tcSilenceTrimBtn');
     if (silenceBtn) silenceBtn.style.display = 'none';  // reset until analysed
     SilenceTrim.checkLastTake();
+    // v0.9.3: in 9:16 mode, surface a Reels trim button when the take exceeds 90 s
+    try { ReelsTrim.checkLastTake(); } catch {}
 
     // v0.6.0: snapshot stats for the BadgeCard generator
     BadgeCard.capture(blob, this.elapsed());
@@ -13165,6 +13226,136 @@ const SilenceTrim = {
     log(`🔇 silence-trim exported: ${(outBlob.size / 1024 / 1024).toFixed(1)} MB (saved ${this.savedSeconds.toFixed(1)}s)`, 'success');
     showToast(`🔇 ${t('silenceExported')} (−${this.savedSeconds.toFixed(1)}s)`, 3000);
     Sfx.play('stop');
+    this.encoding = false;
+    if (btn) { btn.disabled = false; btn.style.display = 'none'; }
+  },
+};
+
+/* v0.9.3: ReelsTrim — re-encodes the last recording down to a 90 s clip
+   so it fits Facebook Reels / IG Reels / TikTok / YT Shorts caps without
+   the platform auto-cropping mid-sentence at upload. Reuses the same
+   canvas+MediaRecorder pipeline as SilenceTrim — single keep range
+   [0, min(90, duration)]. No external deps. */
+const ReelsTrim = {
+  encoding: false,
+  TARGET_SEC: 90,
+
+  /* Show / hide the take-panel button. Called from Recorder.finish() when
+     a new take is available. Visible iff we're in 9:16 mode AND the take
+     is longer than the Reels cap. */
+  checkLastTake() {
+    const btn = $('tcReelsTrimBtn');
+    if (!btn) return;
+    btn.style.display = 'none';
+    if (!Recorder._lastBlob) return;
+    if (typeof StageAspect === 'undefined' || StageAspect.current !== '9:16') return;
+    const durMs = Recorder.elapsed?.() || 0;
+    if (durMs / 1000 <= this.TARGET_SEC + 0.5) return;
+    const over = (durMs / 1000 - this.TARGET_SEC).toFixed(1);
+    btn.textContent = '';
+    btn.appendChild(document.createTextNode(`📱 Cut to 90 s for Reels (−${over}s)`));
+    btn.style.display = '';
+    btn.disabled = false;
+  },
+
+  async exportTrimmed() {
+    if (this.encoding) return;
+    if (!Recorder._lastBlob) return;
+    const btn = $('tcReelsTrimBtn');
+    this.encoding = true;
+    if (btn) btn.disabled = true;
+    showToast('📱 Trimming to 90 s for Reels…', 3000);
+
+    const srcVideo = document.createElement('video');
+    srcVideo.src = URL.createObjectURL(Recorder._lastBlob);
+    srcVideo.muted = true;
+    srcVideo.playsInline = true;
+    await new Promise(r => srcVideo.addEventListener('loadedmetadata', r, { once: true }));
+    if (!isFinite(srcVideo.duration)) {
+      srcVideo.currentTime = 1e9;
+      await new Promise(r => srcVideo.addEventListener('timeupdate', r, { once: true }));
+    }
+
+    const W = srcVideo.videoWidth || Engine.width;
+    const H = srcVideo.videoHeight || Engine.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const audSrc = ac.createMediaElementSource(srcVideo);
+    const dest = ac.createMediaStreamDestination();
+    const silent = ac.createConstantSource();
+    const gain = ac.createGain(); gain.gain.value = 0;
+    silent.connect(gain).connect(dest);
+    silent.start();
+    audSrc.connect(dest);
+
+    const videoStream = canvas.captureStream(30);
+    const stream = new MediaStream([
+      videoStream.getVideoTracks()[0],
+      dest.stream.getAudioTracks()[0],
+    ]);
+    const mime = Recorder.pickMime();
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+    } catch {
+      rec = new MediaRecorder(stream, { videoBitsPerSecond: 8_000_000 });
+    }
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const finished = new Promise(r => rec.onstop = r);
+    rec.start(250);
+
+    srcVideo.currentTime = 0;
+    await new Promise(r => srcVideo.addEventListener('seeked', r, { once: true }));
+    srcVideo.play();
+
+    let rafId;
+    await new Promise((resolve) => {
+      const step = () => {
+        ctx.drawImage(srcVideo, 0, 0, W, H);
+        if (srcVideo.currentTime >= this.TARGET_SEC || srcVideo.ended) {
+          srcVideo.pause();
+          cancelAnimationFrame(rafId);
+          resolve();
+          return;
+        }
+        rafId = requestAnimationFrame(step);
+      };
+      step();
+    });
+
+    try { rec.requestData(); } catch {}
+    rec.stop();
+    await finished;
+    try { silent.stop(); } catch {}
+    try { ac.close(); } catch {}
+    try { URL.revokeObjectURL(srcVideo.src); } catch {}
+
+    const outBlob = new Blob(chunks, { type: chunks[0]?.type || mime || 'video/webm' });
+    if (outBlob.size === 0) {
+      showToast('⚠ Trim produced an empty file — try again', 4000);
+      log('✗ ReelsTrim 0-byte blob', 'error');
+      this.encoding = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const url = URL.createObjectURL(outBlob);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-reels`;
+    const ext = Recorder.extForMime(outBlob.type);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${fname}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+    log(`📱 ReelsTrim exported: ${(outBlob.size / 1024 / 1024).toFixed(1)} MB (90 s)`, 'success');
+    showToast(`📱 Reels-ready clip saved (90 s, ${(outBlob.size / 1024 / 1024).toFixed(1)} MB)`, 4000);
+    Sfx.play?.('stop');
     this.encoding = false;
     if (btn) { btn.disabled = false; btn.style.display = 'none'; }
   },
@@ -22652,6 +22843,8 @@ function wireEvents() {
   // Silence-trim wiring (v0.5.0) — appears after recording if the scan found > 2s of silence
   const silBtn = $('tcSilenceTrimBtn');
   if (silBtn) silBtn.addEventListener('click', () => SilenceTrim.exportCleaned());
+  // v0.9.3: Reels 90 s trim button (only visible in 9:16 mode for >90 s takes)
+  $('tcReelsTrimBtn')?.addEventListener('click', () => ReelsTrim.exportTrimmed());
 
   // Badge card wiring (v0.6.0)
   const badgeBtn = $('tcBadgeBtn');

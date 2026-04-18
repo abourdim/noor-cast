@@ -932,6 +932,7 @@
             <a class="tc-btn-full" id="tcDownloadThumb" download style="display:none">🖼 Thumbnail (.png)</a>
             <button class="tc-btn-full" id="tcTrimBtn">✂️ <span data-i18n="trim">Couper</span></button>
             <button class="tc-btn-full tc-silence-trim" id="tcSilenceTrimBtn" style="display:none">🔇 <span data-i18n="removeSilence">Retirer les silences</span></button>
+            <button class="tc-btn-full" id="tcReelsTrimBtn" style="display:none;background:rgba(244,114,182,.10);border-color:rgba(244,114,182,.4)">📱 <span data-i18n="reelsTrim">Cut to 90s for Reels</span></button>
             <button class="tc-btn-full" id="tcReplayBtn" style="background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35)">⚡ <span data-i18n="instantReplay">Instant Replay</span></button>
             <button class="tc-btn-full" id="tcAutoThumbBtn" style="background:rgba(163,230,53,.08);border-color:rgba(163,230,53,.25)">📸 <span data-i18n="autoThumbnail">Auto Thumbnail</span></button>
             <button class="tc-btn-full" id="tcExportFlyerBtn" style="background:rgba(212,160,60,.08);border-color:rgba(212,160,60,.25)">📄 Export Flyer</button>
@@ -1761,6 +1762,7 @@
             <div class="sidebar-group">
               <label class="toggle-ctrl"><input type="checkbox" id="tcCountdownEnabled" class="checkbox-ctrl" checked /><span data-i18n="countdownOn">⏱ Compte à rebours</span></label>
               <div class="tc-countdown-secs-row"><label class="sidebar-label" data-i18n="countdownSecs">Secondes :</label><input type="number" id="tcCountdownSecs" min="1" max="10" step="1" value="3" class="sidebar-select" style="max-width:80px" /></div>
+              <label class="toggle-ctrl" title="Wait for the first audible word before recording starts. Skips the dead air at the top of a take."><input type="checkbox" id="tcSkipIntro" class="checkbox-ctrl" /><span data-i18n="skipIntro">🎙 Skip silent intro (start on first word)</span></label>
             </div>
             <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcMirrorCam" class="checkbox-ctrl" /><span data-i18n="mirrorCam">🪞 Miroir webcam</span></label></div>
             <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTimelapseToggle" class="checkbox-ctrl" /><span data-i18n="timelapseLabel">⏩ Timelapse</span></label><div id="tcTimelapseOptions" style="display:none;margin-top:6px"><label class="sidebar-label">× <input type="number" id="tcTimelapseMult" min="2" max="20" step="1" value="4" class="sidebar-select" style="max-width:80px" /></label></div></div>
