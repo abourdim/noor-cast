@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.20 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.21 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.20';
+const APP_VERSION = '0.9.21';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -392,6 +392,7 @@ const LANG = {
     outroPlaying: '🎬 Outro en cours…',
     autoPauseLabel: "⏸ Pause auto quand tu changes d'onglet",
     captionsLabel: '💬 Sous-titres live (Chrome/Edge)',
+    captionsBurnIn: '🔥 Marquer dans la vidéo (tient plus longtemps, fond doux)',
     sceneAutoSave: '💾 Sauvegarde auto de la scène quand les sources changent',
     sceneAutoSaved: '💾 Scène sauvegardée auto',
     sceneIntroLabel: "🎭 Texte d'intro auto sur changement de scène",
@@ -1119,6 +1120,7 @@ const LANG = {
     outroPlaying: '🎬 Outro playing…',
     autoPauseLabel: '⏸ Auto-pause when you switch tab',
     captionsLabel: '💬 Live captions (Chrome/Edge)',
+    captionsBurnIn: '🔥 Burn into video (longer hold, gentler fade)',
     sceneAutoSave: '💾 Auto-save scene on source changes',
     sceneAutoSaved: '💾 Scene auto-saved',
     sceneIntroLabel: '🎭 Auto intro text on scene change',
@@ -1835,6 +1837,7 @@ const LANG = {
     outroPlaying: '🎬 الخاتمة قيد التشغيل…',
     autoPauseLabel: '⏸ إيقاف مؤقت تلقائي عند تبديل علامة التبويب',
     captionsLabel: '💬 ترجمات مباشرة (Chrome/Edge)',
+    captionsBurnIn: '🔥 إحراق في الفيديو (يبقى أطول، تلاشي ألطف)',
     sceneAutoSave: '💾 حفظ تلقائي للمشهد عند تغيير المصادر',
     sceneAutoSaved: '💾 تم حفظ المشهد تلقائيًا',
     sceneIntroLabel: '🎭 نص مقدمة تلقائي عند تغيير المشهد',
@@ -16708,10 +16711,23 @@ const LiveCaptions = {
 
   // v0.7.187: improved render — karaoke-style with word highlighting,
   // bigger text, gradient bg, accent-colored current word
+  // v0.9.21: burn-in mode — when enabled, captions stay at full opacity for
+  // the full hold window without the 600 ms fade. Plays well with FB/IG
+  // upload because the platform compresses captions less when they're high
+  // contrast and stable.
+  burnIn: false,
+  loadBurnIn() { this.burnIn = silentGet('tc-captions-burn') === '1'; },
+  setBurnIn(v) { this.burnIn = !!v; silentSet('tc-captions-burn', v ? '1' : '0'); },
+
   render(ctx, W, H) {
     if (!this.running || !this.current) return;
     const age = performance.now() - this._lastFinalAt;
-    const alpha = age < 4000 ? 1 : Math.max(0, 1 - (age - 4000) / 600);
+    // v0.9.21: in burn-in mode, hold full opacity longer (8 s instead of 4)
+    // and fade more gently (1.5 s instead of .6) so the text stays readable
+    // in the recorded video even after the speaker pauses.
+    const holdMs = this.burnIn ? 8000 : 4000;
+    const fadeMs = this.burnIn ? 1500 : 600;
+    const alpha = age < holdMs ? 1 : Math.max(0, 1 - (age - holdMs) / fadeMs);
     if (alpha <= 0) return;
 
     ctx.save();
@@ -24095,6 +24111,15 @@ async function init() {
   Vignette.load();  // v0.7.154
   RecElapsed.load();  // v0.7.141
   LiveCaptions.load();
+  LiveCaptions.loadBurnIn();    // v0.9.21: hold-longer / fade-slower mode
+  const cbi = $('tcCaptionsBurnIn');
+  if (cbi) {
+    cbi.checked = LiveCaptions.burnIn;
+    cbi.addEventListener('change', (e) => {
+      LiveCaptions.setBurnIn(e.target.checked);
+      showToast(e.target.checked ? '🔥 Burn-in: captions hold 8 s + fade slower' : '💬 Captions back to standard fade', 2200);
+    });
+  }
   SceneIntroText.load();
   SceneTransition.load();
   SceneAutoSave.setup();  // v0.7.127
