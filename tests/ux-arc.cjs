@@ -101,8 +101,8 @@ const checks = [
     /_panelOpener\[id\]\s*=\s*document\.activeElement[\s\S]*opener\.focus/.test(js)],
 
   // ─── Misc — ensure no obvious regressions ─────────────────────────
-  ['APP_VERSION present and on 0.9.x line',
-    /const APP_VERSION = '0\.9\.\d+'/.test(js)],
+  ['APP_VERSION present and on a known minor (0.9.x or 0.10.x)',
+    /const APP_VERSION = '0\.(9|10|11|12)\.\d+'/.test(js)],
   ['BUILD_DATE not stale (year 2026 still valid)',
     /const BUILD_DATE = '2026-04-/.test(js)],
 ];

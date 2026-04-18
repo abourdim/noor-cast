@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.10.0 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.1 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.10.0';
+const APP_VERSION = '0.10.1';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -266,6 +266,7 @@ const LANG = {
     addASource: 'Ajouter une source',
     replayTour: 'Revoir la visite de 30 s',
     autoFrame: 'Auto-cadrage', autoFrameTitle: 'Cadrage intelligent',
+    autoChapters: 'Chapitres auto depuis le transcript',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -1001,6 +1002,7 @@ const LANG = {
     addASource: 'Add a source',
     replayTour: 'Replay 30-sec tour',
     autoFrame: 'Auto-frame', autoFrameTitle: 'Smart frame',
+    autoChapters: 'Auto-chapter from transcript',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1725,6 +1727,7 @@ const LANG = {
     addASource: 'أضف مصدراً',
     replayTour: 'إعادة جولة الـ 30 ثانية',
     autoFrame: 'تأطير تلقائي', autoFrameTitle: 'تأطير ذكي',
+    autoChapters: 'فصول تلقائية من النص',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
@@ -9855,6 +9858,93 @@ const Recorder = {
 };
 
 /* ─────────── Chapters (VTT) ─────────── */
+
+/* v0.10.1 — AutoChapters: generate chapter markers from the live caption
+   transcript (LiveCaptions._srtEntries). Pure local heuristic — no LLM,
+   no network. Looks for two cues:
+     (1) PAUSE — a gap of ≥ 3 s between two consecutive entries → topic shift
+     (2) CUE-WORD — start of a new entry with a transition phrase like
+         "now", "next", "okay so", "let's", "alright", "first", etc.
+   Each detected break becomes a chapter named with the first 6 words of
+   the segment that follows (so the chapter list reads like a TOC).
+   Called from a take-panel button "✨ Auto-chapter from transcript". */
+const AutoChapters = {
+  PAUSE_SEC: 3.0,
+  CUE_WORDS_RE: /^(now|next|okay|so|alright|first|second|third|then|finally|let'?s|let me|moving on|switching to|maintenant|alors|ensuite|d'abord|enfin|passons|الآن|التالي|حسناً|أوّلاً|ثانياً|ثالثاً|أخيراً)\b/i,
+  MIN_GAP_BETWEEN_CHAPTERS: 8,  // never put two auto-chapters within 8 s
+
+  /* Returns proposed chapters [{time, label}] from the SRT entries
+     without mutating Chapters.items. Caller decides to commit or not. */
+  propose(srtEntries) {
+    if (!srtEntries || srtEntries.length === 0) return [];
+    const out = [];
+    // Always seed with chapter at t=0 if first entry isn't already there
+    const first = srtEntries[0];
+    if (first.start > 0.5) {
+      out.push({ time: 0, label: this._titleFromText(first.text) });
+    }
+    let lastChapterAt = -Infinity;
+    for (let i = 0; i < srtEntries.length; i++) {
+      const e = srtEntries[i];
+      const prev = i > 0 ? srtEntries[i - 1] : null;
+      const text = (e.text || '').trim();
+      if (!text) continue;
+      // Cue 1: long pause before this entry?
+      const longPause = prev && (e.start - prev.end) >= this.PAUSE_SEC;
+      // Cue 2: cue-word at the start?
+      const hasCue = this.CUE_WORDS_RE.test(text);
+      if ((longPause || hasCue) && (e.start - lastChapterAt) >= this.MIN_GAP_BETWEEN_CHAPTERS) {
+        out.push({ time: e.start, label: this._titleFromText(text) });
+        lastChapterAt = e.start;
+      }
+    }
+    return out;
+  },
+
+  _titleFromText(text) {
+    // First 6 words, capitalised first letter, max 60 chars.
+    const words = String(text || '').trim().split(/\s+/).slice(0, 6).join(' ');
+    const trimmed = words.length > 60 ? words.slice(0, 60) + '…' : words;
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  },
+
+  /* Apply proposed chapters to the live Chapters.items list. Skips any
+     time within ±2 s of an existing chapter (don't duplicate manual ones). */
+  apply(proposed) {
+    if (!Array.isArray(proposed) || proposed.length === 0) return 0;
+    const existingTimes = (Chapters.items || []).map(c => c.time);
+    let added = 0;
+    for (const c of proposed) {
+      if (existingTimes.some(t => Math.abs(t - c.time) < 2)) continue;
+      Chapters.items.push({ time: c.time, label: '✨ ' + c.label });
+      added++;
+    }
+    Chapters.items.sort((a, b) => a.time - b.time);
+    return added;
+  },
+
+  /* One-click flow: proposes from the last transcript and applies. */
+  generate() {
+    if (!LiveCaptions || !LiveCaptions._srtEntries || LiveCaptions._srtEntries.length === 0) {
+      showToast('💬 No captions in this take — enable Live Captions before recording to use auto-chapters.', 4000);
+      return 0;
+    }
+    const proposed = this.propose(LiveCaptions._srtEntries);
+    if (proposed.length === 0) {
+      showToast('✨ No clear topic shifts found — try recording with deliberate pauses between sections.', 4000);
+      return 0;
+    }
+    const added = this.apply(proposed);
+    if (added > 0) {
+      // Re-render the chapter list under the take video so the user sees them
+      try { ChapterList?.render?.(Chapters.items, $('tcTakeVideo')); } catch {}
+      showToast(`✨ Added ${added} auto-chapter${added === 1 ? '' : 's'} from your speech`, 3000);
+    } else {
+      showToast('✨ Auto-chapters all overlap with manual ones — no new entries added.', 3500);
+    }
+    return added;
+  },
+};
 
 const Chapters = {
   items: [], // { time, label }
@@ -24490,6 +24580,8 @@ function wireEvents() {
   $('tcSaveCaptionsBtn')?.addEventListener('click', () => LiveCaptions.saveCaptions());
   $('tcReplayBtn')?.addEventListener('click', () => InstantReplay.generate());
   $('tcAutoThumbBtn')?.addEventListener('click', () => AutoThumbnail.generate());
+  // v0.10.1: AI auto-chapters from live caption transcript
+  $('tcAutoChaptersBtn')?.addEventListener('click', () => AutoChapters.generate());
   $('tcExportFlyerBtn')?.addEventListener('click', () => ExportFlyer.generate());
   $('tcTranscriptBtn')?.addEventListener('click', () => PostTranscript.generate());
   $('tcTrimBtn').addEventListener('click', () => Trim.open());
