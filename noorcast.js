@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.246 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.247 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.246';
+const APP_VERSION = '0.7.247';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -14143,6 +14143,20 @@ function toggleMaximize() {
   log(on ? '⛶ maximized' : '⛶ restored', 'info');
 }
 
+// v0.7.247: keep the .app.maximized class in sync with the actual browser
+// fullscreen state. Previously, pressing Esc in browser fullscreen left the
+// .maximized class stuck — the page was no longer fullscreen but UI stayed
+// hidden. Now any fullscreen exit (Esc, F11, browser button) reverts the
+// class.
+document.addEventListener('fullscreenchange', () => {
+  const app = document.querySelector('.app');
+  if (!app) return;
+  if (!document.fullscreenElement && app.classList.contains('maximized')) {
+    app.classList.remove('maximized');
+    log('⛶ restored (fullscreen exit)', 'info');
+  }
+});
+
 /* QuizCard — press Q mid-recording, enter a question, it appears as a big
    text overlay. Reuses TextOverlays so it's drawn on the canvas and goes
    into the recording. Auto-removes after 6 seconds. Not interactive —
@@ -17374,7 +17388,7 @@ const Sensors = {
   // v0.7.214: expected firmware version — bump when makecode.ts changes.
   // If the connected board reports an older version, the user is shown a
   // gentle "please reflash" hint instead of a hard error.
-  EXPECTED_FW: 'V3.5',
+  EXPECTED_FW: 'V3.6',
   firmware: null,
 
   _renderFirmwareInfo() {

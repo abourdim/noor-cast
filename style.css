@@ -3641,7 +3641,12 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
 .app.maximized .tc-sidebar,
 .app.maximized .tc-templates,
 .app.maximized .card-header,
-.app.maximized .tc-template-strip {
+.app.maximized .tc-template-strip,
+/* v0.7.247: hide sidebar-resize affordances + the rsidebar collapse toggle
+   when in maximized/fullscreen mode — they refer to UI that's hidden. */
+.app.maximized .tc-studio-lresize,
+.app.maximized .tc-rsidebar-toggle,
+.app.maximized .tc-sidebar-resize {
   display: none !important;
 }
 .app.maximized {
@@ -3660,8 +3665,14 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
   gap: 0 !important;
 }
 .app.maximized .tc-stage {
+  /* v0.7.247: respect the active stage aspect ratio instead of hard-coded 16:9.
+     The stage element has aspect-ratio set inline via StageAspect; let CSS
+     compute the matching max-width from max-height + that aspect ratio.
+     Falls back gracefully to 16:9 for browsers without aspect-ratio CSS. */
   max-height: calc(100vh - 120px) !important;
-  max-width: calc((100vh - 120px) * 16 / 9) !important;
+  max-width: 100vw !important;
+  width: auto !important;
+  margin: 0 auto !important;
   border-radius: 0 !important;
 }
 .app.maximized .tc-rec-bar {

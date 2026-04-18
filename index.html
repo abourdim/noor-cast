@@ -2066,10 +2066,17 @@
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
       </div>
       <pre class="tc-fw-code" id="tcMicrobitCode">/**
- * NoorCast — micro:bit BLE Firmware V3.5
+ * NoorCast — micro:bit BLE Firmware V3.6
  *
  * UART over Bluetooth LE
  * Compatible with NoorCast + bit-playground
+ *
+ * v3.6: SOLID disconnected X icon. v3.5 used basic.showIcon(No) inside
+ * basic.forever, which can be queued/clobbered if any showString or
+ * scrolling animation is in flight (or if the disconnect event handler
+ * also tries to write to LEDs). Replaced with basic.showLeds(...) —
+ * synchronous, explicit 5x5 pattern, never queued. Disconnect handler
+ * also simplified (no longer races with the forever loop).
  *
  * v3.5: REMOVED compass telemetry. Calling input.compassHeading()
  * triggers MakeCode's "tilt to fill circle" calibration game on the
@@ -2122,7 +2129,7 @@
 // FW_NAME stays "NoorCast" so other apps using the same protocol can
 // tell if a board is running NoorCast firmware vs. something else.
 const FW_NAME = "NoorCast"
-const FW_VERSION = "V3.5"
+const FW_VERSION = "V3.6"
 const FW_BUILD = "2026-04-17"
 
 bluetooth.startUartService()
@@ -2149,10 +2156,10 @@ bluetooth.onBluetoothConnected(() => {
     sendVer()  // v3.3: announce identity right after CONNECTED
 })
 bluetooth.onBluetoothDisconnected(() => {
+    // v3.6: just flip the flag — the forever loop draws the X reliably.
+    // Removed showIcon + pause(2000) here because it raced with the
+    // forever loop and sometimes left the LEDs stuck blank.
     btConnected = false
-    basic.showIcon(IconNames.No)
-    basic.pause(2000)
-    basic.clearScreen()
 })
 
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
@@ -2256,13 +2263,18 @@ input.onButtonPressed(Button.B, () => { if (btConnected) bluetooth.uartWriteLine
 let prevLeds = ""
 basic.forever(() => {
     if (!btConnected) {
-        // v3.5: pulsing X = "waiting for connection" (was a pulsing dot).
-        // X is unambiguously "disconnected" — parents/kids instantly
-        // understand without needing context.
-        basic.showIcon(IconNames.No)
-        basic.pause(600)
+        // v3.6: pulsing X drawn with explicit showLeds — never queued,
+        // never racey, always visible the moment btConnected is false.
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            . . # . .
+            . # . # .
+            # . . . #
+        `)
+        basic.pause(700)
         basic.clearScreen()
-        basic.pause(400)
+        basic.pause(300)
         return
     }
     // v3.2: change-detection — only send when value changed enough.
