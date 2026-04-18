@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.10.1 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.2 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.10.1';
+const APP_VERSION = '0.10.2';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -267,6 +267,7 @@ const LANG = {
     replayTour: 'Revoir la visite de 30 s',
     autoFrame: 'Auto-cadrage', autoFrameTitle: 'Cadrage intelligent',
     autoChapters: 'Chapitres auto depuis le transcript',
+    etsyPlaybook: 'Playbook Hollywood 60 s',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -1003,6 +1004,7 @@ const LANG = {
     replayTour: 'Replay 30-sec tour',
     autoFrame: 'Auto-frame', autoFrameTitle: 'Smart frame',
     autoChapters: 'Auto-chapter from transcript',
+    etsyPlaybook: '60-sec Hollywood playbook',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1728,6 +1730,7 @@ const LANG = {
     replayTour: 'إعادة جولة الـ 30 ثانية',
     autoFrame: 'تأطير تلقائي', autoFrameTitle: 'تأطير ذكي',
     autoChapters: 'فصول تلقائية من النص',
+    etsyPlaybook: 'دليل هوليوود 60 ثانية',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
