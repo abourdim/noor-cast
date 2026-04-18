@@ -2879,8 +2879,17 @@ body.log-open .app {
   opacity: 0.85;
 }
 .tc-set-sub > summary::-webkit-details-marker { display: none; }
-.tc-set-sub > summary::before { content: '▸'; font-size: 10px; transition: transform .15s; }
-.tc-set-sub[open] > summary::before { transform: rotate(90deg); }
+/* v0.7.250: smaller cousin of the chunky finger marker on .tc-set-summary.
+   Sub-accordions get a smaller 👉 / 👇 — same vibe, less prominent. */
+.tc-set-sub > summary::before {
+  content: '👉';
+  font-size: .85rem;
+  display: inline-block;
+  margin-right: 4px;
+  transition: transform .2s ease;
+}
+.tc-set-sub[open] > summary::before { content: '👇'; transform: scale(1.05); }
+.tc-set-sub > summary:hover::before { transform: scale(1.15); }
 .tc-set-sub > summary:hover { opacity: 1; background: rgba(255,255,255,.04); }
 .tc-set-sub > .sidebar-group:first-of-type { margin-top: 4px; }
 .tc-set-sub > .sidebar-group { padding: 0 10px; }
@@ -3349,15 +3358,35 @@ body.tc-simple .tc-dashboard-section { display: none !important; }
   transition: background .15s;
 }
 .tc-set-summary::-webkit-details-marker { display: none; }
+/* v0.7.250: replaced tiny ▸ caret with a chunky pointing-finger (👉)
+   that wiggles gently on collapsed sections to invite "click me!".
+   When the section opens, the finger flips to point down (👇) and
+   the wiggle stops. Much more kid-friendly than a 0.75rem grey arrow. */
 .tc-set-summary::before {
-  content: '▸';
+  content: '👉';
   display: inline-block;
-  font-size: .75rem;
-  opacity: .7;
-  transition: transform .18s;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform .25s ease;
+  animation: tcSummaryWiggle 1.6s ease-in-out infinite;
+  transform-origin: 50% 50%;
 }
 .tc-set-section[open] > .tc-set-summary::before {
-  transform: rotate(90deg);
+  content: '👇';
+  animation: none;
+  transform: scale(1.1);
+}
+@keyframes tcSummaryWiggle {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(2px) rotate(-4deg); }
+  40%      { transform: translateX(0)   rotate(0deg); }
+  60%      { transform: translateX(2px) rotate(-4deg); }
+  80%      { transform: translateX(0)   rotate(0deg); }
+}
+/* On hover, the finger gets bigger + rocks once for "yes click me!" */
+.tc-set-summary:hover::before {
+  transform: translateX(3px) scale(1.18);
+  animation-play-state: paused;
 }
 .tc-set-summary:hover {
   background: rgba(255, 255, 255, .04);
