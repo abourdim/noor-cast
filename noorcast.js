@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.13 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.14 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.13';
+const APP_VERSION = '0.9.14';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -11528,6 +11528,22 @@ const Watermark = {
   load() {
     try {
       this.text = silentGet('tc-watermark-text') || '';
+      // v0.9.14 self-heal: v0.9.11–v0.9.13 wrote the kids hacker handle
+      // into Watermark.text by mistake (it baked into recorded video).
+      // If the persisted text matches the handle the user picked in the
+      // KidsMode picker, clear it. They can still re-set their own
+      // watermark from Settings → Slogan if they actually want one.
+      const handle = silentGet('tc-kids-handle');
+      if (handle && this.text === handle) {
+        this.text = '';
+        silentSet('tc-watermark-text', '');
+      }
+      // Also catch the case where the legacy text matches the picker pool
+      // but tc-kids-handle wasn't set yet (early adopters who upgraded fast).
+      if (this.text && /^@(CyberPanda42|RobotBoss99|PixelNinja|QuantumKid|LaserSheep|DataDoge|NeonBee|HexFox|BinaryBunny|CircuitCat|PlasmaPup|GlitchGoose)$/.test(this.text)) {
+        this.text = '';
+        silentSet('tc-watermark-text', '');
+      }
       this.corner = silentGet('tc-watermark-corner') || 'br';
       const op = parseFloat(silentGet('tc-watermark-opacity'));
       if (!isNaN(op)) this.opacity = Math.max(0, Math.min(1, op));
@@ -18640,19 +18656,17 @@ const KidsMode = {
       b.addEventListener('mouseenter', () => b.style.background = 'rgba(74,222,128,.2)');
       b.addEventListener('mouseleave', () => b.style.background = 'rgba(74,222,128,.08)');
       b.addEventListener('click', () => {
+        // v0.9.14: handle is a UI-only personalization (greeting, future
+        // header chip / leaderboards) — must NOT bake into the recording.
+        // v0.9.11–v0.9.13 mistakenly wrote it into Watermark.text which
+        // painted onto the canvas and into every saved video. User
+        // feedback: "do not put it in canva, not important".
         try {
-          if (typeof Watermark !== 'undefined') {
-            Watermark.text = '@' + h;
-            silentSet('tc-watermark-text', '@' + h);
-          }
+          silentSet('tc-kids-handle', '@' + h);
           silentSet('tc-handle-picked', '1');
         } catch {}
         m.remove();
-        showToast('🥷 @' + h + ' set as your watermark — bottom-right of every recording. Edit in Settings → Slogan.', 4500);
-        // v0.9.13: also force a render so the new watermark appears immediately
-        // even before the user adds their first source (otherwise the canvas
-        // is black and they think nothing happened).
-        try { Engine?.render?.(); } catch {}
+        showToast('🥷 Hello, @' + h + '! (Saved in the app — never on your video.)', 3500);
       });
       grid.appendChild(b);
     });
