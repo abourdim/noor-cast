@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.18 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.19 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.18';
+const APP_VERSION = '0.9.19';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -18840,6 +18840,13 @@ const WhatsNew = {
       return;
     }
     if (last === APP_VERSION) return;
+    // v0.9.19: skip the toast in Kids mode — kids don't care about which
+    // version arc shipped what. Still record the version so adults flipping
+    // to Teacher won't get a stale "v0.9.0 → 0.9.1" message later.
+    if (silentGet('tc-mode') !== 'pro') {
+      silentSet('tc-last-seen-version', APP_VERSION);
+      return;
+    }
     // Returning user — was the previous arc < 0.9.0? If so, point at Reels.
     if (this._olderThan(last, '0.9.0') && !this._olderThan(APP_VERSION, '0.9.0')) {
       // Wait for splash / onboarding to settle.
@@ -23909,11 +23916,20 @@ function wireEvents() {
   }
 
   // v0.7.71: custom countdown duration (1-10s, default 3) persisted in tc-countdown-secs
+  // v0.9.19: bump default from 3 → 5 in Kids mode (kids need a moment to
+  // position themselves before the rec actually starts). Only applies if the
+  // user hasn't picked their own value yet — once tc-countdown-secs is set,
+  // user choice wins forever.
   const cdEl = $('tcCountdownSecs');
   if (cdEl) {
     try {
       const saved = parseInt(silentGet('tc-countdown-secs'), 10);
-      if (!isNaN(saved) && saved >= 1 && saved <= 10) cdEl.value = saved;
+      if (!isNaN(saved) && saved >= 1 && saved <= 10) {
+        cdEl.value = saved;
+      } else if (silentGet('tc-mode') !== 'pro') {
+        cdEl.value = 5;
+        silentSet('tc-countdown-secs', '5');
+      }
     } catch {}
     cdEl.addEventListener('change', (e) => {
       let v = parseInt(e.target.value, 10);

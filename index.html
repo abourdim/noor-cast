@@ -394,7 +394,7 @@
 
             <!-- Panel 2: micro:bit -->
             <div class="tc-side-panel" id="tcSidebarMicrobit">
-              <button class="tc-btn-full" id="tcFwModalBtn" style="font-size:.75rem;opacity:.7">⚙ Flash firmware first</button>
+              <button class="tc-btn-full" id="tcFwModalBtn" data-mode="pro" style="font-size:.75rem;opacity:.7">⚙ Flash firmware first</button>
               <button class="tc-btn-full" id="btConnectBtn" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)">📡 Connect</button>
               <button class="tc-btn-full" id="btDisconnectBtn" style="display:none;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">✕ Disconnect</button>
               <span id="tcBtStatus" style="font-size:.7rem;opacity:.6;display:block;text-align:center;margin-top:2px"></span>
@@ -1700,7 +1700,10 @@
             <label class="sidebar-label">Opacity <input type="range" id="tcBgPatternOpacity" min="5" max="100" value="30" style="width:120px;vertical-align:middle" /> <span id="tcBgPatternOpacityVal">30%</span></label>
           </div>
           <!-- v0.7.20: reset controls + build timestamp -->
-          <div class="sidebar-group">
+          <!-- v0.9.19: Maintenance group hidden in Kids mode (data-mode="pro").
+               Reset-badges + Clear-cache are destructive and lose recordings/
+               settings — protect kids from accidental clicks. -->
+          <div class="sidebar-group" data-mode="pro">
             <label class="sidebar-label" data-i18n="setSecDanger">♻ Maintenance</label>
             <button id="tcResetBadgesBtn" class="tc-btn-full" style="margin-bottom:6px">🗑 <span data-i18n="resetBadges">Réinitialiser les badges</span></button>
             <button id="tcClearCacheBtn" class="tc-btn-full tc-btn-danger">💥 <span data-i18n="clearCache">Vider le cache complet</span></button>
