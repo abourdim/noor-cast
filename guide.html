@@ -1823,48 +1823,113 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 <h2 id="ch24"><span class="ch-num">24</span> Advanced Features Reference</h2>
 
 <h3>24.1 Timelapse Recording</h3>
-<p>In <a class="xref" href="#ch20">Settings</a> → Recording: enable Timelapse and set multiplier (2×, 4×, 6×, 8×, 10×). The recording runs at reduced frame rate (30fps ÷ multiplier), resulting in a sped-up video. Perfect for long build sessions or soldering timelapses.</p>
+<p><strong>What.</strong> Speed up the entire recording by capturing fewer frames per second. A 1-hour build becomes a 6-minute timelapse at 10×.</p>
+<p><strong>Where.</strong> Settings → Enregistrement → Capture → <code>⏩ Timelapse</code> toggle + multiplier (×2 to ×20).</p>
+<p><strong>How it works.</strong> Canvas <code>captureStream</code> is called at <code>30 / multiplier</code> fps. The recorder still produces 30fps playback, but each captured frame represents <code>multiplier</code> seconds of real time. So a 1-minute soldering session at ×10 plays back as 6 seconds.</p>
+<p><strong>Use cases.</strong></p>
+<ul>
+  <li><strong>Building a project</strong> — assemble a robot, hand-write a long proof, soldering, painting → ×10 to ×20.</li>
+  <li><strong>Multi-step demos</strong> — show every step of a long process in a few seconds → ×4 to ×8.</li>
+  <li><strong>"How long did this take?"</strong> — visualize lengthy work in a quick clip → ×6.</li>
+</ul>
+<p><strong>Caveat.</strong> Audio recording continues at full speed but plays back fast (chipmunk effect). Best to mute mic during timelapse and add a voiceover later, OR keep mic on for fun chipmunk narration.</p>
+<p><strong>Defaults.</strong> Off · ×4 multiplier · stage 1920×1080 unchanged.</p>
 
 <h3>24.2 Time Goal & Auto-Stop</h3>
-<p>In <a class="xref" href="#ch20">Settings</a> → Recording: set a target duration (minutes). A countdown chip appears on canvas. Optionally enable <strong>auto-stop</strong> — recording stops automatically when the goal is reached.</p>
-
-<h3>24.3 Screensaver</h3>
-<p>After 90 seconds of no user input (and not recording), an idle screensaver activates: a drifting emoji with a "press any key to wake up" hint. Any mouse/key/touch event dismisses it. Toggle in <a class="xref" href="#ch20">Settings</a>.</p>
-
-<h3>24.4 Intro/Outro Cards</h3>
-<p>In <a class="xref" href="#ch20">Settings</a> → Recording: enable cinematic cards. A <strong>2.5s intro card</strong> (brand title + scene name + "Action!") plays at the start, and a <strong>2s outro card</strong> (Merci! + badge summary) at the end. Both baked into the recording.</p>
-
-<h3>24.5 Onboarding Tour</h3>
-<p>On first launch, a <strong>5-step guided tour</strong> highlights key areas: Sources, Canvas, Scenes, Recording, Settings. Runs once (gated by <code>tc-tour-done</code> in localStorage). Can be re-triggered from Help panel.</p>
-
-<h3>24.6 Session Export & Import</h3>
+<p><strong>What.</strong> Set a target recording duration. A countdown chip appears on the canvas. Optionally have NoorCast stop automatically when the goal is reached.</p>
+<p><strong>Where.</strong> Settings → Enregistrement → Capture → <code>⏳ Objectif de durée</code> toggle + minutes input + auto-stop checkbox.</p>
+<p><strong>How.</strong> Set minutes (0.5–60, in 0.5 increments). Start a recording. A pill in the top-right shows time remaining. When zero is hit: auto-stop fires (if enabled), or just keep going past zero (chip flashes red).</p>
+<p><strong>Why.</strong></p>
 <ul>
-  <li><strong>📦 Export Session</strong> — <a class="xref" href="#ch20">Settings</a> → Maintenance. Downloads a JSON file with all <code>tc-*</code> localStorage keys.</li>
-  <li><strong>📥 Import Settings</strong> — upload a previously exported JSON. Replaces all settings. Page reloads.</li>
+  <li><strong>Lessons with strict length.</strong> "5-minute lightning lesson" — set 5min + auto-stop. Your kids learn to fit content into the slot.</li>
+  <li><strong>Practice pacing.</strong> "Explain this in under 2 minutes" → builds discipline.</li>
+  <li><strong>Hard time-box.</strong> Class ends at 14:30 — set the timer, walk away.</li>
 </ul>
-<p>Use this to back up your setup, transfer settings to another computer, or share your configuration with colleagues.</p>
+<p><strong>Defaults.</strong> Off · 5 minutes · auto-stop off (you decide whether to keep recording past the goal).</p>
+
+<h3>24.3 Screensaver — idle wake screen</h3>
+<p><strong>What.</strong> After 90 seconds of no user input (and not recording), the canvas is replaced by a drifting emoji and a "press any key to wake up" hint. Any mouse / key / touch event dismisses it.</p>
+<p><strong>Where.</strong> Settings → Comportement → <code>📺 Screensaver après 90s d'inactivité</code> checkbox.</p>
+<p><strong>Why.</strong> Two reasons:</p>
+<ul>
+  <li><strong>Live demos:</strong> Burn-in protection for OLED displays during prep / breaks / Q&amp;A.</li>
+  <li><strong>"Is this thing on?"</strong> When the canvas is dark, kids look at it puzzled. The drifting emoji says "I'm alive, click me" without distracting from the workspace.</li>
+</ul>
+<p><strong>Defaults.</strong> Off · 90s timeout · drifts a random emoji from a 20-emoji palette.</p>
+
+<h3>24.4 Intro / Outro Cards</h3>
+<p><strong>What.</strong> Cinematic full-canvas cards that play at the start and end of every recording. The intro card (2.5s) shows the title + active scene name + "Action!" countdown. The outro card (2s) shows "Merci!" + a badge summary of the take.</p>
+<p><strong>Where.</strong> Settings → Comportement → <code>🎬 Cartes intro/outro</code> toggle.</p>
+<p><strong>How.</strong> Toggle on → recordings auto-prepend the intro card and append the outro card to the file. The cards use your active brand colors / theme. Both bake into the file (no post-processing).</p>
+<p><strong>Why.</strong> Polishing your tutorials in a single click. Every recording feels intentional instead of "I started talking mid-sentence". The outro reminds viewers what they accomplished + provides a natural ending instead of an awkward cut.</p>
+<p><strong>Defaults.</strong> Off · intro 2.5s · outro 2s · uses brand title + slogan + theme accent.</p>
+
+<h3>24.5 Onboarding Tour — first-launch spotlight</h3>
+<p><strong>What.</strong> A 5-step guided tour that runs the first time you ever open NoorCast. Spotlights the most important UI areas with a tooltip explaining each: Sources, Canvas, Scenes, Recording, Settings.</p>
+<p><strong>Where.</strong> Auto-fires on first launch (gated by <code>tc-tour-done</code> in localStorage). Re-run from Help panel → "Replay tour".</p>
+<p><strong>How.</strong> Each step dims the rest of the UI, highlights one element with a glowing outline, and shows a tooltip with a brief explanation + Next/Skip buttons.</p>
+<p><strong>Why.</strong> 200+ features make NoorCast intimidating. The tour gets a complete beginner from "what's this?" to "I can record" in 30 seconds without reading documentation.</p>
+<p><strong>Defaults.</strong> On · runs once · skippable at any step.</p>
+
+<h3>24.6 Session Export &amp; Import</h3>
+<p><strong>What.</strong> Two complementary backup tools. Both produce a single JSON file you can save / share / restore. Both are non-destructive (Import can preview before applying).</p>
+<dl>
+  <dt><strong>📦 Export Session</strong></dt>
+  <dd>Settings → Maintenance. Downloads <code>noorcast-session-YYYYMMDD-HHMM.json</code> containing every <code>tc-*</code> localStorage key — settings, badges, history, brand logo (base64), watermark text, scene customizations, theme, all preferences. Around 50–500 KB depending on what you've stored.</dd>
+  <dt><strong>📥 Import Session</strong></dt>
+  <dd>Upload a previously exported JSON. Confirms with a "replace all settings?" dialog. On accept, it overwrites localStorage and reloads the page. Your current setup is wiped — keep an Export of your current state first if you might want to revert.</dd>
+</dl>
+<p><strong>Use cases.</strong> Backup before resetting cache · transfer your setup to a new computer · clone the same configuration across multiple classroom workstations · share your "perfect setup" with a colleague · roll back after experimenting.</p>
+<p><strong>What's NOT included.</strong> Recordings, snapshots, badge cards (these are downloaded files, not localStorage). Live camera/mic streams (those are device-bound). The micro:bit firmware (lives on the device).</p>
+<p><strong>Defaults.</strong> Always available · no auto-export · no version conflict checking (importing an old session over a newer one may break some features — re-importing the newer one fixes it).</p>
 
 <h3>24.7 Multi-Select Sources</h3>
-<p><kbd>Shift+click</kbd> to add/remove sources from the selection. Multi-selected sources show a sky-blue dashed outline. Move all selected sources together by dragging one. <kbd>Ctrl+A</kbd> or "Select All" button to select all visible sources.</p>
-
-<h3>24.8 Snapshot Features</h3>
+<p><strong>What.</strong> Select 2 or more sources at once and operate on them as a group — move them together, delete them in one shot, change their visibility together.</p>
+<p><strong>How to enter / exit multi-select.</strong></p>
 <ul>
-  <li><strong>Snapshot Gallery Strip</strong> — pressing <kbd>S</kbd> downloads a PNG AND adds an 88×50 thumbnail to a scrollable strip below the stage. Click to re-download, hover for delete ✕.</li>
-  <li><strong>Multiplier</strong> — in <a class="xref" href="#ch20">Settings</a>: capture at 1×, 2×, or 4× canvas resolution (up to 7680×4320).</li>
-  <li><strong>Annotation Mode</strong> — in <a class="xref" href="#ch20">Settings</a>: when enabled, snapshots open in an annotation modal where you can draw/add text before saving.</li>
+  <li><kbd>Shift</kbd>+click any source → adds to / removes from the selection.</li>
+  <li><kbd>Ctrl/Cmd</kbd>+<kbd>A</kbd> → selects all visible sources.</li>
+  <li>Click empty canvas or press <kbd>Esc</kbd> → clears the multi-select.</li>
 </ul>
+<p><strong>Visual feedback.</strong> Multi-selected sources show a sky-blue dashed outline (different from the single-select green outline).</p>
+<p><strong>Group operations.</strong></p>
+<ul>
+  <li><strong>Move</strong> — drag one source; all selected sources move by the same delta. Preserves their relative positions.</li>
+  <li><strong>Delete</strong> — <kbd>Delete</kbd> or <kbd>Backspace</kbd> removes all selected sources.</li>
+  <li><strong>Hide / show</strong> — toggles visibility of all selected together.</li>
+</ul>
+<p><strong>Why.</strong> Re-arranging a 4-camera layout one source at a time is tedious. Selecting all and dragging the group as one is a single gesture.</p>
+
+<h3>24.8 Snapshot Features (full reference)</h3>
+<p>See the new <a class="xref" href="#ch28-snapshot">28.24 Snapshot system</a> entry for the full What/Where/How/Why/Defaults including the gallery strip, 1×/2×/4× multipliers, the annotator workflow, and file naming.</p>
 
 <h3>24.9 Scene Auto-Save</h3>
-<p>When you drag/resize a source or change its properties (skin, border, etc.), the active custom scene is automatically re-saved. Toggle in <a class="xref" href="#ch20">Settings</a>. No need to manually click "Save Layout" after every change.</p>
+<p><strong>What.</strong> Whenever you drag, resize, change opacity, swap a skin, or modify any property of a source, the currently active <em>custom</em> scene is silently re-saved. No "Save Layout" button needed.</p>
+<p><strong>Where.</strong> Settings → Comportement → <code>💾 Auto-save scene on drag/resize</code> toggle (default ON).</p>
+<p><strong>How.</strong> A small debounced trigger fires 800ms after the last edit. The active custom scene's layout is overwritten in <code>tc-scene-custom</code>. Built-in scenes (you, code, robot…) are <em>not</em> overwritten — they stay pristine.</p>
+<p><strong>Why.</strong> Kids would forget to save and lose 10 minutes of layout tweaking. Auto-save eliminates that frustration.</p>
+<p><strong>Caveat.</strong> If you don't want the scene mutated, switch to a built-in scene first, then experiment. Or use the Layout Undo (<a class="xref" href="#ch28-layout-history">28.40</a>) to revert.</p>
+<p><strong>Defaults.</strong> On · 800ms debounce · only active <em>custom</em> scenes get auto-saved.</p>
 
 <h3>24.10 Scene Auto-Advance</h3>
-<p>In <a class="xref" href="#ch20">Settings</a>: automatically advance to the next scene after N seconds. A countdown pill appears at top-right of the canvas. Useful for timed presentations.</p>
+<p><strong>What.</strong> Automatically rotates through your scenes during a recording. After N seconds on a scene, NoorCast switches to the next one in order.</p>
+<p><strong>Where.</strong> Settings → Comportement → <code>↻ Avance auto des scènes</code> toggle + interval (5-600 seconds).</p>
+<p><strong>How.</strong> Toggle on → set interval (e.g. 30s) → start recording. Each scene gets exactly N seconds, then the next one activates. A countdown pill in the top-right shows time remaining.</p>
+<p><strong>Use cases.</strong></p>
+<ul>
+  <li><strong>Time-boxed lessons</strong> — "30s intro, 30s code, 30s robot, 30s wrap-up". Total 2 minutes, every section the same length, you don't need to watch the clock.</li>
+  <li><strong>Photo-booth style content</strong> — set 5-10s intervals for a fast-moving sample reel.</li>
+  <li><strong>Live performance</strong> — DJ-style scene rotation without touching keyboard.</li>
+</ul>
+<p><strong>Defaults.</strong> Off · 30 seconds · loops back to scene 1 after the last.</p>
 
-<h3>24.11 Layout Undo/Redo History</h3>
-<p><kbd>Ctrl+Z</kbd> undoes the last layout change (source position/size/visibility). <kbd>Ctrl+Y</kbd> redoes. 10-step history. Each drag/resize end, scene switch, and source add/remove creates a history entry.</p>
+<h3>24.11 Layout Undo / Redo History</h3>
+<p><strong>What.</strong> Every "complete" layout change creates a snapshot. <kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd> rewinds, <kbd>Ctrl/Cmd</kbd>+<kbd>Y</kbd> (or <kbd>Ctrl+Shift+Z</kbd>) replays. 10-step ring buffer.</p>
+<p>See <a class="xref" href="#ch28-layout-history">28.40</a> for the full reference (what's tracked, what isn't, defaults).</p>
 
-<h3>24.12 Retry 30s (Soft Rewind)</h3>
-<p><kbd>Ctrl+Z</kbd> <strong>during recording</strong> flags the last 30 seconds as a retry region. A chapter marker is added with an orange tint. The trim editor can later auto-cut these retry regions.</p>
+<h3>24.12 Retry 30s (Soft Rewind during recording)</h3>
+<p><strong>What.</strong> Special meaning of <kbd>Ctrl+Z</kbd> while recording: instead of layout-undo, it flags the last 30 seconds as a "retry region" with an orange marker.</p>
+<p>See <a class="xref" href="#ch28-retry">28.41</a> for the full reference.</p>
 
 <h3>24.13 Source Details</h3>
 <table>
