@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.3 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.4 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.3';
+const APP_VERSION = '0.9.4';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -54,6 +54,10 @@ function silentSet(key, val) {
 }
 function silentSetJSON(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+// v0.9.4: codemod target — replaces `try { localStorage.removeItem(k) } catch {}`
+function silentRemove(key) {
+  silentRemove(key);
 }
 
 // Debounce helper — overlays call _savePos() on every pointermove during
@@ -2497,7 +2501,7 @@ const CustomAccent = {
   current: null,
 
   load() {
-    try { this.current = localStorage.getItem('tc-custom-accent') || null; } catch {}
+    this.current = silentGet('tc-custom-accent') || null;
     this.apply();
   },
 
@@ -2512,7 +2516,7 @@ const CustomAccent = {
 
   clear() {
     this.current = null;
-    try { localStorage.removeItem('tc-custom-accent'); } catch {}
+    silentRemove('tc-custom-accent');
     this.apply();
   },
 
@@ -2553,19 +2557,19 @@ const CanvasBg = {
 
   load() {
     try {
-      const v = localStorage.getItem('tc-canvas-bg');
+      const v = silentGet('tc-canvas-bg');
       if (v && /^#[0-9a-fA-F]{6}$/.test(v)) this.current = v;
       // v0.7.225: restore image + options
-      const dataUrl = localStorage.getItem('tc-canvas-bg-image');
+      const dataUrl = silentGet('tc-canvas-bg-image');
       if (dataUrl && dataUrl.startsWith('data:image/')) {
         this.imageDataUrl = dataUrl;
         const img = new Image();
         img.onload = () => { this.image = img; };
         img.src = dataUrl;
       }
-      const fit = localStorage.getItem('tc-canvas-bg-image-fit');
+      const fit = silentGet('tc-canvas-bg-image-fit');
       if (fit && ['cover', 'contain', 'stretch', 'tile'].includes(fit)) this.imageFit = fit;
-      const op = parseFloat(localStorage.getItem('tc-canvas-bg-image-opacity'));
+      const op = parseFloat(silentGet('tc-canvas-bg-image-opacity'));
       if (!isNaN(op)) this.imageOpacity = Math.max(0, Math.min(1, op));
     } catch {}
   },
@@ -2597,7 +2601,7 @@ const CanvasBg = {
       img.onload = () => {
         this.image = img;
         this.imageDataUrl = dataUrl;
-        try { localStorage.setItem('tc-canvas-bg-image', dataUrl); } catch {
+        try { silentSet('tc-canvas-bg-image', dataUrl); } catch {
           showToast('⚠ Image too big for storage', 2500);
         }
         showToast(`🖼 Background image: ${img.naturalWidth}×${img.naturalHeight}`, 2000);
@@ -2611,7 +2615,7 @@ const CanvasBg = {
   clearImage() {
     this.image = null;
     this.imageDataUrl = null;
-    try { localStorage.removeItem('tc-canvas-bg-image'); } catch {}
+    silentRemove('tc-canvas-bg-image');
     showToast('🗑 Background image removed', 1500);
   },
 
@@ -2660,9 +2664,9 @@ const BgPatterns = {
 
   load() {
     try {
-      const p = localStorage.getItem('tc-bg-pattern');
+      const p = silentGet('tc-bg-pattern');
       if (p) this.current = p;
-      const o = parseFloat(localStorage.getItem('tc-bg-pattern-opacity'));
+      const o = parseFloat(silentGet('tc-bg-pattern-opacity'));
       if (!isNaN(o)) this.opacity = Math.max(0.05, Math.min(1, o));
     } catch {}
   },
@@ -3172,7 +3176,7 @@ const StageAspect = {
 
   load() {
     try {
-      const saved = localStorage.getItem('tc-stage-aspect');
+      const saved = silentGet('tc-stage-aspect');
       if (saved && this.presets.find(p => p.key === saved)) this.current = saved;
     } catch {}
     // Apply on load (AFTER Engine.init has set initial dimensions)
@@ -3382,9 +3386,9 @@ const MicBoost = {
   _muted: false,
   load() {
     try {
-      const g = parseFloat(localStorage.getItem('tc-mic-gain'));
+      const g = parseFloat(silentGet('tc-mic-gain'));
       if (!isNaN(g)) this.gain = Math.max(0, Math.min(4, g));
-      const d = parseFloat(localStorage.getItem('tc-mic-gate-db'));
+      const d = parseFloat(silentGet('tc-mic-gate-db'));
       if (!isNaN(d)) this.gateDb = Math.max(-60, Math.min(-20, d));
     } catch {}
   },
@@ -3521,7 +3525,7 @@ const StickyNotes = {
 
   setup() {
     try {
-      const raw = localStorage.getItem('tc-sticky-notes');
+      const raw = silentGet('tc-sticky-notes');
       if (raw) {
         const data = JSON.parse(raw);
         if (Array.isArray(data.notes)) this.notes = data.notes;
@@ -3557,7 +3561,7 @@ const StickyNotes = {
 
   _save() {
     try {
-      localStorage.setItem('tc-sticky-notes', JSON.stringify({
+      silentSet('tc-sticky-notes', JSON.stringify({
         notes: this.notes,
         nextId: this._nextId,
       }));
@@ -3633,7 +3637,7 @@ const VolumeDuck = {
   _active: false,
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-duck') === '1'; } catch {}
+    this.enabled = silentGet('tc-duck') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -5405,13 +5409,13 @@ const Scenes = {
   saveOrder() {
     try {
       const keys = this.presets.map(p => p.key);
-      localStorage.setItem('tc-scene-order', JSON.stringify(keys));
+      silentSet('tc-scene-order', JSON.stringify(keys));
     } catch {}
   },
 
   loadOrder() {
     try {
-      const raw = localStorage.getItem('tc-scene-order');
+      const raw = silentGet('tc-scene-order');
       if (!raw) return;
       const keys = JSON.parse(raw);
       if (!Array.isArray(keys)) return;
@@ -5599,7 +5603,7 @@ const Scenes = {
 
   saveCustom() {
     try {
-      localStorage.setItem('tc-scene-custom', JSON.stringify(
+      silentSet('tc-scene-custom', JSON.stringify(
         this.custom.map(c => ({ key: c.key, icon: c.icon, label: c.label, snapshot: c.snapshot }))
       ));
     } catch {}
@@ -5607,7 +5611,7 @@ const Scenes = {
 
   loadCustom() {
     try {
-      const raw = localStorage.getItem('tc-scene-custom');
+      const raw = silentGet('tc-scene-custom');
       if (!raw) return;
       const saved = JSON.parse(raw);
       if (!Array.isArray(saved)) return;
@@ -5700,16 +5704,16 @@ const Scenes = {
       const overrides = {};
       this.presets.forEach(p => { if (!p.custom && p.overrideName) overrides[p.key] = p.overrideName; });
       if (Object.keys(overrides).length) {
-        localStorage.setItem('tc-scene-overrides', JSON.stringify(overrides));
+        silentSet('tc-scene-overrides', JSON.stringify(overrides));
       } else {
-        localStorage.removeItem('tc-scene-overrides');
+        silentRemove('tc-scene-overrides');
       }
     } catch {}
   },
 
   _loadPresetOverrides() {
     try {
-      const raw = localStorage.getItem('tc-scene-overrides');
+      const raw = silentGet('tc-scene-overrides');
       if (!raw) return;
       const overrides = JSON.parse(raw);
       if (typeof overrides !== 'object') return;
@@ -5741,7 +5745,7 @@ const SceneAutoSave = {
 
   load() {
     try {
-      const v = localStorage.getItem('tc-scene-autosave');
+      const v = silentGet('tc-scene-autosave');
       if (v !== null) this.enabled = v === '1';
     } catch {}
   },
@@ -5792,13 +5796,13 @@ const SceneTransition = {
 
   load() {
     try {
-      const stored = localStorage.getItem('tc-scene-transition-mode');
+      const stored = silentGet('tc-scene-transition-mode');
       if (this.MODES.includes(stored)) {
         this.mode = stored;
         this.enabled = true;
       } else if (stored === 'none' || stored === null) {
         // migrate from old boolean key
-        const legacy = localStorage.getItem('tc-scene-transition');
+        const legacy = silentGet('tc-scene-transition');
         if (legacy === '1') { this.enabled = true; this.mode = 'fade'; }
         else { this.enabled = false; }
       }
@@ -6004,7 +6008,7 @@ const Screensaver = {
   _t0: 0,
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-screensaver') === '1'; } catch {}
+    this.enabled = silentGet('tc-screensaver') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -6090,7 +6094,7 @@ const SceneIntroText = {
   DURATION: 3000,  // ms visible before fading
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-scene-intro') === '1'; } catch {}
+    this.enabled = silentGet('tc-scene-intro') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -6127,9 +6131,9 @@ const SceneAutoAdvance = {
   _lastTick: 0,
 
   setup() {
-    try { this.enabled = localStorage.getItem('tc-autoadv') === '1'; } catch {}
+    this.enabled = silentGet('tc-autoadv') === '1';
     try {
-      const s = parseInt(localStorage.getItem('tc-autoadv-sec'), 10);
+      const s = parseInt(silentGet('tc-autoadv-sec'), 10);
       if (s >= 5 && s <= 600) this.intervalSec = s;
     } catch {}
     if (this.enabled) this.start();
@@ -6480,7 +6484,7 @@ const MicrobitOverlay = {
 
     // Restore saved position
     try {
-      const pos = JSON.parse(localStorage.getItem('tc-mo-pos'));
+      const pos = JSON.parse(silentGet('tc-mo-pos'));
       if (pos && typeof pos.x === 'number') {
         el.style.left = pos.x + 'px';
         el.style.top = pos.y + 'px';
@@ -9126,7 +9130,7 @@ const Recorder = {
 
   pickMime() {
     let pref = 'auto';
-    try { pref = localStorage.getItem('tc-format') || 'auto'; } catch {}
+    pref = silentGet('tc-format') || 'auto';
     const mp4 = [
       'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
       'video/mp4;codecs=avc1,mp4a.40.2',
@@ -9167,7 +9171,7 @@ const Recorder = {
   async countdown() {
     let duration = 3;
     try {
-      const saved = parseInt(localStorage.getItem('tc-countdown-secs'), 10);
+      const saved = parseInt(silentGet('tc-countdown-secs'), 10);
       if (!isNaN(saved) && saved >= 1 && saved <= 10) duration = saved;
     } catch {}
     const el = $('tcCountdown');
@@ -10034,7 +10038,7 @@ const Spotlight = {
   DARKNESS: 0.65,  // alpha of the dim overlay outside the circle
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-spotlight') === '1'; } catch {}
+    this.enabled = silentGet('tc-spotlight') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -10103,7 +10107,7 @@ const CursorTrail = {
   _lastY: 0,
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-cursor-trail') === '1'; } catch {}
+    this.enabled = silentGet('tc-cursor-trail') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -10410,9 +10414,9 @@ const SnapGrid = {
   size: 20,
 
   setup() {
-    try { this.enabled = localStorage.getItem('tc-snap-grid') === '1'; } catch {}
+    this.enabled = silentGet('tc-snap-grid') === '1';
     try {
-      const s = parseInt(localStorage.getItem('tc-snap-grid-size'), 10);
+      const s = parseInt(silentGet('tc-snap-grid-size'), 10);
       if (s >= 10 && s <= 100) this.size = s;
     } catch {}
   },
@@ -11243,23 +11247,23 @@ const Brand = {
 
   load() {
     try {
-      this.logo._originalDataUrl = localStorage.getItem('tc-brand-logo') || null;
-      this.slogan.text           = localStorage.getItem('tc-brand-slogan') || '';
-      this.logo.effect           = localStorage.getItem('tc-brand-effect') || 'none';
-      this.logo.bgRemoved        = localStorage.getItem('tc-brand-bgremove') === '1';
-      this.slogan.color          = localStorage.getItem('tc-brand-color') || '#ffffff';
-      this.logo.opacity          = parseFloat(localStorage.getItem('tc-brand-logo-opacity') || '1');
-      this.logo.filter           = localStorage.getItem('tc-brand-logo-filter') || 'none';
-      this.logo.tint             = localStorage.getItem('tc-brand-logo-tint') || null;
+      this.logo._originalDataUrl = silentGet('tc-brand-logo') || null;
+      this.slogan.text           = silentGet('tc-brand-slogan') || '';
+      this.logo.effect           = silentGet('tc-brand-effect') || 'none';
+      this.logo.bgRemoved        = silentGet('tc-brand-bgremove') === '1';
+      this.slogan.color          = silentGet('tc-brand-color') || '#ffffff';
+      this.logo.opacity          = parseFloat(silentGet('tc-brand-logo-opacity') || '1');
+      this.logo.filter           = silentGet('tc-brand-logo-filter') || 'none';
+      this.logo.tint             = silentGet('tc-brand-logo-tint') || null;
       // v0.7.7: new keys — independent positions for logo and slogan
-      const logoPos   = localStorage.getItem('tc-brand-logo-pos');
-      const sloganPos = localStorage.getItem('tc-brand-slogan-pos');
+      const logoPos   = silentGet('tc-brand-logo-pos');
+      const sloganPos = silentGet('tc-brand-slogan-pos');
       if (logoPos)   { try { Object.assign(this.logo,   JSON.parse(logoPos));   } catch {} }
       if (sloganPos) { try { Object.assign(this.slogan, JSON.parse(sloganPos)); } catch {} }
       // Back-compat: migrate the old tc-brand-pos (single bounding box)
       // to the new logo-pos if no logo-pos exists yet
       if (!logoPos) {
-        const oldPos = localStorage.getItem('tc-brand-pos');
+        const oldPos = silentGet('tc-brand-pos');
         if (oldPos) { try { Object.assign(this.logo, JSON.parse(oldPos)); } catch {} }
       }
     } catch {}
@@ -11268,17 +11272,17 @@ const Brand = {
 
   save() {
     try {
-      if (this.logo._originalDataUrl) localStorage.setItem('tc-brand-logo', this.logo._originalDataUrl);
-      localStorage.setItem('tc-brand-slogan',      this.slogan.text || '');
-      localStorage.setItem('tc-brand-effect',      this.logo.effect);
-      localStorage.setItem('tc-brand-bgremove',    this.logo.bgRemoved ? '1' : '0');
-      localStorage.setItem('tc-brand-color',       this.slogan.color || '#ffffff');
-      localStorage.setItem('tc-brand-logo-opacity', String(this.logo.opacity));
-      localStorage.setItem('tc-brand-logo-filter',  this.logo.filter);
-      if (this.logo.tint) localStorage.setItem('tc-brand-logo-tint', this.logo.tint);
-      else                localStorage.removeItem('tc-brand-logo-tint');
-      localStorage.setItem('tc-brand-logo-pos',    JSON.stringify({ x: this.logo.x, y: this.logo.y, w: this.logo.w, h: this.logo.h, rotation: this.logo.rotation }));
-      localStorage.setItem('tc-brand-slogan-pos',  JSON.stringify({ x: this.slogan.x, y: this.slogan.y, w: this.slogan.w, h: this.slogan.h, size: this.slogan.size, font: this.slogan.font, rotation: this.slogan.rotation, opacity: this.slogan.opacity }));
+      if (this.logo._originalDataUrl) silentSet('tc-brand-logo', this.logo._originalDataUrl);
+      silentSet('tc-brand-slogan',      this.slogan.text || '');
+      silentSet('tc-brand-effect',      this.logo.effect);
+      silentSet('tc-brand-bgremove',    this.logo.bgRemoved ? '1' : '0');
+      silentSet('tc-brand-color',       this.slogan.color || '#ffffff');
+      silentSet('tc-brand-logo-opacity', String(this.logo.opacity));
+      silentSet('tc-brand-logo-filter',  this.logo.filter);
+      if (this.logo.tint) silentSet('tc-brand-logo-tint', this.logo.tint);
+      else                silentRemove('tc-brand-logo-tint');
+      silentSet('tc-brand-logo-pos',    JSON.stringify({ x: this.logo.x, y: this.logo.y, w: this.logo.w, h: this.logo.h, rotation: this.logo.rotation }));
+      silentSet('tc-brand-slogan-pos',  JSON.stringify({ x: this.slogan.x, y: this.slogan.y, w: this.slogan.w, h: this.slogan.h, size: this.slogan.size, font: this.slogan.font, rotation: this.slogan.rotation, opacity: this.slogan.opacity }));
     } catch {}
   },
 
@@ -11332,7 +11336,7 @@ const Brand = {
   clearLogo() {
     this.logo._originalDataUrl = null;
     this.logo.img = null;
-    try { localStorage.removeItem('tc-brand-logo'); } catch {}
+    silentRemove('tc-brand-logo');
   },
 
   setSlogan(s)        { this.slogan.text = s || ''; this._measureSlogan(); this.save(); },
@@ -11495,16 +11499,16 @@ const Watermark = {
 
   load() {
     try {
-      this.text = localStorage.getItem('tc-watermark-text') || '';
-      this.corner = localStorage.getItem('tc-watermark-corner') || 'br';
-      const op = parseFloat(localStorage.getItem('tc-watermark-opacity'));
+      this.text = silentGet('tc-watermark-text') || '';
+      this.corner = silentGet('tc-watermark-corner') || 'br';
+      const op = parseFloat(silentGet('tc-watermark-opacity'));
       if (!isNaN(op)) this.opacity = Math.max(0, Math.min(1, op));
       this._loadPos();
     } catch {}
   },
   _loadPos() {
     try {
-      const raw = localStorage.getItem('tc-watermark-pos');
+      const raw = silentGet('tc-watermark-pos');
       if (raw) {
         const p = JSON.parse(raw);
         if (typeof p.x === 'number') { this.x = p.x; this.y = p.y; this._customPos = true; }
@@ -11514,9 +11518,9 @@ const Watermark = {
   _savePos() {
     try {
       if (this._customPos) {
-        localStorage.setItem('tc-watermark-pos', JSON.stringify({ x: this.x, y: this.y }));
+        silentSet('tc-watermark-pos', JSON.stringify({ x: this.x, y: this.y }));
       } else {
-        localStorage.removeItem('tc-watermark-pos');
+        silentRemove('tc-watermark-pos');
       }
     } catch {}
   },
@@ -11645,9 +11649,9 @@ const ServoGauge = {
 
   load() {
     try {
-      const vis = localStorage.getItem('tc-servo-gauge-visible');
+      const vis = silentGet('tc-servo-gauge-visible');
       if (vis !== null) this.visible = vis === '1';
-      const raw = localStorage.getItem('tc-servo-gauge');
+      const raw = silentGet('tc-servo-gauge');
       if (raw) {
         const s = JSON.parse(raw);
         if (typeof s.x === 'number') { this.x = s.x; this.y = s.y; this._customPos = true; }
@@ -11658,7 +11662,7 @@ const ServoGauge = {
   },
   _savePos() {
     try {
-      localStorage.setItem('tc-servo-gauge', JSON.stringify({
+      silentSet('tc-servo-gauge', JSON.stringify({
         x: this.x, y: this.y, opacity: this._opacity, scale: this._scale
       }));
     } catch {}
@@ -11810,7 +11814,7 @@ const GridOverlay = {
   },
 
   load() {
-    try { this.visible = localStorage.getItem('tc-grid-overlay') === '1'; } catch {}
+    this.visible = silentGet('tc-grid-overlay') === '1';
   },
 
   _save() {
@@ -11877,7 +11881,7 @@ const SourceLabels = {
   },
 
   load() {
-    try { this.visible = localStorage.getItem('tc-source-labels') === '1'; } catch {}
+    this.visible = silentGet('tc-source-labels') === '1';
   },
 
   _save() {
@@ -11968,7 +11972,7 @@ const FpsCounter = {
   },
 
   load() {
-    try { this.visible = localStorage.getItem('tc-fps-counter') === '1'; } catch {}
+    this.visible = silentGet('tc-fps-counter') === '1';
   },
 
   _save() {
@@ -12088,7 +12092,7 @@ const BrandPresets = {
           rotation: Brand.slogan?.rotation,
         },
       };
-      localStorage.setItem(this.SLOT_KEYS[idx], JSON.stringify(snap));
+      silentSet(this.SLOT_KEYS[idx], JSON.stringify(snap));
       showToast(`💾 ${t('brandPresetSaved') || 'Preset'} ${slot}`, 1400);
       this._renderSlots();
     } catch (e) {
@@ -12100,7 +12104,7 @@ const BrandPresets = {
     const idx = slot - 1;
     if (idx < 0 || idx > 2) return;
     try {
-      const raw = localStorage.getItem(this.SLOT_KEYS[idx]);
+      const raw = silentGet(this.SLOT_KEYS[idx]);
       if (!raw) {
         showToast(`${t('brandPresetEmpty') || 'Slot vide'} ${slot}`, 1400);
         return;
@@ -12150,7 +12154,7 @@ const BrandPresets = {
     // Add a small dot indicator on buttons whose slot has data
     document.querySelectorAll('[data-brand-load]').forEach(btn => {
       const slot = parseInt(btn.dataset.brandLoad);
-      const hasData = !!localStorage.getItem(this.SLOT_KEYS[slot - 1]);
+      const hasData = !!silentGet(this.SLOT_KEYS[slot - 1]);
       btn.classList.toggle('has-data', hasData);
     });
   },
@@ -12340,10 +12344,10 @@ const Teleprompter = {
   setup() {
     // Load persisted values — pattern matches Badges/Brand/TextOverlays
     try {
-      const s = localStorage.getItem('tc-tele-script'); if (s !== null) this.script = s;
-      const sp = parseFloat(localStorage.getItem('tc-tele-speed'));   if (!isNaN(sp)) this.speed = sp;
-      const fs = parseFloat(localStorage.getItem('tc-tele-font'));    if (!isNaN(fs)) this.fontSize = fs;
-      const w  = parseFloat(localStorage.getItem('tc-tele-width'));   if (!isNaN(w))  this.widthPct = w;
+      const s = silentGet('tc-tele-script'); if (s !== null) this.script = s;
+      const sp = parseFloat(silentGet('tc-tele-speed'));   if (!isNaN(sp)) this.speed = sp;
+      const fs = parseFloat(silentGet('tc-tele-font'));    if (!isNaN(fs)) this.fontSize = fs;
+      const w  = parseFloat(silentGet('tc-tele-width'));   if (!isNaN(w))  this.widthPct = w;
     } catch {}
 
     const inner = $('tcTeleInner');
@@ -13680,7 +13684,7 @@ const BadgeCard = {
     // Text fallback — a full QR encoder would violate the single-file
     // zero-dep mission. Teachers can set the URL in Settings > Brand.
     let badgeUrl = '';
-    try { badgeUrl = localStorage.getItem('tc-brand-url') || ''; } catch {}
+    badgeUrl = silentGet('tc-brand-url') || '';
     if (badgeUrl) {
       ctx.save();
       ctx.font = '18px ui-monospace, "Consolas", "Courier New", monospace';
@@ -14520,7 +14524,7 @@ const SourceContextMenu = {
 const FocusMode = {
   on: false,
   setup() {
-    try { this.on = localStorage.getItem('tc-focus-mode') === '1'; } catch {}
+    this.on = silentGet('tc-focus-mode') === '1';
     this._apply();
   },
   toggle() {
@@ -14696,7 +14700,7 @@ function snapshot() {
   // operates on the Engine canvas at its native resolution; the chosen
   // multiplier still applies when the annotated image is finally saved.
   let annotate = false;
-  try { annotate = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
+  annotate = silentGet('tc-snap-annotate') === '1';
   if (annotate) {
     Engine.canvas.toBlob((blob) => SnapshotAnnotator.open(blob));
     return;
@@ -14705,7 +14709,7 @@ function snapshot() {
   // v0.7.79: snapshot resolution multiplier — 1× / 2× / 4×
   let mult = 1;
   try {
-    const saved = parseInt(localStorage.getItem('tc-snap-mult'), 10);
+    const saved = parseInt(silentGet('tc-snap-mult'), 10);
     if (saved === 2 || saved === 4) mult = saved;
   } catch {}
 
@@ -15241,7 +15245,7 @@ const GuidedTour = {
 
   maybeAutoStart() {
     try {
-      if (localStorage.getItem('tc-tour-done') === '1') return;
+      if (silentGet('tc-tour-done') === '1') return;
     } catch {}
     // Delay so splash/onboard cards fade first
     setTimeout(() => this.start(), 1800);
@@ -15363,8 +15367,8 @@ const ClockOverlay = {
 
   load() {
     try {
-      this.enabled = localStorage.getItem('tc-clock') === '1';
-      this.showDate = localStorage.getItem('tc-clock-date') !== '0';
+      this.enabled = silentGet('tc-clock') === '1';
+      this.showDate = silentGet('tc-clock-date') !== '0';
     } catch {}
   },
   setEnabled(v) {
@@ -15438,7 +15442,7 @@ const RecIndicator = {
 
   load() {
     try {
-      const v = localStorage.getItem('tc-rec-indicator');
+      const v = silentGet('tc-rec-indicator');
       if (v !== null) this.enabled = v === '1';
     } catch {}
   },
@@ -15482,7 +15486,7 @@ const AudioViz = {
 
   load() {
     try {
-      this.visible = localStorage.getItem('tc-audio-viz') === '1';
+      this.visible = silentGet('tc-audio-viz') === '1';
     } catch {}
   },
   setVisible(v) {
@@ -15549,7 +15553,7 @@ const RecElapsed = {
 
   load() {
     try {
-      this.visible = localStorage.getItem('tc-rec-elapsed') === '1';
+      this.visible = silentGet('tc-rec-elapsed') === '1';
     } catch {}
   },
   setVisible(v) {
@@ -15651,7 +15655,7 @@ const Letterbox = {
 
   _load() {
     try {
-      const raw = localStorage.getItem('tc-letterbox');
+      const raw = silentGet('tc-letterbox');
       if (raw) {
         const obj = JSON.parse(raw);
         this.visible = !!obj.visible;
@@ -15899,8 +15903,8 @@ const Vignette = {
 
   load() {
     try {
-      this.visible = localStorage.getItem('tc-vignette') === '1';
-      const v = parseFloat(localStorage.getItem('tc-vignette-intensity'));
+      this.visible = silentGet('tc-vignette') === '1';
+      const v = parseFloat(silentGet('tc-vignette-intensity'));
       if (!isNaN(v)) this.intensity = Math.max(0.1, Math.min(1, v));
     } catch {}
   },
@@ -15944,7 +15948,7 @@ const CountdownTimer = {
 
   setup() {
     try {
-      const m = parseInt(localStorage.getItem('tc-timer-dur'), 10);
+      const m = parseInt(silentGet('tc-timer-dur'), 10);
       if (m >= 1 && m <= 60) this.durationSec = m * 60;
     } catch {}
   },
@@ -16381,8 +16385,8 @@ const Timelapse = {
 
   load() {
     try {
-      this.enabled = localStorage.getItem('tc-timelapse') === '1';
-      const m = parseFloat(localStorage.getItem('tc-timelapse-mult'));
+      this.enabled = silentGet('tc-timelapse') === '1';
+      const m = parseFloat(silentGet('tc-timelapse-mult'));
       if (!isNaN(m)) this.multiplier = Math.max(2, Math.min(20, m));
     } catch {}
   },
@@ -16411,9 +16415,9 @@ const TimeGoal = {
 
   load() {
     try {
-      this.enabled = localStorage.getItem('tc-timegoal') === '1';
-      this.autoStop = localStorage.getItem('tc-timegoal-autostop') === '1';
-      const m = parseFloat(localStorage.getItem('tc-timegoal-min'));
+      this.enabled = silentGet('tc-timegoal') === '1';
+      this.autoStop = silentGet('tc-timegoal-autostop') === '1';
+      const m = parseFloat(silentGet('tc-timegoal-min'));
       if (!isNaN(m)) this.minutes = Math.max(0.5, Math.min(60, m));
     } catch {}
   },
@@ -16489,7 +16493,7 @@ const LiveCaptions = {
   _srtStart: 0,      // recording start time
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-captions') === '1'; } catch {}
+    this.enabled = silentGet('tc-captions') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -16787,7 +16791,7 @@ const History = {
 
   load() {
     try {
-      const raw = localStorage.getItem('tc-history');
+      const raw = silentGet('tc-history');
       this.entries = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(this.entries)) this.entries = [];
     } catch { this.entries = []; }
@@ -16925,7 +16929,7 @@ const DailyGoal = {
     const today = new Date();
     const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     let last = null;
-    try { last = localStorage.getItem('tc-last-rec-day'); } catch {}
+    last = silentGet('tc-last-rec-day');
     if (last === key) return { first: false, streak: 0 };
 
     // First recording today — update the marker + compute streak
@@ -17089,7 +17093,7 @@ const SettingsIO = {
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('tc-')) data.keys[k] = localStorage.getItem(k);
+        if (k && k.startsWith('tc-')) data.keys[k] = silentGet(k);
       }
     } catch {}
     const json = JSON.stringify(data, null, 2);
@@ -17118,7 +17122,7 @@ const SettingsIO = {
         if (data.keys) {
           try {
             Object.entries(data.keys).forEach(([k, v]) => {
-              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+              if (k.startsWith('tc-')) silentSet(k, v);
             });
           } catch {}
         }
@@ -17169,7 +17173,7 @@ const SessionBundle = {
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('tc-')) bundle.settings[k] = localStorage.getItem(k);
+        if (k && k.startsWith('tc-')) bundle.settings[k] = silentGet(k);
       }
     } catch {}
     const json = JSON.stringify(bundle, null, 2);
@@ -17199,7 +17203,7 @@ const SessionBundle = {
         if (bundle.settings) {
           try {
             Object.entries(bundle.settings).forEach(([k, v]) => {
-              if (k.startsWith('tc-')) localStorage.setItem(k, v);
+              if (k.startsWith('tc-')) silentSet(k, v);
             });
           } catch {}
         }
@@ -17214,7 +17218,7 @@ const SessionBundle = {
   },
 
   _tryLocalStorage(key) {
-    try { return localStorage.getItem(key); } catch { return null; }
+    try { return silentGet(key); } catch { return null; }
   },
 };
 
@@ -17473,7 +17477,7 @@ const Sensors = {
   },
   _loadOverlayPos() {
     try {
-      const s = JSON.parse(localStorage.getItem('tc-sensor-overlay'));
+      const s = JSON.parse(silentGet('tc-sensor-overlay'));
       if (s) { this._overlayX = s.x; this._overlayY = s.y; this._overlayOpacity = s.opacity ?? 0.85; this._overlayScale = s.scale ?? 1; if (typeof s.visible === 'boolean') this._overlayVisible = s.visible; }
     } catch {}
   },
@@ -18014,7 +18018,7 @@ const Jingle = {
   ],
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-jingle') === '1'; } catch {}
+    this.enabled = silentGet('tc-jingle') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -18068,7 +18072,7 @@ const IntroOutro = {
   DURATION_OUTRO: 2000,
 
   load() {
-    try { this.enabled = localStorage.getItem('tc-intro-outro') === '1'; } catch {}
+    this.enabled = silentGet('tc-intro-outro') === '1';
   },
   setEnabled(v) {
     this.enabled = !!v;
@@ -18215,7 +18219,7 @@ const Sfx = {
   },
   load() {
     try {
-      const v = localStorage.getItem('tc-sfx');
+      const v = silentGet('tc-sfx');
       if (v !== null) this.enabled = v === '1';
     } catch {}
   }
@@ -18383,7 +18387,7 @@ const Badges = {
 
   load() {
     try {
-      const s = JSON.parse(localStorage.getItem('tc-badges') || '[]');
+      const s = JSON.parse(silentGet('tc-badges') || '[]');
       this.unlocked = new Set(s);
     } catch {}
   },
@@ -18417,10 +18421,10 @@ const Badges = {
      Incremented in Recorder.finish(), survive History's 10-entry cap. */
   _incCounters(durSec) {
     try {
-      const n = parseInt(localStorage.getItem('tc-total-recordings') || '0', 10) + 1;
-      const s = parseFloat(localStorage.getItem('tc-total-seconds') || '0') + (durSec || 0);
-      localStorage.setItem('tc-total-recordings', String(n));
-      localStorage.setItem('tc-total-seconds', String(s));
+      const n = parseInt(silentGet('tc-total-recordings') || '0', 10) + 1;
+      const s = parseFloat(silentGet('tc-total-seconds') || '0') + (durSec || 0);
+      silentSet('tc-total-recordings', String(n));
+      silentSet('tc-total-seconds', String(s));
       if (n >= 10) this.unlock('veteran');
       if (s >= 30 * 60) this.unlock('marathon');
     } catch {}
@@ -18487,7 +18491,7 @@ const TipOfDay = {
     const today = new Date();
     const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     let last = null;
-    try { last = localStorage.getItem('tc-last-tip-day'); } catch {}
+    last = silentGet('tc-last-tip-day');
     if (last === key) return;  // already fired today
     const tips = this._tips();
     if (tips.length === 0) return;
@@ -18517,7 +18521,7 @@ const V100Celebration = {
       return;
     }
     try {
-      if (localStorage.getItem('tc-v100-seen') === '1') return;
+      if (silentGet('tc-v100-seen') === '1') return;
     } catch {}
     // v0.7.166: don't show if mode picker or template picker is active
     const modePicker = $('tcModePicker');
@@ -18754,7 +18758,7 @@ const VoiceFx = {
   _flashUntil: 0,
   _flashColor: '',
 
-  load() { try { this.enabled = localStorage.getItem('tc-voicefx') === '1'; } catch {} },
+  load() { this.enabled = silentGet('tc-voicefx') === '1'; },
   toggle() { this.enabled = !this.enabled; silentSet('tc-voicefx', this.enabled ? '1' : '0') },
 
   tick() {
@@ -18841,18 +18845,18 @@ const XpBar = {
 
   load() {
     try {
-      this.visible = localStorage.getItem('tc-xpbar') === '1';
-      const xp = parseInt(localStorage.getItem('tc-xp'));
+      this.visible = silentGet('tc-xpbar') === '1';
+      const xp = parseInt(silentGet('tc-xp'));
       if (!isNaN(xp)) this._xp = xp;
-      const lv = parseInt(localStorage.getItem('tc-xp-level'));
+      const lv = parseInt(silentGet('tc-xp-level'));
       if (!isNaN(lv) && lv > 0) { this._level = lv; this._maxXp = 300 * lv; }
     } catch {}
   },
   _save() {
     try {
-      localStorage.setItem('tc-xpbar', this.visible ? '1' : '0');
-      localStorage.setItem('tc-xp', String(this._xp));
-      localStorage.setItem('tc-xp-level', String(this._level));
+      silentSet('tc-xpbar', this.visible ? '1' : '0');
+      silentSet('tc-xp', String(this._xp));
+      silentSet('tc-xp-level', String(this._level));
     } catch {}
   },
   toggle() { this.visible = !this.visible; this._save(); },
@@ -18975,7 +18979,7 @@ const SoundPad = {
   _el: null,
   visible: false,
 
-  load() { try { this.visible = localStorage.getItem('tc-soundpad') === '1'; } catch {} if (this.visible) this._show(); },
+  load() { this.visible = silentGet('tc-soundpad') === '1'; if (this.visible) this._show(); },
   toggle() {
     this.visible = !this.visible;
     silentSet('tc-soundpad', this.visible ? '1' : '0');
@@ -19070,7 +19074,7 @@ const BgMusic = {
 
   load() {
     try {
-      const saved = localStorage.getItem('tc-bgmusic');
+      const saved = silentGet('tc-bgmusic');
       if (saved) { const d = JSON.parse(saved); this._track = d.track || 'chiptune'; this._volume = d.volume ?? 0.15; }
     } catch {}
   },
@@ -19184,7 +19188,7 @@ const VoiceCommands = {
     silentSet('tc-voicecmd', this.enabled ? '1' : '0');
   },
 
-  load() { try { this.enabled = localStorage.getItem('tc-voicecmd') === '1'; } catch {} },
+  load() { this.enabled = silentGet('tc-voicecmd') === '1'; },
 
   start() {
     if (!this.supported() || this._recognition) return;
@@ -19309,7 +19313,7 @@ const DailyChallenges = {
   load() {
     try {
       const key = new Date().toISOString().slice(0, 10);
-      const saved = JSON.parse(localStorage.getItem('tc-daily-challenge'));
+      const saved = JSON.parse(silentGet('tc-daily-challenge'));
       if (saved && saved.date === key) {
         this._today = this._challenges.find(c => c.id === saved.id) || this._pick(key);
         this._completed = !!saved.completed;
@@ -19332,7 +19336,7 @@ const DailyChallenges = {
 
   _save() {
     try {
-      localStorage.setItem('tc-daily-challenge', JSON.stringify({
+      silentSet('tc-daily-challenge', JSON.stringify({
         date: new Date().toISOString().slice(0, 10),
         id: this._today.id,
         completed: this._completed,
@@ -19685,7 +19689,7 @@ const RobotChoreo = {
   },
   load() {
     try {
-      const raw = localStorage.getItem('tc-robot-choreo');
+      const raw = silentGet('tc-robot-choreo');
       if (raw) this._sequence = JSON.parse(raw);
     } catch {}
   },
@@ -19862,7 +19866,7 @@ const SmartSceneSwitcher = {
     silentSet('tc-smart-scene', this.enabled ? '1' : '0');
     if (this.enabled) this.start(); else this.stop();
   },
-  load() { try { this.enabled = localStorage.getItem('tc-smart-scene') === '1'; } catch {} },
+  load() { this.enabled = silentGet('tc-smart-scene') === '1'; },
 
   start() {
     if (this._recognition) return;
@@ -20109,7 +20113,7 @@ const AICohost = {
   },
   _save() {
     try {
-      localStorage.setItem('tc-cohost', JSON.stringify({
+      silentSet('tc-cohost', JSON.stringify({
         v: this.visible, c: this.character,
         // v0.7.220: persist user-positioned location + scale
         x: this._x, y: this._y, scale: this._scale, custom: this._customPos,
@@ -20124,7 +20128,7 @@ const AICohost = {
   },
   load() {
     try {
-      const raw = localStorage.getItem('tc-cohost');
+      const raw = silentGet('tc-cohost');
       if (raw === '1') { this.visible = true; }
       else if (raw) {
         const d = JSON.parse(raw);
@@ -20495,7 +20499,7 @@ const CanvasFlair = {
 
   load() {
     try {
-      const s = JSON.parse(localStorage.getItem('tc-canvas-flair'));
+      const s = JSON.parse(silentGet('tc-canvas-flair'));
       if (s) {
         if (typeof s.neon === 'boolean') this.neonBorder = s.neon;
         if (typeof s.heartbeat === 'boolean') this.heartbeatBorder = s.heartbeat;
@@ -20603,7 +20607,7 @@ const UnlockGallery = {
   load() {
     this._unlocked = new Set(['none', 'tv', 'polaroid', 'comic', 'robot', 'space', 'pixel', 'chalk']); // starter pack
     try {
-      const raw = localStorage.getItem('tc-unlocked-gallery');
+      const raw = silentGet('tc-unlocked-gallery');
       if (raw) JSON.parse(raw).forEach(k => this._unlocked.add(k));
     } catch {}
   },
@@ -20758,7 +20762,7 @@ const GhostReplay = {
     this.enabled = !this.enabled;
     silentSet('tc-ghost-replay', this.enabled ? '1' : '0');
   },
-  load() { try { this.enabled = localStorage.getItem('tc-ghost-replay') === '1'; } catch {} },
+  load() { this.enabled = silentGet('tc-ghost-replay') === '1'; },
 
   // Called when recording starts — if enabled and previous take exists
   startIfReady() {
@@ -20884,8 +20888,8 @@ const CanvasPets = {
   },
   remove(type) { this.active = this.active.filter(function(p) { return p.type !== type; }); this._save(); },
   toggle(type) { if (this.active.some(function(p) { return p.type === type; })) this.remove(type); else this.add(type); },
-  _save() { try { localStorage.setItem('tc-canvas-pets', JSON.stringify(this.active.map(function(p) { return p.type; }))); } catch(e) {} },
-  load() { try { var raw = JSON.parse(localStorage.getItem('tc-canvas-pets')); if (raw) raw.forEach(function(t) { CanvasPets.add(t); }); } catch(e) {} },
+  _save() { try { silentSet('tc-canvas-pets', JSON.stringify(this.active.map(function(p) { return p.type; }))); } catch(e) {} },
+  load() { try { var raw = JSON.parse(silentGet('tc-canvas-pets')); if (raw) raw.forEach(function(t) { CanvasPets.add(t); }); } catch(e) {} },
 
   render(ctx, W, H) {
     if (!this.active.length) return;
@@ -21175,7 +21179,7 @@ function renderTicker() {
   // line). Falls back to the 10 built-in tip_* translations if empty.
   let items = [];
   try {
-    const custom = localStorage.getItem('tc-ticker-custom') || '';
+    const custom = silentGet('tc-ticker-custom') || '';
     const lines = custom.split('\n').map(s => s.trim()).filter(Boolean);
     if (lines.length) items = lines;
   } catch {}
@@ -21494,7 +21498,7 @@ const KeyBindings = {
   load() {
     this.current = { ...this.DEFAULTS };
     try {
-      const raw = localStorage.getItem('tc-keybinds');
+      const raw = silentGet('tc-keybinds');
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved && typeof saved === 'object') {
@@ -22003,7 +22007,7 @@ function wireEvents() {
   // v0.7.79: snapshot resolution multiplier dropdown
   const smEl = $('tcSnapMultSelect');
   if (smEl) {
-    try { smEl.value = localStorage.getItem('tc-snap-mult') || '1'; } catch {}
+    smEl.value = silentGet('tc-snap-mult') || '1';
     smEl.addEventListener('change', (e) => {
       silentSet('tc-snap-mult', e.target.value);
     });
@@ -22071,7 +22075,7 @@ function wireEvents() {
   $('tcResetBadgesBtn')?.addEventListener('click', () => {
     Badges.unlocked.clear();
     Badges.scenesUsed.clear();
-    try { localStorage.removeItem('tc-badges'); } catch {}
+    silentRemove('tc-badges');
     renderBadges();
     showToast(t('badgesReset'), 1800);
   });
@@ -22084,7 +22088,7 @@ function wireEvents() {
         const k = localStorage.key(i);
         if (k && k.startsWith('tc-')) victims.push(k);
       }
-      victims.forEach(k => localStorage.removeItem(k));
+      victims.forEach(k => silentRemove(k));
     } catch {}
     showToast(t('cacheCleared'), 1400);
     setTimeout(() => location.reload(), 900);
@@ -22393,7 +22397,7 @@ function wireEvents() {
   const tfs = $('tcTextFontSelect');
   if (tfs) {
     try {
-      const saved = parseInt(localStorage.getItem('tc-text-default-font') || '0', 10);
+      const saved = parseInt(silentGet('tc-text-default-font') || '0', 10);
       if (!isNaN(saved)) {
         TextOverlays.defaultFont = saved;
         tfs.value = String(saved);
@@ -22414,7 +22418,7 @@ function wireEvents() {
   const tsEl = $('tcTextStrokeSlider');
   if (tsEl) {
     try {
-      const saved = parseInt(localStorage.getItem('tc-text-stroke'), 10);
+      const saved = parseInt(silentGet('tc-text-stroke'), 10);
       if (!isNaN(saved)) {
         TextOverlays.defaultStroke = saved;
         tsEl.value = saved;
@@ -22791,7 +22795,7 @@ function wireEvents() {
   // fires if _autoPaused flag is set).
   document.addEventListener('visibilitychange', () => {
     try {
-      if (localStorage.getItem('tc-auto-pause') !== '1') return;
+      if (silentGet('tc-auto-pause') !== '1') return;
     } catch { return; }
     if (document.hidden) {
       Recorder.autoPause();
@@ -22819,7 +22823,7 @@ function wireEvents() {
     const grid = document.querySelector('.tc-studio-grid');
     if (!btn || !grid) return;
     let collapsed = false;
-    try { collapsed = localStorage.getItem('tc-rsidebar-collapsed') === '1'; } catch {}
+    collapsed = silentGet('tc-rsidebar-collapsed') === '1';
     const apply = () => {
       grid.classList.toggle('rsidebar-collapsed', collapsed);
       // v0.7.219: bigger arrow glyphs for kid-visibility (▶ → ⮞ etc.).
@@ -22928,7 +22932,7 @@ function wireEvents() {
   // Persisted separately from Brand so non-recording flows don't touch it.
   const urlEl = $('tcBrandUrlInput');
   if (urlEl) {
-    try { urlEl.value = localStorage.getItem('tc-brand-url') || ''; } catch {}
+    urlEl.value = silentGet('tc-brand-url') || '';
     urlEl.addEventListener('input', (e) => {
       silentSet('tc-brand-url', e.target.value);
     });
@@ -23035,10 +23039,10 @@ function wireEvents() {
     KEY: 'tc-logo-gallery',
     _items: [],
     load() {
-      try { this._items = JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { this._items = []; }
+      try { this._items = JSON.parse(silentGet(this.KEY) || '[]'); } catch { this._items = []; }
     },
     save() {
-      try { localStorage.setItem(this.KEY, JSON.stringify(this._items)); } catch {}
+      silentSet(this.KEY, JSON.stringify(this._items));
     },
     add(dataUrl, name) {
       // Max 8 logos, ~200KB each
@@ -23107,7 +23111,7 @@ function wireEvents() {
   // Custom ticker messages (v0.7.8)
   const tickerTA = $('tcTickerCustomInput');
   if (tickerTA) {
-    try { tickerTA.value = localStorage.getItem('tc-ticker-custom') || ''; } catch {}
+    tickerTA.value = silentGet('tc-ticker-custom') || '';
     let tDebounce;
     tickerTA.addEventListener('input', (e) => {
       silentSet('tc-ticker-custom', e.target.value);
@@ -23273,7 +23277,7 @@ function wireEvents() {
   // no dedicated object is needed.
   const apEl = $('tcAutoPauseToggle');
   if (apEl) {
-    try { apEl.checked = localStorage.getItem('tc-auto-pause') === '1'; } catch {}
+    apEl.checked = silentGet('tc-auto-pause') === '1';
     apEl.addEventListener('change', (e) => {
       silentSet('tc-auto-pause', e.target.checked ? '1' : '0');
     });
@@ -23308,7 +23312,7 @@ function wireEvents() {
   // v0.7.54: opt-in snapshot annotation modal before saving
   const saEl = $('tcSnapAnnotToggle');
   if (saEl) {
-    try { saEl.checked = localStorage.getItem('tc-snap-annotate') === '1'; } catch {}
+    saEl.checked = silentGet('tc-snap-annotate') === '1';
     saEl.addEventListener('change', (e) => {
       silentSet('tc-snap-annotate', e.target.checked ? '1' : '0');
     });
@@ -23402,7 +23406,7 @@ function wireEvents() {
   // Sensor-triggered overlay toggle (v0.5.0) — opt-in in Settings
   const sensorOverlayEl = $('tcSensorOverlayToggle');
   if (sensorOverlayEl) {
-    try { sensorOverlayEl.checked = localStorage.getItem('tc-sensor-overlay') === '1'; } catch {}
+    sensorOverlayEl.checked = silentGet('tc-sensor-overlay') === '1';
     Sensors.autoOverlayEnabled = sensorOverlayEl.checked;
     sensorOverlayEl.addEventListener('change', (e) => {
       Sensors.autoOverlayEnabled = e.target.checked;
@@ -23423,7 +23427,7 @@ function wireEvents() {
   mbToggles.forEach(([elId, prop, lsKey]) => {
     const el = $(elId);
     if (!el) return;
-    try { el.checked = localStorage.getItem(lsKey) === '1'; } catch {}
+    el.checked = silentGet(lsKey) === '1';
     Sensors[prop] = el.checked;
     if (prop === '_liveGraph' && el.checked) Sensors._graphSamples = [];
     if (prop === '_motionTrail' && el.checked) Sensors._trailPoints = [];
@@ -23431,13 +23435,13 @@ function wireEvents() {
       Sensors[prop] = e.target.checked;
       if (prop === '_liveGraph') Sensors._graphSamples = [];
       if (prop === '_motionTrail') Sensors._trailPoints = [];
-      try { localStorage.setItem(lsKey, e.target.checked ? '1' : '0'); } catch {}
+      silentSet(lsKey, e.target.checked ? '1' : '0');
     });
   });
   // Button A action toggle
   const btnASfxEl = $('tcBtnASfxToggle');
   if (btnASfxEl) {
-    try { btnASfxEl.checked = localStorage.getItem('tc-btn-a-sfx') === '1'; } catch {}
+    btnASfxEl.checked = silentGet('tc-btn-a-sfx') === '1';
     Sensors._btnAAction = btnASfxEl.checked ? 'sfx' : 'zoom';
     btnASfxEl.addEventListener('change', (e) => {
       Sensors._btnAAction = e.target.checked ? 'sfx' : 'zoom';
@@ -23449,7 +23453,7 @@ function wireEvents() {
   const cdEl = $('tcCountdownSecs');
   if (cdEl) {
     try {
-      const saved = parseInt(localStorage.getItem('tc-countdown-secs'), 10);
+      const saved = parseInt(silentGet('tc-countdown-secs'), 10);
       if (!isNaN(saved) && saved >= 1 && saved <= 10) cdEl.value = saved;
     } catch {}
     cdEl.addEventListener('change', (e) => {
@@ -23540,8 +23544,8 @@ async function init() {
   });
   // Restore prefs
   try {
-    const lang = localStorage.getItem('tc-lang'); if (lang) currentLang = lang;
-    const theme = localStorage.getItem('tc-theme'); if (theme) setTheme(theme);
+    const lang = silentGet('tc-lang'); if (lang) currentLang = lang;
+    const theme = silentGet('tc-theme'); if (theme) setTheme(theme);
   } catch {}
   $('langSelect').value = currentLang;
   // v0.7.216: set the initial flag icon to match the restored language
