@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.0 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.1 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.9.1';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -9081,8 +9081,14 @@ const Recorder = {
     // v0.7.200: On Windows, auto prefers WebM because Chromium's MP4
     // encoder (via Windows Media Foundation) silently produces 0-byte
     // files on many hardware configs (crbug.com/370072551, 362873381).
+    // v0.9.1: in Reels mode (9:16) try MP4 first regardless of platform —
+    // Facebook/Instagram/TikTok all transcode WebM with quality loss, so
+    // shipping MP4 directly looks much better. The 0-byte watchdog at line
+    // ~8954 will catch the Windows MF failure case and fall back to WebM.
+    const isReels = (typeof StageAspect !== 'undefined') && StageAspect.current === '9:16';
     const order = pref === 'mp4' ? [...mp4, ...webm]
                 : pref === 'webm' ? [...webm, ...mp4]
+                : isReels ? [...mp4, ...webm]
                 : this._isWindows ? [...webm, ...mp4]
                 : [...mp4, ...webm];
     for (const m of order) {
@@ -16407,7 +16413,12 @@ const LiveCaptions = {
     const totalH = lines.length * lineH + padY * 2;
     const boxW = Math.min(W - 60, Math.max(...lines.map(l => ctx.measureText(l).width)) + padX * 2);
     const boxX = (W - boxW) / 2;
-    const boxY = H - totalH - 30;
+    // v0.9.1: on portrait canvases (Reels/TikTok/Shorts), the bottom 31% is
+    // covered by the platform's caption + buttons UI. Push captions up into
+    // the safe band so they stay visible after upload.
+    const isPortrait = H > W;
+    const bottomMargin = isPortrait ? Math.round(H * 0.34) : 30;
+    const boxY = H - totalH - bottomMargin;
 
     // Background — gradient pill
     const bgGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + totalH);
