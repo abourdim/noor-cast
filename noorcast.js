@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.10.2 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.3 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.10.2';
+const APP_VERSION = '0.10.3';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -24781,6 +24781,14 @@ async function init() {
     silentRemove('tc-tour-seen');
     setTimeout(() => Tour.start(), 380);
   });
+  // v0.10.3: open the localized variant of the playbook based on currentLang
+  try {
+    const epLink = $('tcEtsyPlaybookLink');
+    if (epLink && typeof currentLang === 'string') {
+      const map = { fr: './etsy-playbook-fr.html', ar: './etsy-playbook-ar.html', en: './etsy-playbook.html' };
+      epLink.href = map[currentLang] || map.en;
+    }
+  } catch {}
   // v0.9.23: A11y — mirror the .active toggle class onto aria-pressed for
   // every tool/scene button. Single MutationObserver, retroactive for
   // buttons added later (Templates, dynamically built scene tiles, etc).

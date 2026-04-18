@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NoorCast — دليل هوليوود لـ Etsy 60 ثانية</title>
+<style>
+  :root {
+    --bg: #0a0e0a; --panel: #0f1610; --panel2: #131c14;
+    --ink: #e8f2e0; --muted: #8aa18e; --accent: #a3e635;
+    --accent2: #4ade80; --hook: #fb923c; --demo: #38bdf8;
+    --payoff: #4ade80; --cta: #ef4444; --beige: #d4b896;
+    --border: rgba(163,230,53,.15);
+    --shadow: 0 4px 24px rgba(0,0,0,.45);
+    --mono: ui-monospace, "SF Mono", Consolas, Menlo, monospace;
+    --serif: "Amiri", "Times New Roman", Georgia, serif;
+    --sans: "Tajawal", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --display: "Bangers", "Tajawal", "Righteous", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.7; }
+  body { max-width: 1080px; margin: 0 auto; padding: 24px 18px 80px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed rgba(163,230,53,.4); }
+  a:hover { color: #fff; border-bottom-color: var(--accent); }
+  .lang-switch { position: absolute; top: 18px; left: 18px; display: flex; gap: 6px; z-index: 60; }
+  .lang-switch a { background: rgba(15,22,16,.85); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: var(--mono); border-bottom: 1px solid var(--border); }
+  .lang-switch a.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .slate { background: radial-gradient(ellipse at top left, rgba(163,230,53,.12), transparent 60%), linear-gradient(180deg, var(--panel2), var(--panel)); border: 2px solid var(--border); border-radius: 18px; padding: 36px 28px 28px; text-align: center; margin-bottom: 22px; box-shadow: var(--shadow); position: relative; }
+  .slate-clap { font-size: 56px; line-height: 1; margin-bottom: 8px; filter: drop-shadow(0 0 18px rgba(163,230,53,.4)); }
+  .slate h1 { font-family: var(--display); font-size: 2.2rem; letter-spacing: .5px; margin: 6px 0 4px; color: var(--accent); }
+  .slate .tag { color: var(--muted); font-size: .92rem; letter-spacing: .8px; }
+  .slate .meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; font-size: .82rem; color: var(--muted); flex-wrap: wrap; }
+  .slate .meta b { color: var(--ink); font-weight: 700; }
+
+  .toc { position: sticky; top: 0; z-index: 50; background: rgba(15,22,16,.92); backdrop-filter: blur(8px); border: 1px solid var(--border); border-radius: 14px; padding: 8px 12px; margin-bottom: 22px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .toc a { background: rgba(163,230,53,.06); border: 1px solid rgba(163,230,53,.22); border-radius: 10px; padding: 6px 12px; font-size: .82rem; font-weight: 600; border-bottom: none; }
+  .toc a:hover { background: rgba(163,230,53,.18); color: var(--accent); }
+
+  .slug { font-family: var(--mono); letter-spacing: .8px; font-size: .82rem; color: var(--accent); background: linear-gradient(270deg, rgba(163,230,53,.12), transparent); border-right: 4px solid var(--accent); padding: 8px 12px; margin: 26px 0 14px; border-radius: 8px 0 0 8px; }
+  h2 { font-family: var(--display); letter-spacing: .5px; color: var(--accent); margin: 8px 0 12px; font-size: 1.7rem; }
+  h3 { color: var(--ink); margin-top: 18px; font-size: 1.15rem; }
+  h4 { color: var(--accent2); font-size: 1rem; margin: 14px 0 6px; }
+  p { margin: 8px 0; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin: 12px 0; box-shadow: var(--shadow); }
+  .card-tight { padding: 10px 14px; }
+
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 8px; transition: background .15s; cursor: pointer; user-select: none; }
+  .checklist li:hover { background: rgba(163,230,53,.06); }
+  .checklist input[type=checkbox] { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .checklist li.checked label { color: var(--muted); text-decoration: line-through; opacity: .65; }
+  .checklist label { cursor: pointer; flex: 1; }
+  .checklist .where { color: var(--muted); font-size: .82rem; display: block; margin-top: 2px; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tab { flex: 1; padding: 12px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; color: var(--muted); font-family: var(--display); letter-spacing: .5px; cursor: pointer; text-align: center; transition: all .15s; }
+  .tab:hover { color: var(--ink); background: rgba(163,230,53,.06); }
+  .tab.active { background: linear-gradient(180deg, rgba(163,230,53,.18), rgba(163,230,53,.05)); color: var(--accent); border-color: var(--accent); box-shadow: 0 -2px 0 var(--accent); }
+  .tab-num { font-size: 1.4rem; line-height: 1; display: block; }
+  .tab-title { font-size: .82rem; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .tab-body { background: var(--panel); border: 1px solid var(--accent); border-radius: 0 0 14px 14px; padding: 16px; box-shadow: var(--shadow); }
+
+  .scene { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--border); border-radius: 14px; margin: 14px 0; overflow: hidden; }
+  .scene-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(0,0,0,.25); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: .82rem; letter-spacing: .5px; flex-wrap: wrap; gap: 8px; }
+  .scene-head .scene-time { color: var(--accent); font-weight: 700; font-size: 1.05rem; direction: ltr; unicode-bidi: bidi-override; }
+  .scene-head .scene-phase { padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; }
+  .phase-hook { background: rgba(251,146,60,.18); color: var(--hook); border: 1px solid rgba(251,146,60,.4); }
+  .phase-demo { background: rgba(56,189,248,.18); color: var(--demo); border: 1px solid rgba(56,189,248,.4); }
+  .phase-payoff { background: rgba(74,222,128,.18); color: var(--payoff); border: 1px solid rgba(74,222,128,.4); }
+  .phase-cta { background: rgba(239,68,68,.18); color: var(--cta); border: 1px solid rgba(239,68,68,.4); }
+  .phase-end { background: rgba(212,184,150,.18); color: var(--beige); border: 1px solid rgba(212,184,150,.4); }
+  .scene-body { padding: 14px 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+  .say { background: rgba(0,0,0,.25); border-right: 3px solid var(--accent); border-radius: 10px 0 0 10px; padding: 12px 14px; position: relative; }
+  .say-label { font-family: var(--mono); font-size: .72rem; letter-spacing: .8px; color: var(--accent); font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .say-text { font-family: var(--serif); font-size: 1.32rem; color: #fff; line-height: 1.55; font-style: normal; }
+  .say-text::before { content: '«'; opacity: .5; margin-left: 4px; }
+  .say-text::after { content: '»'; opacity: .5; margin-right: 4px; }
+  .paren { color: var(--muted); font-size: .82rem; display: block; margin: 4px 0 0; }
+
+  .do { background: rgba(56,189,248,.04); border-right: 3px solid var(--demo); border-radius: 10px 0 0 10px; padding: 10px 14px; }
+  .do-label { font-family: var(--mono); font-size: .72rem; letter-spacing: .8px; color: var(--demo); font-weight: 700; margin-bottom: 6px; }
+  .do-text { color: var(--ink); font-size: .98rem; }
+  .do-text kbd { background: #0a0a0a; border: 1px solid rgba(255,255,255,.18); border-radius: 4px; padding: 1px 7px; font-family: var(--mono); font-size: .82rem; color: var(--accent); box-shadow: 0 2px 0 rgba(0,0,0,.5); direction: ltr; unicode-bidi: bidi-override; }
+  .do-text .ui { background: rgba(163,230,53,.12); color: var(--accent); padding: 1px 7px; border-radius: 4px; font-weight: 600; font-size: .92rem; }
+
+  .vis { background: rgba(212,184,150,.04); border-right: 3px solid var(--beige); border-radius: 10px 0 0 10px; padding: 10px 14px; color: var(--ink); font-size: .96rem; }
+  .vis-label { font-family: var(--mono); font-size: .72rem; letter-spacing: .8px; color: var(--beige); font-weight: 700; margin-bottom: 6px; }
+  .vis em { color: var(--beige); font-style: normal; font-weight: 700; }
+
+  .actions { display: flex; gap: 6px; margin-right: auto; }
+  .btn { background: rgba(163,230,53,.1); border: 1px solid rgba(163,230,53,.3); color: var(--accent); border-radius: 6px; padding: 4px 10px; font-size: .78rem; font-family: var(--sans); font-weight: 700; cursor: pointer; transition: all .12s; }
+  .btn:hover { background: rgba(163,230,53,.25); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn.copied { background: rgba(74,222,128,.4); color: #fff; }
+
+  .transition { text-align: left; font-family: var(--mono); font-size: .82rem; color: var(--muted); letter-spacing: 1px; margin: 2px 6px; }
+  .transition::before { content: '✂  '; color: var(--accent); }
+
+  .ascii { background: #000; color: var(--accent2); font-family: var(--mono); font-size: .82rem; padding: 14px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; line-height: 1.4; white-space: pre; direction: ltr; text-align: left; }
+  .tip { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .96rem; }
+  .tip::before { content: '💡 '; }
+  .warn { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .96rem; }
+  .warn::before { content: '⚠ '; }
+  .pro { background: rgba(168,85,247,.08); border: 1px solid rgba(168,85,247,.3); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: .96rem; }
+  .pro::before { content: '🎬 '; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .94rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; vertical-align: top; }
+  th { color: var(--accent); font-family: var(--mono); font-size: .82rem; letter-spacing: .5px; }
+
+  .storyboard { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 14px 0; }
+  .storyboard .frame { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; aspect-ratio: 9/16; padding: 8px 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; transition: transform .15s, border-color .15s; text-decoration: none; }
+  .storyboard .frame:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .storyboard .frame .t { font-family: var(--mono); font-size: .78rem; color: var(--accent); font-weight: 700; direction: ltr; }
+  .storyboard .frame .icon { font-size: 1.8rem; margin: 4px 0; }
+  .storyboard .frame .what { font-size: .72rem; color: var(--muted); line-height: 1.4; }
+
+  .teleprompter-dock { position: fixed; bottom: 18px; left: 18px; background: var(--panel2); border: 2px solid var(--accent); border-radius: 12px; padding: 12px; z-index: 100; box-shadow: 0 12px 28px rgba(0,0,0,.5); max-width: 320px; font-size: .94rem; }
+  .teleprompter-dock .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .teleprompter-dock .title { font-family: var(--display); color: var(--accent); letter-spacing: .5px; font-size: .96rem; }
+  .teleprompter-dock .copy-all-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; }
+  .teleprompter-dock .copy-all-btn:hover { background: var(--accent2); }
+  .teleprompter-dock .hint { color: var(--muted); font-size: .8rem; line-height: 1.5; }
+  @media (max-width: 720px) { .teleprompter-dock { display: none; } }
+
+  .glossary dt { color: var(--accent); font-weight: 700; margin-top: 8px; font-family: var(--mono); font-size: .92rem; }
+  .glossary dd { margin: 2px 14px 0 0; color: var(--ink); font-size: .96rem; }
+  .footer { text-align: center; color: var(--muted); font-size: .86rem; margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); }
+  @media print {
+    body { background: #fff; color: #000; max-width: 100%; padding: 12px; }
+    .toc, .teleprompter-dock, .actions, .lang-switch { display: none !important; }
+    .card, .scene, .slate { box-shadow: none; border-color: #999; background: #fff; color: #000; }
+    .say-text { color: #000; }
+    .say { background: #f5f5f5; }
+    .do { background: #eef7ff; }
+    .vis { background: #fcf5ea; }
+    h2, .slug, .scene-head .scene-time { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="lang-switch" aria-label="اللغة">
+  <a href="etsy-playbook.html">EN</a>
+  <a href="etsy-playbook-fr.html">FR</a>
+  <a href="etsy-playbook-ar.html" class="active">AR</a>
+</nav>
+
+<div class="slate">
+  <div class="slate-clap">🎬</div>
+  <h1>دليل Etsy 60 ثانية</h1>
+  <div class="tag">سيناريو تصوير بأسلوب هوليوود لـ NoorCast</div>
+  <div class="meta">
+    <span><b>صُوِّر بـ:</b> NoorCast v0.10.x</span>
+    <span><b>المدّة:</b> 60 ثانية بالضبط</span>
+    <span><b>الصيغة:</b> 9:16 عمودي (Reels)</span>
+    <span><b>الترميز:</b> MP4 H.264 8 Mbps</span>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#what">📋 ما هذا</a>
+  <a href="#preflight">✈ ما قبل الإقلاع</a>
+  <a href="#layout">🗺 خريطة NoorCast</a>
+  <a href="#storyboard">🎞 الستوريبورد</a>
+  <a href="#scripts">🎭 السيناريوهات الثلاثة</a>
+  <a href="#director">🎬 حِيَل المخرج</a>
+  <a href="#after">🎁 بعد STOP</a>
+  <a href="#troubles">🚨 مشاكل شائعة</a>
+  <a href="#glossary">📖 المعجم</a>
+</nav>
+
+<div class="slug">المقدّمة — ما تمسكه بين يديك</div>
+<h2 id="what">📋 ما هذا الشيء</h2>
+<div class="card">
+  <p>هذا <b>سيناريو تصوير</b>، من النوع الذي يسلّمه مخرج هوليوودي للممثلين قبل المشهد. يخبرك <b>بالضبط</b> بثلاثة أمور سطراً سطراً:</p>
+  <ol>
+    <li><b>قُلْ</b> — الكلمات الدقيقة التي تنطقها (بين علامتي اقتباس). كل سطر له زر <span class="btn" style="display:inline-block">📋 نسخ</span> لإسقاط النصّ في تليبرومبتر NoorCast.</li>
+    <li><b>افعل</b> — الزر الدقيق الذي تنقره في NoorCast أو المفتاح الذي تضغطه على لوحة المفاتيح.</li>
+    <li><b>المشهد</b> — ما يجب أن يفعله وجهك / يداك / الكاميرا (ابتسامة، نظرة، حركة).</li>
+  </ol>
+  <p>بالإضافة إلى: <b>قائمة فحص قبل الإقلاع</b> حتى لا تفوّت أي إعداد، <b>ستوريبورد</b> لرؤية الـ 60 ثانية كاملة دفعة واحدة، <b>حِيَل المخرج</b> للطاقة والإيقاع، و<b>دليل الأعطال</b> عندما تسوء الأمور.</p>
+  <div class="tip">إذا لم تسجّل فيديو من قبل، <b>اقرأ السيناريو مرّتين بصمت أوّلاً</b>. ثم اقرأه بصوت عالٍ مرّة. ثم ابدأ ما قبل الإقلاع. عند الضغط على REC ستعرف جملاتك.</div>
+  <div class="pro">استخدم <b>رصيف التليبرومبتر العائم</b> أسفل الشمال. به زر <b>«📤 نسخ كل الجمل»</b> — ينسخ كل سطر إلى الحافظة لتلصقه مباشرة في تليبرومبتر NoorCast المدمج (مفتاح <kbd>T</kbd>).</div>
+</div>
+
+<div class="slug">الفصل صفر — قبل الضغط على تسجيل</div>
+<h2 id="preflight">✈ قائمة ما قبل الإقلاع</h2>
+<div class="card">
+  <p>اختر كل صندوق. كل اختيار يُحفظ تلقائياً — أغلق الصفحة وعد لاحقاً، يبقى تقدّمك. اختر الصندوق أو السطر كاملاً.</p>
+  <h4>الغرفة</h4>
+  <ul class="checklist" data-storage="pre-room-ar">
+    <li><input type="checkbox"><label>غرفة هادئة. الهاتف على وجهه. الإشعارات مغلقة. الباب مغلق.<span class="where">إذا سمعت الثلّاجة أو الشارع، فيديوك أيضاً يسمع.</span></label></li>
+    <li><input type="checkbox"><label>الإضاءة على وجهك من الأمام، لا من الخلف.<span class="where">قِف باتجاه النافذة، لا تجعل النافذة خلفك. الإضاءة الخلفية = ظلّ = سيّئ.</span></label></li>
+    <li><input type="checkbox"><label>مكتب مرتّب في إطار الكاميرا.<span class="where">حتى زاوية فوضوية واحدة تظهر. رتّب لـ 30 ثانية — الأمر يستحق.</span></label></li>
+  </ul>
+  <h4>المعدّات</h4>
+  <ul class="checklist" data-storage="pre-hw-ar">
+    <li><input type="checkbox"><label>الكاميرا موصولة (أو كاميرا اللابتوب جاهزة).</label></li>
+    <li><input type="checkbox"><label>الميكروفون مُختبَر. <span class="where">الإعدادات → 🎤 المصادر → مقياس المستوى الأخضر يهتزّ عند الكلام.</span></label></li>
+    <li><input type="checkbox"><label>الشاحن موصول. <span class="where">التسجيل يستهلك ~30% أكثر من التصفّح. لا تنفد البطّارية في الوسط.</span></label></li>
+    <li><input type="checkbox"><label>أغلق التبويبات الأخرى في هذا المتصفّح. <span class="where">تسرق المعالج وتُسقط معدّل الإطارات. اترك NoorCast وهذا الدليل فقط.</span></label></li>
+  </ul>
+  <h4>إعدادات NoorCast</h4>
+  <ul class="checklist" data-storage="pre-nc-ar">
+    <li><input type="checkbox"><label>افتح <span class="ui">⚙ الإعدادات</span> (أيقونة الترس أعلى اليمين). جد قائمة <span class="ui">📐 صيغة المسرح</span>. اختر <b>9:16 — 1080×1920</b>.<span class="where">يظهر toast «📱 وضع Reels — دليل المنطقة الآمنة ON». ينقلب الـ canvas إلى عمودي.</span></label></li>
+    <li><input type="checkbox"><label>انظر إلى شريط الأدوات فوق الـ canvas. انقر زر <span class="ui">📱 Reels</span>. يضيء بالأخضر اللايم عند التفعيل.<span class="where">يظهر تراكب أحمر+أخضر للمنطقة الآمنة. الصندوق الأخضر هو ما سيراه المشاهدون. احتفظ بالمهمّ داخله.</span></label></li>
+    <li><input type="checkbox"><label>جد <span class="ui">⚙ الإعدادات → 🎬 التسجيل → 💬 الترجمة المباشرة</span>. اختر الاثنين: «الترجمة المباشرة» و «🔥 إحراق في الفيديو».<span class="where">Etsy يشغّل الفيديوهات صامتة في الخلاصة. الترجمة = صوتك. الإحراق يُبقيها ظاهرة أطول.</span></label></li>
+    <li><input type="checkbox"><label>جد <span class="ui">⚙ الإعدادات → 🎥 الالتقاط → 🎙 تخطّي الصمت الافتتاحي</span>. اختره.<span class="where">بعد العدّ التنازلي، ينتظر NoorCast أوّل كلمة قبل بدء التسجيل. لا كلام ميّت في البداية.</span></label></li>
+    <li><input type="checkbox"><label>جد <span class="ui">⚙ الإعدادات → 🎬 التسجيل → الجودة</span>. تأكّد من <b>High — 8 Mbps</b>.<span class="where">Etsy يضغط الرفعات. التسجيل بـ 8 Mbps يعني ملفك النهائي يبقى حادّاً بعد ضغطهم.</span></label></li>
+  </ul>
+  <h4>المصادر</h4>
+  <ul class="checklist" data-storage="pre-src-ar">
+    <li><input type="checkbox"><label>أضف كاميرا واحدة على الأقل. <span class="ui">+ كاميرا</span> في الشريط الأيسر. اختر كاميرا الويب من القائمة، انقر <span class="ui">+</span>.<span class="where">يظهر وجهك على الـ canvas كطبقة قابلة للسحب وتغيير الحجم.</span></label></li>
+    <li><input type="checkbox"><label>انقر مصدر الكاميرا. يظهر شريط أدوات المصدر. افتح نافذة <span class="ui">🎨 Style</span>. جد <b>🎯 تأطير ذكي</b>. انقر <span class="ui">🎯 تأطير تلقائي</span>.<span class="where">Toast: «🎯 تأطير تلقائي ON — الوجه يبقى مركّزاً». الآن إذا مِلت يميناً أو يساراً أثناء التسجيل، يتحرّك المصدر للحفاظ على تركيزك. سحري.</span></label></li>
+    <li><input type="checkbox"><label>(إذا كانت العرض على الشاشة) أضف مصدر شاشة. <span class="ui">+ شاشة</span>. اختر النافذة أو التبويب للمشاركة.</label></li>
+    <li><input type="checkbox"><label>اسحب الكاميرا إلى الموضع الذي تريد. <span class="where">لـ Etsy: face-cam عادة في النصف العلوي (فوق منطقة التعليق الآمنة)، محتوى العرض يملأ الأسفل.</span></label></li>
+    <li><input type="checkbox"><label>انظر إلى <b>شريط الحالة فوق زر REC</b>. يجب أن يقرأ شيئاً مثل:<br><code>🟢 جاهز · 2 مصادر · 9:16 📱 Reels · 8 Mbps</code><span class="where">إذا بدا شيء غير صحيح — أصلحه قبل الضغط على REC.</span></label></li>
+  </ul>
+  <h4>الممثّل (أنت)</h4>
+  <ul class="checklist" data-storage="pre-you-ar">
+    <li><input type="checkbox"><label>اقرأ السيناريو الذي اخترته مرّتين بصمت.</label></li>
+    <li><input type="checkbox"><label>اقرأه مرّة بصوت عالٍ. أحسب الوقت. يجب أن يكون 50–55 ثانية (5 ثوانٍ هامش).</label></li>
+    <li><input type="checkbox"><label>ابتسم. تمدّد وجهك. أرخِ فكّك. <span class="where">يبدو سخيفاً. يساعد. الطاقة أمام الكاميرا = ضعف الطاقة الحقيقية.</span></label></li>
+    <li><input type="checkbox"><label>اجلس / قف في مكان يمكنك البقاء فيه للقطات الخمس القادمة.</label></li>
+  </ul>
+  <p style="text-align:center;margin:14px 0 4px;color:var(--muted);font-size:.9rem">عند اختيار كل الصناديق، أنت جاهز. <b style="color:var(--accent)">اضغط <kbd style="background:#000;padding:1px 8px;border-radius:4px;color:var(--accent);font-family:var(--mono);direction:ltr;display:inline-block">R</kbd> في NoorCast.</b></p>
+</div>
+
+<div class="slug">قسم الديكور — اعرف أدواتك</div>
+<h2 id="layout">🗺 خريطة NoorCast</h2>
+<div class="card">
+  <p>ما يوجد أين على الشاشة. (تقريبيّ — يختلف حسب الـ viewport.)</p>
+<pre class="ascii">
+┌────────────────────────────────────────────────────────────────────┐
+│ ❓ ⚙ 📜 ⛶ 🧒 Kids                                                    │  ← Header
+├────────────────────────────────────────────────────────────────────┤
+│ 1 الإعداد  2 الضبط  3 التسجيل  4 المشاركة                           │  ← تبويبات Workflow
+├────────────────────────────────────────────────────────────────────┤
+│ ↩ ↪ │ 🔴 Laser ❄ Freeze ✏ Draw 📸 Photo │ 💬 Captions ⋯ More       │  ← شريط الأدوات
+│                                          📊 Sensors 📱 Reels        │
+├──────────┬───────────────────────────────────────────┬─────────────┤
+│ ✨ أضف   │                                           │             │
+│ مصدراً    │                                           │ 🎬 المشاهد  │
+│ ┌──────┐ │            CANVAS / المسرح                │ ┌─┐ ┌─┐ ┌─┐ │
+│ │شاشة  │ │            (9:16 portrait)                │ │1│ │2│ │3│ │
+│ │+Add  │ │                                           │ └─┘ └─┘ └─┘ │
+│ └──────┘ │            [وجهك هنا]                     │ ┌─┐ ┌─┐ ┌─┐ │
+│ ┌──────┐ │                                           │ │4│ │5│ │6│ │
+│ │كام ▼ │ │            [عرضك هنا]                     │ └─┘ └─┘ └─┘ │
+│ │   +  │ │                                           │             │
+│ └──────┘ │                                           │             │
+│ ┌──────┐ │                                           │             │
+│ │ميك ▼ │ │                                           │             │
+│ └──────┘ │                                           │             │
+├──────────┴───────────────────────────────────────────┴─────────────┤
+│ 🟢 جاهز · 2 مصادر · 9:16 📱 Reels · 8 Mbps · @PixelNinja            │  ← شريط الحالة
+├────────────────────────────────────────────────────────────────────┤
+│            [ ⏺  REC  R ]   00:00   ⏸ Pause  🏷 Mark  ⏹ Stop         │  ← شريط REC
+└────────────────────────────────────────────────────────────────────┘
+</pre>
+  <h4>الأزرار التي ستلمسها كثيراً</h4>
+  <table>
+    <tr><th>ماذا</th><th>أين</th><th>المفتاح</th><th>الفعل</th></tr>
+    <tr><td><span class="ui">⏺ REC</span></td><td>أحمر كبير، أسفل الوسط</td><td><kbd>R</kbd></td><td>ابدأ / أوقف</td></tr>
+    <tr><td><span class="ui">🏷 Mark</span></td><td>يمين REC، أثناء التسجيل</td><td><kbd>M</kbd></td><td>علامة فصل</td></tr>
+    <tr><td><span class="ui">🔴 Laser</span></td><td>شريط الأدوات</td><td><kbd>L</kbd></td><td>نقطة حمراء تتبع الفأرة</td></tr>
+    <tr><td><span class="ui">❄ Freeze</span></td><td>شريط الأدوات</td><td><kbd>F</kbd></td><td>يجمّد الـ canvas ثانية — للتأكيد</td></tr>
+    <tr><td><span class="ui">📸 Photo</span></td><td>شريط الأدوات</td><td><kbd>S</kbd></td><td>لقطة شاشة PNG</td></tr>
+    <tr><td><span class="ui">بلاطة المشهد</span></td><td>الشريط الأيمن</td><td><kbd>1</kbd>–<kbd>9</kbd></td><td>تبديل التصميم فوراً</td></tr>
+    <tr><td><span class="ui">📜 Tele</span></td><td>الشريط → ⋯ المزيد</td><td><kbd>T</kbd></td><td>تليبرومبتر</td></tr>
+  </table>
+</div>
+
+<div class="slug">ما قبل التصوير — كل الـ 60 ثانية بنظرة واحدة</div>
+<h2 id="storyboard">🎞 الستوريبورد</h2>
+<div class="card">
+  <p>ست لقطات. القوس الكامل لفيديوك. انقر أي لقطة للقفز إلى مشهدها.</p>
+  <div class="storyboard">
+    <a href="#scene-1" class="frame"><span class="t">0–3 ث</span><span class="icon">😊</span><span class="what"><b>الخطّاف</b><br>ابتسامة كبيرة<br>أمسك المنتج</span></a>
+    <a href="#scene-2" class="frame"><span class="t">3–10 ث</span><span class="icon">🎯</span><span class="what"><b>السياق</b><br>أظهر<br>المشكلة</span></a>
+    <a href="#scene-3" class="frame"><span class="t">10–35 ث</span><span class="icon">⚙</span><span class="what"><b>العرض</b><br>اعمل الشيء<br>خطوة بخطوة</span></a>
+    <a href="#scene-4" class="frame"><span class="t">35–50 ث</span><span class="icon">🎉</span><span class="what"><b>النتيجة</b><br>أظهر + ابتسم<br>+ توقّف</span></a>
+    <a href="#scene-5" class="frame"><span class="t">50–55 ث</span><span class="icon">🛍</span><span class="what"><b>دعوة للعمل</b><br>رابط Etsy</span></a>
+    <a href="#scene-6" class="frame"><span class="t">55–60 ث</span><span class="icon">🎬</span><span class="what"><b>اللقطة الختامية</b><br>احتفظ بالابتسامة<br>للحلقة</span></a>
+  </div>
+  <div class="tip">Etsy <b>يعيد تشغيل</b> فيديوك في الخلاصة. اللقطة الأخيرة تصبح الغلاف. إذا أنهيت بابتسامة نظيفة + شعارك، التماس الحلقة غير مرئي — يشاهد المشاهدون 2-3 مرّات قبل أن يدركوا.</div>
+</div>
+
+<div class="slug">الفصل الأوّل — اختر سيناريوك</div>
+<h2 id="scripts">🎭 السيناريوهات الثلاثة</h2>
+<div class="card card-tight">
+  <p>ثلاث نكهات. اختر الأقرب لإعلانك. كل سيناريو كامل 60 ثانية بـ <b>قُلْ / افعل / المشهد</b> لكل لحظة. زر <span class="btn" style="display:inline-block">📋 نسخ</span> على كل سطر لنسخ النص بالضبط. <span class="btn" style="display:inline-block">▶ اسمع</span> يشغّل السطر بصوت عالٍ (صوت المتصفّح) لتسمع الإيقاع.</p>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" data-tab="creator" role="tab"><span class="tab-num">A</span><span class="tab-title">«صنعت هذا»</span></button>
+  <button class="tab" data-tab="tutorial" role="tab"><span class="tab-num">B</span><span class="tab-title">«كيفيّة الاستخدام»</span></button>
+  <button class="tab" data-tab="robot" role="tab"><span class="tab-num">C</span><span class="tab-title">«عرض الروبوت»</span></button>
+</div>
+
+<!-- ━━━━━━━━━━━━━━ نموذج A: المُبدع ━━━━━━━━━━━━━━ -->
+<div class="tab-pane active" data-pane="creator">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>حالة الاستخدام:</b> عرض منتج تصنعه (فخّار، مجوهرات، فنّ، عُدّة، أي شيء مادّي أو رقمي). أكثر صيغ فيديو Etsy شيوعاً.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 نسخ كل الجمل (الصق في تليبرومبتر NoorCast)</button>
+
+<div class="scene" id="scene-1">
+  <div class="scene-head"><span>المشهد 1 — داخل · استوديو · نهار · لقطة افتتاحية</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">الخطّاف</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ <span class="paren">(طاقة كبيرة، نظرة مباشرة)</span> <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">ثلاث ثوانٍ — ها هو ما صنعته للتوّ.</div><span class="paren">(النبرة: مباشرة، كأنّك توقف شخصاً في الشارع. لا تتلاشى.)</span></div>
+    <div class="do"><div class="do-label">افعل</div><div class="do-text">التسجيل يعمل بالفعل. <b>لا تلمس شيئاً.</b> ارفع المنتج عند مستوى الذقن، مركّزاً في المنطقة الآمنة. المشهد <span class="ui">👋 You</span> (مفتاح <kbd>1</kbd>) يكفي — وجه ملء الشاشة.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div><em>ابتسامة كبيرة وحقيقية.</em> انظر مباشرة إلى عدسة الكاميرا (لا الشاشة). أمسك المنتج بوضوح. <em>لا تحرّك رأسك</em> — دع المنتج يتحرّك.</div>
+  </div>
+</div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene" id="scene-2">
+  <div class="scene-head"><span>المشهد 2 — السياق · المشكلة</span><span class="scene-time">⏱ 0:03 → 0:10</span><span class="scene-phase phase-hook">السياق</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">معظم الناس يشترون منه ولا يعرفون أنّه يستطيع فعل هذا الشيء الغريب.</div><span class="paren">(استبدل «هذا الشيء الغريب» بخطّافك الحقيقي — الميزة المفاجئة. أقلّ من 12 كلمة.)</span></div>
+    <div class="do"><div class="do-label">افعل</div><div class="do-text">إذا كان العرض على الشاشة: اضغط <kbd>2</kbd> للمشهد <span class="ui">💻 Code</span> (ملء الشاشة). إذا مادّي: ابقَ على face-cam. <b>اضغط <kbd>M</kbd></b> عند كلمة «هذا» — يضع علامة فصل «كشف الخطّاف».</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div>عيناك تتّسعان عند «غريب». <em>إمالة طفيفة للرأس.</em> إذا كنت تمسك المنتج، أملْه قليلاً نحو الكاميرا عند «هذا».</div>
+  </div>
+</div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene" id="scene-3">
+  <div class="scene-head"><span>المشهد 3 — العرض · افعل الشيء</span><span class="scene-time">⏱ 0:10 → 0:35</span><span class="scene-phase phase-demo">العرض</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ · لحظة 1 <span class="paren">(0:10–0:18، أبطئ هنا)</span> <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">شاهد — سأريك بحركة واحدة.</div></div>
+    <div class="do"><div class="do-label">افعل · لحظة 1</div><div class="do-text">افعل الفعل. <b>اضغط <kbd>L</kbd></b> إذا احتجت للإشارة على الشاشة — مؤشّر ليزر. <b>اضغط <kbd>F</kbd></b> في ذروة الفعل — يجمّد الـ canvas ثانية، يعطي المشاهد وقتاً ليستوعب.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div>أبطئ يديك بنسبة 30%. الناس دائماً يستعجلون العروض. <em>إذا كانت يداك ضبابيّتين، فقد تجاوزت السرعة.</em></div>
+  </div>
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say"><div class="say-label">قُلْ · لحظة 2 <span class="paren">(0:18–0:28)</span> <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">وها هي طريقة عمله من وراء الكواليس.</div></div>
+    <div class="do"><div class="do-label">افعل · لحظة 2</div><div class="do-text">انتقل لمشهد متعدّد المصادر — <kbd>5</kbd> = <span class="ui">🎬 Studio</span> (تقسيم: وجه + شاشة). استخدم <span class="ui">🔴 Laser</span> للإشارة.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div>نظرة سريعة على الليزر، ثم عُد للكاميرا. لا تحدّق بالشاشة. <em>أنت تتحدّث إلى شخص، لا تروي نصّاً.</em></div>
+  </div>
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say"><div class="say-label">قُلْ · لحظة 3 <span class="paren">(0:28–0:35)</span> <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">يستغرق حوالي 30 ثانية، ولا تحتاج شيئاً غير ما وضعته في العُدّة.</div></div>
+    <div class="do"><div class="do-label">افعل · لحظة 3</div><div class="do-text"><b>اضغط <kbd>M</kbd></b> بعد كلمة «العُدّة» — علامة «الطمأنينة». ابقَ على المشهد المتعدّد.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div><em>صادق، هادئ.</em> هذه لحظة الثقة. لا تبالغ في البيع. انظر إلى العدسة.</div>
+  </div>
+</div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene" id="scene-4">
+  <div class="scene-head"><span>المشهد 4 — النتيجة · أظهر الثمرة</span><span class="scene-time">⏱ 0:35 → 0:50</span><span class="scene-phase phase-payoff">النتيجة</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">… والنتيجة هي هذه.</div><span class="paren">(توقّف ثانيتين كاملتين بعد كلمة «هذه». هذا أهمّ صمت في الفيديو كلّه. لا تملأه.)</span></div>
+    <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>1</kbd> للعودة إلى face-cam ملء الشاشة (<span class="ui">👋 You</span>). ارفع المنتج المنتهي / أظهر النتيجة بوضوح. <b>توقّف ثانيتين</b> — عُدّ «واحد ميسيسيبي، اثنان ميسيسيبي» في رأسك. لا تقل «إيه».</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div><em>ابتسامة بطيئة وحقيقية.</em> ارفع النتيجة قريباً من وجهك ليكون كلاهما في الإطار معاً. صمت الثانيتين هو متى يقرّر المشاهدون شراءه. اتركهم.</div>
+  </div>
+</div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene" id="scene-5">
+  <div class="scene-head"><span>المشهد 5 — دعوة للعمل · أرسلهم إلى Etsy</span><span class="scene-time">⏱ 0:50 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">يمكنك الحصول على واحد من متجري على Etsy — الرابط أسفل هذا الفيديو.</div><span class="paren">(محادثة. كأنّك تنصح بمكان صديق. لا بيع.)</span></div>
+    <div class="do"><div class="do-label">افعل</div><div class="do-text">ابقَ على face-cam ملء الشاشة. <b>لا تبدّل المشهد</b> — يحتاج المشاهدون لرؤية عينيك للـ CTA. علامتك المائية (@اسمك) تتحدّث عن العلامة.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div><em>نظرة مباشرة.</em> إيماءة طفيفة على «أسفل». إيماءة واثقة صغيرة، لا هزّ رأس. <em>لا تبتسم بعرض شديد هنا</em> — يبدو مُلِحّاً. كن دافئاً، لا يائساً.</div>
+  </div>
+</div>
+<div class="transition">تلاشي إلى:</div>
+
+<div class="scene" id="scene-6">
+  <div class="scene-head"><span>المشهد 6 — اللقطة الختامية · لحام الحلقة</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">النهاية</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">شكراً للمشاهدة.</div><span class="paren">(ناعم. شبه همس. ثم صمت لـ 3 ثوانٍ كاملة.)</span></div>
+    <div class="do"><div class="do-label">افعل</div><div class="do-text">لا تتحرّك. لا ترمش بسرعة. <em>احتفظ بتعبير هادئ ودافئ لـ 3 ثوانٍ.</em> هذا الإطار يصبح غلاف فيديوك ولحام الحلقة. ثم اضغط <kbd>R</kbd> لـ STOP.</div></div>
+    <div class="vis"><div class="vis-label">المشهد</div><em>تكوين الإطار النهائي:</em> الوجه في الثلث العلوي، العلامة المائية ظاهرة، لا حركة. هذه الصورة يعرضها Etsy عندما لا يكون الفيديو في تشغيل تلقائي. <em>اجعله إطاراً تسرّ برؤيته متوقّفاً.</em></div>
+  </div>
+</div>
+</div></div>
+
+<!-- ━━━━━━━━━━━━━━ نموذج B: تعليمي ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="tutorial">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>حالة الاستخدام:</b> «إليك كيف يعمل». تخبر المشتري بالمهارات التي سيكتسبها. مناسب للعُدد الإبداعيّة، الدورات، القوالب.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 نسخ كل الجمل</button>
+
+<div class="scene"><div class="scene-head"><span>المشهد 1 — الخطّاف</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">الخطّاف</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">60 ثانية لتعلّم هذا. مستعد؟</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>L</kbd> لمؤشّر الليزر لحظة قول «هذا». أشِر إلى أكثر العناصر إثارة على الشاشة. كن على المشهد <span class="ui">💻 Code</span> (مفتاح <kbd>2</kbd>).</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>طاقة كبيرة. حواجب مرفوعة سريعاً عند «مستعد؟».</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 2 — الخطوة 1</span><span class="scene-time">⏱ 0:03 → 0:10</span><span class="scene-phase phase-demo">خطوة 1</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">الخطوة الأولى — افتح الأداة. انقر هنا.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">حرّك الليزر إلى هدف النقر قبل قول «هنا» بنبضة. انقر العنصر. <b>اضغط <kbd>M</kbd></b> فوراً بعد النقر — فصل «الخطوة 1».</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>لا تجعل النقر يبدو سلبيّاً — توقّف نصف ثانية بعده ليرى المشاهدون النتيجة.</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 3 — الخطوتان 2 + 3</span><span class="scene-time">⏱ 0:10 → 0:30</span><span class="scene-phase phase-demo">خطوتان 2-3</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ · خطوة 2 <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">الخطوة الثانية — اختر الخيار الذي تريده، هنا.</div></div>
+  <div class="do"><div class="do-label">افعل · خطوة 2</div><div class="do-text">ليزر → نقر → <kbd>M</kbd>.</div></div>
+  <div class="say"><div class="say-label">قُلْ · خطوة 3 <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">الخطوة الثالثة — والآن تضغط الزر الكبير.</div></div>
+  <div class="do"><div class="do-label">افعل · خطوة 3</div><div class="do-text">دوّر الليزر حول الزر. <b>اضغط <kbd>F</kbd></b> عند النقر — يجمّد الـ canvas للتأكيد أنّ هذه هي اللحظة.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>الخطوة 3 هي ذروة العرض. أبطئ. اترك التجميد يعمل. <em>لا تتحدّث فوق التجميد.</em></div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 4 — النتيجة</span><span class="scene-time">⏱ 0:30 → 0:45</span><span class="scene-phase phase-payoff">النتيجة</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">وهكذا — انتهى. ثلاث خطوات.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>5</kbd> لـ <span class="ui">🎬 Studio</span> (تقسيم متعدّد المصادر) — يرى المشاهدون وجهك يتفاعل. ابتسامة كبيرة.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div><em>ردّ فعل صادق «أحبّ هذا».</em> حتى لو فعلت ذلك 100 مرّة، تظاهر بدهشة المرّة الأولى. الناس يقلّدون طاقتك.</div>
+</div></div>
+<div class="transition">تلاشي إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 5 — CTA</span><span class="scene-time">⏱ 0:45 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">العُدّة الكاملة في متجري على Etsy. الرابط أسفل مباشرة.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>1</kbd> face-cam ملء الشاشة. نظرة مباشرة، لا تبديل مشهد.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>إيماءة واثقة. لا توسّل. <em>أنت صنعت هذا. أنت فخور به. هم محظوظون أنّهم وجدوه.</em></div>
+</div></div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 6 — النهاية</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">النهاية</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">أتمنّى أن تصنع شيئاً مذهلاً.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">احتفظ بالابتسامة + face-cam لـ 3 ثوانٍ صمت. اضغط <kbd>R</kbd>.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>الإطار النهائي: تعبير دافئ كريم. الوجه الذي تريد أن يكون لك صديقاً.</div>
+</div></div>
+</div></div>
+
+<!-- ━━━━━━━━━━━━━━ نموذج C: الروبوت ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="robot">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>حالة الاستخدام:</b> مشروع micro:bit / روبوت — إعلانات Etsy للأطفال. يستفيد من تخصّص NoorCast.</p>
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 نسخ كل الجمل</button>
+
+<div class="scene"><div class="scene-head"><span>المشهد 1 — الخطّاف</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">الخطّاف</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">روبوتي يفعل هذا — شاهد!</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>3</kbd> للمشهد <span class="ui">🤖 Robot</span> (firstCam = منظر الروبوت). تأكّد أنّ <span class="ui">📊 Sensors</span> ON في شريط الأدوات للبيانات الحيّة.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>الروبوت في وسط الإطار. <em>لست بحاجة لأن تكون في هذه اللقطة</em> — دع الروبوت يكون النجم.</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 2 — يسار/يمين</span><span class="scene-time">⏱ 0:03 → 0:18</span><span class="scene-phase phase-demo">التحكّم</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">أقول له يسار… ثم يمين… والـ servo تتحرّك مباشرة.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط زر A على الـ micro:bit أو اسحب slider <span class="ui">Servo 1 (Pan)</span> — يرسل UART مباشرة. ثم زر B / اسحب <span class="ui">Servo 2 (Tilt)</span>. <b>اضغط <kbd>M</kbd></b> بعد كل حركة — فصول «يسار» / «يمين».</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>الكاميرا تبقى على الروبوت. أظهر مقاييس الـ servo تستجيب. <em>تحريك بطيء للرأس</em> ليتابع المشاهدون الحركة.</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 3 — هزّ</span><span class="scene-time">⏱ 0:18 → 0:28</span><span class="scene-phase phase-demo">حسّاسات</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">هزّ الدماغ ليجنّ.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">أمسك الـ micro:bit واهزّه ثانيتين. منحنى مقياس التسارع يقفز. اضغط <kbd>F</kbd> عند الذروة — يجمّد. اضغط <kbd>M</kbd> فصل «جنون».</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div><em>ابتسامة طفيفة</em> أثناء الهزّ. الأطفال يحبّون رؤية «البيانات تتفاعل». المنحنى هو النجم.</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 4 — الكود</span><span class="scene-time">⏱ 0:28 → 0:42</span><span class="scene-phase phase-demo">الكود</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">كلّه مُبرمَج بحوالي 20 كتلة من MakeCode. شيء بسيط.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>2</kbd> للمشهد <span class="ui">💻 Code</span> (الشاشة تأخذ كل المساحة). اعرض MakeCode. <kbd>L</kbd> للإشارة لـ 2-3 كتل أساسيّة. لا تشرح كل شيء — <em>أبرز</em> شيئين فقط.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>لا تسحب الليزر ذهاباً وإياباً. <em>اضغط، توقّف، اضغط، توقّف.</em> كأنّك تخطّ تحت كلمات مهمّة على لوح.</div>
+</div></div>
+<div class="transition">قطع إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 5 — CTA العُدّة</span><span class="scene-time">⏱ 0:42 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">يمكنك بناء واحد أيضاً. العُدّة الكاملة، الكود، التعليمات في متجري على Etsy — الرابط أسفل.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">اضغط <kbd>5</kbd> لـ <span class="ui">🎬 Studio</span> (تقسيم: وجه + منظر روبوت). أمسك الروبوت ليكون الوجه + الروبوت معاً في الإطار. <em>نجمان في اللقطة الأخيرة.</em></div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>ابتسامة واثقة. الروبوت بمستوى الصدر. <em>المشاهدون الأطفال يحتاجون لتخيّل أنفسهم يحملونه.</em></div>
+</div></div>
+<div class="transition">تلاشي إلى:</div>
+
+<div class="scene"><div class="scene-head"><span>المشهد 6 — النهاية + هاشتاج</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">النهاية</span></div>
+<div class="scene-body">
+  <div class="say"><div class="say-label">قُلْ <div class="actions"><button class="btn copy-line">📋 نسخ</button><button class="btn read-line">▶ اسمع</button></div></div><div class="say-text">اذكرني بـ #روبوتي عندما تبني روبوتك.</div></div>
+  <div class="do"><div class="do-label">افعل</div><div class="do-text">احتفظ بالمشهد الستوديو (وجه + روبوت). ابتسم. 3 ثوانٍ صمت. اضغط <kbd>R</kbd>.</div></div>
+  <div class="vis"><div class="vis-label">المشهد</div>الإطار الأخير = الغلاف: وجه + روبوت + علامة مائية. <em>تأكّد أنّ @اسمك و #هاشتاجك مقروءان</em> — هكذا يجد المشاهدون متجرك.</div>
+</div></div>
+</div></div>
+
+<div class="slug">كرسي المخرج — أسرار يستخدمها المحترفون</div>
+<h2 id="director">🎬 حِيَل المخرج</h2>
+
+<div class="card"><h4>قاعدة اللقطات الخمس (الأهمّ)</h4>
+<p><b>لا تنشر لقطتك الأولى أبداً. خطّط لـ 5.</b> كل لقطة تُحفظ تلقائياً في التاريخ. زر header <span class="ui">🎬 آخر لقطة</span> للعودة.</p>
+<table>
+  <tr><th>اللقطة</th><th>الهدف</th><th>ما تُصلحه</th></tr>
+  <tr><td><b>1</b></td><td>اقرأ السيناريو حرفيّاً.</td><td>جد الجمل الغريبة. علّمها.</td></tr>
+  <tr><td><b>2</b></td><td>أصلح الغرابات.</td><td>قراءة أقلّ، كلام أكثر.</td></tr>
+  <tr><td><b>3</b></td><td>أسقط السيناريو تماماً.</td><td>تحدّث لصديق، لا لكاميرا.</td></tr>
+  <tr><td><b>4</b></td><td>أبطئ 10%. أضف توقّفاً مقصوداً.</td><td>اكتشف الإيقاع.</td></tr>
+  <tr><td><b>5</b></td><td>المحفوظة.</td><td>ابتسامة، انشر.</td></tr>
+</table></div>
+
+<div class="card"><h4>حيلة «انظر للعدسة، لا للشاشة»</h4>
+<p>المبتدئون يحدّقون بالمعاينة. عيناك تنظران إلى الأسفل في التسجيل. <b>الصق ملصقاً صغيراً بجانب عدسة الكاميرا</b> — وجه ضاحك يكفي. تحدّث للملصق. نظرتك للكاميرا ستقفز من «مخيفة» إلى «مغناطيسيّة» في لقطة واحدة.</p></div>
+
+<div class="card"><h4>توقّف 3 ثوانٍ = ثقة</h4>
+<p>بعد CTA، ابقَ صامتاً 3 ثوانٍ كاملة قبل STOP. المبتدئون يشعرون بالحرج. <b>المشاهدون يشعرون بالثقة.</b> حلقة Etsy تبدأ نظيفة. لحام الحلقة يختفي.</p></div>
+
+<div class="card"><h4>حيلة التليبرومبتر</h4>
+<p>NoorCast لديه تليبرومبتر مدمج (شريط → ⋯ المزيد → 📜 Tele، أو مفتاح <kbd>T</kbd>). انقر <span class="btn" style="display:inline-block">📤 نسخ كل الجمل</span> في كل تبويب. ثم في NoorCast، افتح التليبرومبتر، الصق، السرعة <b>30–40 كلمة/دقيقة</b>، ابدأ التسجيل. <b>انظر للعدسة، لا للتليبرومبتر</b> — دع الكلمات تمرّ في الرؤية المحيطيّة.</p></div>
+
+<div class="card"><h4>مضاعف الطاقة</h4>
+<p><b>أيّاً كانت الطاقة التي تقدّمها للتسجيل، يحصل المشاهد على نصفها.</b> إذا شعرت بـ«عادي»، يشعر المشاهد بـ«متعب». إذا شعرت بـ«150%»، يشعر بـ«جيّد». إذاً بالغ دائماً. ابتسامة كبيرة. عيون كبيرة. حركات كبيرة. <em>ستشاهد التسجيل وتفكّر «ياه، الكثير» — والمشاهد سيفكّر «طبيعي ودافئ».</em></p></div>
+
+<div class="card"><h4>الصوت = 60% من الجودة المُدركة</h4>
+<p>ميك رخيص + كاميرا رائعة = هاوٍ. ميك رائع + كاميرا رخيصة = محترف. <b>إذا استثمرت في شيء واحد فقط، اشترِ ميكاً لافالييه بـ 30 €.</b> جودة الصوت تشتري الثقة أسرع من 4K.</p></div>
+
+<div class="card"><h4>تقنية علامة الفصل</h4>
+<p>اضغط <kbd>M</kbd> في كل لحظة مهمّة. بعد STOP، في modal اللقطة، انقر <span class="btn" style="display:inline-block">✨ فصول تلقائية من النص</span> — يضيف فصولاً ذكيّة من كلامك. تنتهي بفيديو مقسّم تماماً مع جدول محتويات مدمج.</p></div>
+
+<div class="card"><h4>التجميد عند النتيجة</h4>
+<p>اضغط <kbd>F</kbd> لحظة ظهور النتيجة. الـ canvas يتجمّد ثانية — يؤكّد أنّ هذه هي اللحظة. قويّ جدّاً للـ unboxings والتحوّلات والكشوف.</p></div>
+
+<div class="slug">ما بعد الإنتاج — بعد اللقطة</div>
+<h2 id="after">🎁 بعد STOP</h2>
+<div class="card">
+  <p>لحظة ضغط STOP، يفتح NoorCast <b>modal اللقطة</b> — overlay بملء الشاشة مع فيديوك يساراً وكل أدوات ما بعد التسجيل يميناً. اعمل من العمود الأيمن بهذا الترتيب:</p>
+  <ol>
+    <li><b>شاهد التسجيل مرّة.</b> كاملاً. عيناك خارج السيناريو. هل ينجح؟ إذا لا، انقر <span class="ui">🎬 تسجيل جديد</span> وأعد.</li>
+    <li><b>إذا تجاوزت اللقطة 60 ثانية:</b> انقر <span class="ui">📱 قص إلى 90 ث لـ Reels</span>. إعادة ترميز داخل المتصفّح بالوقت الفعلي. الإخراج باسم <code>&lt;name&gt;-reels.mp4</code>.</li>
+    <li><b>انقر ✨ فصول تلقائية من النص</b>. يضيف علامات فصل ذكيّة من كلامك.</li>
+    <li><b>اقرأ بطاقة MISSION COMPLETE</b> (وضع Kids). Cool factor &lt; 60؟ تحتاج طاقة / مشاهد / فصول أكثر. أعد.</li>
+    <li><b>اكتب عنواناً نظيفاً</b> في حقل الاسم. مثل <code>etsy-listing-coastal-pottery-2026.mp4</code>.</li>
+    <li><b>قيّم اللقطة</b> (5 نجوم). يساعدك على تذكّر أيّ لقطة كانت المحفوظة عبر جلسات متعدّدة.</li>
+    <li><b>انقر 📥 تحميل</b> (الزر الأخضر الأساسي). يحفظ MP4 في مجلّد التحميلات.</li>
+    <li><b>انقر 💬 الترجمة (.srt)</b>. احفظ الترجمات. ستلصقها في وصف Etsy للـ SEO.</li>
+    <li><b>انقر 🖼 صورة مصغّرة (.png)</b>. يحفظ الإطار الأوّل. جيّد لمصفوفة صور المنتج.</li>
+    <li><b>أغلق الـ modal</b> (X أو ESC). NoorCast يتذكّر — افتح عبر زر header <span class="ui">🎬 آخر لقطة</span> إذا احتجت لإعادة تحميل شيء.</li>
+  </ol>
+  <div class="tip">للضبط قبل الرفع: افتح modal التقطيع داخل المتصفّح (زر <span class="ui">✂️ قطع</span>) — يعطيك scrubbers للبداية والنهاية، تصوّر الـ scene-bands، ويصدّر مقطعاً مُعاد ترميزه بنفس الجودة.</div>
+</div>
+
+<div class="card"><h4>قائمة فحص رفع Etsy</h4>
+<ol>
+  <li>افتح Etsy → متجرك → الإعلان → قسم الصور والفيديو.</li>
+  <li>انقر <b>+ إضافة فيديو</b>. ارفع MP4. Etsy يضغط (لا يمكن تجنّبه — لذا سجّلنا بـ 8 Mbps).</li>
+  <li>استخدم <b>نصّ الترجمات</b> (من ملف SRT) في <b>الوصف</b>. بحث Etsy يقرأ الأوصاف.</li>
+  <li><b>عنوان الإعلان</b> يجب أن يطابق أوّل كلمات فيديوك. إذا قلت «60 ثانية لتعلّم الماكرامي»، العنوان «تعلّم الماكرامي في 60 ثانية — عُدّة كاملة».</li>
+  <li>وسم الإعلان بالكلمات التي قلتها فعلاً.</li>
+  <li>احفظ. عاين الإعلان كمشترٍ. <b>شاهد فيديوك كما يفعل المشتري.</b> هل يوقف تمريره؟</li>
+</ol></div>
+
+<div class="slug">الطوارئ — عندما تسوء الأمور</div>
+<h2 id="troubles">🚨 المشاكل الشائعة</h2>
+<div class="card">
+  <table>
+    <tr><th>العَرَض</th><th>السبب المحتمل</th><th>الحلّ</th></tr>
+    <tr><td>الكاميرا = مربّع أسود</td><td>الإذن مرفوض</td><td>شريط العنوان → 🔒 → الكاميرا → السماح. أعد التحميل.</td></tr>
+    <tr><td>تسجيل لكن ملف 0 بايت</td><td>خلل مُرمِّز Windows MP4 (نادر)</td><td>الإعدادات → الصيغة → بدّل لـ WebM. أعد.</td></tr>
+    <tr><td>الصوت يقطع وسط اللقطة</td><td>الميك انفصل / الهاتف أخذه</td><td>الإعدادات → 🎤 → اختر الميك مجدّداً. تحقّق من المقياس.</td></tr>
+    <tr><td>الترجمات لا تظهر</td><td>المتصفّح يحجب SpeechRecognition / لا إنترنت</td><td>Chrome يحتاج إنترنت لـ live captions أوّل مرّة.</td></tr>
+    <tr><td>التأطير التلقائي يهتزّ</td><td>الخلفيّة بألوان بشرة</td><td>أزل الفوضى. أو أوقف التأطير التلقائي.</td></tr>
+    <tr><td>اللقطة طويلة (&gt;60 ث)</td><td>قلت الكثير</td><td>انقر «📱 قص إلى 90 ث». لتقطيع أدقّ، استخدم ffmpeg.</td></tr>
+    <tr><td>اللقطة صامتة عند التشغيل</td><td>نسيت إضافة مصدر ميك</td><td>أعد. أضف ميك في الشريط الأيسر قبل R.</td></tr>
+    <tr><td>اختفى شريط الأدوات</td><td>أنت في الإعداد أو المشاركة</td><td>انقر <span class="ui">2 الضبط</span> أو <span class="ui">3 التسجيل</span>.</td></tr>
+    <tr><td>معدّل الإطارات يسقط</td><td>تبويبات / تطبيقات أخرى</td><td>أغلق كل شيء عدا NoorCast. المعالج هو العنق.</td></tr>
+    <tr><td>العلامة المائية غير مرئيّة</td><td>تباين أسود-على-أسود</td><td>الإعدادات → الشعار → نصّ. v0.9.13 أضاف حدّاً lime.</td></tr>
+    <tr><td>الملف كبير جدّاً لـ Etsy</td><td>طويل بجودة عالية</td><td>قصّ لـ 60 ث. أو الإعدادات → Standard (4 Mbps) + أعد.</td></tr>
+  </table>
+</div>
+
+<div class="slug">القاموس — معاني الكلمات</div>
+<h2 id="glossary">📖 معجم المبتدئ</h2>
+<div class="card"><dl class="glossary">
+  <dt>المصدر (SOURCE)</dt><dd>طبقة إدخال واحدة على الـ canvas. كاميرا، شاشة، ميك، صورة. يمكن أن يكون لديك عدّة.</dd>
+  <dt>المشهد (SCENE)</dt><dd>ترتيب محفوظ للمصادر. انقر بلاطة في الشريط الأيمن للتبديل. <kbd>1</kbd>–<kbd>9</kbd>.</dd>
+  <dt>الـ CANVAS</dt><dd>المستطيل الكبير في الوسط. ما يُسجَّل. ما خارجه يُتجاهَل.</dd>
+  <dt>المنطقة الآمنة (SAFE ZONE)</dt><dd>الصندوق الأخضر المنقّط في 9:16. حيث سيرى المشاهد فعلاً — UI Etsy/FB/TikTok يغطّي المناطق الحمراء.</dd>
+  <dt>علامة الفصل (CHAPTER MARKER)</dt><dd>عنوان مع طابع زمني داخل الفيديو. <kbd>M</kbd> لإسقاط واحدة. مفيد للتنقّل في اللقطات الطويلة.</dd>
+  <dt>العلامة المائية (WATERMARK)</dt><dd>تراكب نصّ/شعار صغير في زاوية كل تسجيل. الإعدادات → الشعار. تصبح «طابع» علامتك.</dd>
+  <dt>خطوة Workflow</dt><dd>التبويبات الأربع فوق شريط الأدوات (الإعداد / الضبط / التسجيل / المشاركة). تتقدّم تلقائيّاً.</dd>
+  <dt>شريط الحالة</dt><dd>السطر الواحد فوق REC. الحالة، عدد المصادر، الصيغة، البتريت، اللقب. كل قطعة قابلة للنقر.</dd>
+  <dt>اللقطة (TAKE)</dt><dd>محاولة تسجيل واحدة. NoorCast يحفظ الكلّ — افتح عبر <span class="ui">🎬 آخر لقطة</span>.</dd>
+  <dt>BURN-IN CAPTIONS</dt><dd>ترجمات مرسومة مباشرة على بكسلات الفيديو. ينجو من ضغط الشبكات الاجتماعيّة.</dd>
+  <dt>الخطّاف (HOOK)</dt><dd>أوّل 3 ثوانٍ. الجزء الأهمّ. خطّاف فاشل = الباقي بلا قيمة.</dd>
+  <dt>CTA</dt><dd>«Call To Action» — الجملة التي تخبر المشاهد بما يفعل بعد. قرب النهاية، لا في الوسط.</dd>
+  <dt>END FRAME / لحام الحلقة</dt><dd>آخر إطار. على Etsy/Reels = الغلاف ونقطة استمرار الحلقة. بصريّاً نظيف.</dd>
+  <dt>B-ROLL</dt><dd>مرئيّات خلفيّة تحت صوتك. NoorCast = مشاهد متعدّدة المصادر.</dd>
+  <dt>التليبرومبتر</dt><dd>تراكب سيناريو يمرّ بينما تنظر للكاميرا. <kbd>T</kbd> للتبديل.</dd>
+</dl></div>
+
+<div class="footer">
+  <p><b>دليل Etsy Hollywood 60 ثانية</b> · لـ NoorCast v0.10.x</p>
+  <p>اطبعه على A4 (أو A3 للحائط). صديق للطباعة — الألوان تخفّ، الـ dock يختفي.</p>
+  <p style="margin-top:14px"><a href="./index.html">← العودة إلى NoorCast</a> · <a href="./guide-ar.html">الدليل الكامل</a></p>
+</div>
+
+<aside class="teleprompter-dock" aria-label="رصيف التليبرومبتر">
+  <div class="head"><span class="title">📜 رصيف التليبرومبتر</span></div>
+  <button class="copy-all-btn" id="dockCopyAll">📤 نسخ كل الجمل</button>
+  <div class="hint" style="margin-top:8px">ينسخ كل جمل قُلْ من التبويب النشط. ثم في NoorCast: <kbd>T</kbd> → الصق → <kbd>R</kbd>.</div>
+</aside>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const target = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === target));
+    });
+  });
+  document.querySelectorAll('.checklist').forEach(list => {
+    const key = 'playbook-' + list.dataset.storage;
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+    list.querySelectorAll('li').forEach((li, i) => {
+      const cb = li.querySelector('input[type=checkbox]');
+      if (state[i]) { cb.checked = true; li.classList.add('checked'); }
+      const sync = () => { li.classList.toggle('checked', cb.checked); state[i] = cb.checked; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} };
+      cb.addEventListener('change', sync);
+      li.addEventListener('click', e => { if (e.target.tagName === 'INPUT') return; cb.checked = !cb.checked; sync(); });
+    });
+  });
+  document.querySelectorAll('.copy-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      navigator.clipboard?.writeText(sayText).then(() => {
+        btn.textContent = '✓ نُسخ'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 نسخ'; btn.classList.remove('copied'); }, 1400);
+      }).catch(() => { btn.textContent = '⚠ محظور'; });
+    });
+  });
+  document.querySelectorAll('.read-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(sayText);
+        u.lang = 'ar-SA'; u.rate = 0.95; u.pitch = 1.0;
+        speechSynthesis.speak(u);
+        btn.textContent = '🔊 تشغيل…';
+        u.onend = () => { btn.textContent = '▶ اسمع'; };
+      } catch { btn.textContent = '⚠ N/A'; }
+    });
+  });
+  function copyAllForActiveScript() {
+    const active = document.querySelector('.tab-pane.active');
+    if (!active) return 0;
+    const lines = Array.from(active.querySelectorAll('.say-text')).map(s => s.textContent.trim());
+    navigator.clipboard?.writeText(lines.join('\n\n'));
+    return lines.length;
+  }
+  document.querySelectorAll('.copy-all-script').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = copyAllForActiveScript();
+      btn.textContent = `✓ نُسخت ${n} جملة — الصق في تليبرومبتر NoorCast (T)`;
+      setTimeout(() => { btn.textContent = '📤 نسخ كل الجمل (الصق في تليبرومبتر NoorCast)'; }, 3000);
+    });
+  });
+  document.getElementById('dockCopyAll')?.addEventListener('click', () => {
+    const n = copyAllForActiveScript();
+    const b = document.getElementById('dockCopyAll');
+    b.textContent = `✓ نُسخت ${n} جملة`;
+    setTimeout(() => { b.textContent = '📤 نسخ كل الجمل'; }, 2400);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') speechSynthesis.cancel?.(); });
+</script>
+</body>
+</html>

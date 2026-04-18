@@ -411,6 +411,10 @@
     border-top: 1px solid var(--border);
   }
 
+  .lang-switch { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; z-index: 60; }
+  .lang-switch a { background: rgba(15,22,16,.85); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: var(--mono); border-bottom: 1px solid var(--border); }
+  .lang-switch a.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
   /* Print */
   @media print {
     body { background: #fff; color: #000; max-width: 100%; padding: 12px; }
@@ -425,6 +429,12 @@
 </style>
 </head>
 <body>
+
+<nav class="lang-switch" aria-label="Language">
+  <a href="etsy-playbook.html" class="active">EN</a>
+  <a href="etsy-playbook-fr.html">FR</a>
+  <a href="etsy-playbook-ar.html">AR</a>
+</nav>
 
 <!-- ═════════════════ TITLE SLATE ═════════════════ -->
 <div class="slate">
