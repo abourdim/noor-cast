@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.7 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.8 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.7';
+const APP_VERSION = '0.9.8';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -22291,19 +22291,27 @@ function wireEvents() {
   $('tcPanCenter')?.addEventListener('click', () => { Sensors.sendUart('CMD:CLEAR'); Sensors.panTiltCenter(); $('tcPanVal').textContent = 90; $('tcTiltVal').textContent = 90; });
   // FIRE button
   $('tcFireBtn')?.addEventListener('click', () => { Sensors.sendUart('CMD:FIRE'); showToast('🔥 FIRE!', 800); });
-  // v0.7.173: Servo sliders (inspired by bit-playground)
-  $('tcServo1Slider')?.addEventListener('input', e => { $('tcServo1Val').textContent = e.target.value + '°'; });
-  $('tcServo1Move')?.addEventListener('click', () => {
-    const angle = parseInt($('tcServo1Slider')?.value || 90);
-    Sensors._panAngle = angle; $('tcPanVal').textContent = angle;
-    Sensors.sendUart('P:' + angle);
+  // v0.7.173 / v0.9.8: Servo sliders move the servo live as you drag.
+  // Move buttons removed — separate "set angle then click Move" was an
+  // extra step nobody wanted. UART sends are throttled to ~10/s via
+  // debounce so BLE doesn't flood (board can't keep up with 60 Hz input
+  // events from a smooth slider drag).
+  const sendPan  = debounce(a => Sensors.sendUart('P:' + a),  100);
+  const sendTilt = debounce(a => Sensors.sendUart('TI:' + a), 100);
+  $('tcServo1Slider')?.addEventListener('input', e => {
+    const angle = parseInt(e.target.value, 10);
+    $('tcServo1Val').textContent = angle + '°';
+    Sensors._panAngle = angle;
+    const pv = $('tcPanVal'); if (pv) pv.textContent = angle;
+    sendPan(angle);
   });
   $('tcServo1Stop')?.addEventListener('click', () => { Sensors.sendUart('P:OFF'); });
-  $('tcServo2Slider')?.addEventListener('input', e => { $('tcServo2Val').textContent = e.target.value + '°'; });
-  $('tcServo2Move')?.addEventListener('click', () => {
-    const angle = parseInt($('tcServo2Slider')?.value || 90);
-    Sensors._tiltAngle = angle; $('tcTiltVal').textContent = angle;
-    Sensors.sendUart('TI:' + angle);
+  $('tcServo2Slider')?.addEventListener('input', e => {
+    const angle = parseInt(e.target.value, 10);
+    $('tcServo2Val').textContent = angle + '°';
+    Sensors._tiltAngle = angle;
+    const tv = $('tcTiltVal'); if (tv) tv.textContent = angle;
+    sendTilt(angle);
   });
   $('tcServo2Stop')?.addEventListener('click', () => { Sensors.sendUart('TI:OFF'); });
   // v0.7.170: LED 5x5 grid editor
