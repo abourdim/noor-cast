@@ -3,6 +3,47 @@
 All notable changes to **NoorCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.9.3 — 2026-04-18 (Reels-ready — vertical video done right)
+
+The v0.9.x arc shipped over a single afternoon turns NoorCast into a
+first-class Facebook Reels / Instagram Reels / TikTok / YouTube Shorts
+recording tool. The bottleneck wasn't the encoder — it was that 16:9
+landscape clips look terrible when uploaded to a 9:16 surface.
+
+**What changed across v0.9.0 → v0.9.3:**
+
+- **9:16 portrait canvas preset** (StageAspect was already there since
+  v0.7.58 — finally promoted to discoverable, with auto-tune on first
+  selection).
+- **📱 Reels safe-zone overlay**: editor-only red mask shows where the
+  platform UI (top header 13%, bottom caption + buttons 31%, right
+  action column 14%) covers the video. Green dashed safe area in the
+  middle. Toggleable via the new toolbar button. Never recorded.
+- **LiveCaptions safe-zone position**: caption box auto-rises to ~34%
+  from the bottom on portrait canvases so it isn't hidden by the FB
+  caption + like/comment column after upload.
+- **Auto-MP4 in 9:16 mode**: `Recorder.pickMime()` prefers H.264 even
+  on Windows when the canvas is portrait — FB/IG transcode WebM with
+  visible quality loss. The 0-byte MF watchdog still falls back to
+  WebM if the encoder fails.
+- **Live 90 s cap warning**: elapsed-time chip turns red and pulses
+  past 90 s; toast at 90 s + every 30 s after. No more cropped final
+  sentence.
+- **Post-save ffmpeg trim helper**: clickable toast copies an
+  `ffmpeg -ss 00:00:00 -to 00:01:30 -i <file> -c copy <out>` one-liner
+  so users can stream-copy trim in a terminal.
+- **In-browser ReelsTrim button**: when a 9:16 take exceeds 90 s, a
+  "Cut to 90 s for Reels (−Xs)" button appears in the take panel.
+  Real re-encode at 8 Mbps via the same canvas-MediaRecorder pipeline
+  SilenceTrim and InstantReplay use. No ffmpeg.wasm bundle needed.
+- **Skip-intro audio gate**: optional Settings → Capture toggle that
+  opens an AnalyserNode on the active mic after countdown and waits
+  up to 5 s for RMS > 0.05 before kicking off MediaRecorder. Skips
+  the dead air at the top of takes.
+
+The full Reels loop is now in-app: vertical canvas → safe-zone aware
+composition → MP4 default → cap warning → real trim → skip dead intro.
+
 ## v0.8.0 — 2026-04-18 (Maturity milestone — first major release)
 
 After a 78-version stabilization run from v0.7.176 → v0.7.254, NoorCast is
