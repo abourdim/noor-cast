@@ -2089,10 +2089,13 @@
     </div>
   </aside>
 
-  <!-- Toast -->
-  <div id="toastIndicator" class="toast-indicator">
+  <!-- Toast — v0.9.24: aria-live="polite" so screen readers announce
+       every toast (errors, confirmations, mode switches, etc.). role
+       status pairs with aria-live so the announcement happens without
+       focus stealing. -->
+  <div id="toastIndicator" class="toast-indicator" role="status" aria-live="polite" aria-atomic="true">
     <div class="toast-inner">
-      <div class="spinner"></div>
+      <div class="spinner" aria-hidden="true"></div>
       <div id="toastMessage" class="toast-text">Working…</div>
     </div>
   </div>

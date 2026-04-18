@@ -3093,6 +3093,26 @@ body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #
 .tc-simple .tc-dashboard-section { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   v0.9.24: A11y — respect prefers-reduced-motion
+   ═══════════════════════════════════════════════════════════════════ */
+/* Kids-mode adds lots of bouncy hover/scale/pulse animations + the REC
+   ring pulse + ticker scroll + boot sequence + toast spring-in. Some
+   users get motion-sick or vestibular reactions from this stuff and
+   set their OS to prefers-reduced-motion. Honour that — strip the
+   animations, keep the colors and chunkiness. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Tickers, REC pulse, boot scroll: hard-stop their continuous loops */
+  .tc-ticker-track,
+  .tc-kids .tc-rec-btn { animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    v0.9.23: A11y — visible focus ring for keyboard users
    ═══════════════════════════════════════════════════════════════════ */
 /* Browsers default to weak/inconsistent focus outlines on dark themes.
