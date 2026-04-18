@@ -3173,6 +3173,59 @@ body:not(.tc-simple) .tc-mode-badge { background: rgba(251,146,60,.15); color: #
 .tc-simple .tc-dashboard-section { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   v0.9.29: Source-add zone — single primary-CTA frame
+   ═══════════════════════════════════════════════════════════════════ */
+/* Visually unify the 3 source-add rows so the user reads it as ONE
+   primary action (Add a source), not 3 competing ones. The frame
+   pulses gently when the canvas has zero sources — clear hint that
+   "this is where to start". */
+.tc-add-zone {
+  position: relative;
+  padding: 14px 12px 10px;
+  margin: 0 -2px 14px;
+  background: linear-gradient(180deg, rgba(163,230,53,.06), rgba(163,230,53,.01));
+  border: 1.5px solid rgba(163,230,53,.22);
+  border-radius: 14px;
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.tc-add-zone-title {
+  font-family: var(--font-h, system-ui);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+.tc-add-zone .tc-source-row {
+  margin-bottom: 6px;
+}
+.tc-add-zone .tc-source-row:last-child { margin-bottom: 0; }
+/* When no sources yet (= SETUP step), pulse the frame so the user
+   notices it as the call-to-action. Picked up via the studio's
+   data-active-step attribute set by WorkflowSteps. */
+.tc-studio[data-active-step="setup"] .tc-add-zone {
+  border-color: rgba(163,230,53,.5);
+  box-shadow: 0 0 0 0 rgba(163,230,53,.4);
+  animation: addZonePulse 2.4s ease-in-out infinite;
+}
+@keyframes addZonePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(163,230,53,.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(163,230,53,0); }
+}
+/* Kids mode: chunkier border + bigger title */
+.tc-kids .tc-add-zone {
+  border-width: 2.5px;
+  border-radius: 18px;
+  padding: 16px 14px 12px;
+}
+.tc-kids .tc-add-zone-title {
+  font-size: .92rem;
+  letter-spacing: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    v0.9.28: Stage status bar — status-as-language single line
    ═══════════════════════════════════════════════════════════════════ */
 .tc-stage-status {

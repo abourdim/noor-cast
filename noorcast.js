@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.28 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.29 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.28';
+const APP_VERSION = '0.9.29';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -263,6 +263,7 @@ const LANG = {
     takeReady: 'Prise prête', reopenTake: 'Dernière prise',
     ssReady: 'Prêt', ssRecording: 'Enregistre', ssPaused: 'Pause', ssNoSources: 'Aucune source',
     ssSource: 'source', ssSources: 'sources',
+    addASource: 'Ajouter une source',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -995,6 +996,7 @@ const LANG = {
     takeReady: 'Take ready', reopenTake: 'Last take',
     ssReady: 'Ready', ssRecording: 'Recording', ssPaused: 'Paused', ssNoSources: 'No sources yet',
     ssSource: 'source', ssSources: 'sources',
+    addASource: 'Add a source',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1716,6 +1718,7 @@ const LANG = {
     takeReady: 'اللقطة جاهزة', reopenTake: 'آخر لقطة',
     ssReady: 'جاهز', ssRecording: 'جاري التسجيل', ssPaused: 'متوقف', ssNoSources: 'لا توجد مصادر',
     ssSource: 'مصدر', ssSources: 'مصادر',
+    addASource: 'أضف مصدراً',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',

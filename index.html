@@ -397,9 +397,17 @@
 
             <!-- Panel 1: Sources -->
             <div class="tc-side-panel active" id="tcSidebarSources">
-              <div class="tc-source-row"><label data-i18n="sourceScreen">Écran</label><button class="tc-src-btn tc-src-btn-screen" id="srcScreenBtn">🖥 <span data-i18n="add">+ Ajouter</span></button></div>
-              <div class="tc-source-row"><label data-i18n="sourceCam">Caméra</label><select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— choose —</option></select><button class="tc-src-btn tc-src-btn-cam" id="srcCamBtn">🎥 <span data-i18n="add">+</span></button></div>
-              <div class="tc-source-row"><label data-i18n="sourceMic">Micro</label><select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— choose —</option></select></div>
+              <!-- v0.9.29: visually unify the 3 source-add rows under one
+                   primary-CTA frame ("✨ ADD A SOURCE"). Same buttons,
+                   same handlers, same row layout — just clearly grouped
+                   so it reads as ONE primary action, not three competing
+                   ones. Active-sources list lives below in its own zone. -->
+              <div class="tc-add-zone" aria-labelledby="tcAddZoneTitle">
+                <div class="tc-add-zone-title" id="tcAddZoneTitle">✨ <span data-i18n="addASource">Add a source</span></div>
+                <div class="tc-source-row"><label data-i18n="sourceScreen">Écran</label><button class="tc-src-btn tc-src-btn-screen" id="srcScreenBtn">🖥 <span data-i18n="add">+ Ajouter</span></button></div>
+                <div class="tc-source-row"><label data-i18n="sourceCam">Caméra</label><select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— choose —</option></select><button class="tc-src-btn tc-src-btn-cam" id="srcCamBtn">🎥 <span data-i18n="add">+</span></button></div>
+                <div class="tc-source-row"><label data-i18n="sourceMic">Micro</label><select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— choose —</option></select></div>
+              </div>
               <div class="tc-mic-check" id="tcMicCheck"></div>
               <div class="tc-side-title">🎭 <span data-i18n="activeSources">Sources actives</span></div>
               <ul class="tc-src-list" id="tcSrcList"></ul>
