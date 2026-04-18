@@ -2305,6 +2305,132 @@
   <li><strong>Diagnostics</strong> = info système = capacités navigateur</li>
 </ul>
 
+<h3 id="ch28-snapshot">28.24 Captures d'écran — galerie, multiplicateurs, annotation</h3>
+<p><strong>Quoi.</strong> Sauvegarde une seule image du canvas en PNG, avec dessin optionnel par-dessus avant de sauver.</p>
+<p><strong>Où.</strong> Bouton barre d'outils <code>📷 Snapshot</code> · clavier <kbd>S</kbd> · galerie sous la scène après la 1<sup>re</sup> capture.</p>
+<p><strong>Comment.</strong> Clique <code>📷</code> ou <kbd>S</kbd>. Si <em>Annotateur</em> activé (Réglages → Comportement), une modale s'ouvre — dessine flèches/cercles/main-levée, choisis parmi 5 couleurs, puis <code>💾 Enregistrer</code>. Chaque capture apparaît dans la <strong>bande galerie</strong> sous la scène.</p>
+<p><strong>Multiplicateur de résolution.</strong> Réglages → Général → <code>📐 Résolution capture photo</code> : 1× écran, 2× HiDPI (3840×2160), 4× Print (7680×4320).</p>
+<p><strong>Pourquoi.</strong> Sauver des moments-clés sans enregistrer toute la vidéo. Idéal pour les supports de cours, posts réseaux sociaux, captures de bug, badges.</p>
+<p><strong>Défauts.</strong> Annotation off · ×1 · galerie 30 dernières · fichiers nommés <code>noorcast-snap-AAAAMMJJ-HHMMSS.png</code>.</p>
+
+<h3 id="ch28-templates">28.25 Templates — lesson / robot / fix / robotcam</h3>
+<p><strong>Quoi.</strong> Une séquence préfabriquée de 5 scènes qui te suggère l'étape suivante pendant l'enregistrement. Choisis-en un, NoorCast change de scène à ton rythme.</p>
+<p><strong>Où.</strong> Bandeau au-dessus du bouton REC → <code>🎬 Choisir un template</code>. Aussi affiché au 1<sup>er</sup> lancement après le choix Simple/Pro.</p>
+<p><strong>Les 4 templates.</strong></p>
+<dl>
+  <dt><strong>📚 Lesson — cours complet (5 étapes)</strong></dt>
+  <dd>Intro → Théorie → Démo → Exercice → Conclusion. Pour enseigner un concept de A à Z.</dd>
+  <dt><strong>🤖 Robot — démo robot (5 étapes)</strong></dt>
+  <dd>Intro → Code → Robot → Capteurs → Bilan. Pour montrer une construction micro:bit.</dd>
+  <dt><strong>🔧 Fix — débogage (5 étapes)</strong></dt>
+  <dd>Code → explication caméra → fix → test ensemble → bilan. Idéal pour le tutorat.</dd>
+  <dt><strong>🤖 Robotcam — robot + caméra (5 étapes)</strong></dt>
+  <dd>Comme Robot mais avec la face-cam plus grosse. Quand la narration compte autant que l'objet.</dd>
+</dl>
+<p><strong>Comment.</strong> Choisis un template → 1<sup>re</sup> scène activée + toast d'intro. Clique sur les boutons d'étape pour avancer. Les labels d'étape deviennent <strong>marqueurs de chapitre</strong> dans la vidéo finale automatiquement.</p>
+<p><strong>Pourquoi.</strong> Supprime la paralysie "qu'est-ce que je fais maintenant ?". Les enfants voient la structure d'un bon tuto visuellement.</p>
+
+<h3 id="ch28-mic-check">28.26 Test micro — auto-test 3 secondes</h3>
+<p><strong>Quoi.</strong> Juste après avoir sélectionné un micro, NoorCast écoute pendant 3 s et te dit s'il t'a entendu. Évite la galère "pourquoi ma vidéo est silencieuse ?" après l'enregistrement.</p>
+<p><strong>Où.</strong> Auto à chaque changement de micro dans le menu déroulant. Statut affiché en barre colorée au-dessus du VU-mètre.</p>
+<dl>
+  <dt><strong>🟡 listening…</strong></dt><dd>Test en cours — parle normalement (3 s).</dd>
+  <dt><strong>🟢 mic OK ✓</strong></dt><dd>Son détecté au-dessus du seuil (RMS > 0.02). Bar disparaît après 4 s.</dd>
+  <dt><strong>🔴 no sound detected</strong></dt><dd>Micro muet, débranché, ou mauvais appareil. Vérifie les paramètres de confidentialité Windows / le câble / change de micro pour réessayer.</dd>
+</dl>
+<p><strong>Pourquoi.</strong> Les navigateurs ne signalent pas si un micro est muet au niveau OS. En détectant un vrai signal, ce test attrape l'erreur la plus courante avant que tu enregistres une vidéo silencieuse.</p>
+
+<h3 id="ch28-global-search">28.27 Recherche globale — Spotlight (Ctrl+K)</h3>
+<p><strong>Quoi.</strong> Une overlay style Spotlight qui cherche dans <em>tous</em> les réglages, scènes, skins, fonds, thèmes, mascottes, sons, badges, raccourcis. Tape un mot, clique le résultat, l'action s'exécute.</p>
+<p><strong>Où.</strong> Bouton 🔍 · <kbd>Ctrl/Cmd</kbd>+<kbd>K</kbd> · ou <kbd>/</kbd> n'importe où.</p>
+<p><strong>Indexé.</strong> Scènes, skins (49), fonds (15), thèmes (8), mascottes, réglages, outils, sons, badges, raccourcis, langues.</p>
+<p><strong>Comment.</strong> <kbd>Ctrl+K</kbd> → tape → flèches pour naviguer → <kbd>Entrée</kbd> → <kbd>Esc</kbd> ferme. Recherche floue, insensible à la casse.</p>
+<p><strong>Pourquoi.</strong> NoorCast a 200+ fonctions. Mémoriser les chemins de menu n'est pas réaliste. La recherche est l'échappatoire universelle — tape ce que tu veux, exécute-le.</p>
+
+<h3 id="ch28-cohost-characters">28.28 Personnages Co-host — catalogue complet (40)</h3>
+<p><strong>Quoi.</strong> Le petit copain SVG en bas à droite du canvas qui se balance, cligne des yeux, ouvre la bouche quand tu parles, applaudit quand tu te tais. <strong>40 personnages</strong> dans 5 groupes thématiques.</p>
+<p><strong>Où.</strong> Bouton barre d'outils <code>😊 Co-host</code> pour activer. Menu déroulant adjacent pour choisir le personnage. Drag pour repositionner · resize via coin · double-clic pour reset.</p>
+<p><strong>Groupes :</strong></p>
+<ul>
+  <li><strong>🔬 Sciences (6)</strong> : Atom, DNA, Flask, Microscope, Magnet, Telescope</li>
+  <li><strong>🚀 Espace (9)</strong> : Saturn, Earth, Comet, Moon, Pulsar, Satellite, Rocket, Black Hole, Sun</li>
+  <li><strong>💡 Symboles (9)</strong> : Bulb, Compass, Battery, Crescent (☪️), Infinity, Lightning, Gem, Flame, Wave</li>
+  <li><strong>🎭 Personnages (6)</strong> : Skull, Dragon, Eye, Terminal, Lock, Spider</li>
+  <li><strong>🏴‍☠️ Pirates &amp; Hackers (10)</strong> : Jolly Roger, Anchor, Swords, Pirate Flag, V Mask, Tux, Trident, Red Pill, Globe, Cipher</li>
+</ul>
+<p><strong>Pourquoi autant.</strong> Chaque cours a son ambiance — un tafsir Coran ne veut pas un Skull, un cours de robotique ne veut pas un Crescent. Le grand catalogue permet au prof de choisir thématiquement en 2 clics.</p>
+
+<h3 id="ch28-chromakey">28.29 Chroma key (fond vert)</h3>
+<p><strong>Quoi.</strong> Rendre une zone d'une couleur unie d'une source vidéo <em>transparente</em>. Effet classique de fond vert / bleu.</p>
+<p><strong>Où.</strong> Clic-droit sur une caméra/écran → menu <code>🎨 Chroma</code>. Aussi via console : <code>Engine.sources[i].chromaKey = { color: '#00ff00', threshold: 60 }</code>.</p>
+<p><strong>Comment.</strong> Cadre ta caméra contre un fond uni (vert, blanc, bleu) → applique chroma → la couleur disparaît, ton sujet reste visible. Combine avec <a class="xref" href="#ch28-bg-image">image de fond</a> pour faker n'importe quel décor.</p>
+<p><strong>Conseils.</strong> Éclairage uniforme, évite les ombres. Ne porte pas la couleur clé. Un vrai drap green-screen vaut mieux qu'un mur.</p>
+
+<h3 id="ch28-whiteboard">28.30 Tableau blanc — annotation à main levée</h3>
+<p><strong>Quoi.</strong> Dessiner des traits sur le canvas — cercles, flèches, soulignements — qui s'intègrent dans l'enregistrement.</p>
+<p><strong>Où.</strong> Bouton <code>✏️ Draw</code> · clavier <kbd>D</kbd> · sélecteur couleur/épaisseur/gomme apparaît en haut.</p>
+<p><strong>Comment.</strong> Active → curseur devient un stylo → dessine. Change couleur (jaune/rouge/vert/bleu/blanc), épaisseur (2-32 px), passe en gomme. Clic 🗑 pour tout effacer.</p>
+<p><strong>Pourquoi.</strong> Tableau blanc en direct dans l'enregistrement — pas besoin de tablette ni de OneNote. Les traits sont gravés dans la vidéo.</p>
+
+<h3 id="ch28-teleprompter">28.31 Téléprompteur — lecteur de script</h3>
+<p><strong>Quoi.</strong> Une overlay défilante (style présentateur TV) qui montre ton script préparé pour que tu lises sans regarder ailleurs.</p>
+<p><strong>Où.</strong> Bouton <code>📜 Teleprompter</code> · clavier <kbd>T</kbd>.</p>
+<p><strong>Comment.</strong> Ouvre, colle/écris ton script. <strong>⏵ Play</strong> pour défiler, vitesse via slider. <strong>A−/A+</strong> taille texte. <strong>↔−/↔+</strong> largeur. <strong>↻</strong> retour début. Script auto-sauvegardé (<code>tc-tele-script</code>).</p>
+<p><strong>Pourquoi.</strong> Enregistrer sans oublier la phrase suivante. Conçu pour garder le contact visuel avec la caméra.</p>
+
+<h3 id="ch28-trim">28.32 Éditeur Trim — coupe non-destructive</h3>
+<p><strong>Quoi.</strong> Après enregistrement, coupe le début et la fin sans ré-enregistrer. Deux poignées sur une timeline ; tout ce qui est en dehors part dans un nouveau fichier. L'original reste intact.</p>
+<p><strong>Où.</strong> Après stop, clique <code>✂ Trim</code> dans le panneau take.</p>
+<p><strong>Comment.</strong> Drag in/out handles · <code>✂ Auto-cut silences</code> coupe les > 2s de silence · <strong>Export</strong> ré-encode via canvas hors-écran + MediaRecorder, chapitres réalignés.</p>
+<p><strong>Raccourcis :</strong> <kbd>Espace</kbd> play · <kbd>←/→</kbd> 1s · <kbd>[/]</kbd> set in/out · <kbd>Entrée</kbd> export · <kbd>Esc</kbd> annule.</p>
+
+<h3 id="ch28-chapters">28.33 Chapitres — marqueurs cliquables</h3>
+<p><strong>Quoi.</strong> Timestamps nommés dans l'enregistrement. Chaque chapitre devient un bouton cliquable sous la vidéo finale — un clic saute à ce moment. Aussi exportés en <code>.vtt</code>.</p>
+<p><strong>Où.</strong> Pendant enregistrement : bouton <code>🏷 Marker</code> ou clavier <kbd>M</kbd>.</p>
+<p><strong>Comment — 3 façons.</strong> Manuel (M) · Templates (auto-ajout par étape) · Changements de scène (1-9, optionnel via Réglages).</p>
+<p><strong>Pourquoi.</strong> Les longs tutos deviennent navigables — les viewers sautent à "Étape 3 : câblage" sans scrubber. Boost rétention + SEO YouTube gratuit.</p>
+
+<h3 id="ch28-voice-commands">28.34 Commandes vocales — contrôle mains-libres</h3>
+<p><strong>Quoi.</strong> Parle des commandes et NoorCast les exécute — record/stop, change de scène, capture, freeze, fire — sans toucher le clavier.</p>
+<p><strong>Où.</strong> Bouton <code>🎙 Voice</code>. Chrome / Edge requis (SpeechRecognition). Cooldown 1.5 s.</p>
+<p><strong>Commandes.</strong> "record" / "stop" / "pause" · "scene 3" · "laser" / "freeze" / "zoom" / "screenshot" / "fire". Multilingue (FR/EN/AR).</p>
+<p><strong>Pourquoi.</strong> Recording avec les deux mains sur le robot/code/instrument ? Mains-libres est la seule façon. Aussi accessibilité.</p>
+
+<h3 id="ch28-voice-fx">28.35 Voice FX — effets activés par la voix</h3>
+<p><strong>Quoi.</strong> Effets visuels qui se déclenchent automatiquement selon ce que ton micro entend. Crier déclenche du feu ; applaudir lance des confettis ; chuchoter active une vision nocturne.</p>
+<p><strong>Triggers.</strong> 🔥 Shout (RMS > 0.4) · 🎉 Clap (pic + silence) · 🌙 Whisper (RMS très bas mais > gate).</p>
+<p><strong>Pourquoi.</strong> Pure valeur de divertissement pour les enfants — l'enregistrement devient une performance.</p>
+
+<h3 id="ch28-quiz-card">28.36 Carte Quiz — vérification interactive</h3>
+<p><strong>Quoi.</strong> Une question à choix multiples qui apparaît sur le canvas en cours d'enregistrement.</p>
+<p><strong>Pourquoi.</strong> Les tutos avec courtes vérifications interactives ont des taux de complétion mesurablement plus hauts.</p>
+
+<h3 id="ch28-sticky-notes">28.37 Sticky notes — pinboard prof-only</h3>
+<p><strong>Quoi.</strong> Notes Post-it jaunes que tu poses sur le canvas pour te rappeler ce qu'il faut dire/faire. <strong>NON enregistrées</strong> — overlay HTML au-dessus du canvas, visibles seulement par le prof.</p>
+<p><strong>Pourquoi.</strong> "N'oublie pas la formule", "passe sur la cam à ce moment". Comme un script collé sur l'écran, mais directement dans NoorCast.</p>
+
+<h3 id="ch28-auto-zoom">28.38 Zoom auto — clic-pour-focus sur écran</h3>
+<p><strong>Quoi.</strong> Clique un point sur une source écran capturée — le rendu zoome smooth pendant ~1.5 s puis revient.</p>
+<p><strong>Pourquoi.</strong> Plus de "laisse-moi zoomer" + Ctrl+scroll. Le zoom + retour auto se lit comme une coupe de film délibérée.</p>
+
+<h3 id="ch28-lesson-guide">28.39 Lesson Guide + Tutorial Score</h3>
+<p><strong>Quoi.</strong> Auto-coaching pour créateurs solo. Lesson Guide te souffle le prochain conseil ("Montre ton visage", "Utilise le laser"). Tutorial Score note la prise 0-100 selon des signaux objectifs (scènes utilisées, marqueurs, audio propre, durée).</p>
+
+<h3 id="ch28-layout-history">28.40 Historique de layout — undo/redo (Ctrl+Z)</h3>
+<p><strong>Quoi.</strong> Snapshots de layout à chaque drag/resize. <kbd>Ctrl+Z</kbd> annule, <kbd>Ctrl+Y</kbd> rétablit. Buffer 10 étapes.</p>
+
+<h3 id="ch28-retry">28.41 Retry 30s — soft rewind pendant l'enregistrement</h3>
+<p><strong>Quoi.</strong> <kbd>Ctrl+Z</kbd> pendant que tu enregistres marque les 30 dernières secondes comme "à refaire". L'enregistrement continue ; la zone marquée prend une marque orange.</p>
+
+<h3 id="ch28-pip">28.42 PiP Popout — fenêtre Picture-in-Picture</h3>
+<p><strong>Quoi.</strong> Éjecter une source dans une fenêtre flottante navigateur qui reste au-dessus de toutes les apps. Clic-droit sur source → <code>📺 PiP</code>.</p>
+
+<h3 id="ch28-daily">28.43 Daily Goal + Daily Challenges + Take Rating</h3>
+<p>Trois fonctionnalités légères de motivation. <strong>Daily Goal</strong> compte les recordings du jour. <strong>Daily Challenges</strong> propose une petite tâche (+25 XP). <strong>Take Rating</strong> ⭐⭐⭐⭐⭐ après chaque prise.</p>
+
+<h3 id="ch28-canvas-effects">28.44 Micro-effets canvas live</h3>
+<p>Cinq petits effets "vivants" : <strong>Cursor Trail</strong> (traînée colorée) · <strong>Click Ripples</strong> (cercles) · <strong>Source Pulse</strong> (auto à l'ajout) · <strong>Speed Lines</strong> (radiales manga) · <strong>Reactions</strong> (explosion d'emoji + screen-shake).</p>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Ouvrir NoorCast</a>
 </p>
