@@ -19,7 +19,7 @@
 const APP_VERSION = '0.9.3';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
-const BUILD_DATE = '2026-04-17 21:30';
+const BUILD_DATE = '2026-04-18 18:00';
 const $ = (id) => document.getElementById(id);
 
 /* v0.7.180: shared helpers — use in new code to replace 284 empty catches
