@@ -158,6 +158,17 @@
       <div class="card tc-studio" id="mainCard">
         <!-- Studio header removed — maximize button moved to app header -->
 
+        <!-- v0.9.26: Workflow step tabs — gives users a clear mental model
+             (SETUP → TUNE → RECORD → SHARE) and lets the toolbar hide in
+             SETUP/SHARE where it's not needed. Auto-advances on key events.
+             Manual click always works. Persists in tc-step. -->
+        <nav class="tc-step-tabs" id="tcStepTabs" role="tablist" aria-label="Workflow step">
+          <button class="tc-step-tab" role="tab" data-step="setup"  aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">1</span><span class="tc-step-label" data-i18n="stepSetup">Setup</span></button>
+          <button class="tc-step-tab" role="tab" data-step="tune"   aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">2</span><span class="tc-step-label" data-i18n="stepTune">Tune</span></button>
+          <button class="tc-step-tab" role="tab" data-step="record" aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">3</span><span class="tc-step-label" data-i18n="stepRecord">Record</span></button>
+          <button class="tc-step-tab" role="tab" data-step="share"  aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">4</span><span class="tc-step-label" data-i18n="stepShare">Share</span></button>
+        </nav>
+
         <!-- v0.7.20: Floating horizontal tools bar — Canva-style icon pill
              above the studio grid. Frees the right sidebar from 7 stacked
              buttons and puts the live tools one click away from the stage. -->
