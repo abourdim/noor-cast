@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.19 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.20 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.19';
+const APP_VERSION = '0.9.20';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -3149,7 +3149,34 @@ function log(msg, type = 'info') {
   if (logHistory.length > 500) logHistory.shift();
 }
 
+// v0.9.20: Kids-mode error rewrites — replace boring/scary tech messages
+// with kid-friendly geek versions. Pattern-matched, so localised t() output
+// gets caught regardless of language. If no pattern hits, the original toast
+// string passes through. Substring match (case-insensitive) keeps it robust.
+const KIDS_TOAST_REWRITES = [
+  [/permission|autoris|سماح/i,                    '[ERR_403] Browser said "no" 🔐 — click "Allow" next time.'],
+  [/recording empty|fichier vide|recorder produced no data|0 byte|0 octet/i,
+                                                  '[ERR_VOID] Got 0 bytes 🕳 — try again with a different format in Settings.'],
+  [/disk write|disk error|file save error|sauvegarde/i,
+                                                  '[ERR_DISK] Disk hiccup 💾 — pick another folder or restart Chrome.'],
+  [/no source|need.*source|aucune source|ajoute.*source/i,
+                                                  '[ERR_NULL] Add a screen 📺 or camera 🎥 first!'],
+  [/codec|mime.*type|encoder/i,                   '[ERR_CODEC] Browser can\'t encode that 🤖 — try a different format.'],
+  [/network|internet|hors-ligne|offline/i,        '[ERR_OFFLINE] No wifi 📡 — that\'s OK, NoorCast works offline 💪'],
+  [/no camera|no cam|caméra introuvable|camera not found/i,
+                                                  '[ERR_NOCAM] Camera went on vacation 🏖 — plug it in or pick another.'],
+  [/no mic|microphone introuvable|mic not found/i,
+                                                  '[ERR_NOMIC] Mic is sleeping 🎤💤 — plug it in or pick another.'],
+];
 function showToast(msg, ms = 2000) {
+  // v0.9.20: rewrite for Kids mode if any pattern matches.
+  try {
+    if (typeof msg === 'string' && document.body.classList.contains('tc-kids')) {
+      for (const [re, rep] of KIDS_TOAST_REWRITES) {
+        if (re.test(msg)) { msg = rep; break; }
+      }
+    }
+  } catch {}
   const toast = $('toastIndicator'), m = $('toastMessage'); if (!toast || !m) return;
   m.textContent = msg;
   toast.style.display = 'block';
@@ -9643,6 +9670,8 @@ const Recorder = {
       size: blob.size,
       pauses: this.pauseCount || 0,  // v0.7.88
     });
+    // v0.9.20: Pro discoverability nudge after the 10th save in Kids mode
+    try { KidsMode.maybeNudgePro?.(); } catch {}
     // v0.7.107: if the user dropped chapter markers during this take,
     // auto-suggest the first chapter's label as the take title. Never
     // overwrite a title the user already typed (titleInput still holds
@@ -18682,7 +18711,23 @@ const KidsMode = {
   },
 
   // ── 3. Konami easter egg ───────────────────────────────────────────
-  // ── 4. Empty-canvas drop-zone hint (Kids mode) ───────────────────
+  // ── 4. Pro discoverability nudge ──────────────────────────────────
+  // v0.9.20: after the kid has saved 10 successful takes in Kids mode,
+  // surface a one-time toast pointing at Teacher mode. Only fires once
+  // (gated by tc-pro-nudge-shown), only in Kids, only when the milestone
+  // is freshly crossed. Called from Recorder.finish via History.add path.
+  maybeNudgePro() {
+    if (!this.isKids()) return;
+    if (silentGet('tc-pro-nudge-shown') === '1') return;
+    const count = (typeof History !== 'undefined' && History.entries?.length) || 0;
+    if (count < 10) return;
+    silentSet('tc-pro-nudge-shown', '1');
+    setTimeout(() => {
+      showToast('🎓 10 takes done — you\'re a pro now! Try 🧑\u200d🏫 Teacher mode for chapters, markers, +30 tools.', 6500);
+    }, 1500);
+  },
+
+  // ── 5. Empty-canvas drop-zone hint (Kids mode) ───────────────────
   // v0.9.18: replace the small bobbing "👆 Add a source" text with three
   // chunky clickable buttons that DO the thing on click. Way more
   // discoverable for kids who don't read instructions.
