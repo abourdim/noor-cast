@@ -5,14 +5,14 @@
  * Usage: node build-package.js
  * Requires: @playwright/test (already in devDependencies)
  *
- * v0.9.5 update: ZIP_DIR + version refs bumped to v0.9 (Reels arc). The legacy
+ * v0.9.5 update: ZIP_DIR + version refs bumped to v0.10 (UX architecture + AI features arc). The legacy
  * NoorCast-v0.7/ directory and NoorCast-v0.7.zip stay in the repo as
  * historical artifacts until the next build run replaces them.
  *
- * To regenerate the v0.9 ZIP for the Etsy listing, run:
+ * To regenerate the v0.10 ZIP for the Etsy listing, run:
  *   1. npm install (if @playwright/test isn't in node_modules)
  *   2. node etsy-package/build-package.js
- *   3. Upload etsy-package/NoorCast-v0.9.zip to your Etsy listing
+ *   3. Upload etsy-package/NoorCast-v0.10.zip to your Etsy listing
  *   4. (optional) Delete the old NoorCast-v0.7/ + .zip if you don't
  *      want to ship the legacy version anymore
  */
@@ -28,7 +28,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const PKG = resolve(__dirname);
 const OUT = resolve(PKG, 'output');
-const ZIP_DIR = resolve(PKG, 'NoorCast-v0.9');
+const ZIP_DIR = resolve(PKG, 'NoorCast-v0.10');
 
 // Ensure output dirs
 mkdirSync(OUT, { recursive: true });
@@ -201,14 +201,14 @@ async function main() {
 
   // Create ZIP — try zip (Linux/macOS) → ditto (macOS) → PowerShell (Windows)
   console.log('\n📦 Creating ZIP archive...\n');
-  const zipPath = join(PKG, 'NoorCast-v0.9.zip');
+  const zipPath = join(PKG, 'NoorCast-v0.10.zip');
   let zipped = false;
   try {
-    execSync(`cd "${PKG}" && zip -r "${zipPath}" NoorCast-v0.9/`, { stdio: 'pipe' });
+    execSync(`cd "${PKG}" && zip -r "${zipPath}" NoorCast-v0.10/`, { stdio: 'pipe' });
     zipped = true;
   } catch {}
   if (!zipped) try {
-    execSync(`cd "${PKG}" && ditto -c -k --keepParent NoorCast-v0.9 "${zipPath}"`, { stdio: 'pipe' });
+    execSync(`cd "${PKG}" && ditto -c -k --keepParent NoorCast-v0.10 "${zipPath}"`, { stdio: 'pipe' });
     zipped = true;
   } catch {}
   // v0.10.7: Windows fallback via PowerShell Compress-Archive
@@ -217,7 +217,7 @@ async function main() {
     zipped = true;
   } catch {}
   if (zipped) console.log(`  ✅ ${zipPath}`);
-  else        console.log('  ❌ Could not create ZIP (no zip / ditto / PowerShell). Manually zip the NoorCast-v0.9 folder.');
+  else        console.log('  ❌ Could not create ZIP (no zip / ditto / PowerShell). Manually zip the NoorCast-v0.10 folder.');
 
   // Show final size
   try {
