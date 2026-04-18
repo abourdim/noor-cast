@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.4 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.5 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.4';
+const APP_VERSION = '0.8.5';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -18173,6 +18173,13 @@ const TipOfDay = {
    exactly once on the first launch of v0.7.100, gated by tc-v100-seen. */
 const V100Celebration = {
   maybeShow() {
+    // v0.8.5: this splash was a one-shot for the v0.7.100 release. We're
+    // way past that now — disable on any version that isn't v0.7.x. Mark
+    // as seen too, so even if you flip back to a v0.7 build it won't pop.
+    if (!APP_VERSION.startsWith('0.7.')) {
+      silentSet('tc-v100-seen', '1');
+      return;
+    }
     try {
       if (localStorage.getItem('tc-v100-seen') === '1') return;
     } catch {}
