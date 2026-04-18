@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.30 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.31 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.30';
+const APP_VERSION = '0.9.31';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -264,6 +264,7 @@ const LANG = {
     ssReady: 'Prêt', ssRecording: 'Enregistre', ssPaused: 'Pause', ssNoSources: 'Aucune source',
     ssSource: 'source', ssSources: 'sources',
     addASource: 'Ajouter une source',
+    replayTour: 'Revoir la visite de 30 s',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -997,6 +998,7 @@ const LANG = {
     ssReady: 'Ready', ssRecording: 'Recording', ssPaused: 'Paused', ssNoSources: 'No sources yet',
     ssSource: 'source', ssSources: 'sources',
     addASource: 'Add a source',
+    replayTour: 'Replay 30-sec tour',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1719,6 +1721,7 @@ const LANG = {
     ssReady: 'جاهز', ssRecording: 'جاري التسجيل', ssPaused: 'متوقف', ssNoSources: 'لا توجد مصادر',
     ssSource: 'مصدر', ssSources: 'مصادر',
     addASource: 'أضف مصدراً',
+    replayTour: 'إعادة جولة الـ 30 ثانية',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
@@ -18675,6 +18678,128 @@ const TipOfDay = {
      overlay + glitch SFX. Always armed regardless of mode.
    All three skip silently in Teacher mode. Pure additive — does not
    touch the existing app shell wiring. */
+/* v0.9.31 — Tour: 30-second guided overlay that fires once after the
+   mode + template pickers close. 5 steps max, each <5 s. Highlights
+   one UI element at a time with a tooltip card; ESC or Skip closes;
+   Next advances. Marked seen via tc-tour-seen so it never re-fires.
+   Manually re-triggerable via Tour.start() (exposed for a Settings
+   button if added later). */
+const Tour = {
+  STEPS: [
+    { sel: '#tcStepTabs',        title: '1️⃣ Your 4 steps',      body: 'Setup → Tune → Record → Share. The active step glows; suggested next step pulses.' },
+    { sel: '#tcSidebarSources .tc-add-zone', title: '2️⃣ Add a source', body: 'Pick a screen, a camera, or a mic. Each source becomes a draggable layer on the canvas.' },
+    { sel: '#tcRecBtn',          title: '3️⃣ Hit RECORD',         body: 'Big red button. 3-2-1 countdown, then you\'re live. Hit it again to stop.' },
+    { sel: '.tc-rsidebar',       title: '4️⃣ Switch scenes',      body: 'Tap any scene tile to swap layouts mid-recording. Drag to reorder.' },
+    { sel: '#tcStageStatus',     title: '5️⃣ Always-on status',   body: 'This bar tells you everything: state, sources, format, quality. Click any chunk to change it.' },
+  ],
+  _idx: 0,
+  _root: null,
+
+  shouldShow() {
+    if (silentGet('tc-tour-seen') === '1') return false;
+    return true;
+  },
+
+  start() {
+    if (this._root) return;
+    this._idx = 0;
+    this._build();
+    this._render();
+  },
+
+  _build() {
+    const r = document.createElement('div');
+    r.id = 'tcTourRoot';
+    r.style.cssText = 'position:fixed;inset:0;z-index:99000;pointer-events:none';
+    r.innerHTML = `
+      <div class="tc-tour-overlay" id="tcTourOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.55);pointer-events:auto;transition:opacity .25s"></div>
+      <div class="tc-tour-spotlight" id="tcTourSpotlight" style="position:fixed;border:3px solid #a3e635;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.55), 0 0 28px rgba(163,230,53,.6);pointer-events:none;transition:all .35s cubic-bezier(.4,1.4,.5,1)"></div>
+      <div class="tc-tour-card" id="tcTourCard" style="position:fixed;background:#0a0a0a;border:2px solid #4ade80;border-radius:12px;padding:16px 20px;max-width:340px;color:#e5e7eb;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(74,222,128,.35);pointer-events:auto;z-index:99002">
+        <div id="tcTourTitle" style="font-size:1rem;font-weight:800;color:#a3e635;margin-bottom:8px;font-family:var(--font-h,system-ui)"></div>
+        <div id="tcTourBody"  style="font-size:.88rem;line-height:1.45;margin-bottom:14px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <button id="tcTourSkip" style="background:none;border:1px solid rgba(255,255,255,.18);color:#94a3b8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:.78rem">Skip tour</button>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="tcTourCount" style="color:#64748b;font-size:.75rem;font-family:ui-monospace,monospace"></span>
+            <button id="tcTourNext" style="background:rgba(163,230,53,.18);border:1.5px solid rgba(163,230,53,.5);color:#a3e635;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem">Next →</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(r);
+    this._root = r;
+    // Wire controls
+    r.querySelector('#tcTourNext').addEventListener('click', () => this._next());
+    r.querySelector('#tcTourSkip').addEventListener('click', () => this._end());
+    r.querySelector('#tcTourOverlay').addEventListener('click', () => this._end());
+    this._keyHandler = (e) => {
+      if (e.key === 'Escape') { this._end(); }
+      else if (e.key === 'Enter' || e.key === 'ArrowRight') { this._next(); }
+    };
+    document.addEventListener('keydown', this._keyHandler, true);
+    // Reposition on resize
+    this._resizeHandler = () => this._render();
+    window.addEventListener('resize', this._resizeHandler);
+  },
+
+  _render() {
+    if (!this._root) return;
+    const step = this.STEPS[this._idx];
+    const target = document.querySelector(step.sel);
+    const titleEl = this._root.querySelector('#tcTourTitle');
+    const bodyEl  = this._root.querySelector('#tcTourBody');
+    const countEl = this._root.querySelector('#tcTourCount');
+    const nextEl  = this._root.querySelector('#tcTourNext');
+    titleEl.textContent = step.title;
+    bodyEl.textContent  = step.body;
+    countEl.textContent = `${this._idx + 1} / ${this.STEPS.length}`;
+    nextEl.textContent  = (this._idx === this.STEPS.length - 1) ? 'Done ✓' : 'Next →';
+
+    const spot = this._root.querySelector('#tcTourSpotlight');
+    const card = this._root.querySelector('#tcTourCard');
+    if (!target) {
+      // Target missing — centre the card and skip the spotlight
+      spot.style.display = 'none';
+      card.style.left = '50%';
+      card.style.top  = '50%';
+      card.style.transform = 'translate(-50%, -50%)';
+      return;
+    }
+    spot.style.display = '';
+    const r = target.getBoundingClientRect();
+    const pad = 8;
+    spot.style.left   = (r.left - pad) + 'px';
+    spot.style.top    = (r.top - pad) + 'px';
+    spot.style.width  = (r.width + pad * 2) + 'px';
+    spot.style.height = (r.height + pad * 2) + 'px';
+    // Auto-position card: prefer below, else above, else right, else centre
+    const cw = 340, ch = 200;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let cx, cy;
+    if (r.bottom + ch + 24 < vh)        { cx = Math.max(12, Math.min(vw - cw - 12, r.left + r.width / 2 - cw / 2)); cy = r.bottom + 18; }
+    else if (r.top - ch - 24 > 0)       { cx = Math.max(12, Math.min(vw - cw - 12, r.left + r.width / 2 - cw / 2)); cy = r.top - ch - 18; }
+    else if (r.right + cw + 24 < vw)    { cx = r.right + 18; cy = Math.max(12, Math.min(vh - ch - 12, r.top)); }
+    else                                 { cx = (vw - cw) / 2; cy = (vh - ch) / 2; }
+    card.style.left = cx + 'px';
+    card.style.top  = cy + 'px';
+    card.style.transform = '';
+  },
+
+  _next() {
+    if (this._idx >= this.STEPS.length - 1) { this._end(); return; }
+    this._idx++;
+    this._render();
+  },
+
+  _end() {
+    silentSet('tc-tour-seen', '1');
+    if (this._keyHandler) document.removeEventListener('keydown', this._keyHandler, true);
+    if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
+    if (this._root) { this._root.remove(); this._root = null; }
+    showToast('🎬 Tour done — recording in 3 clicks!', 2200);
+  },
+};
+
 /* v0.9.28 — StageStatus: one-line status-as-language bar consolidating 5
    scattered indicators (recorder state, source count, format, bitrate,
    handle). Each chunk is a clickable shortcut to the relevant setting.
@@ -21962,6 +22087,8 @@ function setupOnboarding() {
   if (close) close.addEventListener('click', () => {
     Templates.hidePicker();
     markOnboarded();
+    // v0.9.31: 30-second tour fires once after templates close
+    setTimeout(() => { if (Tour.shouldShow()) Tour.start(); }, 600);
   });
   // Wire each template card button
   document.querySelectorAll('[data-tpl]').forEach(btn => {
@@ -24416,6 +24543,14 @@ async function init() {
   TipOfDay.maybeShow();
   V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
   WhatsNew.maybeShow();         // v0.9.5: discoverability for upgraders
+  // v0.9.31: 30-second guided tour for users who never saw it. Fires
+  // ~5 s after init so it doesn't compete with WhatsNew toast or the
+  // Kids-mode boot sequence; only if no mode picker is showing.
+  setTimeout(() => {
+    if (Tour.shouldShow() && $('tcModePicker')?.style.display === 'none' && $('tcTemplates')?.style.display === 'none') {
+      Tour.start();
+    }
+  }, 5200);
   // v0.9.11: Kids-mode vibe layer — boot sequence, handle picker, Konami
   KidsMode.konamiInit();
   KidsMode.bootSeq();
@@ -24425,6 +24560,12 @@ async function init() {
   WorkflowSteps.load();
   WorkflowSteps.setup();
   StageStatus.setup();  // v0.9.28: status-as-language bar
+  // v0.9.31: replay-tour button in Help panel
+  $('tcReplayTourBtn')?.addEventListener('click', () => {
+    closePanel?.('helpPanel');
+    silentRemove('tc-tour-seen');
+    setTimeout(() => Tour.start(), 380);
+  });
   // v0.9.23: A11y — mirror the .active toggle class onto aria-pressed for
   // every tool/scene button. Single MutationObserver, retroactive for
   // buttons added later (Templates, dynamically built scene tiles, etc).
