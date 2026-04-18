@@ -414,12 +414,14 @@ body {
    SIDEBAR OVERLAY + PANEL
    ═══════════════════════════════════════════════════════════════════ */
 
+/* v0.7.248: backdrop is invisible — no dim, no blur — but still catches
+   clicks for click-outside-to-close. Canvas + studio sidebars stay fully
+   visible while a flyout panel is open. */
 .sidebar-overlay {
   position: fixed; inset: 0; z-index: 900;
-  background: rgba(0,0,0,.45);
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background: transparent;
   opacity: 0; pointer-events: none;
-  transition: opacity .3s ease;
+  transition: opacity .15s ease;
 }
 .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
 
@@ -440,7 +442,8 @@ body {
   overflow: hidden;
 }
 /* v0.7.216 + v0.7.226: drag handle on the inner edge of the settings sidebar.
-   Bigger + visible affordance (kids couldn't find the 6px transparent version). */
+   Bigger + visible affordance (kids couldn't find the 6px transparent version).
+   v0.7.248: for left-side panels, the inner edge is the RIGHT side. */
 .tc-sidebar-resize {
   position: absolute; inset-inline-start: 0; top: 0; bottom: 0;
   width: 10px; cursor: ew-resize;
@@ -467,6 +470,8 @@ body {
 }
 .tc-sidebar-resize:hover::before,
 .tc-sidebar-resize.dragging::before { opacity: 1; }
+/* v0.7.248: for left-side panels (helpPanel), flip the handle to the right edge */
+.sidebar-left .tc-sidebar-resize { inset-inline-start: auto; inset-inline-end: 0; }
 /* Disable the transform transition while the user is actively dragging */
 .sidebar.resizing { transition: none; }
 

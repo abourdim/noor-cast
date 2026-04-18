@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.247 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.248 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.247';
+const APP_VERSION = '0.7.248';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2314,16 +2314,24 @@ const SidebarResize = {
   },
   setup() {
     // Flyout settings sidebar handle (right-side panel)
+    // v0.7.248: handles all flyout sidebars (settings + log + help).
+    // Detects left vs right based on .sidebar-left class so the resize math
+    // works for both orientations.
     document.querySelectorAll('.tc-sidebar-resize').forEach(handle => {
       const panel = handle.closest('.sidebar');
+      const isLeftPanel = panel && panel.classList.contains('sidebar-left');
       handle.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         handle.classList.add('dragging');
         panel?.classList.add('resizing');
         const isRtl = document.documentElement.dir === 'rtl';
+        // Right panels (default): width = innerWidth - clientX in LTR; clientX in RTL.
+        // Left panels (.sidebar-left): width = clientX in LTR; innerWidth - clientX in RTL.
         const onMove = (ev) => {
           const x = ev.clientX;
-          const newW = isRtl ? x : (window.innerWidth - x);
+          let newW;
+          if (isLeftPanel) newW = isRtl ? (window.innerWidth - x) : x;
+          else             newW = isRtl ? x : (window.innerWidth - x);
           this._apply(newW);
         };
         const onUp = () => {
