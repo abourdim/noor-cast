@@ -622,4 +622,58 @@ Settings are in the **⚙** panel (top-right gear icon), organized into sections
 
 ---
 
-*NoorCast v0.7.176 — A professional tool for teachers who code with robots*
+## What's new since v0.7.176
+
+This Markdown reference is a high-level tour. For deep coverage, the full HTML guide ([guide.html](guide.html)) has a dedicated **Chapter 28 — Settings & Feature Reference (A–Z)** with 44 entries covering every feature with What/Where/How/Why/Defaults. Highlights since v0.7.176:
+
+### Major new features
+- **🖼 Background image** (v0.7.225) — Upload PNG/JPG as canvas background. Cover/Contain/Stretch/Tile fit modes. Settings → Apparence.
+- **📶 Recording quality picker** (v0.7.234) — 4 bitrate presets: Standard 4 / High 8 / Ultra 12 / Max 20 Mbps. Default bumped to High 8 Mbps for sharper 1080p.
+- **🔤 UI font picker** (v0.7.209) — 7 fonts (Orbitron default). Overrides theme `--font-b/h`. Settings → Général → 🔤 Police.
+- **🇩🇿 SVG language flags** (v0.7.216) — UK/France/Algeria flags next to language dropdown. Works on Windows where emoji flags fail.
+- **↔ Resizable sidebars** (v0.7.226) — Drag the lime grip on either sidebar's inner edge. Double-click to reset. Persisted.
+- **🎛 Servo gauges** (v0.7.177) — Pan/tilt semicircular gauges on canvas. Draggable, resizable. Hidden by default since v0.7.218.
+- **🎭 Mascots** (was Pets, v0.7.224) — Same dropdown, renamed since most aren't animals.
+- **😊 Co-host draggable + 40 chars** (v0.7.220) — The SVG buddy is now draggable + resizable + 40 characters in 5 thematic groups (Science / Space / Symbols / Characters / Pirates).
+- **⚡ COMBO popup off-switch** (v0.7.227) — Settings → Comportement → uncheck if popup distracts videos.
+- **🎵 5 music tracks selector** (v0.7.230) — Toolbar dropdown next to 🎵 Music: Chiptune / Lo-fi / Epic / Chill / Retro.
+
+### micro:bit firmware → V3.5
+- **V3.2** (v0.7.210) — change-detection on telemetry → ~10× less BLE traffic at idle.
+- **V3.3** (v0.7.214) — `VER:NoorCast,V3.5,YYYY-MM-DD` line on connect. Browser auto-detects and warns if outdated.
+- **V3.4** (v0.7.215) — servo-bar LED redraws only on actual angle change.
+- **V3.5** (v0.7.218) — compass calibration removed (no more "tilt to fill the circle"); pulsing X icon when disconnected.
+
+### Watermark (v0.7.176)
+- Now draggable on canvas; position persisted.
+
+### Sidebar / UI polish
+- Sidebar tab active state much more visible (v0.7.222).
+- GamePad section collapsed by default (v0.7.222).
+- Settings sub-sections collapsed on first launch (v0.7.232).
+- Build date next to version badge in sidebar footer (v0.7.211).
+- More Tools popup is resizable + draggable (v0.7.231).
+- Piano keys clickable on canvas, not just keyboard (v0.7.231).
+- Scene click fix — drag-vs-click conflict eliminated (v0.7.221).
+- Settings panel closes on outside click (v0.7.216 — fixed CSS class mismatch).
+- Sensor overlay + Servo gauge hidden by default on first launch (v0.7.218).
+
+### Audio & log
+- Log dedup (v0.7.212) — repeated lines collapse into `(× N)`.
+- COMPASS: silenced JS-side (v0.7.218) — no reflash needed.
+- Honest save toast (v0.7.217) — when File System Access streaming, NoorCast shows real byte count instead of Chrome's misleading "0 octets" chip.
+
+### Architecture
+- `safe()` / `silentGet()` / `silentSet()` / `debounce()` / `EventBus` helpers (v0.7.208) — additive infrastructure.
+- v0.7.233 codemod replaced 86 raw `try { localStorage.setItem(…) } catch {}` sites with the new helpers.
+- Version drift fixed (v0.7.208) — APP_VERSION + sw.js header + CACHE_NAME aligned.
+
+### Documentation
+- Chapter 28 added to guide.html (44 A-Z entries).
+- FAQ doubled from 15 → 31 entries covering every recent confusion point.
+- Cheat sheet added "Recently added" section + 11 new keyboard shortcuts.
+- Synonym cheat-sheet (Ch 28.23) — 27 synonym groups so any search term lands on the right doc section.
+
+---
+
+*NoorCast v0.7.243 — A professional tool for teachers who code with robots*
