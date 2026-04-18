@@ -60,13 +60,26 @@ const checks = [
     /safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:[\s\S]*?safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:[\s\S]*?safeZoneTitle:[\s\S]*?safeZoneTip1:[\s\S]*?safeZoneTip2:/],
   ['SafeZone.render uses t() for label',
     /t\('safeZoneTitle'\)/],
+
+  // v0.9.21–v0.9.22: trim infrastructure pins
+  ['LiveCaptions burnIn flag exists',
+    /burnIn:\s*false[\s\S]*loadBurnIn\(\)/],
+  ['LiveCaptions burnIn extends hold/fade timings',
+    /holdMs = this\.burnIn \? 8000 : 4000[\s\S]*fadeMs = this\.burnIn \? 1500 : 600/],
+  ['Full Trim module exists (in/out scrubber + export)',
+    /const Trim = \{[\s\S]*inTime: 0, outTime: 0, duration: 0[\s\S]*onInChange\(v\)[\s\S]*onOutChange\(v\)[\s\S]*async exportTrimmed\(\)/],
+  ['Trim modal HTML wired in index.html',
+    fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8').includes('id="tcTrimModal"')],
 ];
 
 console.log('── Reels-mode invariants (regex on noorcast.js) ──');
 let pass = 0, fail = 0;
-for (const [label, re] of checks) {
-  if (re.test(src)) { console.log(`✓ ${label}`); pass++; }
-  else              { console.log(`✗ ${label}`); fail++; }
+for (const [label, check] of checks) {
+  // v0.9.22: accept both RegExp (test against noorcast.js) and bare boolean
+  // (so pre-computed checks against other files can be added inline).
+  const ok = (check instanceof RegExp) ? check.test(src) : !!check;
+  if (ok) { console.log(`✓ ${label}`); pass++; }
+  else    { console.log(`✗ ${label}`); fail++; }
 }
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);

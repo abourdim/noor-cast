@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.21 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.22 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.21';
+const APP_VERSION = '0.9.22';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -9675,6 +9675,16 @@ const Recorder = {
     });
     // v0.9.20: Pro discoverability nudge after the 10th save in Kids mode
     try { KidsMode.maybeNudgePro?.(); } catch {}
+    // v0.9.22: Kids-mode trim nudge for long takes (>2 min). Existing Trim
+    // modal is hidden behind a "Trim" button — kids miss it. Toast points
+    // them at the in/out scrubber feature when the take is long enough to
+    // benefit. One nudge per session via tc-trim-nudge-shown-session.
+    try {
+      if (KidsMode.isKids() && (this.elapsed() / 1000) > 120 && !sessionStorage.getItem('tc-trim-nudge-shown-session')) {
+        sessionStorage.setItem('tc-trim-nudge-shown-session', '1');
+        setTimeout(() => showToast('✂️ Long take! Click "Couper" / "Trim" below the video to keep just the best part.', 5500), 2500);
+      }
+    } catch {}
     // v0.7.107: if the user dropped chapter markers during this take,
     // auto-suggest the first chapter's label as the take title. Never
     // overwrite a title the user already typed (titleInput still holds
