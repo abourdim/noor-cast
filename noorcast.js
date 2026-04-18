@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.8.6 — kids-friendly multi-cam screen recorder
+   NoorCast v0.8.7 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8.6';
+const APP_VERSION = '0.8.7';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -2317,6 +2317,12 @@ const SidebarResize = {
     // v0.7.226: restore studio left sidebar width
     const lw = parseInt(silentGet('tc-studio-left-w', '220'), 10);
     if (isFinite(lw)) this._applyStudioLeft(lw);
+    // v0.8.6: restore log panel width (uses its own --log-width var)
+    const lgw = parseInt(silentGet('tc-log-width', '280'), 10);
+    if (isFinite(lgw) && lgw >= 200) {
+      const maxLg = Math.round(window.innerWidth * 0.6);
+      document.documentElement.style.setProperty('--log-width', Math.min(maxLg, lgw) + 'px');
+    }
   },
   _apply(px) {
     const maxW = Math.round(window.innerWidth * 0.9);
@@ -2337,25 +2343,35 @@ const SidebarResize = {
     document.querySelectorAll('.tc-sidebar-resize').forEach(handle => {
       const panel = handle.closest('.sidebar');
       const isLeftPanel = panel && panel.classList.contains('sidebar-left');
+      // v0.8.6: #logPanel uses its own --log-width override (max-width 60vw),
+      // not --sidebar-width. Detect per-panel which CSS var to drive so the
+      // log sidebar resize handle actually works.
+      const isLog = panel && panel.id === 'logPanel';
+      const cssVar = isLog ? '--log-width' : '--sidebar-width';
+      const lsKey  = isLog ? 'tc-log-width' : 'tc-sidebar-width';
+      const minW   = isLog ? 200 : this.MIN;
+      const maxW   = isLog ? Math.round(window.innerWidth * 0.6) : Math.round(window.innerWidth * 0.9);
+      const apply = (px) => {
+        const clamped = Math.max(minW, Math.min(maxW, px));
+        document.documentElement.style.setProperty(cssVar, clamped + 'px');
+      };
       handle.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         handle.classList.add('dragging');
         panel?.classList.add('resizing');
         const isRtl = document.documentElement.dir === 'rtl';
-        // Right panels (default): width = innerWidth - clientX in LTR; clientX in RTL.
-        // Left panels (.sidebar-left): width = clientX in LTR; innerWidth - clientX in RTL.
         const onMove = (ev) => {
           const x = ev.clientX;
           let newW;
           if (isLeftPanel) newW = isRtl ? (window.innerWidth - x) : x;
           else             newW = isRtl ? x : (window.innerWidth - x);
-          this._apply(newW);
+          apply(newW);
         };
         const onUp = () => {
           handle.classList.remove('dragging');
           panel?.classList.remove('resizing');
-          const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
-          silentSet('tc-sidebar-width', parseInt(current, 10) || 280);
+          const current = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+          silentSet(lsKey, parseInt(current, 10) || 280);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
         };
