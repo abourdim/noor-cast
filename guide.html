@@ -2958,6 +2958,56 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 </dl>
 <p><strong>Why.</strong> Modern tutorials feel sluggish without ambient motion. These add subtle "alive" cues without distracting from the content. All can be turned off if you want a clinical look.</p>
 
+<h2 id="ch29"><span class="ch-num">29</span> Reels mode — recording for vertical platforms (v0.9.x)</h2>
+
+<p>Most NoorCast users record in <strong>16:9 landscape</strong> for YouTube and laptop screens. But Facebook Reels, Instagram Reels, TikTok and YouTube Shorts are all <strong>9:16 vertical</strong> — and uploading a landscape clip there gets you either huge black bars (≈30% of the screen wasted) or auto-cropping that chops your sources. The v0.9.x release line solves this end-to-end.</p>
+
+<h3 id="ch29-what">29.1 What "Reels mode" gives you</h3>
+<dl>
+  <dt><strong>9:16 portrait canvas</strong></dt>
+  <dd>Settings → 📐 Stage format → <strong>9:16 — 1080×1920</strong>. The canvas, the preview and the recording all flip vertical. Your sources reflow automatically — face-cam stays in the bottom-right corner of the new portrait area, robot/screen sources fill the rest.</dd>
+  <dt><strong>📱 Reels safe-zone overlay</strong></dt>
+  <dd>New toolbar button next to <code>📊 Sensors</code> and <code>🎛 Gauges</code>. Toggles a semi-transparent <span style="color:#ef4444;font-weight:bold">red mask</span> over the three areas where the platform UI covers your video: top header (~13%), bottom caption + buttons (~31%), right action column (~14%). The <span style="color:#4ade80;font-weight:bold">green dashed box</span> in the middle is the actual safe area — keep important content inside it. <strong>The overlay is editor-only and never bakes into the recording.</strong></dd>
+  <dt><strong>Auto-MP4 in 9:16</strong></dt>
+  <dd>FB and IG transcode WebM with visible quality loss. When the canvas is 9:16, NoorCast auto-prefers H.264 / MP4 even on Windows. The 0-byte Windows-encoder watchdog (v0.7.200) still falls back to WebM if the encoder fails.</dd>
+  <dt><strong>Captions stay in the safe zone</strong></dt>
+  <dd>Live captions used to render flush against the bottom of the canvas — exactly where the FB caption + like / comment / share column covers them. In portrait, the caption box now floats up to ~34% from the bottom so it stays readable after upload.</dd>
+  <dt><strong>Live 90 s cap warning</strong></dt>
+  <dd>FB Reels / IG Reels / TikTok / YT Shorts all cap at 90 s — clips longer than that get auto-trimmed at upload, often mid-sentence. In 9:16 mode, the elapsed-time chip turns bright red and pulses past 90 s, with a toast at exactly 90 s and another every 30 s after.</dd>
+  <dt><strong>📱 Cut to 90 s for Reels (in-browser trim)</strong></dt>
+  <dd>If your take ends up over 90 s in 9:16 mode, a "Cut to 90 s for Reels (−Xs)" button appears in the take panel after the recording stops. One click re-encodes the first 90 s at 8 Mbps using the same canvas + MediaRecorder pipeline that powers Silence-Trim and Instant-Replay. No ffmpeg.wasm bundle, no external dependency. The output is named <code>&lt;original&gt;-reels.mp4</code> (or .webm).</dd>
+  <dt><strong>ffmpeg trim helper</strong></dt>
+  <dd>For users who want a stream-copy (zero re-encode) trim, a clickable toast after every 9:16 save copies an <code>ffmpeg -ss 00:00:00 -to 00:01:30 -i &lt;file&gt; -c copy &lt;file-reels&gt;</code> one-liner to the clipboard.</dd>
+  <dt><strong>Skip-intro audio gate</strong></dt>
+  <dd>Settings → 🎥 Capture → <strong>🎙 Skip silent intro (start on first word)</strong>. After the countdown finishes, NoorCast opens an AnalyserNode on your active mic source and waits up to 5 seconds for the first audible word (RMS &gt; 0.05) before starting MediaRecorder. Lets you say "let me reach for the mouse… ok GO" and not record the dead air. Falls back to immediate-start when no mic is wired or the timeout fires.</dd>
+</dl>
+
+<h3 id="ch29-workflow">29.2 Workflow — first Reels recording, end to end</h3>
+<ol>
+  <li><strong>Open Settings → 📐 Stage format</strong> and pick <strong>9:16 — 1080×1920</strong>. The canvas flips vertical and a one-time toast says "📱 Reels mode — safe-zone guide ON". The 📱 Reels button in the toolbar lights up.</li>
+  <li><strong>Look at the red zones.</strong> Anything in the red areas will be hidden by FB / IG / TikTok UI when you upload. Drag your watermark, sensors overlay and servo gauges into the green dashed box.</li>
+  <li><strong>(Optional) Settings → 🎥 Capture → 🎙 Skip silent intro.</strong> If you tend to start with dead air, turn this on so MediaRecorder waits for your first word.</li>
+  <li><strong>Hit REC.</strong> Watch the elapsed timer. If it turns red, you're past 90 s and need to trim before uploading.</li>
+  <li><strong>STOP.</strong> The take panel opens. If your take is over 90 s, a pink <strong>📱 Cut to 90 s for Reels (−Xs)</strong> button appears. Click it; a re-encoded <code>-reels.mp4</code> file downloads in ≈the duration of the original (real-time encode). Otherwise, click the post-save toast to copy the ffmpeg command for a stream-copy trim.</li>
+  <li><strong>Upload to Facebook Reels.</strong> Pick the <code>-reels.mp4</code> file. No black bars, no auto-crop, captions visible above the FB UI, all under the 90 s cap.</li>
+</ol>
+
+<h3 id="ch29-tips">29.3 Tips for great Reels content</h3>
+<ul>
+  <li><strong>First 3 seconds matter.</strong> The platform algorithm decides whether to keep showing your Reel based on early retention. Skip the intro splash; turn on Skip-intro; start with action.</li>
+  <li><strong>Sweet spot is 15–30 s.</strong> 90 s is the cap, not the target. Shorter Reels get more shares.</li>
+  <li><strong>Watch in muted preview.</strong> ~70% of Reels viewers scroll with sound off. The burned-in captions (LiveCaptions module) are essential — make sure they're in the safe zone.</li>
+  <li><strong>Vertical-aware composition.</strong> A face-cam in the corner of a 16:9 frame becomes the corner of a tall portrait frame — still works. But a wide horizontal robot demo shrinks to a strip in the middle. Consider the <code>👋 You</code> scene preset (face-cam fullscreen) or a custom layout that stacks face top + content bottom.</li>
+  <li><strong>Bitrate.</strong> The default <strong>High — 8 Mbps</strong> in Settings → Recording → Quality is right for Reels. Don't go higher; FB will downscale anyway and big files just slow upload.</li>
+</ul>
+
+<h3 id="ch29-known-limits">29.4 Known limits</h3>
+<ul>
+  <li>The in-browser trim is a real-time re-encode (90 s of video takes ≈90 s to trim). For instant trims, use the ffmpeg helper one-liner.</li>
+  <li>The trim button only handles the first 90 s. To pick a different start point, use the ffmpeg command and edit the <code>-ss</code> timestamp.</li>
+  <li>The safe-zone overlay's exact percentages are based on FB Reels chrome as of 2026. Other platforms (TikTok, IG) are similar but not identical — the green box is a conservative safe area that works on all four.</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
 </p>

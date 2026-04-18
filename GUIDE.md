@@ -676,4 +676,29 @@ This Markdown reference is a high-level tour. For deep coverage, the full HTML g
 
 ---
 
-*NoorCast v0.8.0 — A professional tool for teachers who code with robots*
+## What's new in v0.9.x — Reels-ready
+
+The v0.9.0 → v0.9.3 arc turns NoorCast into a first-class FB Reels / IG
+Reels / TikTok / YT Shorts recording tool. The bottleneck was never the
+encoder — it was that 16:9 landscape clips look terrible on a 9:16
+surface. Full chapter in **guide.html → Chapter 29**.
+
+- **9:16 portrait canvas preset** (Settings → 📐 Stage format).
+- **📱 Reels safe-zone overlay** — editor-only red mask showing where
+  the platform UI covers the video; green dashed safe area in the
+  middle. Toolbar button. Never recorded.
+- **Auto-MP4 in 9:16** even on Windows (FB transcodes WebM badly).
+- **Captions auto-rise** to the safe zone in portrait so they survive
+  upload.
+- **Live 90 s cap warning** — timer chip turns red + pulses past the
+  Reels cap, with toasts at 90 s and every 30 s after.
+- **In-browser ReelsTrim button** — re-encodes the first 90 s at
+  8 Mbps via canvas + MediaRecorder. No ffmpeg.wasm needed.
+- **ffmpeg trim helper** — clickable post-save toast copies a
+  stream-copy `ffmpeg -ss …` one-liner to the clipboard.
+- **Skip-intro audio gate** (Settings → Capture) — waits up to 5 s
+  for first audible word before MediaRecorder starts.
+
+---
+
+*NoorCast v0.9.3 — A professional tool for teachers who code with robots*

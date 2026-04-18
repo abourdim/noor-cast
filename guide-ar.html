@@ -2422,6 +2422,55 @@
 <h3 id="ch28-canvas-effects">28.44 مؤثّرات اللوحة الحيّة</h3>
 <p>خمسة مؤثّرات صغيرة "حيّة": <strong>Cursor Trail</strong> · <strong>Click Ripples</strong> · <strong>Source Pulse</strong> · <strong>Speed Lines</strong> · <strong>Reactions</strong> (انفجار emoji + اهتزاز شاشة).</p>
 
+<h2 id="ch29"><span class="ch-num">29</span> وضع Reels — التسجيل للمنصّات العمودية (v0.9.x)</h2>
+
+<p>معظم مستخدمي NoorCast يصوّرون بصيغة <strong>16:9 أفقي</strong> لـ YouTube وشاشات الكمبيوتر. لكن Facebook Reels و Instagram Reels و TikTok و YouTube Shorts كلّها <strong>9:16 عمودي</strong> — رفع مقطع أفقي هناك يعني إمّا أشرطة سوداء كبيرة (≈30% من الشاشة مهدور) أو قصّ تلقائي يقطع المصادر. الإصدار v0.9.x يحلّ هذا من البداية إلى النهاية.</p>
+
+<h3 id="ch29-what">29.1 ما يقدّمه وضع Reels</h3>
+<dl>
+  <dt><strong>لوحة عمودية 9:16</strong></dt>
+  <dd>الإعدادات → 📐 صيغة المسرح → <strong>9:16 — 1080×1920</strong>. اللوحة والمعاينة والتسجيل كلّها تنقلب عمودياً. المصادر تُعاد ترتيبها تلقائياً.</dd>
+  <dt><strong>📱 دليل المنطقة الآمنة لـ Reels</strong></dt>
+  <dd>زر جديد في شريط الأدوات بجوار <code>📊 Sensors</code> و <code>🎛 Gauges</code>. يُفعّل قناعاً <span style="color:#ef4444;font-weight:bold">أحمر شبه شفّاف</span> فوق المناطق الثلاث التي تغطّيها واجهة المنصّة: الترويسة العلوية (~13%)، التعليق + الأزرار السفلية (~31%)، عمود الإجراءات الأيمن (~14%). <span style="color:#4ade80;font-weight:bold">المربّع الأخضر المنقّط</span> في الوسط هو المنطقة الآمنة — احتفظ بالمحتوى المهم داخله. <strong>الدليل يظهر في المحرّر فقط، ولا يُسجَّل أبداً.</strong></dd>
+  <dt><strong>MP4 تلقائياً في 9:16</strong></dt>
+  <dd>FB و IG يُعيدان ترميز WebM مع فقدان واضح للجودة. في وضع 9:16، يُفضّل NoorCast تلقائياً H.264/MP4 حتى على Windows.</dd>
+  <dt><strong>الترجمة في المنطقة الآمنة</strong></dt>
+  <dd>صندوق الترجمة المباشرة يرتفع إلى ~34% من الأسفل في الوضع العمودي ليبقى مرئياً بعد الرفع.</dd>
+  <dt><strong>تنبيه حيّ عند 90 ثانية</strong></dt>
+  <dd>FB Reels و IG Reels و TikTok و YT Shorts كلّها تحدّد السقف بـ 90 ثانية. في وضع 9:16، عدّاد الوقت يصبح أحمر ويومض بعد 90 ثانية، مع toast عند 90 ثانية ثم كل 30 ثانية.</dd>
+  <dt><strong>📱 قص إلى 90 ثانية لـ Reels (داخل المتصفّح)</strong></dt>
+  <dd>إذا تجاوزت اللقطة 90 ثانية في 9:16، يظهر زر "قص إلى 90 ثانية لـ Reels (−Xs)" في لوحة اللقطة بعد التوقّف. نقرة واحدة تعيد ترميز الـ 90 ثانية الأولى عند 8 Mbps عبر نفس خط الأنابيب canvas + MediaRecorder المستخدم في Silence-Trim و Instant-Replay. لا حاجة لأي تبعية خارجية.</dd>
+  <dt><strong>مساعد ffmpeg</strong></dt>
+  <dd>للحصول على قصّ stream-copy (بدون إعادة ترميز)، toast قابل للنقر بعد كل حفظ في 9:16 ينسخ أمر <code>ffmpeg -ss 00:00:00 -to 00:01:30 -i &lt;file&gt; -c copy &lt;file-reels&gt;</code> إلى الحافظة.</dd>
+  <dt><strong>تخطّي الصمت الافتتاحي</strong></dt>
+  <dd>الإعدادات → 🎥 الالتقاط → <strong>🎙 تخطّي الصمت الافتتاحي (ابدأ عند أول كلمة)</strong>. بعد العدّ التنازلي، يستمع NoorCast إلى الميكروفون وينتظر حتى 5 ثوانٍ لأوّل كلمة (RMS &gt; 0.05) قبل بدء MediaRecorder.</dd>
+</dl>
+
+<h3 id="ch29-workflow">29.2 سير العمل — أوّل Reel من الألف إلى الياء</h3>
+<ol>
+  <li><strong>الإعدادات → 📐 صيغة المسرح</strong> → <strong>9:16 — 1080×1920</strong>. اللوحة تنقلب، يظهر toast "📱 وضع Reels"، زر 📱 Reels يُضاء.</li>
+  <li><strong>انظر إلى المناطق الحمراء.</strong> كل ما فيها سيُحجب بواجهة FB/IG/TikTok. اسحب العلامة المائية وتراكب الحسّاسات والمقاييس داخل المربّع الأخضر.</li>
+  <li><strong>(اختياري) الإعدادات → 🎥 الالتقاط → 🎙 تخطّي الصمت الافتتاحي.</strong></li>
+  <li><strong>REC.</strong> راقب العدّاد. إذا احمرّ، فأنت تجاوزت 90 ثانية.</li>
+  <li><strong>STOP.</strong> تُفتح لوحة اللقطة. إذا تجاوزت اللقطة 90 ثانية، يظهر زر وردي <strong>📱 قص إلى 90 ثانية لـ Reels (−Xs)</strong>. نقرة واحدة، ويُحمَّل ملف <code>-reels.mp4</code>.</li>
+  <li><strong>ارفع إلى Facebook Reels.</strong> اختر ملف <code>-reels.mp4</code>. لا أشرطة سوداء، لا قصّ، الترجمة مرئية، تحت سقف 90 ثانية.</li>
+</ol>
+
+<h3 id="ch29-tips">29.3 نصائح لـ Reels جيّدة</h3>
+<ul>
+  <li><strong>الثواني الثلاث الأولى مهمّة.</strong> فعّل تخطّي الصمت، ابدأ بالحركة.</li>
+  <li><strong>المثالي 15–30 ثانية.</strong> 90 ثانية هو السقف، ليس الهدف.</li>
+  <li><strong>عاين بصمت.</strong> ~70% من مشاهدي Reels يتصفّحون بدون صوت — الترجمة المحروقة أساسية.</li>
+  <li><strong>تركيب عمودي.</strong> فكّر في preset <code>👋 You</code> (face-cam ملء الشاشة) أو layout مخصّص (الوجه فوق + المحتوى تحت).</li>
+  <li><strong>معدّل البت.</strong> الافتراضي <strong>High — 8 Mbps</strong> مثالي لـ Reels.</li>
+</ul>
+
+<h3 id="ch29-known-limits">29.4 قيود معروفة</h3>
+<ul>
+  <li>القص داخل المتصفّح هو إعادة ترميز في الوقت الفعلي (90 ثانية فيديو ≈ 90 ثانية قصّ). للقص الفوري، استخدم أمر ffmpeg.</li>
+  <li>الزر يتعامل فقط مع الـ 90 ثانية الأولى — لنقطة بداية أخرى، عدّل <code>-ss</code> في أمر ffmpeg.</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 افتح NoorCast</a>
 </p>

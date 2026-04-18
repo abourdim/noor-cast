@@ -2431,6 +2431,55 @@
 <h3 id="ch28-canvas-effects">28.44 Micro-effets canvas live</h3>
 <p>Cinq petits effets "vivants" : <strong>Cursor Trail</strong> (traînée colorée) · <strong>Click Ripples</strong> (cercles) · <strong>Source Pulse</strong> (auto à l'ajout) · <strong>Speed Lines</strong> (radiales manga) · <strong>Reactions</strong> (explosion d'emoji + screen-shake).</p>
 
+<h2 id="ch29"><span class="ch-num">29</span> Mode Reels — enregistrer pour les plateformes verticales (v0.9.x)</h2>
+
+<p>La plupart des utilisateurs de NoorCast filment en <strong>16:9 paysage</strong> pour YouTube et les écrans d'ordi. Mais Facebook Reels, Instagram Reels, TikTok et YouTube Shorts sont tous en <strong>9:16 vertical</strong> — uploader un clip paysage, c'est récolter d'énormes bandes noires (≈30% d'écran perdu) ou un recadrage automatique qui coupe vos sources. La série v0.9.x corrige ça de bout en bout.</p>
+
+<h3 id="ch29-what">29.1 Ce que le mode Reels apporte</h3>
+<dl>
+  <dt><strong>Canvas portrait 9:16</strong></dt>
+  <dd>Réglages → 📐 Format de la scène → <strong>9:16 — 1080×1920</strong>. Le canvas, la prévisualisation et l'enregistrement basculent en vertical. Vos sources se réorganisent automatiquement.</dd>
+  <dt><strong>📱 Guide safe-zone Reels</strong></dt>
+  <dd>Nouveau bouton dans la barre d'outils, à côté de <code>📊 Sensors</code> et <code>🎛 Gauges</code>. Active un masque <span style="color:#ef4444;font-weight:bold">rouge semi-transparent</span> sur les trois zones où l'UI de la plateforme couvre la vidéo : header haut (~13%), légende + boutons bas (~31%), colonne d'actions droite (~14%). La <span style="color:#4ade80;font-weight:bold">boîte verte en pointillés</span> au milieu, c'est la safe-zone — gardez le contenu important dedans. <strong>Le guide reste visible uniquement dans l'éditeur, jamais dans l'enregistrement.</strong></dd>
+  <dt><strong>MP4 automatique en 9:16</strong></dt>
+  <dd>FB et IG ré-encodent le WebM avec une perte visible. En 9:16, NoorCast préfère automatiquement H.264/MP4, même sur Windows.</dd>
+  <dt><strong>Sous-titres dans la safe-zone</strong></dt>
+  <dd>Les sous-titres live remontent à ~34% du bas en portrait pour rester lisibles après upload.</dd>
+  <dt><strong>Alerte 90 s en direct</strong></dt>
+  <dd>FB Reels, IG Reels, TikTok, YT Shorts plafonnent tous à 90 s. En mode 9:16, le chrono devient rouge et clignote au-delà, avec un toast à 90 s puis tous les 30 s.</dd>
+  <dt><strong>📱 Couper à 90 s pour Reels (trim in-browser)</strong></dt>
+  <dd>Si votre prise dépasse 90 s en 9:16, un bouton "Couper à 90 s pour Reels (−Xs)" apparaît dans le panneau de prise après l'arrêt. Un clic ré-encode les 90 premières secondes à 8 Mbps via le pipeline canvas + MediaRecorder utilisé par Silence-Trim et Instant-Replay. Aucune dépendance externe.</dd>
+  <dt><strong>Helper ffmpeg</strong></dt>
+  <dd>Pour un trim stream-copy (sans ré-encodage), un toast cliquable après chaque sauvegarde 9:16 copie une commande <code>ffmpeg -ss 00:00:00 -to 00:01:30 -i &lt;file&gt; -c copy &lt;file-reels&gt;</code> dans le presse-papier.</dd>
+  <dt><strong>Saut d'intro audio</strong></dt>
+  <dd>Réglages → 🎥 Capture → <strong>🎙 Sauter le silence d'intro (démarrer au premier mot)</strong>. Après le compte à rebours, NoorCast écoute votre micro et attend jusqu'à 5 s votre premier mot (RMS &gt; 0,05) avant de lancer MediaRecorder. Plus de bla-bla mort en début de prise.</dd>
+</dl>
+
+<h3 id="ch29-workflow">29.2 Workflow — première Reel, de A à Z</h3>
+<ol>
+  <li><strong>Réglages → 📐 Format de la scène</strong> → <strong>9:16 — 1080×1920</strong>. Le canvas bascule, un toast "📱 Mode Reels" apparaît, le bouton 📱 Reels s'allume.</li>
+  <li><strong>Regardez les zones rouges.</strong> Tout ce qui s'y trouve sera caché par l'UI FB/IG/TikTok. Glissez watermark, overlay capteurs, jauges servo dans la boîte verte.</li>
+  <li><strong>(Optionnel) Réglages → 🎥 Capture → 🎙 Sauter le silence d'intro.</strong></li>
+  <li><strong>REC.</strong> Surveillez le chrono. S'il rougit, vous avez dépassé 90 s.</li>
+  <li><strong>STOP.</strong> Le panneau de prise s'ouvre. Si la prise dépasse 90 s, un bouton rose <strong>📱 Couper à 90 s pour Reels (−Xs)</strong> apparaît. Un clic, un fichier <code>-reels.mp4</code> se télécharge.</li>
+  <li><strong>Upload sur Facebook Reels.</strong> Choisissez le fichier <code>-reels.mp4</code>. Plus de bandes noires, plus de recadrage, sous-titres visibles, sous la limite des 90 s.</li>
+</ol>
+
+<h3 id="ch29-tips">29.3 Conseils pour de bons Reels</h3>
+<ul>
+  <li><strong>Les 3 premières secondes comptent.</strong> Activez Sauter intro, commencez par l'action.</li>
+  <li><strong>Sweet-spot 15–30 s.</strong> 90 s c'est le plafond, pas la cible.</li>
+  <li><strong>Pré-visionnez en muet.</strong> ~70% des viewers Reels scrollent sans son — les sous-titres burned-in sont essentiels.</li>
+  <li><strong>Composition verticale.</strong> Pensez au préset <code>👋 You</code> (face-cam plein écran) ou à un layout perso (face en haut + contenu en bas).</li>
+  <li><strong>Bitrate.</strong> Le défaut <strong>High — 8 Mbps</strong> est parfait pour Reels.</li>
+</ul>
+
+<h3 id="ch29-known-limits">29.4 Limites connues</h3>
+<ul>
+  <li>Le trim in-browser est un ré-encodage temps-réel (90 s de vidéo ≈ 90 s de trim). Pour un trim instantané, utilisez la commande ffmpeg.</li>
+  <li>Le bouton ne gère que les 90 premières secondes — pour un autre point de départ, éditez le <code>-ss</code> dans la commande ffmpeg.</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Ouvrir NoorCast</a>
 </p>
