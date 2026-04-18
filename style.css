@@ -1581,6 +1581,17 @@ body.log-open .app {
 }
 .tc-rec-indicator.active,
 .tc-rec-timer.active { color: #fca5a5; border-color: #ef4444; }
+/* v0.9.2: when the user is recording in 9:16 mode and crosses the 90 s
+   Reels cap, the elapsed-time text turns bright red + pulses so you
+   can't miss it mid-take. */
+#tcRecTime.tc-reels-overlimit {
+  color: #fff; background: #dc2626; padding: 2px 8px; border-radius: 6px;
+  animation: reelsOverPulse 1s ease-in-out infinite;
+}
+@keyframes reelsOverPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.7); }
+  50%      { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+}
 .tc-rec-dot {
   width: 10px; height: 10px; border-radius: 50%;
   background: #555;

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.1 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.2 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.1';
+const APP_VERSION = '0.9.2';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -9496,6 +9496,41 @@ const Recorder = {
     // v0.6.0: snapshot stats for the BadgeCard generator
     BadgeCard.capture(blob, this.elapsed());
 
+    // v0.9.2: Reels post-record helper — when in 9:16 mode, surface a one-click
+    // ffmpeg trim command + Reels checklist so the user can ship to FB/IG.
+    try {
+      if (typeof StageAspect !== 'undefined' && StageAspect.current === '9:16') {
+        const durSec = Math.round(this.elapsed() / 1000);
+        const overCap = durSec > 90;
+        const fmtT = (s) => `00:${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+        const trimEnd = overCap ? fmtT(90) : fmtT(durSec);
+        const cmd = `ffmpeg -ss 00:00:00 -to ${trimEnd} -i "${fname}.${ext}" -c copy "${fname}-reels.${ext}"`;
+        const msg = overCap
+          ? `📱 Recorded ${durSec}s — Reels caps at 90s. Click to copy a trim command.`
+          : `📱 Reels-ready (${durSec}s). Click to copy ffmpeg helper.`;
+        // Lightweight inline action — using the existing toast as the carrier.
+        // We attach a one-shot click handler that copies the command.
+        showToast(msg, 6000);
+        try {
+          const toastEl = document.querySelector('.toast-text, #toastMessage');
+          if (toastEl) {
+            toastEl.style.cursor = 'pointer';
+            const onClick = () => {
+              navigator.clipboard?.writeText(cmd).then(() => {
+                showToast('✅ ffmpeg command copied — paste in a terminal.', 3000);
+              }).catch(() => {
+                showToast('⚠ Clipboard blocked — see console.', 3000);
+                console.log('[NoorCast Reels trim]', cmd);
+              });
+              toastEl.removeEventListener('click', onClick);
+              toastEl.style.cursor = '';
+            };
+            toastEl.addEventListener('click', onClick, { once: true });
+          }
+        } catch {}
+      }
+    } catch (e) { /* never block save */ }
+
     // v0.7.31: render clickable chapter list under the take video
     ChapterList.render(Chapters.items, $('tcTakeVideo'));
     // v0.7.34: decode + render audio waveform strip (async)
@@ -9584,6 +9619,7 @@ const Recorder = {
   },
 
   startTimer() {
+    this._reels90Warned = false;  // v0.9.2: reset Reels-cap warning each recording
     this.timerId = setInterval(() => this.updateTimer(), 500);
   },
   stopTimer() {
@@ -9596,6 +9632,20 @@ const Recorder = {
     const m = Math.floor(s / 60);
     const el = $('tcRecTime');
     if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    // v0.9.2: Reels mode (9:16) — warn at the 90s mark + every 30s after.
+    // FB Reels / IG Reels / TikTok / YT Shorts all cap at 90s; clips longer
+    // than that get auto-trimmed at upload time, often mid-sentence.
+    if (typeof StageAspect !== 'undefined' && StageAspect.current === '9:16') {
+      if (el) el.classList.toggle('tc-reels-overlimit', s >= 90);
+      if (s === 90 && !this._reels90Warned) {
+        this._reels90Warned = true;
+        showToast('📱 90 s — Reels limit reached. Stop now or trim before upload.', 4000);
+      } else if (s > 90 && s % 30 === 0) {
+        showToast(`📱 ${s}s — over Reels 90s cap. Trim before upload.`, 2500);
+      }
+    } else if (el) {
+      el.classList.remove('tc-reels-overlimit');
+    }
   },
 
   updateUI() {
