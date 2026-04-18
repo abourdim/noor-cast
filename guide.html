@@ -2136,12 +2136,26 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 
 <h3>25.3 Classroom Setup Tips</h3>
 <ul>
-  <li><strong>One Chromebook per student</strong> — each runs NoorCast independently (no network needed)</li>
-  <li><strong>Shared robot station</strong> — one micro:bit connected to the teacher's NoorCast via Bluetooth</li>
-  <li><strong>Screen sharing</strong> — use the <a class="xref" href="#ch14">📱 Share</a> button to capture and share screenshots with students</li>
-  <li><strong>Simple Mode for students</strong> — hides advanced tools, prevents overwhelm</li>
-  <li><strong>Pro Mode for teacher</strong> — full access to all features during demonstrations</li>
+  <li><strong>One Chromebook per student</strong> — each runs NoorCast independently (no network needed after first load — see <a class="xref" href="#ch26">26.5 Offline</a>).</li>
+  <li><strong>Shared robot station</strong> — one micro:bit connected to the teacher's NoorCast via Bluetooth. Other students watch the live recording on the projector.</li>
+  <li><strong>Screen sharing</strong> — use the <a class="xref" href="#ch14">📱 Share</a> button to capture and share screenshots with students. Or just send them the post-recording <a class="xref" href="#ch28-export-flyer">A4 Export Flyer</a>.</li>
+  <li><strong>Simple Mode for students</strong> — hides advanced tools, prevents overwhelm. Set on first launch via the mode picker; can switch any time via the prominent button at top of Settings.</li>
+  <li><strong>Pro Mode for teacher</strong> — full access to all 200+ features during demonstrations. Explain a feature, then have students switch to Simple to use it.</li>
+  <li><strong>Common workstation setup</strong> — install NoorCast as a PWA (browser menu → "Install"), pin to taskbar / dock. Bookmarks not needed.</li>
+  <li><strong>Backup classroom setup</strong> — once you've configured one workstation perfectly (theme, brand logo, watermark with school name, font, etc.) → Settings → Maintenance → 📦 Export Session → save the JSON to a USB key → Import on every other workstation. Now all 30 machines are identical in 30 seconds.</li>
+  <li><strong>Reset between classes</strong> — Settings → Maintenance → 🗑 Vider le cache complet wipes localStorage. Or "Réinitialiser les badges" to just reset trophies for the next student.</li>
+  <li><strong>Dual monitor</strong> — drag the More Tools popup to the second monitor. Canvas + camera stay on the primary; teacher controls + sticky notes on the secondary.</li>
 </ul>
+
+<h3>25.4 Lesson planning workflow</h3>
+<p>A repeatable 4-step workflow that fits NoorCast's grain:</p>
+<ol>
+  <li><strong>Plan in the Teleprompter</strong> — open <kbd>T</kbd>, type your script. NoorCast saves it across reloads in <code>tc-tele-script</code>.</li>
+  <li><strong>Pick a Template</strong> — Lesson, Robot, Fix, or Robotcam. Each is a 5-step scene flow with auto chapter markers. See <a class="xref" href="#ch28-templates">28.25</a>.</li>
+  <li><strong>Set a Time Goal</strong> — Settings → Comportement → Objectif de durée. "Teach in under 5 minutes" forces tighter content.</li>
+  <li><strong>Record</strong> — start, follow the template chips, narrate from the prompter. Chapter markers fire automatically. After stopping, the Tutorial Score gives you objective feedback (see <a class="xref" href="#ch28-lesson-guide">28.39</a>).</li>
+</ol>
+<p>The four steps form a loop: Plan → Template → Time-box → Record. Repeat with adjustments. Within a few sessions you'll have your "format".</p>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch26"><span class="ch-num">26</span> Accessibility, RTL & Performance</h2>
@@ -2156,13 +2170,30 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 </ul>
 
 <h3>26.2 Accessibility Features</h3>
-<ul>
-  <li><strong>ARIA labels</strong> on all buttons and panels</li>
-  <li><strong>Keyboard navigation</strong> — all features accessible via shortcuts</li>
-  <li><strong>High contrast</strong> — all themes designed for readability</li>
-  <li><strong>No auto-playing audio</strong> — all sounds require user action</li>
-  <li><strong>Focus indicators</strong> — visible focus rings on interactive elements</li>
-</ul>
+<dl>
+  <dt><strong>Keyboard-only operation</strong></dt>
+  <dd>Every essential feature has a keyboard shortcut. <kbd>R</kbd> records · <kbd>L</kbd> laser · <kbd>1-9</kbd> scenes · <kbd>Ctrl+K</kbd> search · <kbd>Esc</kbd> closes everything · <kbd>Ctrl/Cmd+Z</kbd> undo. Full list in <a href="cheatsheet.html">cheatsheet.html</a>.</dd>
+  <dt><strong>Voice commands</strong></dt>
+  <dd>Hands-free control via SpeechRecognition for users with motor impairments. Say "record", "stop", "scene 3", "screenshot", "freeze", "laser" — see <a class="xref" href="#ch28-voice-commands">28.34</a>.</dd>
+  <dt><strong>UI font picker</strong></dt>
+  <dd>Settings → Général → 🔤 Police de l'interface. Switch to Tajawal or Amiri for Arabic readability, Orbitron for futuristic look, or System for OS-native rendering. Particularly helpful for users who need a specific font for dyslexia or low vision.</dd>
+  <dt><strong>High-contrast themes</strong></dt>
+  <dd>8 themes designed with WCAG AA contrast ratios for text. Dark themes (Jungle, Mosque Gold, Space, Robot) and light themes (Riad, Medina). Settings → Apparence → Thème.</dd>
+  <dt><strong>Sidebar resize</strong></dt>
+  <dd>Drag the lime grip to widen sidebars to 420px (left) or 95vw (settings). Helpful for users with screen-zoom enabled.</dd>
+  <dt><strong>RTL flip</strong></dt>
+  <dd>Switch to Arabic (or any RTL locale) and the entire UI mirrors. <code>dir="rtl"</code> on HTML root, all panels flip, fonts switch automatically.</dd>
+  <dt><strong>ARIA labels</strong></dt>
+  <dd>All buttons, dropdowns, modals have <code>aria-label</code> attributes. Screen readers (NVDA, JAWS, VoiceOver) announce the current state.</dd>
+  <dt><strong>No auto-playing audio</strong></dt>
+  <dd>The first user gesture (click anywhere) is required before the audio context starts. Music, SFX, piano all gated. Complies with browser autoplay policy.</dd>
+  <dt><strong>Visible focus rings</strong></dt>
+  <dd>Lime accent outline on all interactive elements when keyboard-focused. Makes <kbd>Tab</kbd> navigation legible.</dd>
+  <dt><strong>Captions for audio content</strong></dt>
+  <dd>Live Captions overlay (<kbd>C</kbd>) shows real-time speech-to-text on the canvas, baked into the recording. Also exports as .srt for video players.</dd>
+  <dt><strong>Skip-to-content link</strong></dt>
+  <dd>The first <kbd>Tab</kbd> press jumps a hidden "Skip to content" link past the header / sidebar nav.</dd>
+</dl>
 
 <h3>26.3 Performance Tips</h3>
 <table>
@@ -2184,12 +2215,34 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 </ul>
 
 <h3>26.5 Offline Usage</h3>
-<p>After the first load, NoorCast works 100% offline:</p>
+<p>After the first load, NoorCast works 100% offline. The PWA architecture caches everything you need on first visit, then runs from cache forever after.</p>
+
+<p><strong>What's cached on first visit:</strong></p>
 <ul>
-  <li>All files cached by the service worker (HTML, JS, CSS, fonts, icons)</li>
-  <li>PWA installable — add to desktop/home screen via browser menu</li>
-  <li>Only exception: <a class="xref" href="#ch15">Live Captions</a> require internet on Chrome (browser sends audio to Google for speech recognition)</li>
+  <li><code>index.html</code>, <code>noorcast.js</code>, <code>style.css</code>, <code>sw.js</code>, <code>manifest.json</code></li>
+  <li>All SVG icons (logo, workshop-diy logo, language flags FR/EN/AR)</li>
+  <li>All 12 self-hosted WOFF2 fonts (Amiri, Tajawal, Bangers, Orbitron, Righteous — both LTR and RTL variants)</li>
+  <li>Total: ~2.5 MB. One-time download.</li>
 </ul>
+
+<p><strong>Install as a desktop / mobile app:</strong></p>
+<ol>
+  <li>Open NoorCast in Chrome / Edge.</li>
+  <li>Click the install icon in the address bar (looks like a screen with a down arrow), OR browser menu → "Install NoorCast".</li>
+  <li>The app opens in its own window without browser chrome — like a native app. Pin it to your taskbar / dock.</li>
+  <li>Subsequent launches load from cache instantly. Zero network calls.</li>
+</ol>
+
+<p><strong>What still needs internet:</strong></p>
+<ul>
+  <li><strong>Live Captions</strong> — Chrome's SpeechRecognition sends audio to Google. Use Edge on Windows 10/11 for offline speech recognition.</li>
+  <li><strong>Voice Commands / Smart Scene Switcher</strong> — same SpeechRecognition limitation.</li>
+  <li><strong>That's it.</strong> Recording, micro:bit BLE, all overlays, all features work offline.</li>
+</ul>
+
+<p><strong>Updates.</strong> When a new NoorCast version is deployed (CACHE_NAME bumped in sw.js), the next visit detects the update and shows a "🔄 New version available — reload" toast. Refresh to get the new version. Your settings + recordings are preserved.</p>
+
+<p><strong>Privacy bonus.</strong> Offline mode means zero analytics, zero CDN fingerprinting, zero "calls home". Perfect for privacy-sensitive classrooms.</p>
 
 <hr>
 
