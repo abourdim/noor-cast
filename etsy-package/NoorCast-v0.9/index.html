@@ -1,0 +1,2483 @@
+<!doctype html>
+<html lang="fr" dir="ltr" data-theme="jungle">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>NoorCast — Crée tes tutos comme un pro !</title>
+  <meta name="description" content="NoorCast — enregistre des tutos vidéo multi-caméras (écran + webcams + micro) directement depuis ton navigateur. Kid-friendly, zéro install, privacy-first." />
+  <meta name="author" content="Workshop-DIY — abourdim" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="NoorCast — Lumière, caméra, ROBOT !" />
+  <meta property="og:description" content="Enregistre des tutos vidéo multi-caméras directement depuis ton navigateur." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="icon.svg" />
+
+  <!-- PWA -->
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#071407" />
+
+  <!-- v0.7.159: self-hosted fonts (previously Google Fonts CDN) -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- v0.9.11: FOUC guard — read tc-mode synchronously and apply the kids
+       class to <html> BEFORE first paint, so Pro-only buttons don't flash
+       visible for 50–200 ms while the bundle parses. Idempotent + tiny. -->
+  <script>
+    (function(){
+      try {
+        var m = localStorage.getItem('tc-mode');
+        if (m === 'simple' || m === null) {
+          document.documentElement.classList.add('tc-simple', 'tc-kids');
+        }
+      } catch(_) {}
+    })();
+  </script>
+</head>
+
+<body>
+<!-- v0.7.158: skip-to-content link for accessibility -->
+<a href="#tcToolsBar" class="tc-skip-link">Skip to main content</a>
+  <!-- ═══════════════════ SPLASH SCREEN ═══════════════════ -->
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-logo" id="splashLogo">
+        <img src="assets/logo.svg" alt="NoorCast" width="140" height="140" />
+      </div>
+      <div class="splash-title" style="font-family:'Amiri',serif">نُورْكَاسْت</div>
+      <div class="splash-sub" data-i18n="slogan">🎬 Lumière, caméra, ROBOT !</div>
+      <a class="splash-credit" href="https://workshop-diy.org" target="_blank" rel="noopener" id="tcSplashCredit">
+        <img src="./assets/workshop-diy-logo.svg" alt="Workshop DIY" class="splash-wdiy-logo" aria-hidden="true">
+      </a>
+      <div class="splash-hint" data-i18n="splashHint">tap to skip</div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="deco-band top-band" aria-hidden="true"></div>
+
+    <div class="rows-container">
+
+      <!-- ═══════════════════ HEADER ═══════════════════ -->
+      <div class="header">
+        <div class="bismillah" aria-hidden="true" title="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ">
+          <div class="bismillah-inner">
+            <span class="bism-ornament">❖</span>
+            <span class="bism-flourish">﴾</span>
+            <span class="bism-text" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+            <span class="bism-flourish">﴿</span>
+            <span class="bism-ornament">❖</span>
+          </div>
+        </div>
+        <div class="title-block">
+          <div class="tc-logo-wrap">
+            <img src="assets/logo.svg" alt="NoorCast" width="56" height="56" id="headerLogo" />
+          </div>
+          <div class="subtitle" data-i18n="slogan" style="font-size:.7rem">🎬 Lumière, caméra, ROBOT !</div>
+        </div>
+        <!-- Centered Arabic title -->
+        <h1 class="tc-center-title" data-i18n="title">نُورْكَاسْت</h1>
+
+        <div class="header-right">
+          <div class="header-buttons">
+            <!-- v0.9.27: re-open the last take modal — appears once a take exists -->
+            <button id="tcReopenTakeBtn" class="tc-take-reopen-btn" aria-label="Re-open last take" title="Re-open last take (review / share / trim)">🎬 <span data-i18n="reopenTake">Last take</span></button>
+            <button id="helpBtn" class="btn-icon-only" aria-label="Help">❓</button>
+            <button id="settingsBtn" class="btn-icon-only" aria-label="Settings">⚙️</button>
+            <button id="logBtn" class="btn-icon-only" aria-label="Activity Log">📜</button>
+            <button id="tcMaxBtn" class="btn-icon-only tc-max-btn" aria-label="Maximize" title="Maximize">⛶</button>
+            <span class="tc-mode-badge" id="tcModeBadge"></span>
+          </div>
+          <div class="status-pill" id="statusPill">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText" data-i18n="statusIdle">Prêt</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ MODE PICKER (first launch) ═══════════════════ -->
+      <div class="card tc-mode-picker" id="tcModePicker" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span class="icon">👋</span> Who's using NoorCast today?</div>
+            <div class="card-subtitle">Switch any time from the header badge or Settings</div>
+          </div>
+        </div>
+        <div class="tc-tpl-grid" style="grid-template-columns:1fr 1fr;max-width:480px;margin:0 auto">
+          <button class="tc-tpl-card" id="tcModeSimpleBtn">
+            <div class="tc-tpl-card-icon">🧒</div>
+            <div class="tc-tpl-card-title">Kids</div>
+            <div class="tc-tpl-card-desc">Funny + geeky.<br>Big buttons, sound FX,<br>safe defaults.</div>
+          </button>
+          <button class="tc-tpl-card" id="tcModeProBtn">
+            <div class="tc-tpl-card-icon">🧑‍🏫</div>
+            <div class="tc-tpl-card-title">Teacher / Pro</div>
+            <div class="tc-tpl-card-desc">Every tool unlocked.<br>Pause, markers, sensors,<br>recording quality, more.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ TEMPLATE PICKER (first launch + reopenable) ═══════════════════ -->
+      <div class="card tc-templates" id="tcTemplates" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span class="icon">🎬</span> <span data-i18n="tplTitle">Choisis comment tu commences</span></div>
+            <div class="card-subtitle" data-i18n="tplSubtitle">Chaque template te guide étape par étape</div>
+          </div>
+          <button class="btn-icon-only" id="tcTemplatesClose" aria-label="Close">✕</button>
+        </div>
+        <div class="tc-tpl-grid">
+          <button class="tc-tpl-card" data-tpl="lesson">
+            <div class="tc-tpl-card-icon">📚</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_lesson">Cours complet</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_lesson_d">Intro → Théorie → Démo → Exercice → Conclusion</div>
+          </button>
+          <button class="tc-tpl-card" data-tpl="robot">
+            <div class="tc-tpl-card-icon">🤖</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_robot">Démo robot</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_robot_d">Présentation → Code → Robot → Capteurs → Bilan</div>
+          </button>
+          <button class="tc-tpl-card" data-tpl="fix">
+            <div class="tc-tpl-card-icon">🔧</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_fix">Correction</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_fix_d">Bug → Analyse → Fix → Test → OK</div>
+          </button>
+          <button class="tc-tpl-card" data-tpl="robotcam">
+            <div class="tc-tpl-card-icon">🤖</div>
+            <div class="tc-tpl-card-title" data-i18n="tpl_robotcam">Robot Tuto</div>
+            <div class="tc-tpl-card-desc" data-i18n="tpl_robotcam_d">Face → Code → Robot → Capteurs → Bilan</div>
+          </button>
+          <button class="tc-tpl-card tc-tpl-blank" data-tpl="">
+            <div class="tc-tpl-card-icon">🎨</div>
+            <div class="tc-tpl-card-title" data-i18n="tplBlank">🎨 Vierge</div>
+            <div class="tc-tpl-card-desc" data-i18n="tplBlankDesc">Je compose ma propre scène</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ MAIN STUDIO CARD ═══════════════════ -->
+      <div class="card tc-studio" id="mainCard">
+        <!-- Studio header removed — maximize button moved to app header -->
+
+        <!-- v0.9.26: Workflow step tabs — gives users a clear mental model
+             (SETUP → TUNE → RECORD → SHARE) and lets the toolbar hide in
+             SETUP/SHARE where it's not needed. Auto-advances on key events.
+             Manual click always works. Persists in tc-step. -->
+        <nav class="tc-step-tabs" id="tcStepTabs" role="tablist" aria-label="Workflow step">
+          <button class="tc-step-tab" role="tab" data-step="setup"  aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">1</span><span class="tc-step-label" data-i18n="stepSetup">Setup</span></button>
+          <button class="tc-step-tab" role="tab" data-step="tune"   aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">2</span><span class="tc-step-label" data-i18n="stepTune">Tune</span></button>
+          <button class="tc-step-tab" role="tab" data-step="record" aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">3</span><span class="tc-step-label" data-i18n="stepRecord">Record</span></button>
+          <button class="tc-step-tab" role="tab" data-step="share"  aria-controls="tcStage" aria-selected="false"><span class="tc-step-num">4</span><span class="tc-step-label" data-i18n="stepShare">Share</span></button>
+        </nav>
+
+        <!-- v0.7.20: Floating horizontal tools bar — Canva-style icon pill
+             above the studio grid. Frees the right sidebar from 7 stacked
+             buttons and puts the live tools one click away from the stage. -->
+        <div class="tc-tools-bar" id="tcToolsBar">
+          <!-- Essential tools — always visible -->
+          <button class="tc-tool-btn" id="tcUndoBtn" title="Undo (Ctrl+Z)">
+            <span class="tc-tool-icon">↩</span><span class="tc-tool-label" data-i18n="undo">Annuler</span>
+          </button>
+          <button class="tc-tool-btn" id="tcRedoBtn" title="Redo (Ctrl+Y)">
+            <span class="tc-tool-icon">↪</span><span class="tc-tool-label" data-i18n="redo">Rétablir</span>
+          </button>
+          <span class="tc-tools-sep"></span>
+          <button class="tc-tool-btn" id="tcLaserBtn" title="Laser (L)">
+            <span class="tc-tool-icon">🔴</span><span class="tc-tool-label" data-i18n="laser">Laser</span><kbd>L</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcFreezeBtn" title="Freeze (F)">
+            <span class="tc-tool-icon">❄️</span><span class="tc-tool-label" data-i18n="freeze">Geler</span><kbd>F</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcWhiteboardBtn" title="Draw (D)">
+            <span class="tc-tool-icon">✏️</span><span class="tc-tool-label" data-i18n="whiteboard">Dessiner</span><kbd>D</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcSnapBtn" title="Snapshot (S)">
+            <span class="tc-tool-icon">📸</span><span class="tc-tool-label" data-i18n="snapshot">Photo</span><kbd>S</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcFullscreenBtn" title="Fullscreen">
+            <span class="tc-tool-icon">⛶</span><span class="tc-tool-label" data-i18n="fullscreen">Plein</span>
+          </button>
+          <button class="tc-tool-btn" id="tcSearchBtn" title="Search (Ctrl+K)" style="opacity:.6">
+            <span class="tc-tool-icon">🔍</span><span class="tc-tool-label">Search</span><kbd>⌘K</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcCaptionsBtn" data-i18n-title="captionsTitle" title="Live captions of your voice (C)">
+            <span class="tc-tool-icon">💬</span><span class="tc-tool-label" data-i18n="captionsBtn">Légendes</span><kbd>C</kbd>
+          </button>
+          <button class="tc-tool-btn" id="tcSaveCaptionsBtn" title="Save captions" style="display:none">
+            <span class="tc-tool-icon">💾</span><span class="tc-tool-label">Save .srt</span>
+          </button>
+          <span class="tc-tools-sep"></span>
+          <!-- v0.7.157: overflow menu for 17 additional tools -->
+          <button class="tc-tool-btn" id="tcMoreToolsBtn" title="More tools">
+            <span class="tc-tool-icon">⋯</span><span class="tc-tool-label">More</span>
+          </button>
+          <div class="tc-more-tools-popup" id="tcMoreToolsPopup" style="display:none">
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Canvas</div>
+              <button class="tc-tool-btn" id="tcRipplesBtn" title="Click ripples"><span class="tc-tool-icon">💧</span><span class="tc-tool-label" data-i18n="ripples">Ripples</span></button>
+              <button class="tc-tool-btn" id="tcCursorTrailBtn" title="Cursor trail"><span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="trail">Trail</span></button>
+              <button class="tc-tool-btn" id="tcGridBtn" title="Grid (G)"><span class="tc-tool-icon">#</span><span class="tc-tool-label" data-i18n="gridOverlay">Grid</span><kbd>G</kbd></button>
+              <button class="tc-tool-btn" id="tcSpotlightBtn" title="Spotlight"><span class="tc-tool-icon">💡</span><span class="tc-tool-label" data-i18n="spotlight">Spot</span></button>
+              <button class="tc-tool-btn" id="tcZoomBtn" title="Zoom (Z)"><span class="tc-tool-icon">🔍</span><span class="tc-tool-label" data-i18n="zoom">Zoom</span><kbd>Z</kbd></button>
+              <button class="tc-tool-btn" id="tcAutoZoomBtn" title="Auto-zoom"><span class="tc-tool-icon">🎯</span><span class="tc-tool-label" data-i18n="autoZoom">AutoZ</span></button>
+              <button class="tc-tool-btn" id="tcLetterboxBtn" title="Letterbox bars"><span class="tc-tool-icon">🎬</span><span class="tc-tool-label" data-i18n="letterboxBars">Bars</span></button>
+            </div>
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Overlays</div>
+              <button class="tc-tool-btn" id="tcTeleBtn" title="Teleprompter (T)"><span class="tc-tool-icon">📜</span><span class="tc-tool-label" data-i18n="teleprompter">Tele</span><kbd>T</kbd></button>
+              <button class="tc-tool-btn" id="tcTimerBtn" title="Countdown timer"><span class="tc-tool-icon">⏳</span><span class="tc-tool-label" data-i18n="countdownTimer">Timer</span></button>
+              <button class="tc-tool-btn" id="tcTextStampBtn" title="Text stamp"><span class="tc-tool-icon">✏️</span><span class="tc-tool-label" data-i18n="textStamp">Text</span></button>
+              <button class="tc-tool-btn" id="tcStickyNoteBtn" title="Sticky note"><span class="tc-tool-icon">🗒️</span><span class="tc-tool-label" data-i18n="stickyNoteBtn">Note</span></button>
+              <button class="tc-tool-btn" id="tcReactBtn" title="React"><span class="tc-tool-icon">😀</span><span class="tc-tool-label" data-i18n="reactBtn">React</span></button>
+              <div class="tc-react-palette" id="tcReactPalette" style="display:none">
+                <button class="tc-react-emoji" data-emoji="👍">👍</button><button class="tc-react-emoji" data-emoji="❤️">❤️</button><button class="tc-react-emoji" data-emoji="🎉">🎉</button><button class="tc-react-emoji" data-emoji="🔥">🔥</button><button class="tc-react-emoji" data-emoji="💡">💡</button><button class="tc-react-emoji" data-emoji="⭐">⭐</button>
+              </div>
+              <button class="tc-tool-btn" id="tcPianoBtn" title="Piano overlay"><span class="tc-tool-icon">🎹</span><span class="tc-tool-label" data-i18n="pianoOverlay">Piano</span></button>
+            </div>
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Tools</div>
+              <button class="tc-tool-btn" id="tcSelectAllBtn" title="Select all"><span class="tc-tool-icon">☐</span><span class="tc-tool-label" data-i18n="selectAll">Tout</span></button>
+              <button class="tc-tool-btn" id="tcSfxBtn" title="Sound board"><span class="tc-tool-icon">🔊</span><span class="tc-tool-label" data-i18n="soundBoard">SFX</span></button>
+              <div class="tc-sfx-palette" id="tcSfxPalette" style="display:none">
+                <button class="tc-sfx-trigger" data-sfx="ding">🔔 <span data-i18n="sbDing">Ding</span></button><button class="tc-sfx-trigger" data-sfx="buzz">❌ <span data-i18n="sbBuzz">Buzz</span></button><button class="tc-sfx-trigger" data-sfx="clap">👏 <span data-i18n="sbClap">Clap</span></button><button class="tc-sfx-trigger" data-sfx="roll">🥁 <span data-i18n="sbRoll">Roll</span></button><button class="tc-sfx-trigger" data-sfx="whistle">🎵 <span data-i18n="sbWhistle">Whistle</span></button><button class="tc-sfx-trigger" data-sfx="whoosh">💨 <span data-i18n="sbWhoosh">Whoosh</span></button>
+              </div>
+              <button class="tc-tool-btn" id="tcFocusBtn" title="Focus (Shift+F)"><span class="tc-tool-icon">🔳</span><span class="tc-tool-label" data-i18n="focusMode">Focus</span><kbd>⇧F</kbd></button>
+              <button class="tc-tool-btn" id="tcRandomSceneBtn" title="Random (?)"><span class="tc-tool-icon">🎲</span><span class="tc-tool-label" data-i18n="randomScene">Random</span><kbd>?</kbd></button>
+              <button class="tc-tool-btn" id="tcColorPickerBtn" title="Color picker"><span class="tc-tool-icon">🎨</span><span class="tc-tool-label" data-i18n="colorPicker">Pick</span></button>
+            </div>
+            <div class="tc-mtp-group">
+              <div class="tc-mtp-title">Fun</div>
+              <button class="tc-tool-btn" id="tcVoiceFxBtn" title="Voice effects"><span class="tc-tool-icon">🗣</span><span class="tc-tool-label">Voice FX</span></button>
+              <button class="tc-tool-btn" id="tcXpBarBtn" title="XP progress bar"><span class="tc-tool-icon">⭐</span><span class="tc-tool-label">XP Bar</span></button>
+              <button class="tc-tool-btn" id="tcSoundPadBtn" title="Sound pad"><span class="tc-tool-icon">🎵</span><span class="tc-tool-label">Sounds</span></button>
+              <button class="tc-tool-btn" id="tcSpeedLinesBtn" title="Speed lines"><span class="tc-tool-icon">💨</span><span class="tc-tool-label">Speed</span></button>
+              <button class="tc-tool-btn" id="tcVoiceCmdBtn" title="Voice commands"><span class="tc-tool-icon">🎙</span><span class="tc-tool-label">Voice</span></button>
+              <button class="tc-tool-btn" id="tcChoreoRecBtn" title="Record robot moves"><span class="tc-tool-icon">🤖</span><span class="tc-tool-label">Choreo</span></button>
+              <button class="tc-tool-btn" id="tcChoreoPlayBtn" title="Replay robot moves"><span class="tc-tool-icon">▶️</span><span class="tc-tool-label">Replay</span></button>
+              <button class="tc-tool-btn" id="tcQRShareBtn" title="Share screenshot"><span class="tc-tool-icon">📱</span><span class="tc-tool-label">Share</span></button>
+              <button class="tc-tool-btn" id="tcGhostBtn" title="Ghost replay"><span class="tc-tool-icon">👻</span><span class="tc-tool-label">Ghost</span></button>
+              <select class="tc-toolbar-select" id="tcPetSelect" style="font-size:.65rem;padding:2px;width:90px" title="Canvas Mascots">
+                <option value="">🎭 Mascots</option>
+                <option value="_clear">❌ Clear all</option>
+                <option value="robot">🤖 Robot</option>
+                <option value="anonymous">🎭 Anon</option>
+                <option value="skull">💀 Skull</option>
+                <option value="agent">🕵️ Agent</option>
+                <option value="bug">🐛 Bug</option>
+                <option value="ufo">🛸 UFO</option>
+                <option value="drone">🤖 Drone</option>
+                <option value="arc">⚡ Arc</option>
+                <option value="pencil">📝 Pencil</option>
+                <option value="wrench">🔧 Wrench</option>
+                <option value="spider">🕷 Spider</option>
+                <option value="eye">👁 Eye</option>
+              </select>
+              <button class="tc-tool-btn" id="tcSmartSceneBtn" title="Smart scene switcher"><span class="tc-tool-icon">🧠</span><span class="tc-tool-label">Smart</span></button>
+              <button class="tc-tool-btn" id="tcCohostBtn" title="AI Co-host (click=toggle, right-click=change)"><span class="tc-tool-icon">😊</span><span class="tc-tool-label">Co-host</span></button>
+              <select class="tc-toolbar-select" id="tcCohostCharSelect" style="font-size:.65rem;padding:2px;width:80px" title="Character">
+                <optgroup label="🔬 Science">
+                  <option value="atom" selected>⚛️ Atom</option>
+                  <option value="dna">🧬 DNA</option>
+                  <option value="flask">⚗️ Flask</option>
+                  <option value="microscope">🔬 Scope</option>
+                  <option value="magnet">🧲 Magnet</option>
+                  <option value="telescope">📡 Dish</option>
+                </optgroup>
+                <optgroup label="🚀 Space">
+                  <option value="saturn">🪐 Saturn</option>
+                  <option value="earth">🌍 Earth</option>
+                  <option value="comet">☄️ Comet</option>
+                  <option value="moon">🌙 Moon</option>
+                  <option value="pulsar">⭐ Pulsar</option>
+                  <option value="satellite">🛰 Satellite</option>
+                  <option value="rocket">🚀 Rocket</option>
+                  <option value="blackhole">🌌 Black Hole</option>
+                  <option value="sun">☀️ Sun</option>
+                </optgroup>
+                <optgroup label="💡 Symbols">
+                  <option value="lightbulb">💡 Bulb</option>
+                  <option value="compass">🧭 Compass</option>
+                  <option value="battery">🔋 Battery</option>
+                  <option value="crescent">☪️ Crescent</option>
+                  <option value="infinity">♾️ Infinity</option>
+                  <option value="lightning">⚡ Bolt</option>
+                  <option value="gem">💎 Gem</option>
+                  <option value="flame">🔥 Flame</option>
+                  <option value="wave">🌊 Wave</option>
+                </optgroup>
+                <optgroup label="💀 Hacker">
+                  <option value="skull">💀 Skull</option>
+                  <option value="dragon">🐉 Dragon</option>
+                  <option value="eye">👁 Eye</option>
+                  <option value="terminal">🖥 Terminal</option>
+                  <option value="lock">🔓 Lock</option>
+                  <option value="spider">🕷 Spider</option>
+                </optgroup>
+                <optgroup label="☠️ Pirate">
+                  <option value="jollyroger">☠️ Roger</option>
+                  <option value="anchor">⚓ Anchor</option>
+                  <option value="swords">🗡 Swords</option>
+                  <option value="pirateflag">🏴 Flag</option>
+                </optgroup>
+                <optgroup label="🎭 Cyber">
+                  <option value="vmask">🎭 V Mask</option>
+                  <option value="tux">🐧 Tux</option>
+                  <option value="trident">🔱 Trident</option>
+                  <option value="redpill">💊 Red Pill</option>
+                  <option value="globe">🌐 Globe</option>
+                  <option value="cipher">🔐 Cipher</option>
+                </optgroup>
+              </select>
+              <button class="tc-tool-btn" id="tcBgMusicBtn" title="Background music — click to play/stop"><span class="tc-tool-icon">🎵</span><span class="tc-tool-label">Music</span></button>
+              <!-- v0.7.230: track picker for the 5 available 8-bit loops -->
+              <select class="tc-toolbar-select" id="tcBgMusicTrackSelect" style="font-size:.65rem;padding:2px;width:95px" title="Music track">
+                <option value="chiptune">🎮 Chiptune</option>
+                <option value="lofi">☕ Lo-fi</option>
+                <option value="epic">⚔️ Epic</option>
+                <option value="chill">🌊 Chill</option>
+                <option value="retro">📼 Retro</option>
+              </select>
+              <button class="tc-tool-btn" id="tcSensorOverlayBtn" title="Sensor overlay"><span class="tc-tool-icon">📊</span><span class="tc-tool-label">Sensors</span></button>
+              <button class="tc-tool-btn" id="tcServoGaugeBtn" title="Servo gauges"><span class="tc-tool-icon">🎛</span><span class="tc-tool-label">Gauges</span></button>
+              <button class="tc-tool-btn" id="tcSafeZoneBtn" title="Reels safe-zone guide (only shown in 9:16, never recorded)"><span class="tc-tool-icon">📱</span><span class="tc-tool-label">Reels</span></button>
+            </div>
+          </div>
+          <span class="tc-tools-sep"></span>
+          <span id="tcPipBadge" class="tc-pip-badge" style="display:none" data-i18n="pipActive">PiP</span>
+        </div>
+
+        <!-- Studio canvas preview + sidebars -->
+        <div class="tc-studio-grid">
+          <!-- v0.7.94: collapse the right sidebar (focus mode) -->
+          <button class="tc-rsidebar-toggle" id="tcRSidebarToggle" title="Collapse scenes sidebar">◀</button>
+          <!-- v0.7.226: drag handle to resize the LEFT studio sidebar width -->
+          <div class="tc-studio-lresize" id="tcStudioLeftResize" role="separator" aria-label="Resize left sidebar" title="Drag to resize"></div>
+          <!-- v0.7.172: LEFT SIDEBAR — icon tabs + drawers -->
+          <aside class="tc-sidebar tc-sidebar-sources">
+            <div class="tc-minimap-wrap" id="tcMinimapWrap">
+              <canvas id="tcMinimap" width="192" height="108"></canvas>
+              <div class="tc-minimap-label" data-i18n="minimap">Aperçu</div>
+            </div>
+
+            <!-- Tab strip -->
+            <div class="tc-side-tabs">
+              <!-- v0.7.249: tabs now stack icon + visible label so kids
+                   instantly know what each tab is. micro:bit gets a
+                   stylized SVG of the actual board (PCB + 5x5 LED grid +
+                   two buttons) instead of an ambiguous robot emoji. -->
+              <button class="tc-side-tab active" data-stab="sources" title="Sources audio + vidéo">
+                <span class="tc-side-tab-icon">📹</span>
+                <span class="tc-side-tab-label">Sources</span>
+              </button>
+              <button class="tc-side-tab" data-stab="microbit" title="Connecter une carte micro:bit">
+                <span class="tc-side-tab-icon" aria-hidden="true">
+                  <svg viewBox="0 0 32 22" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:20px;display:block">
+                    <!-- Board outline (rounded rect, micro:bit's signature shape) -->
+                    <rect x="0.5" y="0.5" width="31" height="21" rx="3" ry="3"
+                      fill="#0a1628" stroke="currentColor" stroke-width="1.2"/>
+                    <!-- 5x5 LED grid (centered) -->
+                    <g fill="#ef4444">
+                      <circle cx="11" cy="6" r="0.9"/><circle cx="13.5" cy="6" r="0.9"/><circle cx="16" cy="6" r="0.9"/><circle cx="18.5" cy="6" r="0.9"/><circle cx="21" cy="6" r="0.9"/>
+                      <circle cx="11" cy="9" r="0.9"/><circle cx="13.5" cy="9" r="0.9"/><circle cx="16" cy="9" r="0.9"/><circle cx="18.5" cy="9" r="0.9"/><circle cx="21" cy="9" r="0.9"/>
+                      <circle cx="11" cy="12" r="0.9"/><circle cx="13.5" cy="12" r="0.9"/><circle cx="16" cy="12" r="0.9"/><circle cx="18.5" cy="12" r="0.9"/><circle cx="21" cy="12" r="0.9"/>
+                      <circle cx="11" cy="15" r="0.9"/><circle cx="13.5" cy="15" r="0.9"/><circle cx="16" cy="15" r="0.9"/><circle cx="18.5" cy="15" r="0.9"/><circle cx="21" cy="15" r="0.9"/>
+                      <circle cx="11" cy="18" r="0.9"/><circle cx="13.5" cy="18" r="0.9"/><circle cx="16" cy="18" r="0.9"/><circle cx="18.5" cy="18" r="0.9"/><circle cx="21" cy="18" r="0.9"/>
+                    </g>
+                    <!-- Two buttons (A and B) on the sides -->
+                    <circle cx="4" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text x="4" y="12.5" font-size="3" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">A</text>
+                    <circle cx="28" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text x="28" y="12.5" font-size="3" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">B</text>
+                  </svg>
+                </span>
+                <span class="tc-side-tab-label">micro:bit</span>
+              </button>
+            </div>
+
+            <!-- Panel 1: Sources -->
+            <div class="tc-side-panel active" id="tcSidebarSources">
+              <!-- v0.9.29: visually unify the 3 source-add rows under one
+                   primary-CTA frame ("✨ ADD A SOURCE"). Same buttons,
+                   same handlers, same row layout — just clearly grouped
+                   so it reads as ONE primary action, not three competing
+                   ones. Active-sources list lives below in its own zone. -->
+              <div class="tc-add-zone" aria-labelledby="tcAddZoneTitle">
+                <div class="tc-add-zone-title" id="tcAddZoneTitle">✨ <span data-i18n="addASource">Add a source</span></div>
+                <div class="tc-source-row"><label data-i18n="sourceScreen">Écran</label><button class="tc-src-btn tc-src-btn-screen" id="srcScreenBtn">🖥 <span data-i18n="add">+ Ajouter</span></button></div>
+                <div class="tc-source-row"><label data-i18n="sourceCam">Caméra</label><select id="camSelect" class="tc-select"><option value="" data-i18n="selectCam">— choose —</option></select><button class="tc-src-btn tc-src-btn-cam" id="srcCamBtn">🎥 <span data-i18n="add">+</span></button></div>
+                <div class="tc-source-row"><label data-i18n="sourceMic">Micro</label><select id="micSelect" class="tc-select"><option value="" data-i18n="selectMic">— choose —</option></select></div>
+              </div>
+              <div class="tc-mic-check" id="tcMicCheck"></div>
+              <div class="tc-side-title">🎭 <span data-i18n="activeSources">Sources actives</span></div>
+              <ul class="tc-src-list" id="tcSrcList"></ul>
+            </div>
+
+            <!-- Panel 2: micro:bit -->
+            <div class="tc-side-panel" id="tcSidebarMicrobit">
+              <button class="tc-btn-full" id="tcFwModalBtn" data-mode="pro" style="font-size:.75rem;opacity:.7">⚙ Flash firmware first</button>
+              <button class="tc-btn-full" id="btConnectBtn" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)">📡 Connect</button>
+              <button class="tc-btn-full" id="btDisconnectBtn" style="display:none;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">✕ Disconnect</button>
+              <span id="tcBtStatus" style="font-size:.7rem;opacity:.6;display:block;text-align:center;margin-top:2px"></span>
+              <!-- v0.7.214: firmware identity reported by the micro:bit -->
+              <span id="tcMicrobitFirmwareInfo" class="tc-fw-info" style="font-size:.62rem;opacity:.55;display:block;text-align:center;margin-top:2px;font-family:ui-monospace,monospace"></span>
+              <div class="tc-bt-values" id="tcBtValues" style="display:none">
+                <canvas id="tcSensorGraph" width="200" height="80" style="width:100%;border-radius:8px;background:rgba(0,0,0,.3)"></canvas>
+                <div id="tcSensorVals" style="font-size:.6rem;opacity:.5;text-align:center;margin-top:2px;font-family:monospace"></div>
+              </div>
+              <button class="tc-btn-full" id="tcBtTestBtn" style="font-size:.75rem">🧪 Test</button>
+              <!-- v0.7.173: GamePad (inspired by bit-playground) -->
+              <!-- v0.7.222: collapsed by default — kids see a compact micro:bit
+                   panel first (just Connect + Test), can expand on demand. -->
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.7;list-style:none;font-weight:700">🎮 GamePad</summary>
+                <div style="padding:8px 0;text-align:center">
+                  <div class="tc-dpad">
+                    <div></div><button class="tc-dpad-btn" id="tcTiltUp">↑</button><div></div>
+                    <button class="tc-dpad-btn" id="tcPanLeft">←</button>
+                    <button class="tc-dpad-center" id="tcPanCenter"></button>
+                    <button class="tc-dpad-btn" id="tcPanRight">→</button>
+                    <div></div><button class="tc-dpad-btn" id="tcTiltDown">↓</button><div></div>
+                  </div>
+                  <button class="tc-fire-btn" id="tcFireBtn">🔥 FIRE</button>
+                  <div style="font-size:.6rem;opacity:.4;margin-top:4px">P:<span id="tcPanVal">90</span>° T:<span id="tcTiltVal">90</span>°</div>
+                </div>
+              </details>
+              <!-- v0.7.173: Servos (inspired by bit-playground) -->
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.7;list-style:none;font-weight:700">⚙ Servos</summary>
+                <div style="padding:6px 0">
+                  <div style="font-size:.7rem;opacity:.7;margin-bottom:2px">Servo 1 (Pan · P1)</div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input type="range" id="tcServo1Slider" min="0" max="180" value="90" style="flex:1" />
+                    <span id="tcServo1Val" style="font-size:.75rem;font-weight:700;min-width:30px">90°</span>
+                  </div>
+                  <button class="tc-btn-full" id="tcServo1Stop" style="margin-top:3px;font-size:.65rem;padding:3px;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)" title="Release servo (no torque)">Stop</button>
+                  <div style="font-size:.7rem;opacity:.7;margin:8px 0 2px">Servo 2 (Tilt · P2)</div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input type="range" id="tcServo2Slider" min="0" max="180" value="90" style="flex:1" />
+                    <span id="tcServo2Val" style="font-size:.75rem;font-weight:700;min-width:30px">90°</span>
+                  </div>
+                  <button class="tc-btn-full" id="tcServo2Stop" style="margin-top:3px;font-size:.65rem;padding:3px;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)" title="Release servo (no torque)">Stop</button>
+                </div>
+              </details>
+              <details>
+                <summary style="font-size:.75rem;cursor:pointer;opacity:.6;list-style:none">💡 LED 5x5</summary>
+                <div style="padding:6px 0;text-align:center">
+                  <div id="tcLedGrid" style="display:inline-grid;grid-template-columns:repeat(5,1fr);gap:2px"></div>
+                  <button class="tc-btn-full" id="tcLedClear" style="margin-top:6px;font-size:.7rem;padding:4px" title="Clear all LEDs (also sends blank to micro:bit)">Clear</button>
+                </div>
+              </details>
+            </div>
+          </aside>
+
+          <!-- CENTER: Canvas preview -->
+          <div class="tc-stage-wrap">
+            <div class="tc-stage" id="tcStage">
+              <canvas id="tcCanvas" width="1920" height="1080" role="img" aria-label="Live preview canvas showing camera and screen sources"></canvas>
+              <canvas id="tcOverlayCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
+              <!-- v0.7.115: rule-of-thirds grid overlay — separate canvas so it never enters captureStream -->
+              <canvas id="tcGridCanvas" width="1920" height="1080" class="tc-overlay tc-grid-overlay"></canvas>
+              <!-- v0.7.130: source name labels overlay — separate canvas so labels never enter captureStream -->
+              <canvas id="tcSourceLabelsCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
+              <!-- v0.7.140: FPS counter overlay — separate canvas so counter never enters captureStream -->
+              <canvas id="tcFpsCanvas" width="1920" height="1080" class="tc-overlay"></canvas>
+              <div class="tc-stage-hint" id="tcStageHint" data-i18n="stageHint">👆 Ajoute une source pour commencer</div>
+              <div class="tc-countdown" id="tcCountdown"></div>
+              <!-- v0.7.115: auto-advance countdown pill -->
+              <div class="tc-autoadv-pill" id="tcAutoAdvPill" style="display:none"></div>
+              <!-- v0.7.20: broadcast-style teleprompter with auto-scroll + persist + font/width controls -->
+              <div class="tc-teleprompter" id="tcTeleprompter" style="display:none">
+                <div class="tc-tele-controls" id="tcTeleControls">
+                  <button class="tc-tele-btn" id="tcTelePlayBtn" title="Play/Pause">⏵</button>
+                  <label class="tc-tele-ctrl">
+                    <span data-i18n="teleSpeed">Vitesse</span>
+                    <input type="range" id="tcTeleSpeed" min="10" max="120" step="5" value="35">
+                  </label>
+                  <button class="tc-tele-btn" id="tcTeleFontDown" title="A−">A−</button>
+                  <button class="tc-tele-btn" id="tcTeleFontUp" title="A+">A+</button>
+                  <button class="tc-tele-btn" id="tcTeleWidthDown" title="Narrower">↔−</button>
+                  <button class="tc-tele-btn" id="tcTeleWidthUp" title="Wider">↔+</button>
+                  <button class="tc-tele-btn" id="tcTeleImportBtn" title="Import .txt/.md/.vtt">📂</button>
+                  <input type="file" id="tcTeleImportInput" accept=".txt,.md,.vtt,text/plain,text/markdown,text/vtt" style="display:none" />
+                  <button class="tc-tele-btn" id="tcTeleResetBtn" title="Reset scroll">↻</button>
+                </div>
+                <div class="tc-tele-inner" id="tcTeleInner" data-i18n="promptTelePlaceholder" contenteditable="true">Colle ton script ici…</div>
+                <div class="tc-tele-reading-line" aria-hidden="true"></div>
+              </div>
+              <!-- v0.7.105: draggable sticky-note overlay layer (HTML-only, never in recording) -->
+              <div class="tc-sticky-layer" id="tcStickyLayer"></div>
+              <!-- Silence warning chip — appears (teacher-only, never in the recording) when mic is quiet >1.8s -->
+              <div class="tc-silence-chip" id="tcSilenceChip">⚠ <span data-i18n="silenceChip">Tu es silencieux…</span></div>
+              <!-- v0.7.20: Floating HTML toolbar for the selected SOURCE (video / screen).
+                   Replaces the canvas-drawn ✕/👁 buttons that used to overlap the video. -->
+              <!-- v0.7.160: kid-friendly source toolbar — 6 big buttons + Style popup -->
+              <div class="tc-source-toolbar" id="tcSourceToolbar" style="display:none">
+                <button class="tc-toolbar-btn" id="tcSrcToolbarHide" title="Hide">👁</button>
+                <button class="tc-toolbar-btn" id="tcSrcToolbarPin" title="Pin">📌</button>
+                <button class="tc-toolbar-btn" id="tcSrcToolbarLock" title="Lock">🔓</button>
+                <select class="tc-toolbar-select" id="tcSrcToolbarShape" title="Shape">
+                  <option value="rect">⬛ Rectangle</option>
+                  <option value="rounded">🔲 Rounded</option>
+                  <option value="circle">⚪ Circle</option>
+                  <option value="pill">💊 Pill</option>
+                  <option value="hexagon">⬢ Hexagon</option>
+                  <option value="octagon">🛑 Octagon</option>
+                  <option value="diamond">🔶 Diamond</option>
+                  <option value="star">⭐ Star</option>
+                  <option value="heart">❤️ Heart</option>
+                </select>
+                <button class="tc-toolbar-btn" id="tcSrcCropBtn" title="Visual crop">✂️</button>
+                <button class="tc-toolbar-btn" id="tcSrcStyleBtn" title="Style">🎨</button>
+                <button class="tc-toolbar-btn tc-toolbar-del" id="tcSrcToolbarDel" title="Delete">✕</button>
+              </div>
+              <!-- v0.7.160: Style popup — all source properties in a compact panel -->
+              <div class="tc-src-style-popup" id="tcSrcStylePopup" style="display:none">
+                <div class="tc-ssp-section" id="tcSspShapeColor" style="display:none">
+                  <div class="tc-ssp-title">🟩 Shape Color</div>
+                  <label class="tc-ssp-row"><input type="color" id="tcSrcShapeColor" value="#a3e635" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🎨 Look</div>
+                  <label class="tc-ssp-row">Opacity <input type="range" id="tcSrcOpacity" min="0" max="100" value="100" /></label>
+                  <label class="tc-ssp-row">Filter <select id="tcSrcFilter"><option value="none">—</option><option value="bw">B&W</option><option value="sepia">Sepia</option><option value="invert">Invert</option><option value="bright">Bright</option><option value="contrast">Contrast</option><option value="vintage">Vintage</option><option value="cool">Cool</option><option value="warm">Warm</option></select></label>
+                  <label class="tc-ssp-row">Corners <input type="range" id="tcSrcCornerRadius" min="0" max="50" value="0" /></label>
+                  <label class="tc-ssp-row">Rotation <input type="range" id="tcSrcRotation" min="-180" max="180" value="0" /><span id="tcSrcRotationVal">0°</span></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🖼 Frame</div>
+                  <label class="tc-ssp-row">Skin <select id="tcSrcSkin">
+                    <option value="none">—</option>
+                    <optgroup label="📺 Classic">
+                      <option value="tv">📺 TV</option><option value="polaroid">📸 Polaroid</option>
+                      <option value="comic">🗯 Comic</option><option value="monitor">🖥 Monitor</option>
+                    </optgroup>
+                    <optgroup label="📱 Tech">
+                      <option value="phone">📱 Phone</option><option value="laptop">💻 Laptop</option>
+                      <option value="terminal">📟 Terminal</option><option value="hologram">🌐 Hologram</option>
+                      <option value="android">🤖 Android</option>
+                    </optgroup>
+                    <optgroup label="🤖 Characters">
+                      <option value="robot">🤖 Visor</option><option value="robothead">🤖 Robot Head</option>
+                      <option value="alien">👾 Alien</option><option value="anonymous">🎭 Anon</option>
+                      <option value="ninja">🥷 Ninja</option><option value="detective">🕵️ Detective</option>
+                    </optgroup>
+                    <optgroup label="🎮 Gaming">
+                      <option value="arcade">🕹 Arcade</option><option value="healthbar">❤️ HP Bar</option>
+                      <option value="leaderboard">🏆 Rank</option><option value="sniper">🎯 Scope</option>
+                      <option value="slotmachine">🎰 Slots</option>
+                    </optgroup>
+                    <optgroup label="🚀 Space">
+                      <option value="astronaut">🧑‍🚀 Astronaut</option><option value="ufo">🛸 UFO</option>
+                      <option value="planet">🪐 Planet</option><option value="warp">💫 Warp</option>
+                    </optgroup>
+                    <optgroup label="🔬 Science">
+                      <option value="lab">🧪 Lab</option><option value="microscope">🔬 Microscope</option>
+                      <option value="dna">🧬 DNA</option><option value="electric">⚡ Electric</option>
+                      <option value="neural">🧠 Neural</option>
+                    </optgroup>
+                    <optgroup label="⚔️ Futurist">
+                      <option value="mech">⚙️ Mech</option><option value="hud">📊 HUD</option>
+                      <option value="forcefield">🛡 Shield</option><option value="hexgrid">💠 Hexgrid</option>
+                      <option value="portal">🔮 Portal</option><option value="floating">🔲 Float</option>
+                    </optgroup>
+                    <optgroup label="🎨 Style">
+                      <option value="diamond">💎 Diamond</option><option value="flame">🔥 Flame</option>
+                      <option value="neon">🌈 Neon</option><option value="circus">🎪 Circus</option>
+                      <option value="vortex">🌀 Vortex</option>
+                    </optgroup>
+                    <optgroup label="📡 Broadcast">
+                      <option value="clapboard">🎬 Clap</option><option value="livestream">📺 Live</option>
+                      <option value="surveillance">📡 CCTV</option>
+                    </optgroup>
+                    <optgroup label="🕌 Islamic">
+                      <option value="minaret">🕌 Minaret</option><option value="crescent">☪️ Crescent</option>
+                      <option value="andalusia">🏛 Andalusia</option>
+                    </optgroup>
+                    <optgroup label="🧊 3D Depth">
+                      <option value="cube">🎲 Cube</option><option value="gallery">🖼 Gallery</option>
+                      <option value="cardboard">📦 Box</option><option value="crystal">💎 Crystal</option>
+                      <option value="mirror">🪞 Mirror</option><option value="book">📖 Book</option>
+                      <option value="museum">🏛 Museum</option><option value="ice">🧊 Ice</option>
+                      <option value="gift">🎁 Gift</option>
+                    </optgroup>
+                    <optgroup label="🎨 Design Apps">
+                      <option value="canva">🎨 Canva</option><option value="figma">🖌 Figma</option>
+                      <option value="photoshop">🖼 Photoshop</option><option value="vscode">💻 VS Code</option>
+                      <option value="scratch">🐱 Scratch</option>
+                    </optgroup>
+                  </select></label>
+                  <label class="tc-ssp-row">Border <input type="color" id="tcSrcBorderColor" value="#ffffff" /> <input type="number" id="tcSrcBorderWidth" min="0" max="10" value="0" style="width:40px" /></label>
+                  <label class="tc-ssp-row">Shadow <input type="color" id="tcSrcShadowColor" value="#000000" /> <input type="range" id="tcSrcShadowBlur" min="0" max="30" value="0" style="width:60px" /></label>
+                  <label class="tc-ssp-row">Offset <input type="range" id="tcSrcShadowOffsetX" min="-20" max="20" value="5" style="width:50px" /> <input type="range" id="tcSrcShadowOffsetY" min="-20" max="20" value="5" style="width:50px" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">✂ Crop</div>
+                  <div class="tc-ssp-grid2">
+                    <label>T <input type="range" id="tcSrcCropTop" min="0" max="40" value="0" /></label>
+                    <label>B <input type="range" id="tcSrcCropBottom" min="0" max="40" value="0" /></label>
+                    <label>L <input type="range" id="tcSrcCropLeft" min="0" max="40" value="0" /></label>
+                    <label>R <input type="range" id="tcSrcCropRight" min="0" max="40" value="0" /></label>
+                  </div>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🏷 Badge</div>
+                  <label class="tc-ssp-row"><input type="text" id="tcSrcBadgeText" placeholder="LIVE" maxlength="12" style="width:70px" /> <input type="color" id="tcSrcBadgeColor" value="#e74c3c" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">↔ Align</div>
+                  <div class="tc-ssp-align">
+                    <button class="tc-toolbar-btn" id="tcSrcAlignLeft" title="Left">⬅</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignCenterH" title="Center H">↔</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignRight" title="Right">➡</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignTop" title="Top">⬆</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignCenterV" title="Center V">↕</button>
+                    <button class="tc-toolbar-btn" id="tcSrcAlignBottom" title="Bottom">⬇</button>
+                  </div>
+                </div>
+                <div class="tc-ssp-section">
+                  <button class="tc-toolbar-btn" id="tcSrcToolbarAspect" title="Aspect lock">🔗</button>
+                  <button class="tc-toolbar-btn" id="tcSrcFlipH" title="Flip H">↔</button>
+                  <button class="tc-toolbar-btn" id="tcSrcFlipV" title="Flip V">↕</button>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🙈 Privacy</div>
+                  <button class="tc-toolbar-btn" id="tcSrcAvatarBtn" title="Avatar mode">🤖 Avatar</button>
+                  <button class="tc-toolbar-btn" id="tcSrcBlurBtn" title="Blur face">🔲 Blur</button>
+                </div>
+                <!-- v0.10.0: AutoFrame — Center Stage clone, skin-tone tracking -->
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🎯 <span data-i18n="autoFrameTitle">Smart frame</span></div>
+                  <button class="tc-toolbar-btn" id="tcSrcAutoFrameBtn" title="Auto-pan to keep face centered (works on cam sources only)">🎯 <span data-i18n="autoFrame">Auto-frame</span></button>
+                </div>
+              </div>
+              <!-- v0.7.169: logo mini panel (click logo on canvas) -->
+              <div class="tc-src-style-popup tc-brand-panel" id="tcLogoPanel" style="display:none">
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">🏷 Logo</div>
+                  <div class="tc-ssp-row" id="tcLogoGallery" style="flex-wrap:wrap;gap:4px"></div>
+                  <label class="tc-ssp-row" style="margin-top:6px"><input type="file" id="tcLogoUploadMore" accept="image/*" style="font-size:11px;width:100%" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Look</div>
+                  <label class="tc-ssp-row">Size <input type="range" id="tcLogoPanelSize" min="60" max="500" value="120" /></label>
+                  <label class="tc-ssp-row">Opacity <input type="range" id="tcLogoPanelOpacity" min="0" max="100" value="100" /></label>
+                  <label class="tc-ssp-row">Effect <select id="tcLogoPanelEffect" style="flex:1;font-size:11px" size="1">
+                    <option value="none">None</option>
+                    <option value="spin">Spin</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option>
+                    <option value="float">Float</option><option value="shake">Shake</option><option value="jelly">Jelly</option>
+                    <option value="flip">Flip</option><option value="orbit">Orbit</option><option value="spiral">Spiral</option>
+                    <option value="glow">Glow</option><option value="neon">Neon</option><option value="fire">Fire</option>
+                    <option value="gold">Gold</option><option value="blink">Blink</option><option value="glitch">Glitch</option>
+                    <option value="matrix">Matrix</option><option value="invert">Invert</option><option value="thermal">Thermal</option>
+                    <option value="xray">X-Ray</option><option value="vintage">Vintage</option>
+                  </select></label>
+                  <label class="tc-ssp-row">Filter <select id="tcLogoPanelFilter" style="flex:1;font-size:11px">
+                    <option value="none">None</option><option value="bw">B&W</option><option value="sepia">Sepia</option><option value="bright">Bright</option><option value="contrast">Contrast</option><option value="vintage">Vintage</option>
+                  </select></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Tint</div>
+                  <div class="tc-ssp-row" style="flex-wrap:wrap;gap:3px">
+                    <button class="tc-brand-swatch" data-tint="" style="background:transparent;border:1px dashed rgba(255,255,255,.3)" title="None">✕</button>
+                    <button class="tc-brand-swatch" data-tint="#ffffff" style="background:#fff"></button>
+                    <button class="tc-brand-swatch" data-tint="#fbbf24" style="background:#fbbf24"></button>
+                    <button class="tc-brand-swatch" data-tint="#fb923c" style="background:#fb923c"></button>
+                    <button class="tc-brand-swatch" data-tint="#ef4444" style="background:#ef4444"></button>
+                    <button class="tc-brand-swatch" data-tint="#a3e635" style="background:#a3e635"></button>
+                    <button class="tc-brand-swatch" data-tint="#38bdf8" style="background:#38bdf8"></button>
+                    <button class="tc-brand-swatch" data-tint="#e879f9" style="background:#e879f9"></button>
+                    <button class="tc-brand-swatch" data-tint="#000000" style="background:#000"></button>
+                  </div>
+                </div>
+                <button class="tc-btn-full" id="tcLogoPanelRemove" style="margin-top:6px;font-size:.75rem;color:#ef4444">Remove logo</button>
+              </div>
+
+              <!-- v0.7.169: slogan mini panel (click slogan on canvas) -->
+              <div class="tc-src-style-popup tc-brand-panel" id="tcSloganPanel" style="display:none">
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">✍ Slogan</div>
+                  <label class="tc-ssp-row"><input type="text" id="tcSloganPanelText" placeholder="Your slogan..." style="flex:1;font-size:12px" /></label>
+                  <label class="tc-ssp-row">Font <select id="tcSloganPanelFont" style="flex:1;font-size:11px">
+                    <option value="0">Bangers</option><option value="1">Righteous</option><option value="2">Orbitron</option><option value="3">Amiri</option><option value="4">Tajawal</option><option value="5">Arial</option>
+                  </select></label>
+                  <label class="tc-ssp-row">Size <input type="range" id="tcSloganPanelSize" min="20" max="160" value="48" /></label>
+                  <label class="tc-ssp-row">Opacity <input type="range" id="tcSloganPanelOpacity" min="0" max="100" value="100" /></label>
+                </div>
+                <div class="tc-ssp-section">
+                  <div class="tc-ssp-title">Color</div>
+                  <div class="tc-ssp-row" style="flex-wrap:wrap;gap:3px">
+                    <button class="tc-slogan-swatch" data-sc="#ffffff" style="background:#fff"></button>
+                    <button class="tc-slogan-swatch" data-sc="#fbbf24" style="background:#fbbf24"></button>
+                    <button class="tc-slogan-swatch" data-sc="#fb923c" style="background:#fb923c"></button>
+                    <button class="tc-slogan-swatch" data-sc="#ef4444" style="background:#ef4444"></button>
+                    <button class="tc-slogan-swatch" data-sc="#a3e635" style="background:#a3e635"></button>
+                    <button class="tc-slogan-swatch" data-sc="#38bdf8" style="background:#38bdf8"></button>
+                    <button class="tc-slogan-swatch" data-sc="#e879f9" style="background:#e879f9"></button>
+                    <button class="tc-slogan-swatch" data-sc="#000000" style="background:#000"></button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- v0.7.47: whiteboard color + thickness + eraser picker -->
+              <div class="tc-wb-picker" id="tcWbPicker" style="display:none">
+                <button class="tc-wb-swatch" data-color="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+                <button class="tc-wb-swatch" data-color="#ef4444" style="background:#ef4444" title="red"></button>
+                <button class="tc-wb-swatch" data-color="#22c55e" style="background:#22c55e" title="green"></button>
+                <button class="tc-wb-swatch" data-color="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+                <button class="tc-wb-swatch" data-color="#e879f9" style="background:#e879f9" title="pink"></button>
+                <button class="tc-wb-swatch" data-color="#ffffff" style="background:#ffffff" title="white"></button>
+                <span class="tc-wb-sep"></span>
+                <button class="tc-wb-thick" data-thickness="4" title="Thin">•</button>
+                <button class="tc-wb-thick" data-thickness="8" title="Medium">●</button>
+                <button class="tc-wb-thick" data-thickness="14" title="Thick">⬤</button>
+                <span class="tc-wb-sep"></span>
+                <button class="tc-wb-btn" id="tcWbEraserBtn" title="Eraser">🧽</button>
+                <button class="tc-wb-btn" id="tcWbClearBtn" title="Clear all">🗑</button>
+              </div>
+              <!-- v0.7.35: right-click context menu on a selected source. Plain
+                   position:fixed panel — teacher-only, never drawn on canvas. -->
+              <div class="tc-src-ctxmenu" id="tcSrcCtxMenu" style="display:none">
+                <button data-action="hide"><span class="tc-ctx-icon">👁</span><span data-i18n="ctxHide">Cacher / afficher</span></button>
+                <button data-action="pin"><span class="tc-ctx-icon">📌</span><span data-i18n="ctxPin">Épingler / détacher</span></button>
+                <button data-action="lock"><span class="tc-ctx-icon">🔒</span><span data-i18n="ctxLock">Verrouiller / déverrouiller</span></button>
+                <button data-action="dup"><span class="tc-ctx-icon">🔄</span><span data-i18n="ctxDup">Dupliquer</span></button>
+                <div class="tc-ctx-sub" data-action="shape">
+                  <span class="tc-ctx-icon">⬛</span><span data-i18n="ctxShape">Forme ▸</span>
+                  <div class="tc-ctx-submenu">
+                    <button data-shape="rect">⬛ Rectangle</button>
+                    <button data-shape="rounded">🔲 Rounded</button>
+                    <button data-shape="circle">⚪ Circle</button>
+                    <button data-shape="pill">💊 Pill</button>
+                    <button data-shape="hexagon">⬢ Hexagon</button>
+                    <button data-shape="octagon">🛑 Octagon</button>
+                    <button data-shape="diamond">🔶 Diamond</button>
+                    <button data-shape="star">⭐ Star</button>
+                    <button data-shape="heart">❤️ Heart</button>
+                  </div>
+                </div>
+                <button data-action="forward"><span class="tc-ctx-icon">⬆</span><span data-i18n="ctxForward">Avancer</span></button>
+                <button data-action="backward"><span class="tc-ctx-icon">⬇</span><span data-i18n="ctxBackward">Reculer</span></button>
+                <button data-action="front"><span class="tc-ctx-icon">⏫</span><span data-i18n="ctxFront">Avant-plan</span></button>
+                <button data-action="back"><span class="tc-ctx-icon">⏬</span><span data-i18n="ctxBack">Arrière-plan</span></button>
+                <button data-action="pip"><span class="tc-ctx-icon">📺</span><span data-i18n="ctxPip">Pop out (PiP)</span></button>
+                <button data-action="mirror"><span class="tc-ctx-icon">🪞</span><span data-i18n="ctxMirror">Miroir</span></button>
+                <button data-action="mirrorDup"><span class="tc-ctx-icon">🔀</span><span data-i18n="ctxMirrorDup">Dupliquer en miroir</span></button>
+                <hr>
+                <button data-action="del" class="danger"><span class="tc-ctx-icon">✕</span><span data-i18n="ctxDel">Supprimer</span></button>
+              </div>
+              <!-- Floating color picker toolbar, shown above a selected text overlay (v0.7.1 Canva-style) -->
+              <div class="tc-text-toolbar" id="tcTextToolbar" style="display:none">
+                <button class="tc-swatch" data-color="#ffffff" style="background:#ffffff" title="white"></button>
+                <button class="tc-swatch" data-color="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+                <button class="tc-swatch" data-color="#fb923c" style="background:#fb923c" title="orange"></button>
+                <button class="tc-swatch" data-color="#ef4444" style="background:#ef4444" title="red"></button>
+                <button class="tc-swatch" data-color="#a3e635" style="background:#a3e635" title="lime"></button>
+                <button class="tc-swatch" data-color="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+                <span class="tc-toolbar-sep"></span>
+                <button class="tc-toolbar-btn" id="tcToolbarFont"   title="Font (cycle)">Aa</button>
+                <button class="tc-toolbar-btn" id="tcToolbarTrans"  title="Transparency (cycle)">🎭</button>
+                <span class="tc-toolbar-sep"></span>
+                <button class="tc-toolbar-btn" id="tcToolbarRotLeft" title=",">↺</button>
+                <button class="tc-toolbar-btn" id="tcToolbarRotRight" title=".">↻</button>
+                <button class="tc-toolbar-btn" id="tcToolbarDup" title="Ctrl+D">📋</button>
+                <button class="tc-toolbar-btn tc-toolbar-del" id="tcToolbarDel" title="Del">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDEBAR: Scenes + texts -->
+          <aside class="tc-sidebar tc-sidebar-scenes">
+            <div class="tc-side-title">🎭 <span data-i18n="scenes">Scènes</span></div>
+            <div class="tc-scenes" id="tcScenes"></div>
+            <button class="tc-btn-full tc-reset-layout" id="tcResetLayoutBtn" data-i18n="resetLayout">🔓 Réinitialiser la disposition</button>
+            <button class="tc-btn-full" id="tcSaveSceneBtn">💾 <span data-i18n="saveScene">Sauvegarder la disposition</span></button>
+
+            <!-- v0.7.161: compact text section — single button with popup -->
+            <button class="tc-btn-full" id="tcAddTextDropdown" style="margin-top:14px">🎨 <span data-i18n="addItemsBtn">Ajouter</span> ▾</button>
+            <!-- Text picker popup -->
+            <div class="tc-text-picker" id="tcTextPicker" style="display:none">
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Quick stickers</div>
+                <div class="tc-text-presets" id="tcTextPresets"></div>
+              </div>
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Custom</div>
+                <button class="tc-btn-full" id="tcAddTextBtn" style="margin:4px 0">+ <span data-i18n="addText">Texte libre</span></button>
+                <button class="tc-btn-full" id="tcEmojiBtn" style="margin:4px 0">😀 <span data-i18n="emojiBtn">Emoji</span></button>
+                <div class="tc-emoji-palette" id="tcEmojiPalette" style="display:none">
+                  <div class="tc-emoji-row"><button>🎉</button><button>🏆</button><button>⭐</button><button>✨</button><button>🔥</button><button>💯</button><button>💪</button><button>🚀</button></div>
+                  <div class="tc-emoji-row"><button>❤️</button><button>💖</button><button>👍</button><button>👏</button><button>🙌</button><button>✌️</button><button>🤝</button><button>🫶</button></div>
+                  <div class="tc-emoji-row"><button>🤖</button><button>⚙️</button><button>🔧</button><button>💡</button><button>📌</button><button>🎯</button><button>⚡</button><button>🌈</button></div>
+                  <div class="tc-emoji-row"><button>😀</button><button>😂</button><button>🤔</button><button>😎</button><button>🙂</button><button>😮</button><button>🤩</button><button>🥳</button></div>
+                </div>
+              </div>
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">🏷 Stickers</div>
+                <div class="tc-sticker-grid" id="tcStickerGrid">
+                  <button class="tc-sticker-btn" data-sticker="🚀" title="Rocket">🚀</button>
+                  <button class="tc-sticker-btn" data-sticker="⭐" title="Star">⭐</button>
+                  <button class="tc-sticker-btn" data-sticker="🔥" title="Fire">🔥</button>
+                  <button class="tc-sticker-btn" data-sticker="💡" title="Idea">💡</button>
+                  <button class="tc-sticker-btn" data-sticker="✅" title="Check">✅</button>
+                  <button class="tc-sticker-btn" data-sticker="❌" title="Cross">❌</button>
+                  <button class="tc-sticker-btn" data-sticker="❓" title="Question">❓</button>
+                  <button class="tc-sticker-btn" data-sticker="⚠️" title="Warning">⚠️</button>
+                  <button class="tc-sticker-btn" data-sticker="👆" title="Point up">👆</button>
+                  <button class="tc-sticker-btn" data-sticker="👇" title="Point down">👇</button>
+                  <button class="tc-sticker-btn" data-sticker="👈" title="Point left">👈</button>
+                  <button class="tc-sticker-btn" data-sticker="👉" title="Point right">👉</button>
+                  <button class="tc-sticker-btn" data-sticker="🤖" title="Robot">🤖</button>
+                  <button class="tc-sticker-btn" data-sticker="💻" title="Laptop">💻</button>
+                  <button class="tc-sticker-btn" data-sticker="⚙️" title="Gear">⚙️</button>
+                  <button class="tc-sticker-btn" data-sticker="🎯" title="Target">🎯</button>
+                  <button class="tc-sticker-btn" data-sticker="💯" title="100">💯</button>
+                  <button class="tc-sticker-btn" data-sticker="🏆" title="Trophy">🏆</button>
+                  <button class="tc-sticker-btn" data-sticker="🎬" title="Clap">🎬</button>
+                  <button class="tc-sticker-btn" data-sticker="📌" title="Pin">📌</button>
+                </div>
+              </div>
+              <div class="tc-tp-section">
+                <div class="tc-tp-title">Shapes</div>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px">
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#a3e635',200,150)" title="Rectangle">⬛</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#38bdf8',200,200)" title="Circle">⚪</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rounded','#fb923c',200,150)" title="Rounded">🔲</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('pill','#e879f9',240,100)" title="Pill">💊</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('hexagon','#22c55e',200,200)" title="Hexagon">⬢</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('octagon','#ef4444',200,200)" title="Octagon">🛑</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('diamond','#fbbf24',200,200)" title="Diamond">🔶</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('star','#fbbf24',200,200)" title="Star">⭐</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('heart','#ef4444',200,200)" title="Heart">❤️</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#000000',1920,1080)" title="Full bg">🖤</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#1e293b',400,60)" title="Dark bar">➖</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rect','#ffffff',400,60)" title="White bar">▬</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#ef4444',60,60)" title="Red dot">🔴</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('circle','#22c55e',60,60)" title="Green dot">🟢</button>
+                  <button class="tc-src-btn" style="padding:5px;font-size:.9rem" onclick="Engine.addShape('rounded','#1e293b',500,300)" title="Dark card">🃏</button>
+                </div>
+              </div>
+              <details class="tc-tp-advanced">
+                <summary>⚙ Font & style</summary>
+                <label class="sidebar-label" style="font-size:.7rem;opacity:.75" data-i18n="textFont">Aa Police</label>
+                <select id="tcTextFontSelect" class="sidebar-select" style="font-size:.78rem;padding:6px 8px">
+                  <option value="0">Bangers</option><option value="1">Righteous</option>
+                  <option value="2">Orbitron</option><option value="3">Amiri</option>
+                  <option value="4">Tajawal</option><option value="5">Arial</option>
+                </select>
+                <label class="sidebar-label" style="margin-top:6px;font-size:.7rem;opacity:.75" data-i18n="textStroke">✒ Contour</label>
+                <input type="range" id="tcTextStrokeSlider" min="0" max="14" step="1" value="6" class="tc-brand-range" />
+              </details>
+            </div>
+
+            <!-- v0.7.20: Tools moved to floating horizontal bar above the stage -->
+
+          </aside>
+        </div>
+
+        <!-- v0.7.34: Snapshot gallery strip — shows thumbnails of every
+             snapshot taken during the session. Hidden when empty. -->
+        <div class="tc-snapshot-strip" id="tcSnapshotStrip" style="display:none"></div>
+
+        <!-- v0.9.28: Stage status bar — single line of "status-as-language"
+             that consolidates 5 scattered indicators (state pill, source
+             count, format, bitrate, handle). Each chunk is clickable and
+             jumps to the relevant setting. Self-documenting. -->
+        <div class="tc-stage-status" id="tcStageStatus" role="status" aria-live="polite">
+          <span class="tc-ss-chunk tc-ss-state"   id="tcSsState"  title="Recorder state">🟢 <span data-i18n="ssReady">Ready</span></span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-sources" id="tcSsSources" title="Click to open the Sources sidebar">0 <span data-i18n="ssSources">sources</span></span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-format"  id="tcSsFormat"  title="Click to change canvas format (Settings → Stage format)">16:9</span>
+          <span class="tc-ss-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-quality" id="tcSsQuality" title="Click to change recording quality">8 Mbps</span>
+          <span class="tc-ss-sep tc-ss-handle-sep">·</span>
+          <span class="tc-ss-chunk tc-ss-handle"  id="tcSsHandle"  title="Your hacker handle"></span>
+        </div>
+
+        <!-- REC BAR (template strip moved inline) -->
+        <div class="tc-rec-bar">
+          <div class="tc-template-strip" id="tcTemplateStrip" style="margin:0"></div>
+          <button class="tc-rec-btn" id="tcRecBtn" aria-label="Record">
+            <span class="tc-rec-icon">⏺</span>
+            <span class="tc-rec-label" data-i18n="recStart">ENREGISTRER</span>
+          </button>
+          <!-- v0.7.20: moved the timer here from the card header so there's
+               just one "00:00" on the page, next to the REC button where the
+               eye naturally goes during recording. -->
+          <div class="tc-rec-timer" id="tcRecIndicator" role="timer" aria-live="polite" aria-label="Recording timer">
+            <span class="tc-rec-dot"></span>
+            <span class="tc-rec-time" id="tcRecTime">00:00</span>
+          </div>
+          <!-- v0.7.65: optional countdown chip when a time goal is set -->
+          <span class="tc-time-goal-chip" id="tcTimeGoalChip" style="display:none">⏳ 00:00</span>
+          <!-- v0.7.42: LED-style live audio level meter next to the REC button.
+               10 segments, color-coded green/yellow/red. Driven by Engine.updateVU. -->
+          <div class="tc-led-meter" id="tcLedMeter" title="Audio level">
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-g"></span>
+            <span class="tc-led tc-led-y"></span>
+            <span class="tc-led tc-led-y"></span>
+            <span class="tc-led tc-led-r"></span>
+            <span class="tc-led tc-led-r"></span>
+          </div>
+          <button class="tc-rec-aux" id="tcPauseBtn" disabled>⏸ <span data-i18n="pause">Pause</span></button>
+          <button class="tc-rec-aux" id="tcMarkBtn" disabled>🏷 <span data-i18n="mark">Marker</span> <kbd>M</kbd></button>
+          <button class="tc-rec-aux" id="tcStopBtn" disabled>⏹ <span data-i18n="stop">Stop</span></button>
+        </div>
+
+        <!-- v0.9.27: Last-take panel as a fullscreen modal overlay.
+             tc-take-modal class fixes it to viewport, with a backdrop +
+             header X. Closing returns to a fresh canvas state.
+             Re-openable via the new tcReopenTakeBtn (added when a take
+             exists). -->
+        <div class="tc-take tc-take-modal" id="tcTake" style="display:none" role="dialog" aria-modal="true" aria-label="Recorded take">
+          <div class="tc-take-modal-header">
+            <span class="tc-take-modal-title">🎬 <span data-i18n="takeReady">Take ready</span></span>
+            <button class="btn-icon-only tc-take-modal-close" id="tcTakeModalClose" aria-label="Close take" title="Close (Esc)">✕</button>
+          </div>
+          <div class="tc-take-modal-body">
+          <video id="tcTakeVideo" controls></video>
+          <!-- v0.7.34: audio waveform strip — envelope of the full take,
+               click-to-seek, playhead tracks currentTime -->
+          <div class="tc-waveform-wrap" id="tcWaveformWrap" style="display:none">
+            <canvas id="tcWaveform" width="960" height="56"></canvas>
+          </div>
+          <!-- v0.7.34: clickable chapter list — seeks the take video on click -->
+          <div class="tc-chapter-list" id="tcChapterList" style="display:none"></div>
+          <!-- v0.7.34: sensor timeline mini-chart. Only visible when the
+               last take has sensor samples. Renders accelerometer X/Y/Z
+               lines over the take duration, aligned with the video. -->
+          <div class="tc-sensor-chart-wrap" id="tcSensorChartWrap" style="display:none">
+            <div class="tc-sensor-chart-title">📈 <span data-i18n="sensorChartTitle">Capteurs micro:bit</span></div>
+            <canvas id="tcSensorChart" width="800" height="120"></canvas>
+            <div class="tc-sensor-chart-legend">
+              <span class="tc-sensor-legend-x">● X</span>
+              <span class="tc-sensor-legend-y">● Y</span>
+              <span class="tc-sensor-legend-z">● Z</span>
+              <span class="tc-sensor-legend-b">▍ <span data-i18n="sensorBtnsLegend">Boutons</span></span>
+            </div>
+          </div>
+          <!-- v0.7.93: rate this take 1-5 stars; writes onto newest History entry -->
+          <div class="tc-take-rating-wrap">
+            <span class="tc-take-rating-label" data-i18n="takeRating">Note ce tuto :</span>
+            <div class="tc-take-rating" id="tcTakeRating"></div>
+          </div>
+          <div class="tc-take-actions">
+            <!-- v0.7.115: inline filename editor — primed in Recorder.finish() -->
+            <div class="tc-take-title-wrap">
+              <label class="sidebar-label" data-i18n="takeTitle">📝 Nom du fichier</label>
+              <input type="text" id="tcTakeTitleInput" class="sidebar-select" maxlength="100" />
+            </div>
+            <!-- v0.7.129: post-recording journal notes -->
+            <div class="tc-take-notes-wrap">
+              <label class="sidebar-label" data-i18n="takeNotes">📝 Notes</label>
+              <textarea id="tcTakeNotes" class="sidebar-select" rows="3" data-i18n-placeholder="takeNotesPlaceholder" placeholder="Notes sur cette prise…"></textarea>
+            </div>
+            <button class="tc-btn-full tc-bulk-dl" id="tcBulkDlBtn">💾 <span data-i18n="bulkDl">Tout télécharger</span></button>
+            <a class="tc-btn-full" id="tcDownloadBtn" download>⬇️ <span data-i18n="download">Télécharger</span></a>
+            <button class="tc-btn-full" id="tcShareBtn">📤 <span data-i18n="shareTake">Partager</span></button>
+            <a class="tc-btn-full" id="tcDownloadVtt" download>📝 <span data-i18n="downloadChapters">Chapitres (.vtt)</span></a>
+            <a class="tc-btn-full" id="tcDownloadMd" download style="display:none">📝 <span data-i18n="downloadMd">Chapitres (.md)</span></a>
+            <a class="tc-btn-full" id="tcDownloadCsv" download style="display:none">📈 <span data-i18n="downloadCsv">Capteurs (.csv)</span></a>
+            <a class="tc-btn-full" id="tcDownloadSrt" download style="display:none">💬 Captions (.srt)</a>
+            <a class="tc-btn-full" id="tcDownloadThumb" download style="display:none">🖼 Thumbnail (.png)</a>
+            <button class="tc-btn-full" id="tcTrimBtn">✂️ <span data-i18n="trim">Couper</span></button>
+            <button class="tc-btn-full tc-silence-trim" id="tcSilenceTrimBtn" style="display:none">🔇 <span data-i18n="removeSilence">Retirer les silences</span></button>
+            <button class="tc-btn-full" id="tcReelsTrimBtn" style="display:none;background:rgba(244,114,182,.10);border-color:rgba(244,114,182,.4)">📱 <span data-i18n="reelsTrim">Cut to 90s for Reels</span></button>
+            <button class="tc-btn-full" id="tcReplayBtn" style="background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35)">⚡ <span data-i18n="instantReplay">Instant Replay</span></button>
+            <button class="tc-btn-full" id="tcAutoThumbBtn" style="background:rgba(163,230,53,.08);border-color:rgba(163,230,53,.25)">📸 <span data-i18n="autoThumbnail">Auto Thumbnail</span></button>
+            <!-- v0.10.1: AI feature — generate chapters from the live caption transcript -->
+            <button class="tc-btn-full" id="tcAutoChaptersBtn" style="background:rgba(168,85,247,.10);border-color:rgba(168,85,247,.35)">✨ <span data-i18n="autoChapters">Auto-chapter from transcript</span></button>
+            <button class="tc-btn-full" id="tcExportFlyerBtn" style="background:rgba(212,160,60,.08);border-color:rgba(212,160,60,.25)">📄 Export Flyer</button>
+            <button class="tc-btn-full" id="tcTranscriptBtn" style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)">📝 <span data-i18n="transcript">Transcript</span></button>
+            <button class="tc-btn-full" id="tcScoreBtn" style="background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25)">🎯 Quality Score</button>
+            <button class="tc-btn-full" id="tcSaveTakeBtn" style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)">🎬 Save as Take</button>
+            <div id="tcDirectorPanel" style="display:none"></div>
+            <button class="tc-btn-full tc-badge-btn" id="tcBadgeBtn">🏆 <span data-i18n="badgeBtn">Carte badge</span></button>
+            <button class="tc-btn-full" id="tcNewTakeBtn">🎬 <span data-i18n="newTake">Nouveau tuto</span></button>
+          </div>
+          </div><!-- /.tc-take-modal-body -->
+        </div>
+      </div>
+
+
+    </div>
+
+    <!-- ═══════════════════ NEWS TICKER ═══════════════════ -->
+    <div class="tc-ticker" id="tcTicker">
+      <div class="tc-ticker-track" id="tcTickerTrack"></div>
+      <button class="tc-ticker-pause" id="tcTickerPause" aria-label="pause ticker">⏸</button>
+    </div>
+
+    <!-- ═══════════════════ FOOTER ═══════════════════ -->
+    <footer class="app-footer">
+      <a class="footer-text" href="https://workshop-diy.org" target="_blank" rel="noopener">
+        <img src="./assets/workshop-diy-logo.svg" alt="Workshop DIY" class="footer-wdiy-logo" aria-hidden="true">
+        <span>powered by workshop-diy.org</span>
+      </a>
+    </footer>
+
+    <div class="deco-band bottom-band" aria-hidden="true"></div>
+  </div>
+
+  <!-- ═══════════════════ TRIM MODAL ═══════════════════ -->
+  <!-- v0.7.34: Keyboard shortcuts cheat sheet overlay. Toggle via ? key. -->
+  <div class="tc-cheat-modal" id="tcCheatModal" style="display:none">
+    <div class="tc-cheat-card">
+      <div class="tc-cheat-header">
+        <span class="tc-cheat-title">⌨ <span data-i18n="cheatTitle">Raccourcis clavier</span></span>
+        <button class="tc-cheat-close" id="tcCheatCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="tc-cheat-body">
+        <div class="tc-cheat-group">
+          <div class="tc-cheat-group-title" data-i18n="cheatRec">🎬 Enregistrement</div>
+          <div class="tc-cheat-row"><kbd>R</kbd><span data-i18n="cheatRecStart">Démarrer / arrêter l'enregistrement</span></div>
+          <div class="tc-cheat-row"><kbd>P</kbd><span data-i18n="cheatRecPause">Pause / reprendre</span></div>
+          <div class="tc-cheat-row"><kbd>M</kbd><span data-i18n="cheatRecMark">Ajouter un marker chapitre</span></div>
+          <div class="tc-cheat-row"><kbd>B</kbd><span data-i18n="cheatRecBig">Big marker (★)</span></div>
+          <div class="tc-cheat-row"><kbd>S</kbd><span data-i18n="cheatRecSnap">Capture photo</span></div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span data-i18n="cheatRecSaveAll">Tout télécharger</span></div>
+        </div>
+        <div class="tc-cheat-group">
+          <div class="tc-cheat-group-title" data-i18n="cheatTools">🛠 Outils live</div>
+          <div class="tc-cheat-row"><kbd>L</kbd><span data-i18n="cheatToolLaser">Laser pointer on/off</span></div>
+          <div class="tc-cheat-row"><kbd>F</kbd><span data-i18n="cheatToolFreeze">Geler l'écran</span></div>
+          <div class="tc-cheat-row"><kbd>D</kbd><span data-i18n="cheatToolDraw">Tableau blanc</span></div>
+          <div class="tc-cheat-row"><kbd>Z</kbd><span data-i18n="cheatToolZoom">Zoom manuel</span></div>
+          <div class="tc-cheat-row"><kbd>T</kbd><span data-i18n="cheatToolTele">Téléprompteur on/off</span></div>
+          <div class="tc-cheat-row"><kbd>Q</kbd><span data-i18n="cheatToolQuiz">Carte question</span></div>
+          <div class="tc-cheat-row"><kbd>C</kbd><span data-i18n="cheatToolCaptions">Sous-titres on/off</span></div>
+        </div>
+        <div class="tc-cheat-group">
+          <div class="tc-cheat-group-title" data-i18n="cheatScenes">🎭 Scènes</div>
+          <div class="tc-cheat-row"><kbd>1</kbd>-<kbd>9</kbd><span data-i18n="cheatScene">Changer de scène</span></div>
+          <div class="tc-cheat-row"><kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd> <kbd>→</kbd><span data-i18n="cheatSceneMove">Réordonner la scène active</span></div>
+        </div>
+        <div class="tc-cheat-group">
+          <div class="tc-cheat-group-title" data-i18n="cheatText">✏️ Texte sélectionné</div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span data-i18n="cheatTextDup">Dupliquer le texte</span></div>
+          <div class="tc-cheat-row"><kbd>,</kbd><span data-i18n="cheatTextRotL">Rotation −5°</span></div>
+          <div class="tc-cheat-row"><kbd>.</kbd><span data-i18n="cheatTextRotR">Rotation +5°</span></div>
+          <div class="tc-cheat-row"><kbd>/</kbd><span data-i18n="cheatTextRotReset">Reset rotation</span></div>
+          <div class="tc-cheat-row"><kbd>[</kbd> <kbd>]</kbd><span data-i18n="cheatTextLayer">Arrière / avant plan</span></div>
+          <div class="tc-cheat-row"><kbd>Shift</kbd>+<kbd>[</kbd> <kbd>]</kbd><span data-i18n="cheatTextLayerX">Arrière/avant plan extrême</span></div>
+          <div class="tc-cheat-row"><kbd>Del</kbd><span data-i18n="cheatTextDel">Supprimer sélection</span></div>
+        </div>
+        <div class="tc-cheat-group">
+          <div class="tc-cheat-group-title" data-i18n="cheatMisc">✨ Divers</div>
+          <div class="tc-cheat-row"><kbd>Shift</kbd>+drag<span data-i18n="cheatMiscFree">Étire libre d'une source</span></div>
+          <div class="tc-cheat-row"><kbd>Alt</kbd>+drag<span data-i18n="cheatMiscGrid">Snap à la grille</span></div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+🖱<span data-i18n="cheatMiscWheelZoom">Zoom molette</span></div>
+          <div class="tc-cheat-row"><kbd>[</kbd> <kbd>]</kbd><span data-i18n="cheatSrcLayer">Source : arrière / avant plan</span></div>
+          <div class="tc-cheat-row"><kbd>?</kbd><span data-i18n="cheatMiscThis">Afficher ce panneau</span></div>
+          <div class="tc-cheat-row"><kbd>Esc</kbd><span data-i18n="cheatMiscEsc">Fermer panneaux</span></div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd><span data-i18n="cheatMiscDebug">Debug HUD</span></div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+<kbd>Z</kbd><span data-i18n="cheatMiscRetry">Retry 30s (pendant enregistrement)</span></div>
+          <div class="tc-cheat-row"><kbd>Shift</kbd>+<kbd>R</kbd><span data-i18n="cheatMiscInstantRec">Rec instantané</span></div>
+          <div class="tc-cheat-row"><kbd>Ctrl</kbd>+<kbd>V</kbd><span data-i18n="cheatMiscPasteImg">Coller une image du presse-papier</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v0.7.71: keyboard rebind modal -->
+  <div class="tc-rebind-modal" id="tcRebindModal" style="display:none">
+    <div class="tc-rebind-card">
+      <div class="tc-rebind-header">
+        <span class="tc-rebind-title">⌨ <span data-i18n="rebindTitle">Raccourcis personnalisés</span></span>
+        <button class="tc-rebind-close" id="tcRebindCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="tc-rebind-body">
+        <div class="tc-rebind-list" id="tcRebindList"></div>
+      </div>
+      <div class="tc-rebind-footer">
+        <button class="tc-rebind-reset" id="tcRebindResetBtn">↺ <span data-i18n="rebindReset">Restaurer par défaut</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v0.7.54: snapshot annotator modal -->
+  <div class="tc-snap-annot-modal" id="tcSnapAnnotModal" style="display:none">
+    <div class="tc-snap-annot-card">
+      <div class="tc-snap-annot-header">
+        <span class="tc-snap-annot-title">✏️ <span data-i18n="snapAnnotTitle">Annote ta capture</span></span>
+        <button class="tc-snap-annot-close" id="tcSnapAnnotCancel" aria-label="Cancel">✕</button>
+      </div>
+      <div class="tc-snap-annot-body">
+        <canvas id="tcSnapAnnotCanvas"></canvas>
+      </div>
+      <div class="tc-snap-annot-toolbar">
+        <button class="tc-snap-annot-swatch active" data-color="#ef4444" style="background:#ef4444" title="red"></button>
+        <button class="tc-snap-annot-swatch" data-color="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+        <button class="tc-snap-annot-swatch" data-color="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+        <span class="tc-snap-annot-sep"></span>
+        <button class="tc-snap-annot-btn" id="tcSnapAnnotClear">🗑 <span data-i18n="snapAnnotClear">Effacer</span></button>
+        <span style="flex:1"></span>
+        <button class="tc-snap-annot-btn tc-snap-annot-save" id="tcSnapAnnotSave">💾 <span data-i18n="snapAnnotSave">Enregistrer</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v0.7.36: Guided tour — shown on first launch -->
+  <div class="tc-tour-modal" id="tcTourModal" style="display:none">
+    <div class="tc-tour-spotlight" id="tcTourSpotlight"></div>
+    <div class="tc-tour-tip" id="tcTourTip">
+      <div class="tc-tour-title"></div>
+      <div class="tc-tour-body"></div>
+      <div class="tc-tour-footer">
+        <span class="tc-tour-progress"></span>
+        <div class="tc-tour-btns">
+          <button id="tcTourSkipBtn" class="tc-tour-btn-skip" data-i18n="tour_skip">Passer</button>
+          <button id="tcTourBackBtn" class="tc-tour-btn-back" data-i18n="tour_back">← Retour</button>
+          <button id="tcTourNextBtn" class="tc-tour-btn-next" data-i18n="tour_next">Suivant →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc-trim-modal" id="tcTrimModal" style="display:none">
+    <div class="tc-trim-card">
+      <div class="tc-trim-header">
+        <span class="tc-trim-title">✂️ <span data-i18n="trimTitle">Couper le tuto</span></span>
+        <button class="btn-icon-only" id="tcTrimClose" aria-label="Close">✕</button>
+      </div>
+      <video id="tcTrimVideo" controls class="tc-trim-video"></video>
+      <div class="tc-trim-controls">
+        <div class="tc-trim-slider-row">
+          <label data-i18n="trimIn">Début</label>
+          <input type="range" id="tcTrimIn" min="0" max="100" value="0" step="0.1" class="tc-trim-slider tc-trim-slider-in" />
+          <span class="tc-trim-val" id="tcTrimInLabel">0:00</span>
+          <button class="tc-trim-preview-btn" id="tcTrimPreviewInBtn" data-i18n="trimPreviewIn">▶ début</button>
+        </div>
+        <div class="tc-trim-slider-row">
+          <label data-i18n="trimOut">Fin</label>
+          <input type="range" id="tcTrimOut" min="0" max="100" value="100" step="0.1" class="tc-trim-slider tc-trim-slider-out" />
+          <span class="tc-trim-val" id="tcTrimOutLabel">0:00</span>
+          <button class="tc-trim-preview-btn" id="tcTrimPreviewOutBtn" data-i18n="trimPreviewOut">▶ fin</button>
+        </div>
+        <div class="tc-trim-duration">
+          <span data-i18n="trimDuration">Durée finale :</span>
+          <strong id="tcTrimDurationLabel">0:00</strong>
+        </div>
+        <!-- v0.7.22: auto-cut silences one-shot -->
+        <button class="tc-btn-full tc-trim-autocut" id="tcTrimAutoCutBtn" data-i18n="trimCutSilences">✂ Couper les silences</button>
+      </div>
+      <div class="tc-trim-progress" id="tcTrimProgress" style="display:none">
+        <div class="tc-trim-progress-label" data-i18n="trimEncoding">Encodage en cours…</div>
+        <div class="tc-trim-progress-track"><div class="tc-trim-progress-bar" id="tcTrimProgressBar"></div></div>
+      </div>
+      <div class="tc-trim-footer">
+        <!-- v0.7.22: live readout — updated via rAF loop in Trim._updateLabels -->
+        <span class="tc-trim-readout" id="tcTrimReadout">00:00 / 00:00 (trim 0 s)</span>
+        <button class="tc-btn-full" id="tcTrimCancelBtn" data-i18n="cancel">Annuler</button>
+        <button class="tc-btn-full tc-trim-export" id="tcTrimExportBtn">⬇️ <span data-i18n="trimExport">Exporter le tuto coupé</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti canvas (hidden by default, shown on recording complete) -->
+  <canvas id="tcConfetti" class="tc-confetti-canvas"></canvas>
+
+  <!-- Matrix rain canvas (unused — kept for workshop-diy compatibility) -->
+  <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+
+  <!-- Debug panel -->
+  <div id="debugPanel" class="debug-panel">
+    <span id="debugFps">0 FPS</span>
+    <span id="debugMem">0 MB</span>
+  </div>
+
+  <!-- ═══════════════════ LEFT PANEL — Help ═══════════════════ -->
+  <div class="sidebar-overlay" id="helpOverlay"></div>
+  <aside class="sidebar sidebar-left" id="helpPanel" aria-label="Help" role="dialog" aria-modal="true">
+    <!-- v0.7.248: drag this handle to resize the help sidebar width -->
+    <div class="tc-sidebar-resize" aria-label="Resize sidebar" title="Drag to resize"></div>
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="help">❓ Aide</span>
+      <button id="helpCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="help-search-wrap">
+      <input type="search" id="tcHelpSearch" class="help-search" placeholder="🔍" />
+    </div>
+    <!-- v0.9.31: replay the 30-second onboarding tour at any time -->
+    <div style="padding:8px 16px 0">
+      <button class="tc-btn-full" id="tcReplayTourBtn" style="background:rgba(163,230,53,.1);border-color:rgba(163,230,53,.3)">🎬 <span data-i18n="replayTour">Replay 30-sec tour</span></button>
+    </div>
+    <!-- v0.10.2: Hollywood-style Etsy playbook (separate page, opens in new tab).
+         v0.10.3: href is rewritten on init to point at the localized variant. -->
+    <div style="padding:8px 16px 0">
+      <a href="./docs/etsy-playbook.html" target="_blank" rel="noopener" class="tc-btn-full" id="tcEtsyPlaybookLink" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);text-decoration:none;color:inherit">🎭 <span data-i18n="etsyPlaybook">60-sec Hollywood playbook</span></a>
+    </div>
+    <div style="padding:8px 16px">
+      <a href="./docs/guide.html" target="_blank" rel="noopener" style="display:block;padding:10px 16px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.25);border-radius:10px;text-align:center;font-weight:bold;color:#a3e635;font-size:.9rem">📖 Full User Guide</a>
+    </div>
+
+    <div class="help-tabs">
+      <button class="help-tab active" data-tab="faq" data-i18n="faq">FAQ</button>
+      <button class="help-tab" data-tab="howto" data-i18n="howto">Comment faire</button>
+      <button class="help-tab" data-tab="wiki" data-i18n="wiki">Wiki</button>
+      <button class="help-tab" data-tab="news" data-i18n="news">Nouveautés</button>
+      <button class="help-tab" data-tab="cameras" data-i18n="helpCamerasTab">📷 Caméras</button>
+      <button class="help-tab" data-tab="hotkeys" data-i18n="hotkeyRefTab">Raccourcis</button>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- FAQ -->
+      <div class="help-content active" id="helpFaq">
+        <details class="help-item" open>
+          <summary data-i18n="faq_q1">Qu'est-ce que NoorCast ?</summary>
+          <p data-i18n="faq_a1">NoorCast est un outil web pour enregistrer des tutos vidéo avec plusieurs caméras (écran + webcams + micro) directement depuis ton navigateur. Zéro install, zéro compte, tout reste chez toi.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q2">Comment ajouter plusieurs caméras ?</summary>
+          <p data-i18n="faq_a2">Dans le panneau de gauche, choisis une caméra dans la liste et clique sur « + ». Tu peux répéter pour ajouter jusqu'à 3 caméras (ex. une pour ton robot, une pour toi, une pour l'écran du micro:bit).</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q3">Je peux lire les capteurs de mon micro:bit ?</summary>
+          <p data-i18n="faq_a3">Oui ! Clique sur « 📡 Connecter micro:bit » dans le panneau de gauche. Ton navigateur va demander l'autorisation de se connecter en Bluetooth. Une fois connecté, les valeurs des capteurs (accéléromètre, luminosité, boutons) s'affichent en overlay sur ta vidéo. ⚠️ Chrome/Edge uniquement.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q4">Quels sont les raccourcis clavier ?</summary>
+          <p data-i18n="faq_a4">R = Rec/Stop · P = Pause · M = Marker · 1-6 = Changer de scène · L = Laser (on/off) · F = Geler l'écran · D = Dessiner · S = Capture photo · Échap = Fermer les panneaux</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q5">Mes vidéos sont privées ?</summary>
+          <p data-i18n="faq_a5">100%. Rien ne quitte ton ordi. L'enregistrement reste dans la mémoire du navigateur et se télécharge directement sur ton disque. Aucun compte, aucune analytique, aucun serveur.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q6">Quel format de sortie ?</summary>
+          <p data-i18n="faq_a6">WebM (VP9 + Opus). Lisible dans VLC, Chrome, Firefox, YouTube, et Davinci Resolve. Pour convertir en MP4, utilise ffmpeg ou un outil en ligne comme cloudconvert.com.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q7">Le teleprompter est visible dans ma vidéo ?</summary>
+          <p data-i18n="faq_a7">Non, jamais. Le teleprompter s'affiche par-dessus l'aperçu uniquement pour toi. Il n'est pas dessiné sur le canvas qui compose la vidéo, donc il n'apparaît pas dans l'enregistrement final.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q8">Navigateur recommandé ?</summary>
+          <p data-i18n="faq_a8">Chrome ou Edge desktop. Firefox marche pour l'enregistrement mais pas pour Web Bluetooth (micro:bit). Safari ne supporte ni les capteurs ni certaines options audio. iOS n'est pas supporté car Safari Mobile bloque la capture d'écran.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q9">🏆 C'est quoi les badges ?</summary>
+          <p data-i18n="faq_a9">Des petits trophées locaux qui se débloquent au fur et à mesure : 🎬 Premier tuto (1re prise finie), ⏱ Plus de 5 min (prise de plus de 5 minutes), 🎥 Multi-caméras (2+ cams en même temps), 🎭 Toutes les scènes (toutes utilisées), 🏷 Roi des markers (5+ dans une prise), 🤖 micro:bit branché (1re connexion BT). Tout est stocké localement (localStorage), rien n'est envoyé nulle part.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q10">♻ Comment remettre à zéro mes données ?</summary>
+          <p data-i18n="faq_a10">Dans ⚙️ Paramètres → Général, deux boutons : « 🗑 Réinitialiser les badges » efface seulement tes trophées. « 💥 Vider le cache complet » efface TOUT : badges, logo, préférences, messages de ticker, police par défaut, onboarding, etc. L'app repart comme une installation neuve après un rechargement.</p>
+        </details>
+        <!-- Links to standalone docs -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <a href="./docs/start.html" target="_blank" class="tc-btn-full" style="flex:1;text-align:center;text-decoration:none">🚀 Start Here</a>
+          <a href="./docs/guide.html" target="_blank" class="tc-btn-full" style="flex:1;text-align:center;text-decoration:none">📖 Full Guide</a>
+          <a href="./docs/faq.html" target="_blank" class="tc-btn-full" style="flex:1;text-align:center;text-decoration:none">❓ FAQ</a>
+          <a href="./docs/cheatsheet.html" target="_blank" class="tc-btn-full" style="flex:1;text-align:center;text-decoration:none">📋 Cheat Sheet</a>
+        </div>
+      </div>
+
+      <!-- How-To -->
+      <div class="help-content" id="helpHowto">
+        <div class="help-firsttime">
+          <div class="help-firsttime-title">⭐ <span data-i18n="firstTimeTitle">Première fois ? Commence ici</span></div>
+          <p data-i18n="firstTimeBody">Les 7 étapes ci-dessous t'emmènent de zéro à ton premier tuto téléchargé en moins de 5 minutes. NoorCast fonctionne aussi bien sur un Chromebook que sur un ordinateur classique, sans compte, sans installation.</p>
+          <p class="help-firsttime-teacher" data-i18n="firstTimeTeacher">👩‍🏫 <strong>Pour les profs :</strong> NoorCast est conçu pour expliquer du code avec un robot (micro:bit, Arduino, LEGO). Utilise le template « 🤖 Démo robot » pour une séquence guidée en 5 étapes. Tes vidéos restent 100% sur ton ordi.</p>
+        </div>
+        <div class="help-step"><span class="help-step-num">1</span><p data-i18n="howto_1">Branche tes caméras USB (si besoin) et autorise l'accès quand le navigateur te le demande.</p></div>
+        <div class="help-step"><span class="help-step-num">2</span><p data-i18n="howto_2">Dans le panneau Sources à gauche, ajoute ton écran, tes caméras et choisis ton micro.</p></div>
+        <div class="help-step"><span class="help-step-num">3</span><p data-i18n="howto_3">Clique sur une des scènes pré-réglées à droite (Code, Robot, Studio…) — la composition change instantanément.</p></div>
+        <div class="help-step"><span class="help-step-num">4</span><p data-i18n="howto_4">Ajoute un texte depuis la bibliothèque (⭐ Bravo, 🎯 Étape 1…) — il apparaît en overlay.</p></div>
+        <div class="help-step"><span class="help-step-num">5</span><p data-i18n="howto_5">Clique sur le gros bouton 🔴 ENREGISTRER. Compte à rebours 3-2-1, puis ça tourne.</p></div>
+        <div class="help-step"><span class="help-step-num">6</span><p data-i18n="howto_6">Utilise les touches 1-9 pour changer de scène en live. L pour laser pointer, F pour geler l'écran, D pour dessiner.</p></div>
+        <div class="help-step"><span class="help-step-num">7</span><p data-i18n="howto_7">Clique ⏹ Stop. Ton tuto est téléchargé en .webm, avec les chapitres en .vtt.</p></div>
+      </div>
+
+      <!-- Wiki -->
+      <div class="help-content" id="helpWiki">
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_multicam_title">🎥 Multi-caméras</h3>
+          <p data-i18n="wiki_multicam">NoorCast peut afficher simultanément jusqu'à 3 caméras + 1 écran + le micro. Chaque source est une boîte déplaçable dans la scène. Tu peux définir sa forme (rectangle ou cercle), sa taille et sa position.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_scenes_title">🎭 Scènes</h3>
+          <p data-i18n="wiki_scenes">Une scène est un layout : position/taille/visibilité de chaque source + textes actifs. Tu peux switcher entre les scènes pendant l'enregistrement avec les touches 1-9 ou en cliquant. Cut sec, pas de latence.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_sensor_title">🤖 Capteurs micro:bit</h3>
+          <p data-i18n="wiki_sensor">Via Web Bluetooth, NoorCast se connecte directement au micro:bit et lit en temps réel ses capteurs (accéléromètre, luminosité, température, boutons). Les valeurs s'affichent en overlay sur la vidéo, parfait pour expliquer un capteur à des élèves.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_privacy_title">🔒 Privacy</h3>
+          <p data-i18n="wiki_privacy">Tout reste local. Les flux vidéo sont traités par le navigateur, compositionnés sur un canvas, et enregistrés en mémoire via MediaRecorder. Le fichier final est téléchargé sur ton disque. Aucun serveur, aucune télémétrie.</p>
+        </div>
+      </div>
+
+      <!-- News / Changelog -->
+      <div class="help-content" id="helpNews">
+        <div class="wiki-entry">
+          <h3>📦 v0.7.98 → v0.7.149 — docs rollup — 12 avril 2026</h3>
+          <p>50+ features shipped across source tools, canvas, audio, scenes, UI, recording and more.</p>
+          <ul>
+            <li><strong>Source tools:</strong> flip, crop, rotate, opacity slider, border width/color, shadow, rounded corners, lock position, aspect-ratio lock, alignment snapping</li>
+            <li><strong>Canvas:</strong> background color picker, grid overlay toggle, countdown timer, REC dot indicator, elapsed timer on canvas, pause overlay</li>
+            <li><strong>Audio:</strong> mic LED meter, audio visualizer bars, sound board with custom clips</li>
+            <li><strong>Scenes:</strong> quick duplicate, inline rename, random shuffle, auto-advance timer, auto-save snapshots, preview tooltip on hover, per-scene time tracker</li>
+            <li><strong>UI:</strong> focus mode (hide panels), sticky notes overlay, emoji reactions, text stamps, color picker popover, undo/redo for layout, multi-source selection</li>
+            <li><strong>Tools:</strong> FPS counter overlay, source labels on canvas, source info HUD, layer badge, hotkey reference panel, settings export/import</li>
+            <li><strong>Recording:</strong> take-notes sidebar, auto title from chapters, cursor trail particles, stage watermark text</li>
+            <li><strong>Fun:</strong> keyboard piano (Z-M keys), v0.7.100 milestone celebration confetti</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🚀 v0.7.40 → v0.7.100 — 12 avril 2026</h3>
+          <p data-i18n="news_087">50+ features en vrac : polish, accessibilité, pro tools 🚀⌨🎨🔧</p>
+          <ul>
+            <li data-i18n="news_087_1">🎚 Audio : meter LED, boost mic, noise gate, ducking auto quand tu parles, sous-titres live (WebSpeech)</li>
+            <li data-i18n="news_087_2">🎨 Brand : presets 1/2/3, couleur accent custom, chroma key, filtre logo silhouette</li>
+            <li data-i18n="news_087_3">🎬 Scène : 9 formes, 4 aspect ratios (16:9 / 9:16 / 1:1 / 4:3), drag-reorder + Shift+Alt+←→, custom scenes save, intro text auto, transition fade</li>
+            <li data-i18n="news_087_4">✏ Dessin : whiteboard 6 couleurs + gomme + 3 épaisseurs, contour de texte slider, emoji picker, annotation snapshot</li>
+            <li data-i18n="news_087_5">⌨ Clavier : cheat sheet (?), raccourcis rebindables, long-press REC instantané, Ctrl+Z retry/undo/redo, Ctrl+S tout télécharger</li>
+            <li data-i18n="news_087_6">📐 Layout : alignment guides, drag threshold, Alt+grid snap 48px, minimap sidebar, scroll-wheel zoom Ctrl+roue</li>
+            <li data-i18n="news_087_7">📸 Capture : snapshot 1×/2×/4×, gallery strip, paste image Ctrl+V, PiP popout caméra, context menu clic-droit</li>
+            <li data-i18n="news_087_8">📊 Feedback : dashboard stats, history 10 derniers, badge unlock confetti, 3 nouveaux badges cumulatifs, daily goal streak</li>
+            <li data-i18n="news_087_9">🎞 Recording : time goal + auto-stop, pause count, countdown custom 1-10s, intro/outro cinéma, auto-pause tab loss, big marker B, click ripples</li>
+            <li data-i18n="news_087_10">🔧 Maintenance : session bundle export/import, diagnostics browser, tip of day, tour guidé, screensaver 90s, clock overlay, chapter list cliquable, waveform audio, sensor chart micro:bit</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🎁 v0.7.29 → v0.7.42 — 11 avril 2026</h3>
+          <p data-i18n="news_039">11 fonctionnalités d'atelier : thumbnails, gallery, chapters, minimap, waveform, context menu, tour, intro text, retry, badge URL 🎁</p>
+          <ul>
+            <li data-i18n="news_039_1">Thumbnails des scènes (v0.7.29) + barre de snapshots (v0.7.30) sous la scène</li>
+            <li data-i18n="news_039_2">Liste de chapitres cliquable (v0.7.31) sous la vidéo finale — seek en 1 clic</li>
+            <li data-i18n="news_039_3">Drag-to-reorder des scènes (v0.7.32) — persiste l'ordre pour les touches 1-9</li>
+            <li data-i18n="news_039_4">Minimap live (v0.7.33) dans la sidebar gauche + waveform audio (v0.7.34) sous la vidéo</li>
+            <li data-i18n="news_039_5">Clic droit sur une source (v0.7.35) = menu contextuel : cacher · épingler · dupliquer · forme ▸ · supprimer</li>
+            <li data-i18n="news_039_6">Tour guidé (v0.7.36) au 1er lancement — 5 étapes spotlight sur les features clés</li>
+            <li data-i18n="news_039_7">Texte d'intro auto sur changement de scène (v0.7.37) — opt-in dans les Paramètres</li>
+            <li data-i18n="news_039_8">Retry 30s (v0.7.38) — Ctrl+Z pendant l'enregistrement marque les 30 dernières secondes comme retry</li>
+            <li data-i18n="news_039_9">URL du badge card (v0.7.42) — affichée au bas de chaque carte de partage</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>⌨ v0.7.24 → v0.7.28 — 11 avril 2026</h3>
+          <p data-i18n="news_028">Intro/outro + auto-pause + capteurs chart + historique + cheat sheet ⌨🎬⏸📊</p>
+          <ul>
+            <li data-i18n="news_028_1">Cheat sheet clavier (v0.7.24) : touche ? pour voir tous les 22 raccourcis groupés en 5 catégories</li>
+            <li data-i18n="news_028_2">Cartes intro/outro cinématiques (v0.7.25) : 2,5 s en début et 2 s en fin, intégrées au recording (bouton opt-in)</li>
+            <li data-i18n="news_028_3">Pause auto quand tu changes d'onglet (v0.7.26) : plus jamais de captures accidentelles de notifications</li>
+            <li data-i18n="news_028_4">Mini-graph des capteurs micro:bit (v0.7.27) dans le panneau du dernier tuto : X/Y/Z + boutons A/B</li>
+            <li data-i18n="news_028_5">Panneau 📊 Mes tutos (v0.7.28) : 10 derniers tutos avec date, durée, badges, taille, total session</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🌊 v0.7.20 → v0.7.23 — 11 avril 2026</h3>
+          <p data-i18n="news_023">Ripples + Zoom auto + éditeur trim + téléprompteur broadcast 🌊🎯✂📜</p>
+          <ul>
+            <li data-i18n="news_023_1">Téléprompteur broadcast (v0.7.20) : auto-scroll avec slider de vitesse, ⏵/⏸, A−/A+, ↔−/↔+, ↻ retour haut, raccourci T, script persisté</li>
+            <li data-i18n="news_023_2">Zoom auto sur clic (v0.7.21) : clique n'importe où sur un écran capturé et l'aperçu zoome en douceur pendant 1,5 s (bouton 🎯 dans la barre d'outils)</li>
+            <li data-i18n="news_023_3">Éditeur trim amélioré (v0.7.22) : scrubber visuel avec poignées in/out, ✂ auto-couper les silences, raccourcis Espace/←/→/[/]/Enter/Esc, compteur de durée</li>
+            <li data-i18n="news_023_4">Ripples de clic (v0.7.23) : chaque clic émet une onde animée de 600 ms rendue sur le canvas de sortie — intégrée à la vidéo finale (bouton 💧)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🎨 v0.7.18 — 11 avril 2026</h3>
+          <p data-i18n="news_018">Redesign + fix critique des toolbars flottantes 🎨🔧</p>
+          <ul>
+            <li data-i18n="news_018_1">Barre d'outils flottante au-dessus du studio : Laser · Geler · Dessiner · Zoom · Télé · Photo · Plein écran — libère ~280 px dans la sidebar droite</li>
+            <li data-i18n="news_018_2">Bug critique corrigé : les boutons des toolbars flottantes (swatches, font, ✕) ne répondaient plus — mousedown bubble passait click stopPropagation</li>
+            <li data-i18n="news_018_3">Timer 00:00 unifié : plus de doublon dans l'en-tête, un seul chrono Orbitron 1.15rem à côté du bouton REC</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>↔ v0.7.17 — 11 avril 2026</h3>
+          <p data-i18n="news_017">Redimensionnement libre + ticker simple ↔📰</p>
+          <ul>
+            <li data-i18n="news_017_1">Shift + coin d'une source = étire libre (aspect ratio débloqué) · sans Shift = lock aspect ratio comme avant (kid-safe)</li>
+            <li data-i18n="news_017_2">Ticker repassé en mode une-passe : chaque message apparaît une seule fois par boucle, plus de mur de répétitions</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>📐 v0.7.16 — 11 avril 2026</h3>
+          <p data-i18n="news_016">Toolbars flottantes dockées hors du stage 📐</p>
+          <ul>
+            <li data-i18n="news_016_1">Les toolbars ✕/👁/📌/forme (source + texte) se collent sous le stage au lieu de flotter au-dessus — zéro recouvrement de la zone d'enregistrement</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>💠 v0.7.15 — 11 avril 2026</h3>
+          <p data-i18n="news_015">9 formes pour tes vidéos 💠</p>
+          <ul>
+            <li data-i18n="news_015_1">Rectangle · Rounded · Cercle · Pill · Hexagone · Octogone · Diamant · Étoile · Cœur — picker direct dans la toolbar de source</li>
+            <li data-i18n="news_015_2">Toutes les formes partagent le même path centralisé (glow, flou arrière-plan, clip utilisent la même géométrie)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>⚙️ v0.7.14 — 11 avril 2026</h3>
+          <p data-i18n="news_014">Paramètres en sections + poignées visibles + police de texte ⚙️</p>
+          <ul>
+            <li data-i18n="news_014_1">Panneau Paramètres réorganisé en 5 sections pliables : Général · Enregistrement · Logo · Slogan · Ticker</li>
+            <li data-i18n="news_014_2">Poignées de redimensionnement visibles aux 4 coins de la source sélectionnée (elles existaient depuis v0.7.0 — maintenant tu les vois)</li>
+            <li data-i18n="news_014_3">Picker de police par défaut pour les textes libres dans la sidebar droite (6 polices, persisté)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>📰 v0.7.13 — 11 avril 2026</h3>
+          <p data-i18n="news_013">Ticker dédoublé + toolbar source flottante 📰</p>
+          <ul>
+            <li data-i18n="news_013_1">Fix ticker : les messages courts comme « hi » ne se dédoublent plus (« hi · hi »)</li>
+            <li data-i18n="news_013_2">Nouvelle toolbar HTML flottante pour la source sélectionnée : 👁 cacher · 📌 épingler · forme · ✕ supprimer</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>✨ v0.7.12 — 11 avril 2026</h3>
+          <p data-i18n="news_012_b">Optimisation du layout + bismillah ✨</p>
+          <ul>
+            <li data-i18n="news_012_b_1">Stage agrandi (+60 px en hauteur à 1080 p), sidebars resserrées 240 → 220 px, header studio compressé</li>
+            <li data-i18n="news_012_b_2">Bismillah dans l'en-tête : forme épelée بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ à 15 px avec gradient — le ligature ﷽ se décomposait dans Amiri</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🖐 v0.7.0 — 11 avril 2026</h3>
+          <p data-i18n="news_070">Max flexibilité : drag+resize pour tout 🖐📐</p>
+          <ul>
+            <li data-i18n="news_070_1">Texts déplaçables ET redimensionnables (poignées aux 4 coins, Ctrl+D = dupliquer, Suppr = supprimer)</li>
+            <li data-i18n="news_070_2">Sources redimensionnables aux 4 coins (aspect ratio conservé)</li>
+            <li data-i18n="news_070_3">Logo + slogan personnalisables (upload PNG/SVG) avec 6 effets fun : spin, pulse, bounce, wiggle, halo, arc-en-ciel</li>
+            <li data-i18n="news_070_4">Filtres visuels par source : N&B, sépia, lumineux, contraste, vintage, froid, chaud</li>
+            <li data-i18n="news_070_5">Titre/caption par source (style lower-third) — tape directement dans le panneau sources</li>
+            <li data-i18n="news_070_6">Bouton plein écran ⛶ — l'aperçu prend tout l'écran, Esc pour sortir</li>
+            <li data-i18n="news_070_7">Hints clavier affichés quand tu actives Zoom / Laser / Gel / Dessin</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🏆 v0.6.0 — 11 avril 2026</h3>
+          <p data-i18n="news_060">Polish adoption 🎵🏆👩‍🏫</p>
+          <ul>
+            <li data-i18n="news_060_1">Jingle d'intro Web Audio (1.5s) en option — opt-in dans les Paramètres</li>
+            <li data-i18n="news_060_2">Carte badge PNG partageable générée après chaque enregistrement</li>
+            <li data-i18n="news_060_3">Callout « Première fois ? Commence ici » + pitch prof dans l'aide</li>
+            <li data-i18n="news_060_4">README enrichi d'une section « Pour les profs »</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🤖 v0.5.0 — 11 avril 2026</h3>
+          <p data-i18n="news_050">micro:bit superpouvoirs + trim intelligent 🤖🔇</p>
+          <ul>
+            <li data-i18n="news_050_1">Bouton A du micro:bit = zoom · Bouton B = marker · Inclinaison = position du laser</li>
+            <li data-i18n="news_050_2">Export CSV des capteurs aligné sur la timeline du tuto (Unique à NoorCast)</li>
+            <li data-i18n="news_050_3">Trim automatique des silences > 2s — un clic après l'enregistrement, zéro éditeur externe</li>
+            <li data-i18n="news_050_4">Chip d'alerte silence en temps réel (>1.8s de micro muet, visible toi seul)</li>
+            <li data-i18n="news_050_5">Touche Q = carte question overlay (kid-friendly quiz)</li>
+            <li data-i18n="news_050_6">Overlay 🤖 auto si le robot s'agite fort (opt-in dans les Paramètres)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🖐 v0.4.0 — 11 avril 2026</h3>
+          <p data-i18n="news_040">Drag-drop + effets 🖐✨</p>
+          <ul>
+            <li data-i18n="news_040_1">Drag-drop : déplace n'importe quelle source directement sur le canvas, elle est épinglée automatiquement</li>
+            <li data-i18n="news_040_2">Aimantation à 7 ancres (coins, centres d'arêtes, centre) dans un rayon de 60 px</li>
+            <li data-i18n="news_040_3">Bouton 📌 / 🔓 dans chaque source pour épingler manuellement, et « Réinitialiser la disposition » pour tout relâcher</li>
+            <li data-i18n="news_040_4">Flou arrière-plan par source (🌫) — net au centre, flou dégradé aux bords</li>
+            <li data-i18n="news_040_5">Halo de couleur thème toujours actif autour des sources visibles</li>
+            <li data-i18n="news_040_6">Pulse visuelle sur chaque marker (M) — retour visible que la marque est enregistrée</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>✂️ v0.3.0 — 11 avril 2026</h3>
+          <p data-i18n="news_030">Trim + Zoom + MP4 ✂️🔍📼</p>
+          <ul>
+            <li data-i18n="news_030_1">Outil de trim non destructif : deux curseurs, un bouton d'export, nouveau fichier avec chapitres ajustés</li>
+            <li data-i18n="news_030_2">Zoom manuel fluide sur Z (ou bouton A du micro:bit) pour les moments de focus</li>
+            <li data-i18n="news_030_3">Export MP4 natif quand le navigateur le supporte (Chrome 126+, Safari, Edge)</li>
+            <li data-i18n="news_030_4">Préférence de format dans les Paramètres : Auto / MP4 / WebM</li>
+            <li data-i18n="news_030_5">Trim réencode via offscreen canvas + MediaRecorder — zéro dépendance, zéro cloud</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>📺 v0.2.4 — 11 avril 2026</h3>
+          <p data-i18n="news_024">Zone de travail élargie (vraiment) 📺</p>
+          <ul>
+            <li data-i18n="news_024_1">Largeur de l'app : 1240 → fluide jusqu'à 1760 px</li>
+            <li data-i18n="news_024_2">Grille studio : sidebars 240 px + minmax(0,1fr) pour le canvas</li>
+            <li data-i18n="news_024_3">Canvas plafonné par la hauteur du viewport — 16:9 parfait à 1920/1600/1366</li>
+            <li data-i18n="news_024_4">Sidebars scrollables en interne pour garder le bouton REC au-dessus de la ligne de flottaison</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🎬 v0.2.3 — 11 avril 2026</h3>
+          <p data-i18n="news_023">Splash rafraîchi + nouveau slogan 🎬</p>
+          <ul>
+            <li data-i18n="news_023_1">Bug du logo qui chevauchait le titre corrigé (container 120×65 → 140×140)</li>
+            <li data-i18n="news_023_2">Nouveau slogan : « Lumière, caméra, ROBOT ! »</li>
+            <li data-i18n="news_023_3">Badge workshop-diy.org dans le splash et le footer</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🎯 v0.2.2 — 11 avril 2026</h3>
+          <p data-i18n="news_022">VRAI fix des fichiers 0 octet 🎯</p>
+          <ul>
+            <li data-i18n="news_022_1">Cause réelle : la piste audio de audioDest n'émettait aucun échantillon sans source connectée</li>
+            <li data-i18n="news_022_2">Correctif : ConstantSourceNode silencieux connecté en permanence</li>
+            <li data-i18n="news_022_3">Vérifié par test runtime headless complet (tous les boutons, toutes les scènes, tous les outils)</li>
+            <li data-i18n="news_022_4">Bouton 'Vierge' efface désormais le template actif</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🚨 v0.2.1 — 11 avril 2026</h3>
+          <p data-i18n="news_021">Hotfix critique : fichiers 0 octet corrigés 🚨</p>
+          <ul>
+            <li data-i18n="news_021_1">canvas.captureStream mis en cache (évite une race connue Chrome/Firefox)</li>
+            <li data-i18n="news_021_2">Gestionnaire d'erreur MediaRecorder + logs détaillés dans le journal</li>
+            <li data-i18n="news_021_3">Détection des enregistrements vides — plus de téléchargement fantôme</li>
+            <li data-i18n="news_021_4">Timeslice ramené de 1000 à 250 ms pour les prises courtes</li>
+            <li data-i18n="news_021_5">AudioContext repris au début de l'enregistrement</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🆕 v0.2.0 — 11 avril 2026</h3>
+          <p data-i18n="news_020">Templates de tutos guidés 🎬</p>
+          <ul>
+            <li data-i18n="news_020_1">3 templates kid-friendly : Cours complet, Démo robot, Correction</li>
+            <li data-i18n="news_020_2">Chaque template pose une séquence de 5 étapes visibles en permanence</li>
+            <li data-i18n="news_020_3">Clic sur une étape = changement de scène + marker chapitre</li>
+            <li data-i18n="news_020_4">Les caméras ajoutées après sélection d'un template héritent du layout</li>
+            <li data-i18n="news_020_5">Ouverture automatique au premier lancement (remplace l'ancienne onboarding)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🆕 v0.1.2 — 11 avril 2026</h3>
+          <p data-i18n="news_012">Audit complet et correctifs majeurs 🔧</p>
+          <ul>
+            <li data-i18n="news_012_1">Fix critique : les traits du tableau blanc étaient effacés en continu par le laser</li>
+            <li data-i18n="news_012_2">Effets sonores activables dans les paramètres (démarrage, stop, pause, marker)</li>
+            <li data-i18n="news_012_3">HUD de debug (FPS + mémoire) via Ctrl+Shift+D</li>
+            <li data-i18n="news_012_4">i18n complet du placeholder teleprompter et du prompt texte libre</li>
+            <li data-i18n="news_012_5">Les libellés des caméras/micros se rafraîchissent après autorisation</li>
+            <li data-i18n="news_012_6">Nettoyage automatique des flux et blobs à la fermeture de l'onglet</li>
+            <li data-i18n="news_012_7">Reset des outils (laser/gel/dessin/textes) entre les prises</li>
+            <li data-i18n="news_012_8">Thèmes traduits, raccourcis FAQ alignés sur le code réel</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🆕 v0.1.1 — 10 avril 2026</h3>
+          <p data-i18n="news_011">Premier test complet en runtime : 2 bugs corrigés 🧪</p>
+          <ul>
+            <li data-i18n="news_011_1">Double emoji corrigé dans les boutons de scène</li>
+            <li data-i18n="news_011_2">41 clés i18n manquantes ajoutées (FAQ, wiki, how-to, changelog)</li>
+          </ul>
+        </div>
+        <div class="wiki-entry">
+          <h3>🆕 v0.1.0 — 10 avril 2026</h3>
+          <p data-i18n="news_010">Première version de NoorCast 🎉</p>
+          <ul>
+            <li data-i18n="news_010_1">Multi-caméras (écran + jusqu'à 3 cams + micro)</li>
+            <li data-i18n="news_010_2">6 scènes prêtes à l'emploi (Code, Robot, Capteurs, Code+Robot, Studio, Toi)</li>
+            <li data-i18n="news_010_3">Textes overlay avec bibliothèque de presets kid-friendly</li>
+            <li data-i18n="news_010_4">Outils live : laser pointer, gel d'écran, whiteboard, teleprompter</li>
+            <li data-i18n="news_010_5">Capteurs micro:bit via Web Bluetooth (Chrome/Edge)</li>
+            <li data-i18n="news_010_6">Chapitres automatiques exportés en .vtt</li>
+            <li data-i18n="news_010_7">Markers live (touche M) + captures photo (touche S)</li>
+            <li data-i18n="news_010_8">Badges de progression + confetti à la fin</li>
+            <li data-i18n="news_010_9">Trilingue FR/EN/AR, 8 thèmes visuels</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- v0.7.134: dynamic hotkey reference panel -->
+      <!-- v0.7.156: remote cameras guide -->
+      <div class="help-content" id="helpCameras">
+        <p style="margin:0 0 12px;opacity:0.7;font-size:13px">Use your phone as a remote camera for NoorCast. Install one of these apps:</p>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_continuity_title">📱 Continuity Camera (Mac + iPhone)</h3>
+          <p data-i18n="cam_continuity_body">No install needed. Same Wi-Fi + same Apple ID = your iPhone shows up as a camera in NoorCast. Perfect for filming the robot.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_droidcam_title">📲 DroidCam (Android / iOS)</h3>
+          <p data-i18n="cam_droidcam_body">Free. Install the app on your phone + the driver on your PC. Connect via USB or Wi-Fi. The phone appears as a virtual webcam.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_iriun_title">📡 Iriun Webcam (all platforms)</h3>
+          <p data-i18n="cam_iriun_body">Free. Works on Windows, Mac and Linux. Same principle: app + driver. Wi-Fi or USB connection.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="cam_camo_title">🎥 Camo (pro quality)</h3>
+          <p data-i18n="cam_camo_body">Free tier is limited, paid plan adds advanced controls. Best image quality.</p>
+        </div>
+        <div style="margin-top:16px;text-align:center">
+          <button class="tc-btn" id="tcCamSetupBtn" data-i18n="cam_setup_btn">📷 Set up cameras</button>
+        </div>
+      </div>
+      <div class="help-content" id="helpHotkeys"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>NoorCast</span>
+      <span class="badge tc-app-ver-badge" title=""><strong>v0.7.208</strong> <small class="tc-app-build">·</small></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Settings ═══════════════════ -->
+  <div class="sidebar-overlay" id="settingsOverlay"></div>
+  <aside class="sidebar" id="settingsPanel" aria-label="Settings" role="dialog" aria-modal="true">
+    <!-- v0.7.216: drag this handle to resize the settings sidebar width -->
+    <div class="tc-sidebar-resize" aria-label="Resize sidebar" title="Drag to resize"></div>
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="settings">⚙️ Paramètres</span>
+      <button id="settingsCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- v0.7.166: mode switch — prominent at top of settings -->
+      <button class="tc-btn-full" id="tcModeSwitchBtn" style="margin-bottom:10px;font-size:.85rem;background:rgba(163,230,53,.1);border-color:rgba(163,230,53,.3)">🔄 Switch to Pro mode</button>
+
+      <!-- v0.7.20: collapsible sections to break up the formerly flat list -->
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">🌐 <span data-i18n="setSecGeneral">Général</span></summary>
+        <div class="tc-set-body">
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="language">Langue</label>
+            <!-- v0.7.216: SVG flags avoid the "GB/FR/DZ letters instead of flag"
+                 bug on Windows where emoji flags don't render. AR uses Algerian. -->
+            <div class="tc-lang-row">
+              <img id="tcLangFlag" class="tc-lang-flag" src="./flags/fr.svg" alt="" width="28" height="20" />
+              <select id="langSelect" class="sidebar-select" aria-label="Language">
+                <option value="en">EN — English</option>
+                <option value="fr" selected>FR — Français</option>
+                <option value="ar">AR — عربي</option>
+              </select>
+            </div>
+          </div>
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="theme">Thème</label>
+            <select id="themeSelect" class="sidebar-select" aria-label="Theme">
+              <option value="jungle" selected data-i18n="t_jungle">Jungle</option>
+              <option value="mosque-gold" data-i18n="t_mosque">Mosque</option>
+              <option value="zellige" data-i18n="t_zellige">Zellige</option>
+              <option value="andalus" data-i18n="t_andalus">Andalus</option>
+              <option value="riad" data-i18n="t_riad">Riad</option>
+              <option value="medina" data-i18n="t_medina">Medina</option>
+              <option value="space" data-i18n="t_space">Space</option>
+              <option value="robot" data-i18n="t_robot">Robot</option>
+            </select>
+          </div>
+          <!-- v0.7.208: global UI font picker — overrides theme --font-b/h -->
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="uiFont">🔤 Police de l'interface</label>
+            <!-- v0.7.223: Orbitron is the default (first launch) -->
+            <select id="tcUiFontSelect" class="sidebar-select" aria-label="UI font">
+              <option value="orbitron" selected style="font-family:'Orbitron',sans-serif">Orbitron (défaut)</option>
+              <option value="righteous" style="font-family:'Righteous',sans-serif">Righteous</option>
+              <option value="bangers" style="font-family:'Bangers',sans-serif">Bangers</option>
+              <option value="amiri" style="font-family:'Amiri',serif">Amiri (Arabic)</option>
+              <option value="tajawal" style="font-family:'Tajawal',sans-serif">Tajawal</option>
+              <option value="system" style="font-family:system-ui,sans-serif">System default</option>
+              <option value="mono" style="font-family:ui-monospace,monospace">Monospace</option>
+              <option value="">— Theme default —</option>
+            </select>
+          </div>
+          <!-- v0.7.79: snapshot resolution multiplier (1× / 2× HiDPI / 4× Print) -->
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="snapResolution">📐 Résolution capture photo</label>
+            <select id="tcSnapMultSelect" class="sidebar-select">
+              <option value="1">1× (écran)</option>
+              <option value="2">2× HiDPI (3840×2160)</option>
+              <option value="4">4× Print (7680×4320)</option>
+            </select>
+          </div>
+          <!-- v0.7.55: custom accent color picker — overlays current theme's --accent -->
+          <div class="sidebar-group">
+            <label class="sidebar-label" data-i18n="customAccent">🎨 Couleur accent personnalisée</label>
+            <div class="tc-custom-accent-row">
+              <input type="color" id="tcCustomAccentInput" value="#a3e635" />
+              <button id="tcCustomAccentClear" class="tc-custom-accent-clear" title="Reset to theme default">✕</button>
+            </div>
+          </div>
+          <!-- v0.7.143: canvas background color picker -->
+          <div class="sidebar-group">
+            <label class="sidebar-label">🎨 Scene Theme</label>
+            <select id="tcSceneTheme" class="tc-select" style="width:100%;margin-bottom:6px">
+              <option value="">— Custom —</option>
+              <option value="cinema">🎬 Cinema</option>
+              <option value="retro">🕹 Retro Gaming</option>
+              <option value="scifi">🤖 Sci-fi Lab</option>
+              <option value="islamic">🕌 Islamic</option>
+              <option value="news">📺 News Studio</option>
+              <option value="space">🚀 Space</option>
+              <option value="hacker">💻 Hacker</option>
+              <option value="clean">✨ Clean</option>
+            </select>
+            <label class="sidebar-label" data-i18n="canvasBgColor">🎨 Couleur de fond du canvas</label>
+            <input type="color" id="tcCanvasBgColor" value="#000000" />
+            <!-- v0.7.225: user-uploaded background image (PNG/JPG ≤4MB) -->
+            <label class="sidebar-label" style="margin-top:10px">🖼 Image de fond</label>
+            <label class="tc-file-btn" for="tcCanvasBgImageInput">
+              📁 <span>Choisir une image (PNG, JPG)</span>
+            </label>
+            <input type="file" id="tcCanvasBgImageInput" accept="image/*" style="display:none" />
+            <button id="tcCanvasBgImageClear" class="tc-btn-full" style="margin-top:4px;font-size:.72rem;opacity:.75">🗑 Retirer l'image</button>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <select id="tcCanvasBgImageFit" class="sidebar-select" style="flex:1">
+                <option value="cover">Cover (remplir)</option>
+                <option value="contain">Contain (ajuster)</option>
+                <option value="stretch">Stretch (étirer)</option>
+                <option value="tile">Tile (répéter)</option>
+              </select>
+            </div>
+            <label class="sidebar-label" style="margin-top:6px;font-size:.7rem">💧 Opacité</label>
+            <input type="range" id="tcCanvasBgImageOpacity" min="0" max="100" step="5" value="100" style="width:100%" />
+          </div>
+          <div class="sidebar-group">
+            <label class="sidebar-label">🖼 Background pattern</label>
+            <select id="tcBgPattern" class="tc-select" style="width:100%;margin-bottom:6px">
+              <option value="none">— None —</option>
+              <optgroup label="🎮 Geeky">
+                <option value="space">🌌 Space</option>
+                <option value="pixel">🧱 Pixel Grid</option>
+                <option value="matrix">💻 Matrix</option>
+                <option value="arcade">🎮 Arcade</option>
+                <option value="circuit">🤖 Circuit Board</option>
+                <option value="chalk">🏫 Chalkboard</option>
+              </optgroup>
+              <optgroup label="🕌 Islamic">
+                <option value="zellige">🕌 Zellige</option>
+                <option value="arabesque">✨ Arabesque</option>
+                <option value="riad">🌙 Riad</option>
+                <option value="muqarnas">⭐ Muqarnas</option>
+              </optgroup>
+              <optgroup label="🔬 Islamic Science">
+                <option value="astrolabe">🔭 Astrolabe</option>
+                <option value="algebra">📐 Al-Khwarizmi</option>
+              </optgroup>
+              <optgroup label="📡 Radar">
+                <option value="radar">📡 Radar</option>
+                <option value="sonar">🎯 Sonar</option>
+                <option value="oscilloscope">📊 Oscilloscope</option>
+              </optgroup>
+            </select>
+            <label class="sidebar-label">Opacity <input type="range" id="tcBgPatternOpacity" min="5" max="100" value="30" style="width:120px;vertical-align:middle" /> <span id="tcBgPatternOpacityVal">30%</span></label>
+          </div>
+          <!-- v0.7.20: reset controls + build timestamp -->
+          <!-- v0.9.19: Maintenance group hidden in Kids mode (data-mode="pro").
+               Reset-badges + Clear-cache are destructive and lose recordings/
+               settings — protect kids from accidental clicks. -->
+          <div class="sidebar-group" data-mode="pro">
+            <label class="sidebar-label" data-i18n="setSecDanger">♻ Maintenance</label>
+            <button id="tcResetBadgesBtn" class="tc-btn-full" style="margin-bottom:6px">🗑 <span data-i18n="resetBadges">Réinitialiser les badges</span></button>
+            <button id="tcClearCacheBtn" class="tc-btn-full tc-btn-danger">💥 <span data-i18n="clearCache">Vider le cache complet</span></button>
+            <button id="tcRebindBtn" class="tc-btn-full" style="margin-top:6px">⌨ <span data-i18n="rebindBtn">Raccourcis clavier…</span></button>
+            <button id="tcExportBundleBtn" class="tc-btn-full" style="margin-top:6px">📦 <span data-i18n="bundleExport">Exporter la session</span></button>
+            <label class="tc-btn-full" for="tcImportBundleInput" style="margin-top:6px; display: flex; align-items: center; justify-content: center; cursor: pointer;">📥 <span data-i18n="bundleImport">Importer une session</span></label>
+            <input type="file" id="tcImportBundleInput" accept="application/json" style="display:none" />
+            <button id="tcExportSettingsBtn" class="tc-btn-full" style="margin-top:6px">📥 <span data-i18n="exportSettings">Exporter les paramètres</span></button>
+            <label class="tc-btn-full" for="tcImportSettingsInput" style="margin-top:6px; display: flex; align-items: center; justify-content: center; cursor: pointer;">📤 <span data-i18n="importSettings">Importer les paramètres</span></label>
+            <input type="file" id="tcImportSettingsInput" accept="application/json" style="display:none" />
+          </div>
+          <!-- v0.7.81: idle screensaver mode -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcScreensaverToggle" class="checkbox-ctrl" />
+              <span data-i18n="screensaverLabel">💤 Screensaver après 90s d'inactivité</span>
+            </label>
+          </div>
+          <!-- v0.7.115: opt-in scene auto-advance timer -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcAutoAdvChk" class="checkbox-ctrl" />
+              <span data-i18n="autoAdvScenes">⏩ Avance auto des scènes</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <label class="sidebar-label" data-i18n="autoAdvSec" style="flex:0 0 auto;margin:0">Intervalle (sec)</label>
+              <input type="number" id="tcAutoAdvSec" class="sidebar-select" min="5" max="600" value="30" style="width:80px" />
+            </div>
+          </div>
+          <!-- v0.7.126: snap-to-grid when dragging sources -->
+          <div class="sidebar-group">
+            <label class="toggle-ctrl">
+              <input type="checkbox" id="tcSnapGridChk" class="checkbox-ctrl" />
+              <span data-i18n="snapGrid">📐 Aligner sur la grille</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <label class="sidebar-label" data-i18n="gridSize" style="flex:0 0 auto;margin:0">Taille grille (px)</label>
+              <input type="number" id="tcSnapGridSize" class="sidebar-select" min="10" max="100" value="20" style="width:80px" />
+            </div>
+          </div>
+          <!-- v0.7.113: canvas countdown timer duration -->
+          <div class="sidebar-group">
+            <div style="display:flex;align-items:center;gap:6px">
+              <label class="sidebar-label" data-i18n="timerDuration" style="flex:0 0 auto;margin:0">Durée minuteur (min)</label>
+              <input type="number" id="tcTimerDur" class="sidebar-select" min="1" max="60" value="5" style="width:80px" />
+            </div>
+          </div>
+          <!-- v0.7.77: hardware / browser capability diagnostics -->
+          <details class="tc-diag-wrap">
+            <summary class="tc-diag-summary">🔧 <span data-i18n="diagnostics">Diagnostics</span></summary>
+            <div class="tc-diag" id="tcDiagList"></div>
+          </details>
+          <!-- mode switch moved to top of settings panel -->
+        </div>
+      </details>
+
+      <details class="tc-set-section" data-mode="pro">
+        <summary class="tc-set-summary">🎬 <span data-i18n="setSecRecording">Enregistrement</span></summary>
+        <div class="tc-set-body">
+
+          <!-- Sub-accordion: Capture -->
+          <details class="tc-set-sub">
+            <summary>🎥 Capture</summary>
+            <div class="sidebar-group">
+              <label class="toggle-ctrl"><input type="checkbox" id="tcCountdownEnabled" class="checkbox-ctrl" checked /><span data-i18n="countdownOn">⏱ Compte à rebours</span></label>
+              <div class="tc-countdown-secs-row"><label class="sidebar-label" data-i18n="countdownSecs">Secondes :</label><input type="number" id="tcCountdownSecs" min="1" max="10" step="1" value="3" class="sidebar-select" style="max-width:80px" /></div>
+              <label class="toggle-ctrl" title="Wait for the first audible word before recording starts. Skips the dead air at the top of a take."><input type="checkbox" id="tcSkipIntro" class="checkbox-ctrl" /><span data-i18n="skipIntro">🎙 Skip silent intro (start on first word)</span></label>
+            </div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcMirrorCam" class="checkbox-ctrl" /><span data-i18n="mirrorCam">🪞 Miroir webcam</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTimelapseToggle" class="checkbox-ctrl" /><span data-i18n="timelapseLabel">⏩ Timelapse</span></label><div id="tcTimelapseOptions" style="display:none;margin-top:6px"><label class="sidebar-label">× <input type="number" id="tcTimelapseMult" min="2" max="20" step="1" value="4" class="sidebar-select" style="max-width:80px" /></label></div></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTimeGoalToggle" class="checkbox-ctrl" /><span data-i18n="timeGoalLabel">⏳ Objectif de durée</span></label><div id="tcTimeGoalOptions" style="display:none;margin-top:6px"><label class="sidebar-label" data-i18n="timeGoalMinutes">Minutes :</label><input type="number" id="tcTimeGoalMinutes" class="sidebar-select" min="0.5" max="60" step="0.5" value="5" /><label class="toggle-ctrl" style="margin-top:6px"><input type="checkbox" id="tcTimeGoalAutoStop" class="checkbox-ctrl" /><span data-i18n="timeGoalAutoStop">Arrêt automatique</span></label></div></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="outputFormat">🎞 Format de sortie</label><select id="tcFormatSelect" class="sidebar-select"><option value="auto" data-i18n="formatAuto">Auto (MP4 si possible)</option><option value="mp4" data-i18n="formatMp4">MP4</option><option value="webm" data-i18n="formatWebm">WebM</option></select></div>
+            <!-- v0.7.234: recording quality picker (bitrate + fps) -->
+            <div class="sidebar-group">
+              <label class="sidebar-label">📶 Qualité vidéo</label>
+              <select id="tcRecQualitySelect" class="sidebar-select">
+                <option value="standard">Standard — 4 Mbps</option>
+                <option value="high" selected>High — 8 Mbps (défaut)</option>
+                <option value="ultra">Ultra — 12 Mbps (gros fichiers)</option>
+                <option value="max">Max — 20 Mbps @ 60fps (énorme)</option>
+              </select>
+              <div class="tc-ticker-hint">S'applique à la prochaine prise</div>
+            </div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="stageAspect">📐 Format de la scène</label><select id="tcStageAspectSelect" class="sidebar-select"><option value="16:9">16:9 — 1920×1080</option><option value="9:16">9:16 — 1080×1920</option><option value="1:1">1:1 — 1080×1080</option><option value="4:3">4:3 — 1440×1080</option></select><div class="tc-ticker-hint" data-i18n="stageAspectHint">Ne change pas pendant un enregistrement</div></div>
+          </details>
+
+          <!-- Sub-accordion: Overlays -->
+          <details class="tc-set-sub">
+            <summary>🎨 Overlays</summary>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcClockToggle" class="checkbox-ctrl" /><span data-i18n="clockLabel">🕐 Horloge</span></label><label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem"><input type="checkbox" id="tcClockDateToggle" class="checkbox-ctrl" checked /><span data-i18n="clockDateLabel">+ date</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcRecIndicatorToggle" class="checkbox-ctrl" checked /><span data-i18n="recIndicatorLabel">🔴 Pastille REC</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcRecElapsedToggle" class="checkbox-ctrl" /><span data-i18n="recElapsedLabel">⏱ Chrono écoulé</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcCaptionsToggle" class="checkbox-ctrl" /><span data-i18n="captionsLabel">💬 Sous-titres live</span></label><label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem"><input type="checkbox" id="tcCaptionsBurnIn" class="checkbox-ctrl" /><span data-i18n="captionsBurnIn" title="Captions stay longer + fade slower so they survive social-media compression">🔥 Burn into video (longer hold, gentler fade)</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSceneIntroToggle" class="checkbox-ctrl" /><span data-i18n="sceneIntroLabel">🎭 Texte d'intro scène</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcLetterboxToggle" class="checkbox-ctrl" /><span data-i18n="letterboxLabel">🎬 Letterbox</span></label><label class="toggle-ctrl" style="margin-top:4px;margin-left:20px;font-size:.78rem"><span data-i18n="letterboxHeight">Hauteur (%)</span><input type="range" id="tcLetterboxHeight" min="5" max="20" step="1" value="10" style="width:80px;margin-left:6px" /><span id="tcLetterboxHeightVal" style="font-size:.75rem;margin-left:4px">10%</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcVignetteToggle" class="checkbox-ctrl" /><span data-i18n="vignetteLabel">🎥 Vignette</span></label><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><label class="sidebar-label" data-i18n="vignetteIntensity" style="flex:0 0 auto;margin:0">Intensité</label><input type="range" id="tcVignetteIntensity" min="0.1" max="1" step="0.05" value="0.5" class="sidebar-select" style="flex:1" /></div></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcAudioVizToggle" class="checkbox-ctrl" /><span data-i18n="audioVizLabel">🎵 Visualiseur audio</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcIntroOutroToggle" class="checkbox-ctrl" /><span data-i18n="introOutroLabel">🎬 Intro/outro</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSourceLabelsToggle" class="checkbox-ctrl" /><span data-i18n="sourceLabels">🏷 Noms des sources</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcFpsCounterToggle" class="checkbox-ctrl" /><span data-i18n="fpsCounter">🎯 Compteur FPS</span></label></div>
+          </details>
+
+          <!-- Sub-accordion: Audio -->
+          <details class="tc-set-sub">
+            <summary>🔊 Audio</summary>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="soundToggle" class="checkbox-ctrl" checked /><span data-i18n="soundEffects">🔊 Effets sonores</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcJingleToggle" class="checkbox-ctrl" /><span data-i18n="jingleLabel">🎵 Jingle d'intro</span></label></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="micBoost">🎚 Boost micro</label><input type="range" id="tcMicBoostSlider" class="tc-brand-range" min="0" max="4" step="0.1" value="1" /><span class="tc-slider-value" id="tcMicBoostValue">1.0×</span></div>
+            <div class="sidebar-group"><label class="sidebar-label" data-i18n="micGate">🔇 Seuil silence (dB)</label><input type="range" id="tcMicGateSlider" class="tc-brand-range" min="-60" max="-20" step="1" value="-50" /><span class="tc-slider-value" id="tcMicGateValue">-50 dB</span></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcDuckToggle" class="checkbox-ctrl" /><span data-i18n="duckLabel">🔉 Volume ducking</span></label></div>
+          </details>
+
+          <!-- Sub-accordion: Behavior -->
+          <details class="tc-set-sub">
+            <summary>⚙️ Comportement</summary>
+            <!-- v0.7.227: opt-out for the on-canvas COMBO xN popup -->
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcComboToggle" class="checkbox-ctrl" /><span>⚡ COMBO popup (XP bonus messages)</span></label></div>
+            <!-- v0.7.253: opt-in to File System Access streaming (long recordings).
+                 Off by default because Chrome's download chip shows "0 octets"
+                 for FSA writes. On = saves RAM during very long recordings. -->
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcFsaStreamToggle" class="checkbox-ctrl" /><span>💾 Streamer les longs enregistrements vers le disque <span style="opacity:.6;font-size:.7rem">(Chrome chip "0 octets" mais OK)</span></span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcAutoPauseToggle" class="checkbox-ctrl" /><span data-i18n="autoPauseLabel">⏸ Pause auto (changement d'onglet)</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSensorOverlayToggle" class="checkbox-ctrl" /><span data-i18n="sensorOverlayLabel">🤖 Overlay capteur auto</span></label></div>
+            <!-- v0.7.163: micro:bit feature toggles -->
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcShakeSceneToggle" class="checkbox-ctrl" /><span>🫨 Shake → switch scene</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcShakeConfettiToggle" class="checkbox-ctrl" /><span>🎉 Shake → confetti</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcBtnASfxToggle" class="checkbox-ctrl" /><span>👏 Button A → applause SFX</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcLiveGraphToggle" class="checkbox-ctrl" /><span>📈 Live accelerometer graph</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcMotionTrailToggle" class="checkbox-ctrl" /><span>🌈 Motion trail</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcShowTempToggle" class="checkbox-ctrl" /><span>🌡 Temperature overlay</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcShowLightToggle" class="checkbox-ctrl" /><span>💡 Light level bar</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcShowSoundToggle" class="checkbox-ctrl" /><span>🔊 Sound level (v2 mic)</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcTiltPanToggle" class="checkbox-ctrl" /><span>🎯 Tilt → pan/zoom camera</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><span data-i18n="sceneTransitionLabel">🎞 Transition scènes</span><select id="tcSceneTransitionSelect" class="checkbox-ctrl" style="margin-left:8px"><option value="none" data-i18n="transitionNone">Aucune</option><option value="fade" data-i18n="transitionFade">Fondu</option><option value="wipe" data-i18n="transitionWipe">Balayage</option><option value="slide">Slide</option><option value="zoom">Zoom</option><option value="flip">Flip</option><option value="glitch">Glitch</option></select></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSceneAutoSaveToggle" class="checkbox-ctrl" checked /><span data-i18n="sceneAutoSave">💾 Sauvegarde auto scène</span></label></div>
+            <div class="sidebar-group"><label class="toggle-ctrl"><input type="checkbox" id="tcSnapAnnotToggle" class="checkbox-ctrl" /><span data-i18n="snapAnnotLabel">✏️ Annoter les captures</span></label></div>
+          </details>
+
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">🏷 <span data-i18n="setSecLogo">Logo</span></summary>
+        <div class="tc-set-body brand-group">
+          <label class="tc-file-btn" for="tcBrandLogoInput">
+            📁 <span data-i18n="brandUploadLogo">Charger un logo (PNG/SVG)</span>
+          </label>
+          <input type="file" id="tcBrandLogoInput" accept="image/*" style="display:none" />
+          <button id="tcBrandClearBtn" class="tc-btn-full" style="margin-top:6px">
+            🗑 <span data-i18n="brandClearLogo">Retirer le logo</span>
+          </button>
+          <label class="toggle-ctrl" style="margin-top:8px">
+            <input type="checkbox" id="tcBrandBgRemoveToggle" class="checkbox-ctrl" />
+            <span data-i18n="brandBgRemove">✂ Retirer le fond du logo (JPG à fond uni)</span>
+          </label>
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSize">📐 Taille du logo</label>
+          <input type="range" id="tcBrandSizeSlider" min="60" max="500" step="10" value="180" class="tc-brand-range" />
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandLogoOpacity">💧 Transparence du logo</label>
+          <input type="range" id="tcBrandOpacitySlider" min="0" max="100" step="5" value="100" class="tc-brand-range" />
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandLogoFilter">🎨 Filtre du logo</label>
+          <select id="tcBrandLogoFilterSelect" class="sidebar-select">
+            <option value="none">— Aucun —</option>
+            <option value="bw">N&B</option>
+            <option value="sepia">Sépia</option>
+            <option value="bright">Lumineux</option>
+            <option value="contrast">Contraste</option>
+            <option value="vintage">Vintage</option>
+            <option value="cool">Froid</option>
+            <option value="warm">Chaud</option>
+          </select>
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandLogoTint">🎨 Couleur du logo (silhouette)</label>
+          <div class="tc-brand-color-row" id="tcBrandLogoTintRow">
+            <button class="tc-brand-swatch active" data-bt="" title="— none —" style="background:linear-gradient(135deg,#888 45%,#fff 55%)">∅</button>
+            <button class="tc-brand-swatch" data-bt="#ffffff" style="background:#ffffff" title="white"></button>
+            <button class="tc-brand-swatch" data-bt="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+            <button class="tc-brand-swatch" data-bt="#fb923c" style="background:#fb923c" title="orange"></button>
+            <button class="tc-brand-swatch" data-bt="#ef4444" style="background:#ef4444" title="red"></button>
+            <button class="tc-brand-swatch" data-bt="#a3e635" style="background:#a3e635" title="lime"></button>
+            <button class="tc-brand-swatch" data-bt="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+            <button class="tc-brand-swatch" data-bt="#e879f9" style="background:#e879f9" title="pink"></button>
+            <button class="tc-brand-swatch" data-bt="#000000" style="background:#000000" title="black"></button>
+          </div>
+
+          <!-- v0.7.82: 3 numbered brand preset slots (save / load) -->
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandEffect">🎭 Logo effect</label>
+          <select id="tcBrandEffectSelect" class="sidebar-select">
+            <optgroup label="— None —">
+              <option value="none">None</option>
+            </optgroup>
+            <optgroup label="Motion">
+              <option value="spin">Spin</option>
+              <option value="pulse">Pulse</option>
+              <option value="bounce">Bounce</option>
+              <option value="wiggle">Wiggle</option>
+              <option value="float">Float</option>
+              <option value="shake">Shake</option>
+              <option value="swing">Swing</option>
+              <option value="rock">Rock</option>
+              <option value="zoom">Zoom</option>
+              <option value="heartbeat">Heartbeat</option>
+              <option value="jelly">Jelly</option>
+              <option value="flip">Flip</option>
+              <option value="orbit">Orbit</option>
+              <option value="spiral">Spiral</option>
+            </optgroup>
+            <optgroup label="Visual">
+              <option value="glow">Glow</option>
+              <option value="neon">Neon</option>
+              <option value="fire">Fire</option>
+              <option value="gold">Gold</option>
+              <option value="blink">Blink</option>
+              <option value="fade">Fade</option>
+              <option value="strobe">Strobe</option>
+              <option value="flicker">Flicker</option>
+              <option value="glitch">Glitch</option>
+            </optgroup>
+            <optgroup label="Filter">
+              <option value="matrix">Matrix</option>
+              <option value="invert">Invert</option>
+              <option value="sepia">Sepia</option>
+              <option value="thermal">Thermal</option>
+              <option value="xray">X-Ray</option>
+              <option value="vintage">Vintage</option>
+            </optgroup>
+          </select>
+
+          <label class="sidebar-label" style="margin-top:14px" data-i18n="brandPresets">📁 Presets de marque</label>
+          <div class="tc-brand-preset-row">
+            <span data-i18n="brandSave">Sauvegarder :</span>
+            <button class="tc-brand-preset-btn" data-brand-save="1">1</button>
+            <button class="tc-brand-preset-btn" data-brand-save="2">2</button>
+            <button class="tc-brand-preset-btn" data-brand-save="3">3</button>
+          </div>
+          <div class="tc-brand-preset-row">
+            <span data-i18n="brandLoad">Charger :</span>
+            <button class="tc-brand-preset-btn" data-brand-load="1">1</button>
+            <button class="tc-brand-preset-btn" data-brand-load="2">2</button>
+            <button class="tc-brand-preset-btn" data-brand-load="3">3</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">✍️ <span data-i18n="setSecSlogan">Slogan &amp; effet</span></summary>
+        <div class="tc-set-body">
+          <input type="text" id="tcBrandSloganInput" class="sidebar-select" placeholder="Ton slogan…" />
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSloganFont">Aa Police du slogan</label>
+          <select id="tcBrandSloganFontSelect" class="sidebar-select">
+            <option value="0">Bangers (BD)</option>
+            <option value="1">Righteous</option>
+            <option value="2">Orbitron (futuriste)</option>
+            <option value="3">Amiri (serif)</option>
+            <option value="4">Tajawal</option>
+            <option value="5">Arial (système)</option>
+          </select>
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSloganSize">📐 Taille du slogan</label>
+          <input type="range" id="tcBrandSloganSizeSlider" min="20" max="160" step="2" value="48" class="tc-brand-range" />
+
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandSloganColor">🎨 Couleur du slogan</label>
+          <div class="tc-brand-color-row" id="tcBrandColorRow">
+            <button class="tc-brand-swatch" data-bc="#ffffff" style="background:#ffffff" title="white"></button>
+            <button class="tc-brand-swatch" data-bc="#fbbf24" style="background:#fbbf24" title="yellow"></button>
+            <button class="tc-brand-swatch" data-bc="#fb923c" style="background:#fb923c" title="orange"></button>
+            <button class="tc-brand-swatch" data-bc="#ef4444" style="background:#ef4444" title="red"></button>
+            <button class="tc-brand-swatch" data-bc="#a3e635" style="background:#a3e635" title="lime"></button>
+            <button class="tc-brand-swatch" data-bc="#38bdf8" style="background:#38bdf8" title="cyan"></button>
+            <button class="tc-brand-swatch" data-bc="#e879f9" style="background:#e879f9" title="pink"></button>
+            <button class="tc-brand-swatch" data-bc="#000000" style="background:#000000" title="black"></button>
+          </div>
+
+          <!-- v0.7.42: badge card link URL — printed on BadgeCard PNG exports -->
+          <label class="sidebar-label" style="margin-top:10px" data-i18n="brandQrUrl">🔗 URL du badge card</label>
+          <input type="url" id="tcBrandUrlInput" class="sidebar-select" placeholder="https://mon-cours.fr/lecon-42" />
+
+          <!-- v0.7.98: stage watermark text overlay — corner stamp -->
+          <label class="sidebar-label" style="margin-top:12px" data-i18n="watermarkLabel">💧 Watermark</label>
+          <input type="text" id="tcWatermarkInput" class="sidebar-select" placeholder="© 2026 Mon Cours" maxlength="80" />
+          <select id="tcWatermarkCorner" class="sidebar-select" style="margin-top:6px">
+            <option value="tl">↖ Haut-gauche</option>
+            <option value="tr">↗ Haut-droite</option>
+            <option value="bl">↙ Bas-gauche</option>
+            <option value="br" selected>↘ Bas-droite</option>
+          </select>
+          <input type="range" id="tcWatermarkOpacity" min="0" max="1" step="0.05" value="0.55" class="tc-brand-range" style="margin-top:6px" />
+        </div>
+      </details>
+
+      <details class="tc-set-section" data-mode="pro">
+        <summary class="tc-set-summary">📰 <span data-i18n="setSecTicker">Ticker</span></summary>
+        <div class="tc-set-body">
+          <label class="sidebar-label" data-i18n="tickerCustomLabel">📰 Messages du ticker (un par ligne)</label>
+          <textarea id="tcTickerCustomInput" class="sidebar-select tc-ticker-textarea"
+            rows="4"
+            placeholder="💡 Mon message perso&#10;🎬 Tuto du jour&#10;⭐ Bonne humeur !"></textarea>
+          <div class="tc-ticker-hint" data-i18n="tickerCustomHint">Laisse vide pour utiliser les 10 conseils par défaut.</div>
+        </div>
+      </details>
+
+      <!-- v0.7.179: dashboard sections moved from main page to settings -->
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">🏆 <span data-i18n="badgesTitle">Tes badges</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-badges" id="tcBadges"></div>
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">📊 <span data-i18n="historyTitle">Mes tutos</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-history-filter">
+            <input type="search" id="tcHistorySearch" class="tc-history-search" placeholder="🔍" data-i18n-placeholder="historySearchPlaceholder" />
+            <div class="tc-history-stars" id="tcHistoryStars">
+              <button data-stars="0" class="active" title="All">All</button>
+              <button data-stars="1" title="≥1">1+</button>
+              <button data-stars="2" title="≥2">2+</button>
+              <button data-stars="3" title="≥3">3+</button>
+              <button data-stars="4" title="≥4">4+</button>
+              <button data-stars="5" title="5">5</button>
+            </div>
+          </div>
+          <div class="tc-history" id="tcHistory">
+            <div class="tc-history-empty" data-i18n="historyEmpty">Aucun tuto encore. Clique 🔴 ENREGISTRER pour commencer !</div>
+          </div>
+          <div class="tc-history-footer">
+            <span class="tc-history-stats" id="tcHistoryStats"></span>
+            <button class="tc-history-clear" id="tcHistoryClearBtn" data-i18n="historyClear">🗑 Vider l'historique</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="tc-set-section">
+        <summary class="tc-set-summary">📈 <span data-i18n="dashTitle">Tes stats</span></summary>
+        <div class="tc-set-body">
+          <div class="tc-dash" id="tcDashboard"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>NoorCast</span>
+      <span class="badge tc-app-ver-badge" title=""><strong>v0.7.208</strong> <small class="tc-app-build">·</small></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Activity Log ═══════════════════ -->
+  <div class="sidebar-overlay" id="logOverlay"></div>
+  <aside class="sidebar" id="logPanel" aria-label="Activity Log" role="dialog" aria-modal="true">
+    <!-- v0.7.248: drag this handle to resize the log sidebar width.
+         (Older "resize-handle" element was non-functional and removed.) -->
+    <div class="tc-sidebar-resize" aria-label="Resize sidebar" title="Drag to resize"></div>
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="activityLog">📜 Journal</span>
+      <div class="log-controls">
+        <button id="clearLogBtn" class="btn-sm"><span class="btn-icon">🧹</span><span data-i18n="clear">Effacer</span></button>
+        <button id="copyLogBtn" class="btn-sm"><span class="btn-icon">📋</span><span data-i18n="copy">Copier</span></button>
+        <button id="exportLogBtn" class="btn-sm"><span class="btn-icon">💾</span><span data-i18n="export">Exporter</span></button>
+        <button id="logCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="log-filters" id="logFilters">
+      <button class="log-filter active" data-filter="all" data-i18n="filterAll">Tout</button>
+      <button class="log-filter" data-filter="info">Info</button>
+      <button class="log-filter" data-filter="success">✓</button>
+      <button class="log-filter" data-filter="error">✗</button>
+      <button class="log-filter" data-filter="tx">TX</button>
+      <button class="log-filter" data-filter="rx">RX</button>
+    </div>
+
+    <div class="sidebar-body log-body">
+      <div class="log" id="logContainer" aria-live="polite"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span data-i18n="eventsMsg">Événements et messages</span>
+      <span class="badge tc-app-ver-badge" title=""><strong>v0.7.208</strong> <small class="tc-app-build">·</small></span>
+    </div>
+  </aside>
+
+  <!-- Toast — v0.9.24: aria-live="polite" so screen readers announce
+       every toast (errors, confirmations, mode switches, etc.). role
+       status pairs with aria-live so the announcement happens without
+       focus stealing. -->
+  <div id="toastIndicator" class="toast-indicator" role="status" aria-live="polite" aria-atomic="true">
+    <div class="toast-inner">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="toastMessage" class="toast-text">Working…</div>
+    </div>
+  </div>
+
+  <!-- v0.7.172: firmware modal (inspired by bit-playground) -->
+  <div class="tc-fw-modal" id="tcFwModal" style="display:none">
+    <div class="tc-fw-modal-content">
+      <h3>micro:bit Firmware V3.6</h3>
+      <p><strong>🚀 Quick flash via MakeCode</strong> (about 30 seconds):</p>
+      <ol>
+        <li>Click <strong>Copy Code</strong> below</li>
+        <li>Click <strong>Open MakeCode</strong> and switch to JavaScript mode (top-right toggle)</li>
+        <li>Select all (<kbd>Ctrl+A</kbd>) and paste (<kbd>Ctrl+V</kbd>)</li>
+        <li>Click <strong>Download</strong> in MakeCode — drag the .hex onto the <code>MICROBIT</code> drive</li>
+      </ol>
+      <p id="tcFwHexNote" style="opacity:.7;font-size:.85em">A pre-built <code>noorcast-v3.6.hex</code> isn't shipped with this build yet. Once you've flashed once, your micro:bit keeps the firmware until you re-flash — you don't need to repeat this.</p>
+      <div class="tc-fw-modal-btns">
+        <a href="./firmware/noorcast-v3.6.hex" download="noorcast-v3.6.hex" id="tcFwDownloadHex" class="tc-fw-btn-open" style="display:none;background:rgba(163,230,53,.22);border-color:rgba(163,230,53,.55)">📥 Download .hex (5-sec flash)</a>
+        <button class="tc-fw-btn-copy" id="tcFwCopyBtn" style="background:rgba(163,230,53,.18);border-color:rgba(163,230,53,.5)">📋 Copy Code</button>
+        <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-fw-btn-open">🔗 Open MakeCode</a>
+        <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>
+      </div>
+      <pre class="tc-fw-code" id="tcMicrobitCode">/**
+ * NoorCast — micro:bit BLE Firmware V3.6
+ *
+ * UART over Bluetooth LE
+ * Compatible with NoorCast + bit-playground
+ *
+ * v3.6: SOLID disconnected X icon. v3.5 used basic.showIcon(No) inside
+ * basic.forever, which can be queued/clobbered if any showString or
+ * scrolling animation is in flight (or if the disconnect event handler
+ * also tries to write to LEDs). Replaced with basic.showLeds(...) —
+ * synchronous, explicit 5x5 pattern, never queued. Disconnect handler
+ * also simplified (no longer races with the forever loop).
+ *
+ * v3.5: REMOVED compass telemetry. Calling input.compassHeading()
+ * triggers MakeCode's "tilt to fill circle" calibration game on the
+ * LEDs the first time it's used — confusing for kids. Cleaner to
+ * skip compass entirely. JS still parses COMPASS: lines if they
+ * arrive (backward-compatible with V3.4 and older firmware).
+ *
+ * v3.4: Servo LED bars only redraw when pan/tilt actually change.
+ * Previously they were redrawn every 100ms (after 2s CMD cooldown),
+ * which erased any arrow icon shown via CMD:LEFT/UP/etc. with
+ * identical bars. Now the LEDs hold whatever was last drawn.
+ *
+ * v3.3: VERSION REPORT on connect — sends "VER:NoorCast,V3.3,YYYY-MM-DD"
+ * so the browser can show which firmware is actually flashed and warn
+ * if it's older than expected. Bump FW_BUILD on every reflash.
+ *
+ * v3.2: CHANGE-DETECTION on all telemetry — only sends a line when
+ * the value actually changes (with thresholds for noisy sensors).
+ * Cuts BLE traffic ~10× when the board sits idle. On (re)connect a
+ * "burst" frame sends all current values once so the browser panel
+ * populates immediately.
+ *
+ * Thresholds: acc 50 mg, sound 5, light 5, compass 5°, temp 1°C.
+ *
+ * TELEMETRY (micro:bit → browser):
+ *   A:x,y,z        accelerometer (milli-g)
+ *   BA:1 / BB:1     button pressed
+ *   TP:n            temperature (°C)
+ *   L:n             light (0-255)
+ *   S:n             sound (0-255, V2)
+ *   LEDS:r0,r1,r2,r3,r4  LED sync
+ *   (compass intentionally omitted — avoids calibration prompt)
+ *
+ * COMMANDS (browser → micro:bit):
+ *   P:angle         pan servo P1 (0-180)
+ *   TI:angle        tilt servo P2 (0-180)
+ *   P:OFF / TI:OFF  release servo PWM
+ *   LED:hex         5x5 matrix (5 hex bytes)
+ *   CMD:HEART/SMILE/SAD/CLEAR/UP/DOWN/LEFT/RIGHT/FIRE
+ *   TEXT:string     scroll text on LEDs
+ *   BUZZ:freq,ms    play tone (V2 speaker + P0)
+ *   BUZZ:OFF        stop sound
+ *   TEST            checkmark + reply "OK"
+ *   HELLO           heart on connect — also forces telemetry burst
+ *   BYE             clean disconnect (show X, stop telemetry)
+ *   VER?            re-send VER:… line (browser can poll on demand)
+ */
+
+// v3.3: firmware identity — bump FW_BUILD when you reflash this code.
+// FW_NAME stays "NoorCast" so other apps using the same protocol can
+// tell if a board is running NoorCast firmware vs. something else.
+const FW_NAME = "NoorCast"
+const FW_VERSION = "V3.6"
+const FW_BUILD = "2026-04-17"
+
+bluetooth.startUartService()
+let pan = 90, tilt = 90, ledsDirty = false, lastCmdAt = 0
+let prevPan = -1, prevTilt = -1
+let s1Active = false, s2Active = false, btConnected = false
+
+// v3.2: cached previous telemetry values for change detection.
+// -9999 means "never sent" — first read forces a transmit (burst).
+let prevAx = -9999, prevAy = -9999, prevAz = -9999
+let prevTp = -9999, prevL = -9999, prevS = -9999, prevC = -9999
+let burst = true  // set true on (re)connect to force one full snapshot
+
+// v3.3: helper — send firmware identity in a single line
+function sendVer() {
+    bluetooth.uartWriteLine("VER:" + FW_NAME + "," + FW_VERSION + "," + FW_BUILD)
+}
+
+bluetooth.onBluetoothConnected(() => {
+    btConnected = true
+    burst = true   // re-send all telemetry once on (re)connect
+    basic.showIcon(IconNames.Yes)
+    bluetooth.uartWriteLine("INFO:CONNECTED")
+    sendVer()  // v3.3: announce identity right after CONNECTED
+})
+bluetooth.onBluetoothDisconnected(() => {
+    // v3.6: just flip the flag — the forever loop draws the X reliably.
+    // Removed showIcon + pause(2000) here because it raced with the
+    // forever loop and sometimes left the LEDs stuck blank.
+    btConnected = false
+})
+
+bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), () => {
+    let cmd = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
+    // Servos
+    if (cmd == "P:OFF") {
+        pins.analogWritePin(AnalogPin.P1, 0); s1Active = false; return
+    }
+    if (cmd == "TI:OFF") {
+        pins.analogWritePin(AnalogPin.P2, 0); s2Active = false; return
+    }
+    if (cmd.indexOf("P:") == 0) {
+        pan = Math.min(180, Math.max(0, parseInt(cmd.substr(2))))
+        pins.servoWritePin(AnalogPin.P1, pan); s1Active = true; return
+    }
+    if (cmd.indexOf("TI:") == 0) {
+        tilt = Math.min(180, Math.max(0, parseInt(cmd.substr(3))))
+        pins.servoWritePin(AnalogPin.P2, tilt); s2Active = true; return
+    }
+    // Test / Hello / Bye
+    if (cmd == "TEST") {
+        basic.showIcon(IconNames.Yes)
+        basic.pause(500); basic.clearScreen()
+        bluetooth.uartWriteLine("OK"); return
+    }
+    if (cmd == "HELLO") {
+        basic.showIcon(IconNames.Heart)
+        burst = true   // v3.2: re-send full telemetry snapshot
+        sendVer()      // v3.3: re-announce identity
+        basic.pause(300); basic.clearScreen(); return
+    }
+    if (cmd == "VER?") {  // v3.3: on-demand version query
+        sendVer(); return
+    }
+    if (cmd == "BYE") {
+        btConnected = false
+        basic.showIcon(IconNames.No)
+        basic.pause(500); basic.clearScreen(); return
+    }
+    // LED matrix (hex)
+    if (cmd.indexOf("LED:") == 0) {
+        let hex = cmd.substr(4)
+        for (let r = 0; r < 5; r++) {
+            let b = parseInt(hex.substr(r * 2, 2), 16)
+            for (let c = 0; c < 5; c++) {
+                if ((b >> (4 - c)) & 1) led.plot(c, r)
+                else led.unplot(c, r)
+            }
+        }
+        ledsDirty = true; return
+    }
+    // CMD icons + arrows
+    if (cmd.indexOf("CMD:") == 0) {
+        lastCmdAt = input.runningTime()
+        let c = cmd.substr(4)
+        if (c == "HEART") basic.showIcon(IconNames.Heart)
+        else if (c == "SMILE") basic.showIcon(IconNames.Happy)
+        else if (c == "SAD") basic.showIcon(IconNames.Sad)
+        else if (c == "CLEAR") basic.clearScreen()
+        else if (c == "UP") basic.showArrow(ArrowNames.North)
+        else if (c == "DOWN") basic.showArrow(ArrowNames.South)
+        else if (c == "LEFT") basic.showArrow(ArrowNames.West)
+        else if (c == "RIGHT") basic.showArrow(ArrowNames.East)
+        else if (c == "FIRE") {
+            for (let i = 0; i < 3; i++) {
+                basic.showIcon(IconNames.SmallDiamond)
+                basic.pause(100)
+                basic.showIcon(IconNames.Diamond)
+                basic.pause(100)
+            }
+            basic.clearScreen()
+        }
+        ledsDirty = true; return
+    }
+    // Scroll text
+    if (cmd.indexOf("TEXT:") == 0) {
+        basic.showString(cmd.substr(5)); return
+    }
+    // Buzzer
+    if (cmd == "BUZZ:OFF") {
+        music.stopAllSounds()
+        pins.analogWritePin(AnalogPin.P0, 0); return
+    }
+    if (cmd.indexOf("BUZZ:") == 0) {
+        let parts = cmd.substr(5).split(",")
+        if (parts.length == 2) {
+            let freq = parseInt(parts[0])
+            let dur = parseInt(parts[1])
+            if (freq >= 20 && freq <= 20000 && dur >= 1 && dur <= 5000) {
+                control.inBackground(() => music.playTone(freq, dur))
+            }
+        }
+        return
+    }
+})
+
+input.onButtonPressed(Button.A, () => { if (btConnected) bluetooth.uartWriteLine("BA:1") })
+input.onButtonPressed(Button.B, () => { if (btConnected) bluetooth.uartWriteLine("BB:1") })
+
+// Telemetry + LED sync
+let prevLeds = ""
+basic.forever(() => {
+    if (!btConnected) {
+        // v3.6: pulsing X drawn with explicit showLeds — never queued,
+        // never racey, always visible the moment btConnected is false.
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            . . # . .
+            . # . # .
+            # . . . #
+        `)
+        basic.pause(700)
+        basic.clearScreen()
+        basic.pause(300)
+        return
+    }
+    // v3.2: change-detection — only send when value changed enough.
+    // 'burst' forces a one-time full snapshot on connect/HELLO.
+    let ax = input.acceleration(Dimension.X)
+    let ay = input.acceleration(Dimension.Y)
+    let az = input.acceleration(Dimension.Z)
+    if (burst || Math.abs(ax - prevAx) >= 50 || Math.abs(ay - prevAy) >= 50 || Math.abs(az - prevAz) >= 50) {
+        bluetooth.uartWriteLine("A:" + ax + "," + ay + "," + az)
+        prevAx = ax; prevAy = ay; prevAz = az
+    }
+    let tp = input.temperature()
+    if (burst || tp != prevTp) {
+        bluetooth.uartWriteLine("TP:" + tp); prevTp = tp
+    }
+    let lv = input.lightLevel()
+    if (burst || Math.abs(lv - prevL) >= 5) {
+        bluetooth.uartWriteLine("L:" + lv); prevL = lv
+    }
+    let sv = input.soundLevel()
+    if (burst || Math.abs(sv - prevS) >= 5) {
+        bluetooth.uartWriteLine("S:" + sv); prevS = sv
+    }
+    // v3.5: compass intentionally NOT read — input.compassHeading()
+    // forces MakeCode's "tilt to fill the circle" calibration game on
+    // first call, which is confusing for kids. If you want compass back,
+    // call input.calibrateCompass() once then read heading freely.
+    burst = false  // burst is one-shot
+    // v3.4: Only redraw servo bars when the angle ACTUALLY changed.
+    // Previously the bars were drawn every 100ms after the 2s CMD
+    // cooldown, which overwrote any other LED content (e.g. the arrow
+    // from CMD:LEFT) with identical bars on every tick. Now the bars
+    // only refresh when pan/tilt move, so the arrow stays put and the
+    // LEDs hold whatever was last drawn.
+    if ((s1Active || s2Active)
+        && (input.runningTime() - lastCmdAt > 2000)
+        && (pan != prevPan || tilt != prevTilt)) {
+        // Row 0-1: servo 1 bar, Row 3-4: servo 2 bar, Row 2: separator
+        for (let c = 0; c < 5; c++) {
+            let s1on = s1Active && c < Math.round(pan / 180 * 5)
+            let s2on = s2Active && c < Math.round(tilt / 180 * 5)
+            if (s1on) { led.plot(c, 0); led.plot(c, 1) } else { led.unplot(c, 0); led.unplot(c, 1) }
+            if (s2on) { led.plot(c, 3); led.plot(c, 4) } else { led.unplot(c, 3); led.unplot(c, 4) }
+            led.unplot(c, 2) // separator row
+        }
+        prevPan = pan
+        prevTilt = tilt
+        ledsDirty = true
+    }
+    // LED sync
+    if (ledsDirty) {
+        let ls = ""
+        for (let r = 0; r < 5; r++) {
+            let v = 0
+            for (let c = 0; c < 5; c++) {
+                if (led.point(c, r)) v |= (1 << c)
+            }
+            ls += (r > 0 ? "," : "") + v
+        }
+        if (ls != prevLeds) {
+            bluetooth.uartWriteLine("LEDS:" + ls)
+            prevLeds = ls
+        }
+        ledsDirty = false
+    }
+    basic.pause(100)
+})</pre>
+    </div>
+  </div>
+
+  <script src="noorcast.js"></script>
+  <!-- v0.7.158: PWA service worker registration -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // v0.7.178: detect SW updates and notify user
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+            if (typeof showToast === 'function') showToast('🔄 Nouvelle version disponible — recharge la page', 5000);
+          }
+        });
+      });
+    }).catch(() => {});
+  }
+  </script>
+</body>
+</html>

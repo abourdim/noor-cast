@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NoorCast Cheat Sheet</title>
+  <style>
+    :root { --bg: #0a0f0a; --card: #141e14; --border: #1e3a1e; --accent: #a3e635; --accent2: #fb923c; --text: #e2e8e0; --muted: #94a394; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .sheet { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+    h1 { font-size: 1.8rem; color: var(--accent); margin-bottom: 4px; }
+    h1 span { color: var(--accent2); }
+    .subtitle { color: var(--muted); margin-bottom: 20px; font-size: .9rem; }
+    h2 { font-size: 1.1rem; color: var(--accent2); margin: 20px 0 8px; padding: 6px 10px; background: rgba(251,146,60,.08); border-radius: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+    .item { display: flex; gap: 10px; padding: 8px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: .85rem; }
+    .item:hover { border-color: var(--accent); }
+    .item-icon { font-size: 1.3rem; flex-shrink: 0; width: 28px; text-align: center; }
+    .item-body { flex: 1; min-width: 0; }
+    .item-name { font-weight: 700; color: var(--text); }
+    .item-desc { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+    kbd { background: var(--card); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-size: .75rem; font-family: monospace; color: var(--accent); }
+    .tag { display: inline-block; font-size: .65rem; padding: 1px 6px; border-radius: 8px; margin-left: 4px; }
+    .tag-canvas { background: rgba(163,230,53,.15); color: #a3e635; }
+    .tag-html { background: rgba(56,189,248,.15); color: #38bdf8; }
+    .tag-setting { background: rgba(251,146,60,.15); color: #fb923c; }
+    .tag-pro { background: rgba(168,85,247,.15); color: #a855f7; }
+    .links { text-align: center; margin-top: 30px; }
+    .links a { color: var(--accent); margin: 0 10px; text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
+    .print-btn { position: fixed; bottom: 16px; right: 16px; background: var(--accent); color: var(--bg); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 700; cursor: pointer; z-index: 99; }
+    @media print { .print-btn { display: none; } body { background: #fff; color: #000; } .item { border-color: #ccc; background: #f9f9f9; } .item-desc { color: #555; } h2 { background: #f0f0f0; } kbd { border-color: #ccc; color: #333; } }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="sheet">
+
+<h1>📋 Noor<span>Cast</span> Cheat Sheet</h1>
+<p class="subtitle">Every feature at a glance. <span class="tag tag-canvas">canvas</span> = visible in recording. <span class="tag tag-html">HTML</span> = teacher-only. <span class="tag tag-pro">Pro</span> = Pro mode only.</p>
+
+<!-- ═══════════ KEYBOARD ═══════════ -->
+<h2>⌨ Keyboard Shortcuts</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon"><kbd>R</kbd></div><div class="item-body"><div class="item-name">Record / Stop</div><div class="item-desc">Start or stop recording. Countdown plays first if enabled.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>L</kbd></div><div class="item-body"><div class="item-name">Laser pointer</div><div class="item-desc">Red dot follows your cursor on the canvas. Visible in recording.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>F</kbd></div><div class="item-body"><div class="item-name">Freeze screen</div><div class="item-desc">Pauses the canvas at the current frame. Combine with Draw to annotate.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>D</kbd></div><div class="item-body"><div class="item-name">Draw / Whiteboard</div><div class="item-desc">Freehand drawing on the canvas. Pick color and thickness from the palette.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>S</kbd></div><div class="item-body"><div class="item-name">Snapshot</div><div class="item-desc">Captures the current canvas as a PNG image.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>T</kbd></div><div class="item-body"><div class="item-name">Teleprompter</div><div class="item-desc">Auto-scrolling script overlay. Teacher-only, never in recording.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Z</kbd></div><div class="item-body"><div class="item-name">Zoom</div><div class="item-desc">Click a point on canvas to zoom in 2x. Click again to reset.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>M</kbd></div><div class="item-body"><div class="item-name">Chapter marker</div><div class="item-desc">Drops a timestamp marker. Exports as .vtt chapter file for YouTube.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Q</kbd></div><div class="item-body"><div class="item-name">Quiz card</div><div class="item-desc">Shows a quiz/question overlay on canvas during recording.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>G</kbd></div><div class="item-body"><div class="item-name">Grid overlay</div><div class="item-desc">Rule-of-thirds grid for framing. Teacher-only, not in recording.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>1-6</kbd></div><div class="item-body"><div class="item-name">Switch scene</div><div class="item-desc">Instantly switch to scene 1-6. Each switch drops a chapter marker.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>?</kbd></div><div class="item-body"><div class="item-name">Random scene</div><div class="item-desc">Jump to a random scene. Fun for quizzes and surprises.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+Z</kbd></div><div class="item-body"><div class="item-name">Undo</div><div class="item-desc">Undo last source position/size change.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+Y</kbd></div><div class="item-body"><div class="item-name">Redo</div><div class="item-desc">Redo undone layout change.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+S</kbd></div><div class="item-body"><div class="item-name">Download all</div><div class="item-desc">Downloads video + chapters + sensors in one click.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>⇧F</kbd></div><div class="item-body"><div class="item-name">Focus mode</div><div class="item-desc">Hides all panels — canvas only. Press again to restore.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Alt+1-9</kbd></div><div class="item-body"><div class="item-name">Toggle source</div><div class="item-desc">Show/hide source #N without removing it.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Esc</kbd></div><div class="item-body"><div class="item-name">Stop / Exit / Close</div><div class="item-desc">Stop recording, close modals, close any open Settings/Help/Log panel, deselect sources, exit modes.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+K</kbd></div><div class="item-body"><div class="item-name">Global search (Spotlight)</div><div class="item-desc">Universal command palette. Searches scenes, skins, backgrounds, themes, mascots, settings, tools, sounds, badges, hotkeys.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>/</kbd></div><div class="item-body"><div class="item-name">Global search (alt)</div><div class="item-desc">Same as Ctrl+K. Single-key shortcut from anywhere.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>C</kbd></div><div class="item-body"><div class="item-name">Live captions</div><div class="item-desc">Toggle browser SpeechRecognition captions. Exports as .srt.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>P</kbd></div><div class="item-body"><div class="item-name">Pause / Resume</div><div class="item-desc">Pause without stopping. Press again to resume. Auto-pause on tab switch (if enabled).</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+A</kbd></div><div class="item-body"><div class="item-name">Select all sources</div><div class="item-desc">Multi-selects every visible source. Drag any to move all together.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Shift+click</kbd></div><div class="item-body"><div class="item-name">Add/remove from selection</div><div class="item-desc">Toggles a source in/out of multi-select. Sky-blue dashed outline.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Alt+drag</kbd></div><div class="item-body"><div class="item-name">Snap to 48px grid</div><div class="item-desc">Hold Alt while dragging — source snaps to grid + visible guides appear.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+wheel</kbd></div><div class="item-body"><div class="item-name">Smooth zoom toward cursor</div><div class="item-desc">On the stage, Ctrl+scroll = continuous zoom (1× to 4×) centered on cursor.</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Ctrl+Shift+D</kbd></div><div class="item-body"><div class="item-name">Debug HUD</div><div class="item-desc">Toggle FPS + JS heap memory overlay (top-right).</div></div></div>
+  <div class="item"><div class="item-icon"><kbd>Delete</kbd></div><div class="item-body"><div class="item-name">Remove selected source</div><div class="item-desc">Deletes the selected source(s). Backspace also works. Streams stopped.</div></div></div>
+</div>
+
+<!-- ═══════════ NEW IN v0.7.x ═══════════ -->
+<h2>✨ Recently added (v0.7.208 → v0.7.240)</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">🖼</div><div class="item-body"><div class="item-name">Background image (PNG/JPG)</div><div class="item-desc">Settings → Apparence → Image de fond. Cover/Contain/Stretch/Tile. Max 4MB. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">📶</div><div class="item-body"><div class="item-name">Recording quality picker</div><div class="item-desc">Settings → Enregistrement → Qualité vidéo. 4 presets: Standard 4 / High 8 / Ultra 12 / Max 20 Mbps. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🔤</div><div class="item-body"><div class="item-name">UI font picker</div><div class="item-desc">Settings → Général → Police. 7 fonts (Orbitron default, Bangers, Amiri, Tajawal, etc). <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🇩🇿</div><div class="item-body"><div class="item-name">SVG language flags</div><div class="item-desc">Next to language dropdown. UK/France/Algeria. Works on Windows where emoji flags fail.</div></div></div>
+  <div class="item"><div class="item-icon">↔</div><div class="item-body"><div class="item-name">Resizable sidebars</div><div class="item-desc">Drag the lime grip on either sidebar's inner edge. Double-click = reset to default.</div></div></div>
+  <div class="item"><div class="item-icon">🎛</div><div class="item-body"><div class="item-name">Servo gauges</div><div class="item-desc">Pan/tilt semicircular gauges on canvas. Draggable, resizable. Hidden by default. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎭</div><div class="item-body"><div class="item-name">Mascots (was Pets)</div><div class="item-desc">Same dropdown — renamed because most aren't animals.</div></div></div>
+  <div class="item"><div class="item-icon">😊</div><div class="item-body"><div class="item-name">Co-host draggable + 40 chars</div><div class="item-desc">Click and drag the SVG buddy. Resize via corner. 40 characters in 5 thematic groups (Science / Space / Symbols / Characters / Pirates).</div></div></div>
+  <div class="item"><div class="item-icon">⚡</div><div class="item-body"><div class="item-name">COMBO popup off-switch</div><div class="item-desc">Settings → Comportement → uncheck if popup distracts.</div></div></div>
+  <div class="item"><div class="item-icon">🎵</div><div class="item-body"><div class="item-name">5 music tracks</div><div class="item-desc">Toolbar dropdown next to Music: Chiptune, Lo-fi, Epic, Chill, Retro.</div></div></div>
+  <div class="item"><div class="item-icon">🤖</div><div class="item-body"><div class="item-name">micro:bit firmware report</div><div class="item-desc">Sidebar shows ✅ V3.5 or ⚠ V3.1 outdated. Auto-detected on connect via VER: line.</div></div></div>
+  <div class="item"><div class="item-icon">📌</div><div class="item-body"><div class="item-name">Build date in sidebar</div><div class="item-desc">Bottom of every sidebar — version + date. Hover for full timestamp.</div></div></div>
+  <div class="item"><div class="item-icon">⋯</div><div class="item-body"><div class="item-name">More Tools popup resize</div><div class="item-desc">Drag the bottom-right lime corner to resize. Drag header to move.</div></div></div>
+  <div class="item"><div class="item-icon">🎹</div><div class="item-body"><div class="item-name">Piano clickable + keyboard</div><div class="item-desc">Click keys on canvas (no longer keyboard-only). White: A-L · Black: WETYUOP.</div></div></div>
+</div>
+
+<!-- ═══════════ TOOLS BAR ═══════════ -->
+<h2>🔧 Tools Bar (inline)</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">↩</div><div class="item-body"><div class="item-name">Undo</div><div class="item-desc">Revert last source drag/resize. Same as Ctrl+Z.</div></div></div>
+  <div class="item"><div class="item-icon">↪</div><div class="item-body"><div class="item-name">Redo</div><div class="item-desc">Re-apply undone change. Same as Ctrl+Y.</div></div></div>
+  <div class="item"><div class="item-icon">🔴</div><div class="item-body"><div class="item-name">Laser</div><div class="item-desc">Red pointer dot on canvas. Follows cursor or micro:bit tilt. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">❄️</div><div class="item-body"><div class="item-name">Freeze</div><div class="item-desc">Freezes the canvas. Draw annotations on the frozen frame. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">✏️</div><div class="item-body"><div class="item-name">Draw</div><div class="item-desc">Freehand whiteboard. Color + thickness picker appears. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">📸</div><div class="item-body"><div class="item-name">Snapshot</div><div class="item-desc">Saves current canvas as PNG. Optional annotation modal. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">⛶</div><div class="item-body"><div class="item-name">Fullscreen</div><div class="item-desc">Browser fullscreen mode for presentations.</div></div></div>
+</div>
+
+<h2>⋯ More Tools (overflow popup) <span class="tag tag-pro">Pro</span></h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">💧</div><div class="item-body"><div class="item-name">Ripples</div><div class="item-desc">Animated ripple effect on click. Visual feedback for students. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎨</div><div class="item-body"><div class="item-name">Cursor trail</div><div class="item-desc">Rainbow particle trail following the cursor. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">#</div><div class="item-body"><div class="item-name">Grid</div><div class="item-desc">Rule-of-thirds composition guide. <span class="tag tag-html">HTML</span></div></div></div>
+  <div class="item"><div class="item-icon">💡</div><div class="item-body"><div class="item-name">Spotlight</div><div class="item-desc">Dims everything except a circle around the cursor. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔍</div><div class="item-body"><div class="item-name">Zoom</div><div class="item-desc">2x zoom on click point. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎯</div><div class="item-body"><div class="item-name">Auto-zoom</div><div class="item-desc">Automatically zooms to where you click. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎬</div><div class="item-body"><div class="item-name">Letterbox</div><div class="item-desc">Cinematic black bars at top/bottom. Adjustable height. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">📜</div><div class="item-body"><div class="item-name">Teleprompter</div><div class="item-desc">Auto-scrolling script. Speed/font/width adjustable. <span class="tag tag-html">HTML</span></div></div></div>
+  <div class="item"><div class="item-icon">⏳</div><div class="item-body"><div class="item-name">Timer</div><div class="item-desc">Countdown timer drawn on canvas. 1-60 min. Flashes red at zero. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">✏️</div><div class="item-body"><div class="item-name">Text stamp</div><div class="item-desc">Add custom text on canvas. Color + size picker. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🗒️</div><div class="item-body"><div class="item-name">Sticky note</div><div class="item-desc">Draggable yellow post-it notes. Teacher-only reminder. <span class="tag tag-html">HTML</span></div></div></div>
+  <div class="item"><div class="item-icon">😀</div><div class="item-body"><div class="item-name">React</div><div class="item-desc">Emoji burst on canvas. 6 emoji palette. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎹</div><div class="item-body"><div class="item-name">Piano</div><div class="item-desc">2-octave keyboard overlay. Keys A-L play notes. For music teachers. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔊</div><div class="item-body"><div class="item-name">SFX</div><div class="item-desc">6 procedural sound effects: ding, buzz, clap, roll, whistle, whoosh.</div></div></div>
+  <div class="item"><div class="item-icon">🔳</div><div class="item-body"><div class="item-name">Focus</div><div class="item-desc">Hide all sidebars and toolbars. Canvas only. <span class="tag tag-html">HTML</span></div></div></div>
+  <div class="item"><div class="item-icon">🎲</div><div class="item-body"><div class="item-name">Random scene</div><div class="item-desc">Switch to a random scene. Skips the current one.</div></div></div>
+  <div class="item"><div class="item-icon">🎨</div><div class="item-body"><div class="item-name">Color picker</div><div class="item-desc">Click canvas to read pixel color. Copies hex to clipboard.</div></div></div>
+  <div class="item"><div class="item-icon">☐</div><div class="item-body"><div class="item-name">Select all</div><div class="item-desc">Select all visible sources. Shift+click to multi-select.</div></div></div>
+</div>
+
+<!-- ═══════════ SOURCE TOOLBAR ═══════════ -->
+<h2>🟩 Shapes (left sidebar)</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">⬛</div><div class="item-body"><div class="item-name">Rectangle</div><div class="item-desc">Basic colored rectangle. Free resize, no aspect lock. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">⚪</div><div class="item-body"><div class="item-name">Circle</div><div class="item-desc">Round shape. Resize freely to make ovals. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔲</div><div class="item-body"><div class="item-name">Rounded</div><div class="item-desc">Soft-corner rectangle. Adjust radius in Style popup. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">💊</div><div class="item-body"><div class="item-name">Pill</div><div class="item-desc">Horizontal capsule. Great for title backgrounds. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">⬢</div><div class="item-body"><div class="item-name">Hexagon</div><div class="item-desc">6-sided polygon. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🛑</div><div class="item-body"><div class="item-name">Octagon</div><div class="item-desc">8-sided polygon. Stop-sign shape. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔶</div><div class="item-body"><div class="item-name">Diamond</div><div class="item-desc">Rotated square. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">⭐</div><div class="item-body"><div class="item-name">Star</div><div class="item-desc">5-point star. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">❤️</div><div class="item-body"><div class="item-name">Heart</div><div class="item-desc">Heart shape. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🖤</div><div class="item-body"><div class="item-name">Full background</div><div class="item-desc">1920x1080 black rectangle. Use as canvas backdrop. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">➖</div><div class="item-body"><div class="item-name">Dark / White bar</div><div class="item-desc">400x60 horizontal bar. Divider or title strip. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔴</div><div class="item-body"><div class="item-name">Colored dots</div><div class="item-desc">60x60 red or green circle. Status indicator. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🃏</div><div class="item-body"><div class="item-name">Dark card</div><div class="item-desc">500x300 dark rounded rect. Background for text or info. <span class="tag tag-canvas">canvas</span></div></div></div>
+</div>
+<p style="font-size:.8rem;color:var(--muted);margin:8px 0">All shapes: drag, free resize (min 20px), color, opacity, border, shadow, corners, rotation, flip, badge. Change color via 🎨 Style → Shape Color.</p>
+
+<h2>🎨 Source Toolbar (per-source controls)</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">👁</div><div class="item-body"><div class="item-name">Hide/Show</div><div class="item-desc">Toggle source visibility without removing it.</div></div></div>
+  <div class="item"><div class="item-icon">📌</div><div class="item-body"><div class="item-name">Pin</div><div class="item-desc">Pin source so it stays when switching scenes.</div></div></div>
+  <div class="item"><div class="item-icon">🔓</div><div class="item-body"><div class="item-name">Lock position</div><div class="item-desc">Prevent accidental drag/resize during recording.</div></div></div>
+  <div class="item"><div class="item-icon">⬛</div><div class="item-body"><div class="item-name">Shape</div><div class="item-desc">9 shapes: rectangle, rounded, circle, pill, hexagon, octagon, diamond, star, heart.</div></div></div>
+  <div class="item"><div class="item-icon">🎨</div><div class="item-body"><div class="item-name">Style popup <span class="tag tag-pro">Pro</span></div><div class="item-desc">Opens panel with all source properties: opacity, filter, corners, rotation, border, shadow, crop, badge, alignment, flip, privacy.</div></div></div>
+  <div class="item"><div class="item-icon">✕</div><div class="item-body"><div class="item-name">Delete</div><div class="item-desc">Remove source from canvas. Also works with Delete key.</div></div></div>
+</div>
+
+<h2>🎨 Style Popup Details <span class="tag tag-pro">Pro</span></h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">🔆</div><div class="item-body"><div class="item-name">Opacity (0-100%)</div><div class="item-desc">Make a source semi-transparent. Useful for overlaying images. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎭</div><div class="item-body"><div class="item-name">Filter</div><div class="item-desc">9 presets: none, B&W, sepia, invert, bright, contrast, vintage, cool, warm. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">⬜</div><div class="item-body"><div class="item-name">Corner radius (0-50px)</div><div class="item-desc">Round the corners of any source. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔄</div><div class="item-body"><div class="item-name">Rotation (-180 to +180)</div><div class="item-desc">Rotate a source freely. Double-click slider to reset to 0. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🖼</div><div class="item-body"><div class="item-name">Border (color + width)</div><div class="item-desc">Colored frame around the source. 0-10px. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🌑</div><div class="item-body"><div class="item-name">Shadow (color + blur + offset)</div><div class="item-desc">Drop shadow behind the source. Adjustable blur and X/Y offset. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">✂</div><div class="item-body"><div class="item-name">Crop (T/B/L/R 0-40%)</div><div class="item-desc">Trim edges of the video feed. Useful for removing black bars. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Badge (text + color)</div><div class="item-desc">Small label at top-right: "LIVE", "DEMO", etc. Max 12 chars. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">↔</div><div class="item-body"><div class="item-name">Alignment (6 buttons)</div><div class="item-desc">Snap source to left/right/top/bottom edge, or center H/V.</div></div></div>
+  <div class="item"><div class="item-icon">🔗</div><div class="item-body"><div class="item-name">Aspect lock</div><div class="item-desc">Lock width/height ratio during resize. Or hold Shift.</div></div></div>
+  <div class="item"><div class="item-icon">↔↕</div><div class="item-body"><div class="item-name">Flip H / V</div><div class="item-desc">Mirror the source horizontally or vertically. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🤖</div><div class="item-body"><div class="item-name">Avatar mode</div><div class="item-desc">Replace camera with cartoon face. Mouth animates with mic. For camera-shy teachers. <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔲</div><div class="item-body"><div class="item-name">Privacy blur</div><div class="item-desc">Heavy 30px blur on entire source. Face unrecognizable. <span class="tag tag-canvas">canvas</span></div></div></div>
+</div>
+
+<!-- ═══════════ SCENES ═══════════ -->
+<h2>🎭 Scenes</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">💻</div><div class="item-body"><div class="item-name">Code</div><div class="item-desc">Screen fullscreen, face cam small in corner. For showing code.</div></div></div>
+  <div class="item"><div class="item-icon">🤖</div><div class="item-body"><div class="item-name">Robot</div><div class="item-desc">Robot camera fullscreen. For demo runs.</div></div></div>
+  <div class="item"><div class="item-icon">📡</div><div class="item-body"><div class="item-name">Sensors</div><div class="item-desc">Sensor camera fullscreen. For breadboard close-ups.</div></div></div>
+  <div class="item"><div class="item-icon">⬛</div><div class="item-body"><div class="item-name">Code + Robot</div><div class="item-desc">Split screen: code left, robot right.</div></div></div>
+  <div class="item"><div class="item-icon">🎬</div><div class="item-body"><div class="item-name">Studio</div><div class="item-desc">All cameras visible in a grid layout.</div></div></div>
+  <div class="item"><div class="item-icon">👤</div><div class="item-body"><div class="item-name">You</div><div class="item-desc">Face cam fullscreen. For intro and outro.</div></div></div>
+  <div class="item"><div class="item-icon">💾</div><div class="item-body"><div class="item-name">Save layout</div><div class="item-desc">Save current source arrangement as a custom scene.</div></div></div>
+  <div class="item"><div class="item-icon">📋</div><div class="item-body"><div class="item-name">Duplicate scene</div><div class="item-desc">Copy a scene as a starting point for a variation.</div></div></div>
+  <div class="item"><div class="item-icon">✏️</div><div class="item-body"><div class="item-name">Rename scene</div><div class="item-desc">Double-click the scene label to rename it inline.</div></div></div>
+</div>
+
+<!-- ═══════════ TEMPLATES ═══════════ -->
+<h2>📚 Templates</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">📚</div><div class="item-body"><div class="item-name">Full Lesson</div><div class="item-desc">Intro → Theory → Demo → Exercise → Recap. 5-step guided flow.</div></div></div>
+  <div class="item"><div class="item-icon">🤖</div><div class="item-body"><div class="item-name">Robot Demo</div><div class="item-desc">Face → Code → Robot → Sensors → Recap. For robot tutorials.</div></div></div>
+  <div class="item"><div class="item-icon">🔧</div><div class="item-body"><div class="item-name">Fix-it</div><div class="item-desc">Bug → Analyze → Fix → Test → Done! For debugging sessions.</div></div></div>
+  <div class="item"><div class="item-icon">🤖</div><div class="item-body"><div class="item-name">Robot Tuto</div><div class="item-desc">Intro → Code → Robot → Sensors → Recap. Optimized for robot assembly.</div></div></div>
+</div>
+
+<!-- ═══════════ RECORDING ═══════════ -->
+<h2>⏺ Recording</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">⏺</div><div class="item-body"><div class="item-name">REC button</div><div class="item-desc">Start recording. 3-2-1 countdown plays first (configurable).</div></div></div>
+  <div class="item"><div class="item-icon">⏸</div><div class="item-body"><div class="item-name">Pause</div><div class="item-desc">Pause recording. "PAUSED" overlay shows on canvas. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Marker</div><div class="item-desc">Drop a chapter marker at the current timestamp. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">⏹</div><div class="item-body"><div class="item-name">Stop</div><div class="item-desc">Stop recording. Video downloads as .webm/.mp4 + .vtt chapters.</div></div></div>
+  <div class="item"><div class="item-icon">✂</div><div class="item-body"><div class="item-name">Trim</div><div class="item-desc">Cut start/end of recorded video before downloading.</div></div></div>
+  <div class="item"><div class="item-icon">🔇</div><div class="item-body"><div class="item-name">Silence trim</div><div class="item-desc">Auto-detect and remove silent pauses from the recording.</div></div></div>
+  <div class="item"><div class="item-icon">📝</div><div class="item-body"><div class="item-name">Take notes</div><div class="item-desc">Add notes about the take. Included in markdown export.</div></div></div>
+  <div class="item"><div class="item-icon">⭐</div><div class="item-body"><div class="item-name">Rate (1-5 stars)</div><div class="item-desc">Rate your take. Saved in history for review.</div></div></div>
+  <div class="item"><div class="item-icon">💬</div><div class="item-body"><div class="item-name">SRT captions</div><div class="item-desc">Download .srt subtitle file if live captions were on. YouTube/VLC compatible.</div></div></div>
+  <div class="item"><div class="item-icon">🖼</div><div class="item-body"><div class="item-name">Thumbnail</div><div class="item-desc">Last frame as .png — auto-generated for YouTube thumbnails.</div></div></div>
+</div>
+
+<!-- ═══════════ CANVAS OVERLAYS ═══════════ -->
+<h2>🎨 Canvas Overlays (visible in recording) <span class="tag tag-canvas">canvas</span></h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">🕐</div><div class="item-body"><div class="item-name">Clock</div><div class="item-desc">Current time + optional date in top-right corner. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🔴</div><div class="item-body"><div class="item-name">REC indicator</div><div class="item-desc">Pulsing red dot + "REC" text during recording. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">⏱</div><div class="item-body"><div class="item-name">Elapsed timer</div><div class="item-desc">HH:MM:SS counter at bottom-center during recording. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">💬</div><div class="item-body"><div class="item-name">Live captions</div><div class="item-desc">Auto-generated subtitles via WebSpeech API. Chrome/Edge only. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎵</div><div class="item-body"><div class="item-name">Audio visualizer</div><div class="item-desc">32-bar frequency display at bottom edge. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎥</div><div class="item-body"><div class="item-name">Vignette</div><div class="item-desc">Dark gradient edges for cinematic look. Adjustable intensity. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎬</div><div class="item-body"><div class="item-name">Letterbox bars</div><div class="item-desc">Black bars at top/bottom. 5-20% height. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎬</div><div class="item-body"><div class="item-name">Intro/Outro cards</div><div class="item-desc">Cinematic title cards baked into start/end of recording. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Watermark</div><div class="item-desc">Custom text on canvas. Draggable to reposition (position saved). Max 80 chars. Adjustable opacity. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">⏸</div><div class="item-body"><div class="item-name">Pause overlay</div><div class="item-desc">"PAUSED" text with dark overlay when recording is paused.</div></div></div>
+</div>
+
+<!-- ═══════════ TEACHER-ONLY ═══════════ -->
+<h2>👁 Teacher-Only Overlays (NOT in recording) <span class="tag tag-html">HTML</span></h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">#</div><div class="item-body"><div class="item-name">Grid overlay</div><div class="item-desc">Rule-of-thirds composition guide on a separate canvas.</div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Source labels</div><div class="item-desc">Name labels at bottom-left of each source. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎯</div><div class="item-body"><div class="item-name">FPS counter</div><div class="item-desc">Frames per second in top-right. Color-coded green/yellow/red. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">📜</div><div class="item-body"><div class="item-name">Teleprompter</div><div class="item-desc">Auto-scrolling script overlay with speed/font/width controls.</div></div></div>
+  <div class="item"><div class="item-icon">🗒️</div><div class="item-body"><div class="item-name">Sticky notes</div><div class="item-desc">Draggable yellow post-its. Persist in localStorage.</div></div></div>
+  <div class="item"><div class="item-icon">ℹ️</div><div class="item-body"><div class="item-name">Source HUD</div><div class="item-desc">Name, type, size, position shown on hover over a source.</div></div></div>
+  <div class="item"><div class="item-icon">#️⃣</div><div class="item-body"><div class="item-name">Layer badge</div><div class="item-desc">"#N / total" shown on hover — z-index order of the source.</div></div></div>
+</div>
+
+<!-- ═══════════ MICRO:BIT ═══════════ -->
+<h2>🤖 micro:bit Features <span class="tag tag-pro">Pro</span></h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">📡</div><div class="item-body"><div class="item-name">BLE connect</div><div class="item-desc">Connect via Web Bluetooth. Accelerometer + buttons stream live.</div></div></div>
+  <div class="item"><div class="item-icon">🔍</div><div class="item-body"><div class="item-name">Button A → Zoom</div><div class="item-desc">Default: toggle zoom. Can switch to applause SFX. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Button B → Marker</div><div class="item-desc">Drop a chapter marker from the physical button.</div></div></div>
+  <div class="item"><div class="item-icon">🎯</div><div class="item-body"><div class="item-name">Tilt → Laser</div><div class="item-desc">Tilt the micro:bit to aim the laser pointer on canvas.</div></div></div>
+  <div class="item"><div class="item-icon">🫨</div><div class="item-body"><div class="item-name">Shake → Scene</div><div class="item-desc">Shake hard (>2.2g) to jump to random scene. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">🎉</div><div class="item-body"><div class="item-name">Shake → Confetti</div><div class="item-desc">Medium shake (>1.8g) triggers confetti burst. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">👏</div><div class="item-body"><div class="item-name">Button A → SFX</div><div class="item-desc">Plays applause sound effect instead of zoom. <span class="tag tag-setting">setting</span></div></div></div>
+  <div class="item"><div class="item-icon">📈</div><div class="item-body"><div class="item-name">Live graph</div><div class="item-desc">X/Y/Z accelerometer line chart at bottom-right of canvas. <span class="tag tag-setting">setting</span> <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🌈</div><div class="item-body"><div class="item-name">Motion trail</div><div class="item-desc">Rainbow dots showing robot movement path. <span class="tag tag-setting">setting</span> <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🌡</div><div class="item-body"><div class="item-name">Temperature</div><div class="item-desc">micro:bit thermometer reading on canvas. <span class="tag tag-setting">setting</span> <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">💡</div><div class="item-body"><div class="item-name">Light level</div><div class="item-desc">Ambient light bar on canvas. <span class="tag tag-setting">setting</span> <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🔊</div><div class="item-body"><div class="item-name">Sound level (v2)</div><div class="item-desc">Mic level via UART. Needs updated firmware. <span class="tag tag-setting">setting</span> <span class="tag tag-canvas">canvas</span></div></div></div>
+  <div class="item"><div class="item-icon">🎯</div><div class="item-body"><div class="item-name">Tilt → Pan camera</div><div class="item-desc">Tilt shifts crop window on selected source. Virtual gimbal. <span class="tag tag-setting">setting</span></div></div></div>
+</div>
+
+<!-- ═══════════ SETTINGS ═══════════ -->
+<h2>⚙ Settings Sections</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">🌐</div><div class="item-body"><div class="item-name">General</div><div class="item-desc">Language (FR/EN/AR), theme (8 options), accent color, canvas background, snap-to-grid, screensaver, auto-advance scenes, timer, diagnostics.</div></div></div>
+  <div class="item"><div class="item-icon">🎥</div><div class="item-body"><div class="item-name">Recording → Capture</div><div class="item-desc">Countdown, mirror webcam, timelapse, time goal, output format (MP4/WebM), stage aspect ratio (16:9, 9:16, 1:1, 4:3). <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">🎨</div><div class="item-body"><div class="item-name">Recording → Overlays</div><div class="item-desc">Clock, REC dot, elapsed timer, captions, letterbox, vignette, audio viz, intro/outro, source labels, FPS counter. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">🔊</div><div class="item-body"><div class="item-name">Recording → Audio</div><div class="item-desc">Sound effects, jingle, mic boost (0-4x), noise gate (-60 to -20 dB), volume ducking. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">⚙</div><div class="item-body"><div class="item-name">Recording → Behavior</div><div class="item-desc">Auto-pause on tab switch, scene transitions (none/fade/wipe), auto-save, snapshot annotation. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">🏷</div><div class="item-body"><div class="item-name">Logo</div><div class="item-desc">Upload PNG/SVG logo. Size, opacity, filter, tint, position. 3 brand presets. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">✍</div><div class="item-body"><div class="item-name">Slogan & Effect</div><div class="item-desc">Scrolling slogan, font, color, fun effect (spin/pulse/bounce/glow/rainbow), watermark, badge card URL. <span class="tag tag-pro">Pro</span></div></div></div>
+  <div class="item"><div class="item-icon">📰</div><div class="item-body"><div class="item-name">Ticker</div><div class="item-desc">Custom scrolling messages at the bottom. Teacher-only. <span class="tag tag-pro">Pro</span></div></div></div>
+</div>
+
+<!-- ═══════════ DATA ═══════════ -->
+<h2>💾 Data & Export</h2>
+<div class="grid">
+  <div class="item"><div class="item-icon">📥</div><div class="item-body"><div class="item-name">Export settings</div><div class="item-desc">Download all tc-* localStorage keys as JSON. Backup or share between machines.</div></div></div>
+  <div class="item"><div class="item-icon">📤</div><div class="item-body"><div class="item-name">Import settings</div><div class="item-desc">Upload JSON to restore all settings. Reloads the page.</div></div></div>
+  <div class="item"><div class="item-icon">📦</div><div class="item-body"><div class="item-name">Export session</div><div class="item-desc">Download history, scenes, brand presets as a bundle.</div></div></div>
+  <div class="item"><div class="item-icon">📦</div><div class="item-body"><div class="item-name">Import session</div><div class="item-desc">Restore a session bundle from file.</div></div></div>
+  <div class="item"><div class="item-icon">⌨</div><div class="item-body"><div class="item-name">Keyboard shortcuts</div><div class="item-desc">Rebind any keyboard shortcut to a different key.</div></div></div>
+  <div class="item"><div class="item-icon">🗑</div><div class="item-body"><div class="item-name">Reset badges</div><div class="item-desc">Clear achievement trophies only.</div></div></div>
+  <div class="item"><div class="item-icon">💥</div><div class="item-body"><div class="item-name">Clear all data</div><div class="item-desc">Wipe everything: badges, scenes, logo, settings. Fresh start.</div></div></div>
+</div>
+
+<div class="links">
+  <a href="start.html">🚀 Start Here</a>
+  <a href="guide.html">📖 Full Guide</a>
+  <a href="faq.html">❓ FAQ</a>
+  <a href="index.html">🎬 Open NoorCast</a>
+</div>
+
+<p style="text-align:center;margin-top:30px;color:var(--muted);font-size:.8rem">
+  NoorCast v0.7.176 — A professional tool for teachers who code with robots<br>
+  Print this page for a classroom reference card
+</p>
+
+</div>
+<button class="print-btn" onclick="window.print()">🖨 Print</button>
+</body>
+</html>

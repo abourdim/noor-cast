@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- background -->
+  <rect width="512" height="512" rx="96" fill="#071407"/>
+  <rect x="8" y="8" width="496" height="496" rx="92" fill="none" stroke="#a3e635" stroke-opacity=".25" stroke-width="2"/>
+
+  <!-- clapperboard body -->
+  <rect x="72" y="160" width="368" height="272" rx="24" fill="#0c1f0a" stroke="#a3e635" stroke-width="6"/>
+
+  <!-- clapperboard top stripes -->
+  <g>
+    <rect x="72" y="96" width="368" height="56" rx="12" fill="#0c1f0a" stroke="#a3e635" stroke-width="6"/>
+    <polygon points="88,148 144,104 192,104 136,148" fill="#a3e635"/>
+    <polygon points="200,148 256,104 304,104 248,148" fill="#a3e635"/>
+    <polygon points="312,148 368,104 416,104 360,148" fill="#a3e635"/>
+  </g>
+
+  <!-- play triangle in the middle -->
+  <polygon points="210,232 210,360 336,296" fill="#fb923c" stroke="#fdba74" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- small LED under -->
+  <circle cx="408" cy="400" r="8" fill="#ef4444">
+    <animate attributeName="opacity" values="1;.25;1" dur="1.6s" repeatCount="indefinite"/>
+  </circle>
+</svg>
