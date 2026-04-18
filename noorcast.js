@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.7.253 — kids-friendly multi-cam screen recorder
+   NoorCast v0.7.254 — kids-friendly multi-cam screen recorder
    Single-file app logic. Zero dependencies. Chrome/Edge desktop.
 
    Architecture:
@@ -13,7 +13,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7.253';
+const APP_VERSION = '0.7.254';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-17 21:30';
@@ -9224,20 +9224,27 @@ const Recorder = {
         }
         const fmt = (b) => b > 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' MB'
                        : b > 1024 ? Math.round(b / 1024) + ' KB' : b + ' B';
+        // v0.7.254: i18n parity for the save-toast trio
+        const ln = currentLang;
         if (actualBytes === 0) {
           // The blocking bug. File on disk is empty.
           log(`✗ ON-DISK SIZE IS 0 BYTES. recorder promised ${promisedBytes} B, write errors: ${writeErrors}. The file is broken.`, 'error');
-          showToast(`❌ Save failed — file is 0 bytes! ${writeErrors > 0 ? '(disk write errors)' : '(recorder produced no data)'} Try again with a different format / location.`, 8000);
+          const cause = writeErrors > 0
+            ? (ln === 'fr' ? 'erreurs d\'écriture disque' : ln === 'ar' ? 'أخطاء كتابة على القرص' : 'disk write errors')
+            : (ln === 'fr' ? 'le recorder n\'a rien produit' : ln === 'ar' ? 'لم يُنتج المسجّل أي بيانات' : 'recorder produced no data');
+          const tail = ln === 'fr' ? 'Réessaie avec un autre format / emplacement.'
+                     : ln === 'ar' ? 'حاول مرّة أخرى بصيغة أو موقع مختلف.'
+                     : 'Try again with a different format / location.';
+          showToast(`❌ ${ln === 'fr' ? 'Échec d\'enregistrement' : ln === 'ar' ? 'فشل الحفظ' : 'Save failed'} — ${ln === 'fr' ? 'fichier de 0 octet' : ln === 'ar' ? 'الملف 0 بايت' : 'file is 0 bytes'}! (${cause}) ${tail}`, 8000);
         } else if (actualBytes > 0) {
-          // Real success — file IS on disk at the verified size.
-          // v0.7.253: explicit Chrome-chip-is-wrong note in the toast since
-          // users keep doubting the success message when Chrome's chip lies.
           log(`💾 Recording saved — ${fmt(actualBytes)} on disk (recorder said ${fmt(promisedBytes)}, ${writeErrors} write errors)`, 'info');
-          showToast(`💾 Saved ${fmt(actualBytes)} ✓ (Chrome's "0 octets" chip is wrong — file IS ${fmt(actualBytes)})`, 6000);
+          const note = ln === 'fr' ? 'Chrome dit "0 octets" mais le fichier fait bien'
+                     : ln === 'ar' ? 'متصفّح Chrome يعرض "0 بايت" لكن حجم الملف الحقيقي'
+                     : 'Chrome says "0 bytes" but the file IS';
+          showToast(`💾 ${ln === 'fr' ? 'Enregistré' : ln === 'ar' ? 'تمّ الحفظ' : 'Saved'} ${fmt(actualBytes)} ✓ (${note} ${fmt(actualBytes)})`, 6000);
         } else {
-          // Couldn't verify (very old browser?). Fall back to the recorder count.
           log(`💾 Recording saved (size unverified). Recorder reported ${fmt(promisedBytes)}.`, 'info');
-          showToast(`💾 Saved ~${fmt(promisedBytes)} to disk`, 4000);
+          showToast(`💾 ${ln === 'fr' ? 'Enregistré' : ln === 'ar' ? 'تمّ الحفظ' : 'Saved'} ~${fmt(promisedBytes)}`, 4000);
         }
       }).catch((err) => {
         log('✗ Failed to close file writer: ' + (err?.message || err), 'error');
@@ -13481,6 +13488,9 @@ const SourceToolbar = {
       s.hidden = !s.hidden;
       showToast(s.hidden ? '👁 ' + t('sourceHidden') : '👁 ' + t('sourceShown'), 1400);
       Engine.onSourcesChanged();
+      // v0.7.254: when source becomes hidden, also hide its floating
+      // toolbar — was staying visible referencing an invisible source.
+      if (s.hidden && this.el) this.el.style.display = 'none';
     });
     $('tcSrcToolbarPin')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -20820,6 +20830,42 @@ function applyMode(mode) {
   if (grid) grid.classList.toggle('rsidebar-collapsed', mode === 'simple');
 }
 
+/* v0.7.254: SettingsState — remember which Settings sub-sections the user
+   had open between page reloads. Was annoying to re-expand the same 2-3
+   sections every time. Stable key = first 40 chars of the summary text,
+   slugified. Stored as JSON object in tc-set-state localStorage. */
+const SettingsState = {
+  KEY: 'tc-set-state',
+  _state: {},
+  _slugFromSummary(detailsEl) {
+    const sum = detailsEl.querySelector('summary');
+    if (!sum) return null;
+    return (sum.textContent || '')
+      .trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+  },
+  load() {
+    this._state = silentGetJSON(this.KEY, {}) || {};
+  },
+  setup() {
+    const all = document.querySelectorAll('details.tc-set-section, details.tc-set-sub');
+    all.forEach(el => {
+      const key = this._slugFromSummary(el);
+      if (!key) return;
+      // Restore saved state (only if user explicitly toggled before)
+      if (this._state[key] === true)  el.setAttribute('open', '');
+      if (this._state[key] === false) el.removeAttribute('open');
+      // Listen for future toggles
+      el.addEventListener('toggle', () => {
+        this._state[key] = el.open;
+        silentSetJSON(this.KEY, this._state);
+      });
+    });
+  },
+};
+
 function setupOnboarding() {
   // v0.7.180: cache initial onboarding state once — previously read 3x during
   // setup and again inside each click handler. Writes ('tc-onboarded' = '1')
@@ -22842,14 +22888,20 @@ function wireEvents() {
     });
   }
   // v0.7.253: File System Access streaming opt-in
+  // v0.7.254: i18n parity — was FR-only
   const fsaEl = $('tcFsaStreamToggle');
   if (fsaEl) {
     fsaEl.checked = silentGet('tc-fsa-stream', '0') === '1';
     fsaEl.addEventListener('change', (e) => {
       silentSet('tc-fsa-stream', e.target.checked ? '1' : '0');
-      showToast(e.target.checked
-        ? '💾 Streaming activé (Chrome chip "0 octets" mais OK)'
-        : '💾 Téléchargement classique activé', 2500);
+      const ln = currentLang;
+      const onMsg = ln === 'fr' ? '💾 Streaming activé (Chrome dit "0 octets" mais OK)'
+                  : ln === 'ar' ? '💾 تفعيل التدفق (متصفّح Chrome يعرض "0 بايت" لكن الملف سليم)'
+                  : '💾 Streaming enabled (Chrome shows "0 bytes" but file is OK)';
+      const offMsg = ln === 'fr' ? '💾 Téléchargement classique activé'
+                   : ln === 'ar' ? '💾 تفعيل التحميل العادي'
+                   : '💾 Classic download enabled';
+      showToast(e.target.checked ? onMsg : offMsg, 2500);
     });
   }
   // v0.7.54: opt-in snapshot annotation modal before saving
@@ -23191,6 +23243,22 @@ async function init() {
   Templates.renderStepStrip();
 
   setupOnboarding();
+  // v0.7.254: restore which Settings sub-sections were open last session
+  SettingsState.load();
+  SettingsState.setup();
+  // v0.7.254: friendly "What's new" toast when the user reloads after a
+  // version bump. We've shipped 76 versions since the last announcement;
+  // this catches users up without spamming returning visitors.
+  try {
+    const lastSeen = silentGet('tc-last-seen-version', '');
+    if (lastSeen && lastSeen !== APP_VERSION) {
+      // Only show on actual upgrade (not first visit, not reload of same version)
+      setTimeout(() => {
+        showToast(`✨ Updated to v${APP_VERSION} — see what's new in the User Guide`, 6000);
+      }, 2500);
+    }
+    silentSet('tc-last-seen-version', APP_VERSION);
+  } catch {}
   TipOfDay.maybeShow();
   V100Celebration.maybeShow();  // v0.7.100: one-shot milestone splash
   GuidedTour.maybeAutoStart();

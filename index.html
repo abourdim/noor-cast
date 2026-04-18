@@ -2089,15 +2089,17 @@
   <!-- v0.7.172: firmware modal (inspired by bit-playground) -->
   <div class="tc-fw-modal" id="tcFwModal" style="display:none">
     <div class="tc-fw-modal-content">
-      <h3>micro:bit Firmware</h3>
-      <p>Flash this code to your micro:bit V2 using MakeCode:</p>
-      <ol>
+      <h3>micro:bit Firmware V3.6</h3>
+      <p><strong>🚀 Easy path:</strong> click <strong>📥 Download .hex</strong> below, then drag the downloaded file onto the <code>MICROBIT</code> drive that appears when your board is plugged in. Done in 5 seconds.</p>
+      <p style="opacity:.75;font-size:.85em">If the .hex link fails (placeholder not shipped yet), follow the MakeCode path:</p>
+      <ol style="opacity:.75;font-size:.85em">
         <li>Click <strong>Copy Code</strong> below</li>
         <li>Open <strong>MakeCode</strong> and switch to JavaScript mode</li>
         <li>Select all (<kbd>Ctrl+A</kbd>) and paste (<kbd>Ctrl+V</kbd>)</li>
         <li>Click <strong>Download</strong> and flash to your micro:bit</li>
       </ol>
       <div class="tc-fw-modal-btns">
+        <a href="./firmware/noorcast-v3.6.hex" download="noorcast-v3.6.hex" class="tc-fw-btn-open" id="tcFwDownloadHex" style="background:rgba(163,230,53,.18);border-color:rgba(163,230,53,.5)">📥 Download .hex</a>
         <button class="tc-fw-btn-copy" id="tcFwCopyBtn">Copy Code</button>
         <a href="https://makecode.microbit.org/#editor" target="_blank" rel="noopener" class="tc-fw-btn-open">Open MakeCode</a>
         <button class="tc-fw-btn-close" id="tcFwCloseBtn">Close</button>

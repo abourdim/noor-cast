@@ -24,7 +24,7 @@ const sourceChecks = [
   ['stores the FileSystemFileHandle', /this\._fileHandle = await showSaveFilePicker/],
   ['re-reads file size via handle.getFile()', /const f = await handle\.getFile\(\);\s*actualBytes = f\.size;/],
   ['shows "Save failed" toast when actualBytes === 0', /if \(actualBytes === 0\) \{[\s\S]*?Save failed[\s\S]*?\}/],
-  ['shows "Saved" toast with verified size when > 0', /actualBytes > 0[\s\S]*?Saved \$\{fmt\(actualBytes\)\}[\s\S]*?✓/],
+  ['shows verified-size toast with checkmark when > 0', /actualBytes > 0[\s\S]*?\$\{fmt\(actualBytes\)\}[\s\S]*?✓/],
   ['distinguishes disk-error vs no-data in zero-byte path', /writeErrors > 0[\s\S]*?disk write errors[\s\S]*?recorder produced no data/],
   ['logs each failed disk write (no longer silent)', /this\._fileWriteErrors\+\+/],
   ['handles getFile() throw with -1 sentinel + soft fallback', /actualBytes === -1[\s\S]*?fmt\(promisedBytes\)|actualBytes === -1|Could not verify on-disk size/],
