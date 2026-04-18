@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.15 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.16 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.15';
+const APP_VERSION = '0.9.16';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -24033,6 +24033,17 @@ async function init() {
   KidsMode.konamiInit();
   KidsMode.bootSeq();
   KidsMode.maybePickHandle();
+  // v0.9.16: SFX feedback on every Kids-mode click. Delegated so it works
+  // for dynamically-added buttons (scene cards, source rows). One listener
+  // for the whole document. Fires only when in Kids mode AND user actually
+  // clicked a button-like target. The Sfx module already de-dupes clicks
+  // so doubles with handler-driven Sfx.play('click') are inaudible.
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('tc-kids')) return;
+    const btn = e.target.closest('.tc-tool-btn, .tc-src-btn, .tc-scene-btn, .tc-rec-btn');
+    if (!btn || btn.disabled) return;
+    try { Sfx.play('click'); } catch {}
+  }, true);
   GuidedTour.maybeAutoStart();
   setupHelpTabs();
   // v0.7.172: sidebar icon tabs
