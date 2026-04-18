@@ -7,7 +7,7 @@ Drop pre-compiled `.hex` files here, named like `noorcast-v3.6.hex`, so the
 
 1. **Open MakeCode**: <https://makecode.microbit.org/#editor>
 2. Switch to **JavaScript mode** — top-right toggle (`{ }` icon).
-3. Paste the entire contents of `../makecode.ts` over the default code
+3. Paste the entire contents of `makecode.ts` over the default code
    (`Ctrl+A` then `Ctrl+V`).
 4. Click **Download** in the bottom-left of MakeCode — your browser
    downloads `microbit-NoorCast.hex` (or similar).

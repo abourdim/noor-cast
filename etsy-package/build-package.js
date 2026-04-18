@@ -31,6 +31,9 @@ const ZIP_DIR = resolve(PKG, 'NoorCast-v0.9');
 mkdirSync(OUT, { recursive: true });
 mkdirSync(join(ZIP_DIR, 'printables'), { recursive: true });
 mkdirSync(join(ZIP_DIR, 'etsy-mockups'), { recursive: true });
+// v0.10.4: assets/ and firmware/ subdirs needed for the new layout
+mkdirSync(join(ZIP_DIR, 'assets'), { recursive: true });
+mkdirSync(join(ZIP_DIR, 'firmware'), { recursive: true });
 
 async function renderHTML(browser, htmlFile, outputPng, opts = {}) {
   const page = await browser.newPage({
@@ -113,9 +116,9 @@ async function main() {
   // Copy app files
   const appFiles = [
     'index.html', 'noorcast.js', 'style.css', 'sw.js',
-    'icon.svg', 'logo.svg', 'manifest.json',
+    'icon.svg', 'assets/logo.svg', 'manifest.json',
     'guide.html', 'cheatsheet.html', 'faq.html', 'start.html',
-    'makecode.ts', 'workshop-diy-logo.svg'
+    'firmware/makecode.ts', 'assets/workshop-diy-logo.svg'
   ];
   for (const f of appFiles) {
     const src = join(ROOT, f);
@@ -140,9 +143,9 @@ async function main() {
   console.log('  ✓ LICENSE.txt');
 
   // Copy flyer
-  const flyer = join(ROOT, 'noorcast-flyer.png');
+  const flyer = join(ROOT, 'assets/noorcast-flyer.png');
   if (existsSync(flyer)) {
-    copyFileSync(flyer, join(ZIP_DIR, 'noorcast-flyer.png'));
+    copyFileSync(flyer, join(ZIP_DIR, 'assets/noorcast-flyer.png'));
     console.log('  ✓ noorcast-flyer.png');
   }
 

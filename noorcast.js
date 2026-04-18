@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.10.3 — kids-friendly multi-cam screen recorder
+   NoorCast v0.10.4 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.10.3';
+const APP_VERSION = '0.10.4';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -22051,7 +22051,7 @@ const ExportFlyer = {
     const logoY = ctaY + 75;
     try {
       const logoImg = new Image();
-      logoImg.src = './workshop-diy-logo.svg';
+      logoImg.src = './assets/workshop-diy-logo.svg';
       await new Promise((resolve, reject) => { logoImg.onload = resolve; logoImg.onerror = reject; setTimeout(reject, 3000); });
       const logoH = 40;
       const logoW = logoH * (logoImg.naturalWidth / logoImg.naturalHeight);
