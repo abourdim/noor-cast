@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NoorCast — Etsy 1-Min Hollywood Playbook</title>
+<style>
+  /* ========== Theme ========== */
+  :root {
+    --bg: #0a0e0a; --panel: #0f1610; --panel2: #131c14;
+    --ink: #e8f2e0; --muted: #8aa18e; --accent: #a3e635;
+    --accent2: #4ade80; --hook: #fb923c; --demo: #38bdf8;
+    --payoff: #4ade80; --cta: #ef4444; --beige: #d4b896;
+    --border: rgba(163,230,53,.15);
+    --shadow: 0 4px 24px rgba(0,0,0,.45);
+    --mono: ui-monospace, "SF Mono", Consolas, Menlo, monospace;
+    --serif: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Bangers", "Righteous", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.55; }
+  body { max-width: 1080px; margin: 0 auto; padding: 24px 18px 80px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed rgba(163,230,53,.4); }
+  a:hover { color: #fff; border-bottom-color: var(--accent); }
+
+  /* ========== Slate (title card) ========== */
+  .slate {
+    background:
+      radial-gradient(ellipse at top right, rgba(163,230,53,.12), transparent 60%),
+      linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 28px 28px;
+    text-align: center;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .slate-clap { font-size: 56px; line-height: 1; margin-bottom: 8px; filter: drop-shadow(0 0 18px rgba(163,230,53,.4)); }
+  .slate h1 { font-family: var(--display); font-size: 2.2rem; letter-spacing: 1.2px; margin: 6px 0 4px; color: var(--accent); }
+  .slate .tag { color: var(--muted); font-size: .92rem; letter-spacing: .8px; text-transform: uppercase; }
+  .slate .meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; font-size: .82rem; color: var(--muted); flex-wrap: wrap; }
+  .slate .meta b { color: var(--ink); font-weight: 700; }
+
+  /* ========== Top nav ========== */
+  .toc {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15,22,16,.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px 12px;
+    margin-bottom: 22px;
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  }
+  .toc a {
+    background: rgba(163,230,53,.06);
+    border: 1px solid rgba(163,230,53,.22);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: .82rem;
+    font-weight: 600;
+    border-bottom: none;
+  }
+  .toc a:hover { background: rgba(163,230,53,.18); color: var(--accent); }
+
+  /* ========== Section headers (like script slug-lines) ========== */
+  .slug {
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-size: .78rem;
+    color: var(--accent);
+    background: linear-gradient(90deg, rgba(163,230,53,.12), transparent);
+    border-left: 4px solid var(--accent);
+    padding: 8px 12px;
+    margin: 26px 0 14px;
+    border-radius: 0 8px 8px 0;
+  }
+  h2 { font-family: var(--display); letter-spacing: 1px; color: var(--accent); margin: 8px 0 12px; font-size: 1.7rem; }
+  h3 { color: var(--ink); margin-top: 18px; font-size: 1.15rem; }
+  h4 { color: var(--accent2); font-size: 1rem; margin: 14px 0 6px; }
+  p { margin: 8px 0; }
+
+  /* ========== Cards ========== */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 12px 0;
+    box-shadow: var(--shadow);
+  }
+  .card-tight { padding: 10px 14px; }
+
+  /* ========== Pre-flight checklist ========== */
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    transition: background .15s;
+    cursor: pointer; user-select: none;
+  }
+  .checklist li:hover { background: rgba(163,230,53,.06); }
+  .checklist input[type=checkbox] {
+    margin-top: 4px;
+    width: 18px; height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .checklist li.checked label { color: var(--muted); text-decoration: line-through; opacity: .65; }
+  .checklist label { cursor: pointer; flex: 1; }
+  .checklist .where { color: var(--muted); font-size: .82rem; display: block; margin-top: 2px; }
+
+  /* ========== Tabs (3 templates) ========== */
+  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tab {
+    flex: 1; padding: 12px 14px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    color: var(--muted);
+    font-family: var(--display);
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s;
+  }
+  .tab:hover { color: var(--ink); background: rgba(163,230,53,.06); }
+  .tab.active {
+    background: linear-gradient(180deg, rgba(163,230,53,.18), rgba(163,230,53,.05));
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 -2px 0 var(--accent);
+  }
+  .tab-num { font-size: 1.4rem; line-height: 1; display: block; }
+  .tab-title { font-size: .82rem; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .tab-body {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 0 0 14px 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ========== Hollywood script script-line ========== */
+  .scene {
+    background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 14px 0;
+    overflow: hidden;
+  }
+  .scene-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(0,0,0,.25);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+  }
+  .scene-head .scene-time {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .scene-head .scene-phase {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .68rem;
+    font-weight: 800;
+  }
+  .phase-hook   { background: rgba(251,146,60,.18); color: var(--hook);   border: 1px solid rgba(251,146,60,.4); }
+  .phase-demo   { background: rgba(56,189,248,.18); color: var(--demo);   border: 1px solid rgba(56,189,248,.4); }
+  .phase-payoff { background: rgba(74,222,128,.18); color: var(--payoff); border: 1px solid rgba(74,222,128,.4); }
+  .phase-cta    { background: rgba(239,68,68,.18);  color: var(--cta);    border: 1px solid rgba(239,68,68,.4); }
+  .phase-end    { background: rgba(212,184,150,.18); color: var(--beige); border: 1px solid rgba(212,184,150,.4); }
+
+  .scene-body { padding: 14px 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+  /* SAY block — Hollywood dialogue style */
+  .say {
+    background: rgba(0,0,0,.25);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 14px;
+    position: relative;
+  }
+  .say-label {
+    font-family: var(--mono);
+    font-size: .68rem; letter-spacing: 1.5px;
+    color: var(--accent); font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .say-text {
+    font-family: var(--serif);
+    font-size: 1.18rem;
+    color: #fff;
+    line-height: 1.45;
+    font-style: italic;
+  }
+  .say-text::before { content: '"'; opacity: .5; margin-right: 2px; }
+  .say-text::after  { content: '"'; opacity: .5; margin-left: 2px; }
+  .paren { color: var(--muted); font-size: .82rem; font-style: italic; display: block; margin: 4px 0 0; }
+
+  /* DO block — Hollywood action description */
+  .do {
+    background: rgba(56,189,248,.04);
+    border-left: 3px solid var(--demo);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+  }
+  .do-label {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: 1.5px;
+    color: var(--demo); font-weight: 700; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .do-text { color: var(--ink); font-size: .92rem; }
+  .do-text kbd {
+    background: #0a0a0a; border: 1px solid rgba(255,255,255,.18);
+    border-radius: 4px; padding: 1px 7px;
+    font-family: var(--mono); font-size: .82rem;
+    color: var(--accent);
+    box-shadow: 0 2px 0 rgba(0,0,0,.5);
+  }
+  .do-text .ui {
+    background: rgba(163,230,53,.12);
+    color: var(--accent);
+    padding: 1px 7px; border-radius: 4px;
+    font-weight: 600; font-size: .88rem;
+  }
+
+  /* VISUAL block — camera/expression cues */
+  .vis {
+    background: rgba(212,184,150,.04);
+    border-left: 3px solid var(--beige);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+    color: var(--ink);
+    font-size: .9rem;
+  }
+  .vis-label {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: 1.5px;
+    color: var(--beige); font-weight: 700; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .vis em { color: var(--beige); font-style: normal; font-weight: 700; }
+
+  /* Action buttons (copy + read-aloud) */
+  .actions { display: flex; gap: 6px; margin-left: auto; }
+  .btn {
+    background: rgba(163,230,53,.1);
+    border: 1px solid rgba(163,230,53,.3);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: .72rem;
+    font-family: var(--sans);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .btn:hover { background: rgba(163,230,53,.25); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn.copied { background: rgba(74,222,128,.4); color: #fff; }
+
+  /* Transition cards (CUT TO:, FADE TO:) */
+  .transition {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin: 2px 6px;
+    text-transform: uppercase;
+  }
+  .transition::before { content: '✂  '; color: var(--accent); }
+
+  /* ASCII diagram block */
+  .ascii {
+    background: #000;
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: .82rem;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    line-height: 1.4;
+    white-space: pre;
+  }
+
+  /* Tip / note callouts */
+  .tip {
+    background: rgba(74,222,128,.08);
+    border: 1px solid rgba(74,222,128,.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: .92rem;
+  }
+  .tip::before { content: '💡 '; }
+  .warn {
+    background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: .92rem;
+  }
+  .warn::before { content: '⚠ '; }
+  .pro {
+    background: rgba(168,85,247,.08);
+    border: 1px solid rgba(168,85,247,.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: .92rem;
+  }
+  .pro::before { content: '🎬 '; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .9rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { color: var(--accent); font-family: var(--mono); font-size: .76rem; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Storyboard */
+  .storyboard { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 14px 0; }
+  .storyboard .frame {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 8px;
+    aspect-ratio: 9/16; padding: 8px 6px; text-align: center;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform .15s, border-color .15s;
+  }
+  .storyboard .frame:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .storyboard .frame .t { font-family: var(--mono); font-size: .72rem; color: var(--accent); font-weight: 700; }
+  .storyboard .frame .icon { font-size: 1.8rem; margin: 4px 0; }
+  .storyboard .frame .what { font-size: .68rem; color: var(--muted); line-height: 1.2; }
+
+  /* Floating teleprompter dock */
+  .teleprompter-dock {
+    position: fixed;
+    bottom: 18px; right: 18px;
+    background: var(--panel2);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 12px;
+    z-index: 100;
+    box-shadow: 0 12px 28px rgba(0,0,0,.5);
+    max-width: 320px;
+    font-size: .9rem;
+  }
+  .teleprompter-dock .head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .teleprompter-dock .title {
+    font-family: var(--display);
+    color: var(--accent);
+    letter-spacing: 1px;
+    font-size: .9rem;
+  }
+  .teleprompter-dock .copy-all-btn {
+    background: var(--accent); color: #000;
+    border: none; border-radius: 6px;
+    padding: 6px 12px; font-weight: 700; cursor: pointer;
+  }
+  .teleprompter-dock .copy-all-btn:hover { background: var(--accent2); }
+  .teleprompter-dock .hint { color: var(--muted); font-size: .76rem; line-height: 1.4; }
+  @media (max-width: 720px) { .teleprompter-dock { display: none; } }
+
+  /* Practice mode (pulse the active scene) */
+  .practice .scene[data-active="true"] {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(163,230,53,.25), 0 8px 28px rgba(163,230,53,.18);
+  }
+  .practice-bar {
+    position: sticky; top: 60px; z-index: 49;
+    background: rgba(0,0,0,.8); backdrop-filter: blur(8px);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    display: none;
+    align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .practice .practice-bar { display: flex; }
+  .practice-bar .timer {
+    font-family: var(--mono); font-size: 1.4rem; color: var(--accent); font-weight: 800;
+  }
+
+  /* Glossary */
+  .glossary dt { color: var(--accent); font-weight: 700; margin-top: 8px; font-family: var(--mono); font-size: .88rem; }
+  .glossary dd { margin: 2px 0 0 14px; color: var(--ink); font-size: .92rem; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: .82rem;
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  .lang-switch { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; z-index: 60; }
+  .lang-switch a { background: rgba(15,22,16,.85); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: var(--mono); border-bottom: 1px solid var(--border); }
+  .lang-switch a.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Print */
+  @media print {
+    body { background: #fff; color: #000; max-width: 100%; padding: 12px; }
+    .toc, .teleprompter-dock, .practice-bar, .actions { display: none !important; }
+    .card, .scene, .slate { box-shadow: none; border-color: #999; background: #fff; color: #000; }
+    .say-text { color: #000; }
+    .say { background: #f5f5f5; }
+    .do { background: #eef7ff; }
+    .vis { background: #fcf5ea; }
+    h2, .slug, .scene-head .scene-time { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="lang-switch" aria-label="Language">
+  <a href="etsy-playbook.html" class="active">EN</a>
+  <a href="etsy-playbook-fr.html">FR</a>
+  <a href="etsy-playbook-ar.html">AR</a>
+</nav>
+
+<!-- ═════════════════ TITLE SLATE ═════════════════ -->
+<div class="slate">
+  <div class="slate-clap">🎬</div>
+  <h1>The 60-Second Etsy Playbook</h1>
+  <div class="tag">A Hollywood-style shooting script for NoorCast</div>
+  <div class="meta">
+    <span><b>Shot on:</b> NoorCast v0.10.x</span>
+    <span><b>Length:</b> 60 sec exact</span>
+    <span><b>Aspect:</b> 9:16 vertical (Reels)</span>
+    <span><b>Codec:</b> MP4 H.264 8 Mbps</span>
+  </div>
+</div>
+
+<!-- ═════════════════ TOC ═════════════════ -->
+<nav class="toc">
+  <a href="#what">📋 What this is</a>
+  <a href="#preflight">✈ Pre-flight</a>
+  <a href="#layout">🗺 NoorCast map</a>
+  <a href="#storyboard">🎞 Storyboard</a>
+  <a href="#scripts">🎭 The 3 scripts</a>
+  <a href="#director">🎬 Director's tricks</a>
+  <a href="#after">🎁 After STOP</a>
+  <a href="#troubles">🚨 Troubleshooting</a>
+  <a href="#glossary">📖 Glossary</a>
+</nav>
+
+<!-- ═════════════════ WHAT THIS IS ═════════════════ -->
+<div class="slug">PROLOGUE — what you're holding</div>
+<h2 id="what">📋 What this is</h2>
+<div class="card">
+  <p>This is a <b>shooting script</b>, the kind a Hollywood director hands to actors before a scene. It tells you <b>EXACTLY</b> three things, line by line:</p>
+  <ol>
+    <li><b>SAY</b> — the exact words to speak (italics, in quotes). Each line has a <span class="btn" style="display:inline-block">📋 Copy</span> button so you can drop it into NoorCast's teleprompter.</li>
+    <li><b>DO</b> — the exact button to click in NoorCast or key to press on your keyboard.</li>
+    <li><b>VISUAL</b> — what your face / hands / camera should be doing (smile, eye contact, gesture).</li>
+  </ol>
+  <p>Plus: a <b>pre-flight checklist</b> so you don't miss a setting, a <b>storyboard</b> so you can see the whole 60 seconds at a glance, <b>director's tricks</b> for energy and pacing, and a <b>troubleshooting</b> matrix for when things go wrong.</p>
+  <div class="tip">If you've never recorded a video before, <b>read the script through twice silently first</b>. Then read it out loud once. Then start the pre-flight. By the time you press REC you'll know your lines.</div>
+  <div class="pro">Use the <b>floating teleprompter dock</b> in the bottom-right of this page. It has a <b>"📤 Send all dialogue to NoorCast Teleprompter"</b> button — copies every line to your clipboard so you can paste them straight into NoorCast's built-in teleprompter (<kbd>T</kbd> to toggle).</div>
+</div>
+
+<!-- ═════════════════ PRE-FLIGHT ═════════════════ -->
+<div class="slug">ACT ZERO — before you press RECORD</div>
+<h2 id="preflight">✈ Pre-flight checklist</h2>
+<div class="card">
+  <p>Tick every box. Each tick is saved automatically — close the page and come back later, your progress stays. Click the box OR the line itself.</p>
+  <h4>The room</h4>
+  <ul class="checklist" data-storage="pre-room">
+    <li><input type="checkbox"><label>Quiet room. Phone is face-down. Notifications are off. Door is closed.<span class="where">If you can hear the fridge or street, your video can hear it too.</span></label></li>
+    <li><input type="checkbox"><label>Lighting hits your face from in front, not behind.<span class="where">Stand facing a window, NOT with a window behind you. Backlight = silhouette = bad.</span></label></li>
+    <li><input type="checkbox"><label>Tidy desk in the camera frame.<span class="where">Even one cluttered corner shows up. Move stuff for 30 seconds — it matters.</span></label></li>
+  </ul>
+  <h4>The hardware</h4>
+  <ul class="checklist" data-storage="pre-hw">
+    <li><input type="checkbox"><label>Webcam plugged in (or laptop camera ready).</label></li>
+    <li><input type="checkbox"><label>Microphone tested. <span class="where">Open Settings → 🎤 Sources → see the green level meter wiggle when you talk.</span></label></li>
+    <li><input type="checkbox"><label>Charger plugged in. <span class="where">Recording uses ~30% more battery than browsing. Don't run out mid-take.</span></label></li>
+    <li><input type="checkbox"><label>Other tabs CLOSED in this browser. <span class="where">Other tabs steal CPU and can drop your frame rate. Keep only NoorCast + this playbook open.</span></label></li>
+  </ul>
+  <h4>NoorCast settings</h4>
+  <ul class="checklist" data-storage="pre-nc">
+    <li><input type="checkbox"><label>Open <span class="ui">⚙ Settings</span> (gear icon top-right of NoorCast). Find the <span class="ui">📐 Stage format</span> dropdown. Choose <b>9:16 — 1080×1920</b>.<span class="where">A toast says "📱 Reels mode — safe-zone guide ON". The canvas flips to vertical.</span></label></li>
+    <li><input type="checkbox"><label>Look at the toolbar above the canvas. Click the <span class="ui">📱 Reels</span> button. It glows lime when active.<span class="where">A red+green safe-zone overlay appears on the canvas. The green box is where viewers will SEE your video. Keep important stuff inside it.</span></label></li>
+    <li><input type="checkbox"><label>Find <span class="ui">⚙ Settings → 🎬 Recording → 💬 Live captions</span>. Check both: "Live captions" AND "🔥 Burn into video".<span class="where">Etsy plays videos MUTED in the feed. Captions are how viewers know what you said. Burn-in makes them stay visible longer.</span></label></li>
+    <li><input type="checkbox"><label>Find <span class="ui">⚙ Settings → 🎥 Capture → 🎙 Skip silent intro</span>. Tick it.<span class="where">After the countdown, NoorCast waits for your first word before recording starts. Skips the dead air at the top.</span></label></li>
+    <li><input type="checkbox"><label>Find <span class="ui">⚙ Settings → 🎬 Recording → Quality</span>. Confirm it's set to <b>High — 8 Mbps</b>.<span class="where">Etsy compresses uploads. Recording at 8 Mbps means your final file looks crisp after their compression.</span></label></li>
+  </ul>
+  <h4>The sources</h4>
+  <ul class="checklist" data-storage="pre-src">
+    <li><input type="checkbox"><label>Add at least one camera. <span class="ui">+ Caméra</span> in the left sidebar. Pick your webcam from the dropdown, click <span class="ui">+</span>.<span class="where">Your face appears on the canvas as a draggable, resizable layer.</span></label></li>
+    <li><input type="checkbox"><label>Click your camera source. The toolbar shows source-edit buttons. Open the <span class="ui">🎨 Style</span> popup. Find the <b>🎯 Smart frame</b> section. Click <span class="ui">🎯 Auto-frame</span>.<span class="where">Toast: "🎯 Auto-frame ON — face stays centered". Now if you lean left or right while recording, the source pans to keep you centered. Magic.</span></label></li>
+    <li><input type="checkbox"><label>(If your demo is on-screen) Add a screen source. <span class="ui">+ Écran</span>. Pick which window or tab to share.</label></li>
+    <li><input type="checkbox"><label>Drag your camera to the position you want. <span class="where">For Etsy: face-cam usually goes top half (above the safe-zone caption area), demo content fills the bottom.</span></label></li>
+    <li><input type="checkbox"><label>Look at the <b>status bar above the REC button</b>. It should read something like:<br><code>🟢 Ready · 2 sources · 9:16 📱 Reels · 8 Mbps</code><span class="where">If anything looks off — fix it before pressing REC.</span></label></li>
+  </ul>
+  <h4>The performer (you)</h4>
+  <ul class="checklist" data-storage="pre-you">
+    <li><input type="checkbox"><label>Read the script you picked through TWICE silently.</label></li>
+    <li><input type="checkbox"><label>Read it out loud ONCE. Time it. Should be 50–55 seconds (give yourself 5 sec of headroom).</label></li>
+    <li><input type="checkbox"><label>Smile. Stretch your face. Loosen your jaw. <span class="where">Sounds silly. Helps. Energy on camera = double the energy in real life.</span></label></li>
+    <li><input type="checkbox"><label>Sit / stand somewhere you can stay for the next 5 takes.</label></li>
+  </ul>
+  <p style="text-align:center;margin:14px 0 4px;color:var(--muted);font-size:.85rem">When all boxes are ticked, you're ready. <b style="color:var(--accent)">Press <kbd style="background:#000;padding:1px 8px;border-radius:4px;color:var(--accent);font-family:var(--mono)">R</kbd> in NoorCast.</b></p>
+</div>
+
+<!-- ═════════════════ NOORCAST MAP ═════════════════ -->
+<div class="slug">PROP DEPARTMENT — know your tools</div>
+<h2 id="layout">🗺 The NoorCast map</h2>
+<div class="card">
+  <p>What's where on screen. (Approximate — your layout may differ slightly by viewport.)</p>
+<pre class="ascii">
+┌────────────────────────────────────────────────────────────────────┐
+│ ❓ ⚙ 📜 ⛶ 🧒 Kids                                                    │  ← Header (top): help, settings, log, fullscreen, mode badge
+├────────────────────────────────────────────────────────────────────┤
+│ 1 SETUP   2 TUNE   3 RECORD   4 SHARE                              │  ← Workflow tabs (auto-advance as you go)
+├────────────────────────────────────────────────────────────────────┤
+│ ↩ ↪ │ 🔴 Laser ❄ Freeze ✏ Draw 📸 Photo ⛶ Full │ 💬 Captions  ⋯ More │  ← Toolbar (only in TUNE/RECORD)
+│                                          📊 Sensors 🎛 Gauges 📱 Reels │
+├──────────┬───────────────────────────────────────────┬─────────────┤
+│  ✨ ADD   │                                           │             │
+│  A SOURCE│                                           │ 🎬 Scenes   │
+│ ┌──────┐ │              CANVAS / STAGE               │ ┌─┐ ┌─┐ ┌─┐ │
+│ │Écran │ │              (9:16 portrait)              │ │1│ │2│ │3│ │
+│ │+Add  │ │                                           │ └─┘ └─┘ └─┘ │
+│ └──────┘ │              [your face here]             │ ┌─┐ ┌─┐ ┌─┐ │
+│ ┌──────┐ │                                           │ │4│ │5│ │6│ │
+│ │Cam ▼ │ │              [your demo here]             │ └─┘ └─┘ └─┘ │
+│ │   +  │ │                                           │             │
+│ └──────┘ │                                           │             │
+│ ┌──────┐ │                                           │             │
+│ │Mic ▼ │ │                                           │             │
+│ └──────┘ │                                           │             │
+│          │                                           │             │
+│ ──────── │                                           │             │
+│ Active   │                                           │             │
+│ sources  │                                           │             │
+│ list     │                                           │             │
+├──────────┴───────────────────────────────────────────┴─────────────┤
+│ 🟢 Ready · 2 sources · 9:16 📱 Reels · 8 Mbps · @PixelNinja        │  ← Status bar (always-on truth)
+├────────────────────────────────────────────────────────────────────┤
+│            [ ⏺  RECORD  R ]   00:00   ⏸ Pause  🏷 Mark  ⏹ Stop      │  ← REC bar
+└────────────────────────────────────────────────────────────────────┘
+</pre>
+  <h4>Buttons you'll touch the most</h4>
+  <table>
+    <tr><th>What</th><th>Where</th><th>Key</th><th>What it does</th></tr>
+    <tr><td><span class="ui">⏺ RECORD</span></td><td>Big red, bottom centre</td><td><kbd>R</kbd></td><td>Start / stop recording</td></tr>
+    <tr><td><span class="ui">🏷 Mark</span></td><td>Right of REC, only while recording</td><td><kbd>M</kbd></td><td>Drop a chapter marker — names a moment in your video</td></tr>
+    <tr><td><span class="ui">🔴 Laser</span></td><td>Toolbar</td><td><kbd>L</kbd></td><td>Red dot follows your mouse on the canvas</td></tr>
+    <tr><td><span class="ui">❄ Freeze</span></td><td>Toolbar</td><td><kbd>F</kbd></td><td>Freezes the canvas for 1 sec — perfect for emphasis</td></tr>
+    <tr><td><span class="ui">📸 Photo</span></td><td>Toolbar</td><td><kbd>S</kbd></td><td>Snapshot — saves a still frame as PNG</td></tr>
+    <tr><td><span class="ui">Scene tile</span></td><td>Right sidebar</td><td><kbd>1</kbd>–<kbd>9</kbd></td><td>Switch layouts instantly (face-only, demo+face, multi-cam, etc.)</td></tr>
+    <tr><td><span class="ui">📜 Tele</span></td><td>Toolbar → ⋯ More</td><td><kbd>T</kbd></td><td>Teleprompter (scrolling script overlay you control)</td></tr>
+  </table>
+</div>
+
+<!-- ═════════════════ STORYBOARD ═════════════════ -->
+<div class="slug">PRE-VIS — the whole 60 seconds at a glance</div>
+<h2 id="storyboard">🎞 The storyboard</h2>
+<div class="card">
+  <p>Six frames. The full arc of your video. Click any frame to jump to that scene below.</p>
+  <div class="storyboard">
+    <a href="#scene-1" class="frame" style="text-decoration:none">
+      <span class="t">0–3 s</span>
+      <span class="icon">😊</span>
+      <span class="what"><b>HOOK</b><br>Big smile<br>Hold product</span>
+    </a>
+    <a href="#scene-2" class="frame" style="text-decoration:none">
+      <span class="t">3–10 s</span>
+      <span class="icon">🎯</span>
+      <span class="what"><b>CONTEXT</b><br>Show the<br>problem</span>
+    </a>
+    <a href="#scene-3" class="frame" style="text-decoration:none">
+      <span class="t">10–35 s</span>
+      <span class="icon">⚙</span>
+      <span class="what"><b>DEMO</b><br>Do the thing<br>step by step</span>
+    </a>
+    <a href="#scene-4" class="frame" style="text-decoration:none">
+      <span class="t">35–50 s</span>
+      <span class="icon">🎉</span>
+      <span class="what"><b>PAYOFF</b><br>Show result<br>Smile + pause</span>
+    </a>
+    <a href="#scene-5" class="frame" style="text-decoration:none">
+      <span class="t">50–55 s</span>
+      <span class="icon">🛍</span>
+      <span class="what"><b>CTA</b><br>Etsy link<br>callout</span>
+    </a>
+    <a href="#scene-6" class="frame" style="text-decoration:none">
+      <span class="t">55–60 s</span>
+      <span class="icon">🎬</span>
+      <span class="what"><b>END FRAME</b><br>Hold smile<br>for the loop</span>
+    </a>
+  </div>
+  <div class="tip">Etsy <b>loops</b> your video in the feed. The end frame becomes the cover. If you end with a clean smile + your logo, the loop seam is invisible — viewers watch 2-3 times before they realize.</div>
+</div>
+
+<!-- ═════════════════ THE 3 SCRIPTS ═════════════════ -->
+<div class="slug">ACT ONE — pick your script</div>
+<h2 id="scripts">🎭 The 3 scripts</h2>
+<div class="card card-tight">
+  <p>Three flavours. Pick the one closest to your listing. Each is a complete 60-second script with <b>SAY / DO / VISUAL</b> for every beat. Click <span class="btn" style="display:inline-block">📋 Copy</span> on any line to copy that exact text. <span class="btn" style="display:inline-block">▶ Read</span> on any line plays it aloud (your browser's voice) so you hear the cadence.</p>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" data-tab="creator" role="tab"><span class="tab-num">A</span><span class="tab-title">"I built this"</span></button>
+  <button class="tab" data-tab="tutorial" role="tab"><span class="tab-num">B</span><span class="tab-title">"How to use it"</span></button>
+  <button class="tab" data-tab="robot" role="tab"><span class="tab-num">C</span><span class="tab-title">"Robot demo"</span></button>
+</div>
+
+<!-- ━━━━━━━━━━━━━━ TEMPLATE A: CREATOR SHOWCASE ━━━━━━━━━━━━━━ -->
+<div class="tab-pane active" data-pane="creator">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Use case:</b> showing a product you made (pottery, jewelry, art, kit, anything physical or digital). Etsy's most common video format.</p>
+
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Send all dialogue to clipboard (paste in NoorCast Teleprompter)</button>
+
+<!-- Scene 1 — HOOK -->
+<div class="scene" id="scene-1">
+  <div class="scene-head">
+    <span>Scene 1 — INT. STUDIO – DAY · OPENING SHOT</span>
+    <span class="scene-time">⏱ 0:00 → 0:03</span>
+    <span class="scene-phase phase-hook">HOOK</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY <span class="paren">(big energy, eye contact)</span> <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">Three seconds — here's what I just made.</div>
+      <span class="paren">(Tone: punchy, like you're stopping someone in the street. Don't trail off.)</span>
+    </div>
+    <div class="do">
+      <div class="do-label">DO</div>
+      <div class="do-text">
+        Recording is already running. <b>Don't touch anything.</b> Hold your product up at chin height, centered in the safe zone. If your face-cam has the product physically with you, scene <span class="ui">👋 You</span> (or scene <kbd>1</kbd>) is fine — face fullscreen.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      <em>Big, real smile.</em> Look directly into the camera lens (not the screen). Hold the product so it's clearly visible. <em>Don't move your head</em> — let the product do the moving.
+    </div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<!-- Scene 2 — CONTEXT -->
+<div class="scene" id="scene-2-creator">
+  <div class="scene-head">
+    <span>Scene 2 — CONTEXT · THE PROBLEM</span>
+    <span class="scene-time">⏱ 0:03 → 0:10</span>
+    <span class="scene-phase phase-hook">CONTEXT</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">Most people buy these and then don't know it can do this one weird thing.</div>
+      <span class="paren">(Replace "this one weird thing" with your actual hook — the surprising feature. Keep it under 12 words.)</span>
+    </div>
+    <div class="do">
+      <div class="do-label">DO</div>
+      <div class="do-text">
+        If your demo is on a screen: press <kbd>2</kbd> to switch to scene <span class="ui">💻 Code</span> (full screen view). If your demo is physical: stay on face-cam scene. <b>Press <kbd>M</kbd></b> right at the word "this" — drops a chapter marker called "Hook reveal."
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      Eyes go wide on the word "weird." <em>Slight head tilt.</em> If holding the product, lean it slightly forward toward the camera on "this."
+    </div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<!-- Scene 3 — DEMO -->
+<div class="scene" id="scene-3-creator">
+  <div class="scene-head">
+    <span>Scene 3 — THE DEMO · DO THE THING</span>
+    <span class="scene-time">⏱ 0:10 → 0:35</span>
+    <span class="scene-phase phase-demo">DEMO</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY · BEAT 1 <span class="paren">(0:10–0:18, slow down here)</span> <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">Watch — I'll show you in one move.</div>
+    </div>
+    <div class="do">
+      <div class="do-label">DO · BEAT 1</div>
+      <div class="do-text">
+        Do the action. <b>Press <kbd>L</kbd></b> if you need to point at something on screen — laser pointer. <b>Press <kbd>F</kbd></b> at the climax of the action — freezes the canvas for 1 sec, gives the viewer time to absorb it.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      Slow your hands by 30%. People always rush demos. <em>If your hands are blurry, you went too fast.</em>
+    </div>
+  </div>
+
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say">
+      <div class="say-label">SAY · BEAT 2 <span class="paren">(0:18–0:28)</span> <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">And here's how it works behind the scenes.</div>
+    </div>
+    <div class="do">
+      <div class="do-label">DO · BEAT 2</div>
+      <div class="do-text">
+        Switch to a multi-source scene if you have one — <kbd>5</kbd> is usually <span class="ui">🎬 Studio</span> (split: face + screen + 2nd cam). Use <span class="ui">🔴 Laser</span> to point at the part you're explaining.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      Glance at the laser, then back to camera. Don't STARE at the screen. <em>You're talking to a person, not narrating.</em>
+    </div>
+  </div>
+
+  <div class="scene-body" style="border-top:1px dashed var(--border);">
+    <div class="say">
+      <div class="say-label">SAY · BEAT 3 <span class="paren">(0:28–0:35)</span> <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">It takes about 30 seconds, and you don't need anything I haven't put in the kit.</div>
+    </div>
+    <div class="do">
+      <div class="do-label">DO · BEAT 3</div>
+      <div class="do-text">
+        <b>Press <kbd>M</kbd></b> right after the word "kit" — chapter marker "Reassurance." Stay on the multi-source scene.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      <em>Genuine, calm</em>. This is the trust beat. Don't oversell. Look directly at the lens.
+    </div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<!-- Scene 4 — PAYOFF -->
+<div class="scene" id="scene-4-creator">
+  <div class="scene-head">
+    <span>Scene 4 — THE PAYOFF · SHOW THE RESULT</span>
+    <span class="scene-time">⏱ 0:35 → 0:50</span>
+    <span class="scene-phase phase-payoff">PAYOFF</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">…and the result is this.</div>
+      <span class="paren">(Pause for 2 full seconds AFTER you say "this." This is THE most important silence in the whole video. Don't fill it.)</span>
+    </div>
+    <div class="do">
+      <div class="do-label">DO</div>
+      <div class="do-text">
+        Press <kbd>1</kbd> to switch back to face-cam fullscreen (<span class="ui">👋 You</span>). Hold up the finished product / show the result clearly. <b>2-second pause</b> — count "one Mississippi, two Mississippi" silently in your head. Don't fill it with "uh."
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      <em>Slow real smile.</em> Hold the result up close to your face so both are in frame together. The 2-sec silence is when viewers DECIDE if they want it. Let them.
+    </div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<!-- Scene 5 — CTA -->
+<div class="scene" id="scene-5-creator">
+  <div class="scene-head">
+    <span>Scene 5 — CALL TO ACTION · SEND THEM TO ETSY</span>
+    <span class="scene-time">⏱ 0:50 → 0:55</span>
+    <span class="scene-phase phase-cta">CTA</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">You can grab one in my Etsy shop — link is right below this video.</div>
+      <span class="paren">(Conversational. Like you're recommending a friend's place. NOT salesy.)</span>
+    </div>
+    <div class="do">
+      <div class="do-label">DO</div>
+      <div class="do-text">
+        Stay on face-cam fullscreen. <b>Don't switch scenes</b> — viewers need to see your eyes for the CTA. Let your watermark (the @yourhandle pill in the corner) speak for the brand.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      <em>Eye contact.</em> Slight nod on "right below." A small confident nod, not a head bob. <em>Don't smile too wide here</em> — that reads as needy. Keep it warm, not desperate.
+    </div>
+  </div>
+</div>
+<div class="transition">FADE TO:</div>
+
+<!-- Scene 6 — END FRAME -->
+<div class="scene" id="scene-6-creator">
+  <div class="scene-head">
+    <span>Scene 6 — END FRAME · THE LOOP SEAM</span>
+    <span class="scene-time">⏱ 0:55 → 0:60</span>
+    <span class="scene-phase phase-end">END FRAME</span>
+  </div>
+  <div class="scene-body">
+    <div class="say">
+      <div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div>
+      <div class="say-text">Thanks for watching.</div>
+      <span class="paren">(Soft. Almost a whisper. Then SILENCE for 3 full seconds.)</span>
+    </div>
+    <div class="do">
+      <div class="do-label">DO</div>
+      <div class="do-text">
+        Don't move. Don't blink fast. <em>Hold a calm, neutral-warm expression for 3 seconds.</em> This frame becomes your video cover AND the loop seam. Then press <kbd>R</kbd> to STOP.
+      </div>
+    </div>
+    <div class="vis">
+      <div class="vis-label">VISUAL</div>
+      <em>Final frame composition:</em> face top-third, watermark visible, no movement. This is the still that Etsy shows when the video isn't autoplaying. <em>Make it a frame you'd be happy to see paused</em>.
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-body creator -->
+</div><!-- /tab-pane creator -->
+
+<!-- ━━━━━━━━━━━━━━ TEMPLATE B: TUTORIAL ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="tutorial">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Use case:</b> "Here's how this thing works." Tells the buyer what skills they're getting. Great for craft kits, courses, templates.</p>
+
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Send all dialogue to clipboard</button>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 1 — HOOK</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">HOOK</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">60 seconds to learn this. Ready?</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>L</kbd> for the laser pointer the moment you say "this." Point at the most interesting on-screen element. Be on your <span class="ui">💻 Code</span> scene (key <kbd>2</kbd>) so the screen fills the frame.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Big energy. Quick raised eyebrows on "Ready?"</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 2 — STEP 1</span><span class="scene-time">⏱ 0:03 → 0:10</span><span class="scene-phase phase-demo">STEP 1</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Step one — open the tool. Click here.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Move the laser to the click target a beat BEFORE you say "here." Click the actual element. <b>Press <kbd>M</kbd></b> immediately after the click — chapter "Step 1."</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Don't let the click feel passive — pause for half a second after the click so viewers see the result.</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 3 — STEPS 2 + 3</span><span class="scene-time">⏱ 0:10 → 0:30</span><span class="scene-phase phase-demo">STEPS 2–3</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY · STEP 2 <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Step two — pick the option you want, here.</div></div>
+    <div class="do"><div class="do-label">DO · STEP 2</div><div class="do-text">Laser → click → <kbd>M</kbd>.</div></div>
+    <div class="say"><div class="say-label">SAY · STEP 3 <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Step three — and now you press the big button.</div></div>
+    <div class="do"><div class="do-label">DO · STEP 3</div><div class="do-text">Laser circles the button. <b>Press <kbd>F</kbd></b> right when you click — freezes the canvas to drive home that THIS is the moment.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Step 3 is the climax of the demo. Slow down. Let the freeze land. <em>Don't talk over the freeze.</em></div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 4 — RESULT</span><span class="scene-time">⏱ 0:30 → 0:45</span><span class="scene-phase phase-payoff">RESULT</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">And just like that — done. Three steps.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>5</kbd> to switch to <span class="ui">🎬 Studio</span> (multi-source split) so viewers see your face REACT to the result. Big smile.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div><em>Genuine "I love this" reaction.</em> Even if you've done this 100 times, fake the first-time wonder. People copy your energy.</div>
+  </div>
+</div>
+<div class="transition">FADE TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 5 — CTA</span><span class="scene-time">⏱ 0:45 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Full kit's in my Etsy shop. Link is right below.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>1</kbd> for face-cam fullscreen. Eye contact, no scene switch.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Confident nod. Not pleading. <em>You made this. You're proud of it. They're lucky to find it.</em></div>
+  </div>
+</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 6 — END FRAME</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">END FRAME</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Hope you make something amazing.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Hold smile + face-cam for 3 seconds of silence. Press <kbd>R</kbd>.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Final frame: warm, generous expression. The kind of face you'd want as a friend.</div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ━━━━━━━━━━━━━━ TEMPLATE C: ROBOT DEMO ━━━━━━━━━━━━━━ -->
+<div class="tab-pane" data-pane="robot">
+<div class="tab-body">
+<p style="margin-top:0;color:var(--muted)"><b>Use case:</b> showing a micro:bit / robot project — kid-targeted Etsy listings. Plays to NoorCast's specialty.</p>
+
+<button class="btn copy-all-script" style="margin-bottom:10px;padding:8px 14px">📤 Send all dialogue to clipboard</button>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 1 — HOOK</span><span class="scene-time">⏱ 0:00 → 0:03</span><span class="scene-phase phase-hook">HOOK</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">My robot does this — watch.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>3</kbd> for scene <span class="ui">🤖 Robot</span> (firstCam = robot view). Make sure <span class="ui">📊 Sensors</span> overlay is ON in the toolbar so the live data appears on the canvas.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Robot in centre frame. <em>You don't need to be in this shot</em> — let the robot star.</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 2 — DEMO LEFT/RIGHT</span><span class="scene-time">⏱ 0:03 → 0:18</span><span class="scene-phase phase-demo">CONTROL</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">I tell it left… and right… and the servos move live.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press button A on the micro:bit OR drag the <span class="ui">Servo 1 (Pan)</span> slider in the left sidebar — slider sends UART live (v0.9.8). Then button B / drag the <span class="ui">Servo 2 (Tilt)</span> slider. <b>Press <kbd>M</kbd></b> after each move — chapters "Left" and "Right."</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Camera stays on the robot. Show the servo gauges responding (the v0.9.x servo gauges appear on canvas). <em>Slow head-pan</em> so viewers can track the motion.</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 3 — SHAKE</span><span class="scene-time">⏱ 0:18 → 0:28</span><span class="scene-phase phase-demo">SENSORS</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Shake the brain to make it freak out.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Pick up the micro:bit and shake it for 2 seconds. The accelerometer chart spikes on the sensors overlay. Press <kbd>F</kbd> at the peak of the spike — freezes the moment. Press <kbd>M</kbd> for chapter "Freak out."</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div><em>Slight smile</em> while shaking. Kids love seeing "the data react." The chart is the star here.</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 4 — THE CODE</span><span class="scene-time">⏱ 0:28 → 0:42</span><span class="scene-phase phase-demo">CODE</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">It's all coded with about 20 blocks of MakeCode. No big deal.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>2</kbd> for scene <span class="ui">💻 Code</span> (screen takes over). Have your MakeCode editor visible. Use <kbd>L</kbd> for the laser to point at 2-3 key blocks. Don't try to explain everything — just <em>highlight</em> 2 things.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Don't drag the laser back and forth. <em>Tap, pause, tap, pause.</em> Like you're underlining important words on a board.</div>
+  </div>
+</div>
+<div class="transition">CUT TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 5 — KIT CTA</span><span class="scene-time">⏱ 0:42 → 0:55</span><span class="scene-phase phase-cta">CTA</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">You can build one too. The full kit, code, and instructions are in my Etsy shop — link below.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Press <kbd>5</kbd> for <span class="ui">🎬 Studio</span> (split: face + robot view). Hold the robot up so your face AND the robot are in frame together. <em>Both stars in the final shot.</em></div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Confident smile. Robot held at chest height. <em>Kids viewing this need to imagine themselves holding it.</em></div>
+  </div>
+</div>
+<div class="transition">FADE TO:</div>
+
+<div class="scene">
+  <div class="scene-head"><span>Scene 6 — END FRAME + HASHTAG</span><span class="scene-time">⏱ 0:55 → 0:60</span><span class="scene-phase phase-end">END</span></div>
+  <div class="scene-body">
+    <div class="say"><div class="say-label">SAY <div class="actions"><button class="btn copy-line">📋 Copy</button><button class="btn read-line">▶ Read</button></div></div><div class="say-text">Tag me with #MyRobot when you build yours.</div></div>
+    <div class="do"><div class="do-label">DO</div><div class="do-text">Hold the studio scene (face + robot). Smile. 3 seconds silence. Press <kbd>R</kbd>.</div></div>
+    <div class="vis"><div class="vis-label">VISUAL</div>Final frame is the cover: face + robot + watermark. <em>Make sure your @handle and #hashtag are readable</em> — that's how viewers find your shop.</div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═════════════════ DIRECTOR'S TRICKS ═════════════════ -->
+<div class="slug">DIRECTOR'S CHAIR — secrets the pros use</div>
+<h2 id="director">🎬 Director's tricks</h2>
+
+<div class="card">
+  <h4>The 5-Take Rule (most important)</h4>
+  <p><b>Never publish your first take. Plan for 5.</b> Each take auto-saves to NoorCast's history. Use the header <span class="ui">🎬 Last take</span> button to revisit.</p>
+  <table>
+    <tr><th>Take</th><th>Goal</th><th>What to fix</th></tr>
+    <tr><td><b>1</b></td><td>Read the script literally.</td><td>Find awkward sentences. Mark them.</td></tr>
+    <tr><td><b>2</b></td><td>Fix the awkward bits.</td><td>Less reading, more talking.</td></tr>
+    <tr><td><b>3</b></td><td>Drop the script entirely.</td><td>Talk to a friend, not a camera.</td></tr>
+    <tr><td><b>4</b></td><td>Slow down 10%. Add 1 deliberate pause.</td><td>Find the rhythm.</td></tr>
+    <tr><td><b>5</b></td><td>Your keeper.</td><td>Smile, ship.</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h4>The "look at the lens, not the screen" trick</h4>
+  <p>Beginners stare at the preview. Your eyes look DOWN in the recording. <b>Put a tiny sticker next to your camera lens</b> — a smiley face works. Talk to that sticker. Your eye contact will jump from "creepy" to "magnetic" in one take.</p>
+</div>
+
+<div class="card">
+  <h4>The 3-second pause = trust</h4>
+  <p>After your CTA, hold silence for 3 full seconds before STOP. Beginners feel this is awkward. <b>Viewers feel it as confidence.</b> The Etsy loop starts cleanly. Your loop seam disappears.</p>
+</div>
+
+<div class="card">
+  <h4>The teleprompter trick</h4>
+  <p>NoorCast has a built-in teleprompter (toolbar → ⋯ More → 📜 Tele, or press <kbd>T</kbd>). Click <span class="btn" style="display:inline-block">📤 Send all dialogue</span> on each script tab to copy every line. Then in NoorCast, open the teleprompter, paste, set scroll speed to <b>30–40 wpm</b> (your reading speed), and start recording. <b>Look at the lens, not the teleprompter</b> — let the words scroll in your peripheral vision.</p>
+</div>
+
+<div class="card">
+  <h4>The energy multiplier</h4>
+  <p><b>Whatever energy you bring to the recording, the viewer gets HALF of it.</b> If you feel "normal," the viewer feels "tired." If you feel "150%," the viewer feels "good." So always overdo it. Big smile. Big eyes. Big hand gestures. <em>You'll watch the playback and think "yikes, too much" — and the viewer will think "natural and warm."</em></p>
+</div>
+
+<div class="card">
+  <h4>Audio is 60% of the perceived quality</h4>
+  <p>Cheap mic + great camera = unprofessional. Cheap camera + great mic = professional. <b>If you only invest in one upgrade, get a $30 lavalier mic.</b> Sound quality buys trust faster than 4K resolution.</p>
+</div>
+
+<div class="card">
+  <h4>The chapter-mark technique</h4>
+  <p>Press <kbd>M</kbd> at every interesting moment during recording. After STOP, in the take modal, click <span class="btn" style="display:inline-block">✨ Auto-chapter from transcript</span> — it ADDS more chapters from your speech (topic shifts, transition words). You end up with a perfectly-segmented video that has a built-in table of contents.</p>
+</div>
+
+<div class="card">
+  <h4>The "freeze on result" emphasis</h4>
+  <p>Press <kbd>F</kbd> right when the result appears. The canvas freezes for 1 second — drives home that THIS is the moment. Especially powerful for unboxings, transformations, and reveals.</p>
+</div>
+
+<!-- ═════════════════ AFTER STOP ═════════════════ -->
+<div class="slug">POST-PRODUCTION — after the take</div>
+<h2 id="after">🎁 After STOP</h2>
+<div class="card">
+  <p>The instant you press STOP, NoorCast opens the <b>Take modal</b> — a fullscreen overlay with your video on the left and ALL post-recording tools on the right. Work down the right column in this order:</p>
+  <ol>
+    <li><b>Watch playback once.</b> All the way through. Eyes off your script. Does it land? If no, click <span class="ui">🎬 Nouveau tuto</span> and re-record.</li>
+    <li><b>If take is over 60 seconds:</b> click <span class="ui">📱 Cut to 90 s for Reels</span>. Real in-browser re-encode (~real-time speed). Output is named <code>&lt;name&gt;-reels.mp4</code>.</li>
+    <li><b>Click ✨ Auto-chapter from transcript</b>. Adds smart chapter markers based on your speech — perfect for the SRT export and any platform that supports chapters.</li>
+    <li><b>Read the MISSION COMPLETE card</b> (Kids mode). Cool factor &lt; 60? You probably need more energy / scenes / chapters. Re-record.</li>
+    <li><b>Type a clean title</b> in the filename input. Something like <code>etsy-listing-coastal-pottery-2026.mp4</code>.</li>
+    <li><b>Rate the take</b> (5-star widget). Helps you remember which take was the keeper across multiple sessions.</li>
+    <li><b>Click 📥 Download</b> (the green primary button). Saves the MP4 to your downloads folder.</li>
+    <li><b>Click 💬 Captions (.srt)</b>. Save the subtitles. You'll paste these into the Etsy listing description for SEO.</li>
+    <li><b>Click 🖼 Thumbnail (.png)</b>. Saves the first frame. Good for the Etsy listing's product photo array.</li>
+    <li><b>Close the modal</b> (X or ESC). NoorCast remembers — re-open via the header <span class="ui">🎬 Last take</span> button if you need to re-download anything.</li>
+  </ol>
+  <div class="tip">If you want to tweak BEFORE uploading: open the in-browser trim modal (<span class="ui">✂️ Couper</span> button) — gives you in/out scrubbers, scene-band visualization, and exports a re-encoded clip with the same quality.</div>
+</div>
+
+<div class="card">
+  <h4>Etsy upload checklist</h4>
+  <ol>
+    <li>Open Etsy → your shop → the listing → Photos &amp; Video section.</li>
+    <li>Click <b>+ Add a video</b>. Upload your MP4. Etsy compresses it (you can't avoid this — that's why we recorded at 8 Mbps).</li>
+    <li>Use the <b>captions text</b> (from your SRT file) in the listing <b>description</b>. Etsy's search reads descriptions. Words you said in the video become discoverable.</li>
+    <li>The <b>listing title</b> should match your video's first words. If you said "60 seconds to learn macramé," the title should be "Learn macramé in 60 seconds — full kit + video tutorial."</li>
+    <li>Tag the listing with the words you actually said. Etsy's recommendation algorithm uses tag-to-search matching.</li>
+    <li>Save. Preview the listing as a buyer. <b>Watch your video AS A BUYER would</b>. Does it stop your scroll?</li>
+  </ol>
+</div>
+
+<!-- ═════════════════ TROUBLESHOOTING ═════════════════ -->
+<div class="slug">EMERGENCY HANDBOOK — when things go wrong</div>
+<h2 id="troubles">🚨 Troubleshooting</h2>
+<div class="card">
+  <table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Camera shows a black square</td><td>Permission denied</td><td>Browser address bar → 🔒 lock icon → Camera → Allow. Refresh.</td></tr>
+    <tr><td>Recording starts but file is 0 bytes</td><td>Windows MP4 encoder bug (rare)</td><td>Settings → Recording → Format → switch to WebM. Re-record.</td></tr>
+    <tr><td>Audio cuts out mid-take</td><td>Mic was bumped / unplugged / phone took over</td><td>Settings → 🎤 → re-pick the mic in the dropdown. Test the level meter wiggles.</td></tr>
+    <tr><td>Captions don't appear</td><td>Browser blocks SpeechRecognition / no internet</td><td>Chrome needs internet for live captions on first run. Check connection.</td></tr>
+    <tr><td>Auto-frame jitters wildly</td><td>Background has skin-tone-coloured clutter</td><td>Move the clutter out of frame. Or turn auto-frame off and frame manually.</td></tr>
+    <tr><td>Take is too long (>60s)</td><td>Said too much</td><td>Click "📱 Cut to 90 s for Reels" — trims to first 90 s. For finer trim use the ffmpeg helper toast.</td></tr>
+    <tr><td>Take is silent on playback</td><td>Forgot to add a mic source</td><td>Re-record. Add a Mic source in the left sidebar BEFORE pressing R.</td></tr>
+    <tr><td>Toolbar disappeared</td><td>You're in SETUP or SHARE step</td><td>Click <span class="ui">2 TUNE</span> or <span class="ui">3 RECORD</span> in the workflow tabs.</td></tr>
+    <tr><td>Frame rate drops during recording</td><td>Too many other tabs / apps</td><td>Close everything but NoorCast. CPU is the bottleneck.</td></tr>
+    <tr><td>Watermark not visible on video</td><td>Black-on-black contrast issue</td><td>Settings → Slogan → set a watermark text. v0.9.13 added a lime border so it's visible on dark canvas.</td></tr>
+    <tr><td>Output file too big for Etsy</td><td>Recorded too long at high bitrate</td><td>Trim to 60s first. If still big: Settings → Quality → Standard (4 Mbps) and re-record.</td></tr>
+  </table>
+</div>
+
+<!-- ═════════════════ GLOSSARY ═════════════════ -->
+<div class="slug">DICTIONARY — what the words mean</div>
+<h2 id="glossary">📖 Glossary for beginners</h2>
+<div class="card">
+  <dl class="glossary">
+    <dt>SOURCE</dt><dd>One input layer on your canvas. A camera, a screen-share, a mic, an image. You can have many.</dd>
+    <dt>SCENE</dt><dd>A saved arrangement of sources. Click a scene tile in the right sidebar to switch instantly. Press <kbd>1</kbd>–<kbd>9</kbd> for the first nine.</dd>
+    <dt>CANVAS</dt><dd>The big rectangle in the middle. What gets recorded. Anything outside it is ignored.</dd>
+    <dt>SAFE ZONE</dt><dd>The green dashed box in 9:16 mode. The area where your viewer will actually SEE the video — Etsy / FB / TikTok UI covers the red areas.</dd>
+    <dt>CHAPTER MARKER</dt><dd>A timestamped label inside the video. Press <kbd>M</kbd> to drop one. Saved in the .vtt sidecar file. Useful for navigation in long takes.</dd>
+    <dt>WATERMARK</dt><dd>A small text/logo overlay in the corner of every recording. Set in Settings → Slogan. Becomes your "brand stamp."</dd>
+    <dt>WORKFLOW STEP</dt><dd>The 4 tabs above the toolbar (SETUP / TUNE / RECORD / SHARE). Auto-advances as you progress. Tells you what to focus on.</dd>
+    <dt>STATUS BAR</dt><dd>The single line above the REC button. Shows current state, source count, format, bitrate, your handle. Click any chunk to change that setting.</dd>
+    <dt>TAKE</dt><dd>One recording attempt. NoorCast saves all takes — you can re-open any of them via the header <span class="ui">🎬 Last take</span> button.</dd>
+    <dt>BURN-IN CAPTIONS</dt><dd>Subtitles painted directly onto the video pixels (vs. a separate text track). Survives social-media compression. Mandatory for muted-autoplay platforms like Etsy and Reels.</dd>
+    <dt>HOOK</dt><dd>The first 3 seconds of your video. The single most important segment. If the hook fails, nothing else matters.</dd>
+    <dt>CTA</dt><dd>"Call To Action" — the line that tells the viewer what to do next ("link below", "tag me with"). Always near the end, never in the middle.</dd>
+    <dt>END FRAME / LOOP SEAM</dt><dd>The last frame of your video. On Etsy/Reels it becomes the cover AND the loop continuation point. Make it visually clean.</dd>
+    <dt>B-ROLL</dt><dd>Background visuals that play under your voiceover (e.g. screen recording while you talk to camera). NoorCast does this via multi-source scenes.</dd>
+    <dt>TELEPROMPTER</dt><dd>A scrolling script overlay you read from while looking at the camera. Press <kbd>T</kbd> in NoorCast to toggle.</dd>
+  </dl>
+</div>
+
+<div class="footer">
+  <p><b>The 60-Second Etsy Hollywood Playbook</b> · for NoorCast v0.10.x</p>
+  <p>Print this on A4 (or A3 for desk-pinning). It's print-friendly — colours desaturate, ads / floating dock disappear.</p>
+  <p style="margin-top:14px"><a href="../index.html">← Back to NoorCast</a> · <a href="./guide.html">Open the full user guide</a></p>
+</div>
+
+<!-- ═════════════════ FLOATING TELEPROMPTER DOCK ═════════════════ -->
+<aside class="teleprompter-dock" aria-label="Teleprompter dock">
+  <div class="head">
+    <span class="title">📜 Teleprompter dock</span>
+  </div>
+  <button class="copy-all-btn" id="dockCopyAll">📤 Copy all dialogue</button>
+  <div class="hint" style="margin-top:8px">Copies every SAY line of the active script tab to your clipboard. Then in NoorCast: <kbd>T</kbd> → paste → press <kbd>R</kbd>.</div>
+</aside>
+
+<!-- ═════════════════ PRACTICE BAR (for Practice Mode) ═════════════════ -->
+<div class="practice-bar" id="practiceBar">
+  <span class="timer" id="practiceTimer">00:00</span>
+  <span style="color:var(--muted);font-size:.82rem">PRACTICE MODE — scenes auto-advance</span>
+  <button class="btn" id="practiceStop">Stop practice</button>
+</div>
+
+<script>
+  // ============== Tabs ==============
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const target = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === target));
+    });
+  });
+
+  // ============== Checklist persistence ==============
+  document.querySelectorAll('.checklist').forEach(list => {
+    const key = 'playbook-' + list.dataset.storage;
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+    list.querySelectorAll('li').forEach((li, i) => {
+      const cb = li.querySelector('input[type=checkbox]');
+      if (state[i]) { cb.checked = true; li.classList.add('checked'); }
+      const sync = () => { li.classList.toggle('checked', cb.checked); state[i] = cb.checked; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} };
+      cb.addEventListener('change', sync);
+      // Click anywhere on the row to toggle the box
+      li.addEventListener('click', e => {
+        if (e.target.tagName === 'INPUT') return;
+        cb.checked = !cb.checked;
+        sync();
+      });
+    });
+  });
+
+  // ============== Copy line ==============
+  document.querySelectorAll('.copy-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      navigator.clipboard?.writeText(sayText).then(() => {
+        btn.textContent = '✓ Copied'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 1400);
+      }).catch(() => { btn.textContent = '⚠ Block'; });
+    });
+  });
+
+  // ============== Read line aloud (Web Speech API) ==============
+  document.querySelectorAll('.read-line').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sayText = btn.closest('.say').querySelector('.say-text').textContent.trim();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(sayText);
+        u.rate = 0.95; u.pitch = 1.0;
+        speechSynthesis.speak(u);
+        btn.textContent = '🔊 Reading…';
+        u.onend = () => { btn.textContent = '▶ Read'; };
+      } catch { btn.textContent = '⚠ N/A'; }
+    });
+  });
+
+  // ============== Copy ALL dialogue (per-script + dock) ==============
+  function copyAllForActiveScript() {
+    const active = document.querySelector('.tab-pane.active');
+    if (!active) return '';
+    const lines = Array.from(active.querySelectorAll('.say-text')).map(s => s.textContent.trim());
+    const txt = lines.join('\n\n');
+    navigator.clipboard?.writeText(txt);
+    return lines.length;
+  }
+  document.querySelectorAll('.copy-all-script').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = copyAllForActiveScript();
+      btn.textContent = `✓ Copied ${n} lines — paste into NoorCast Teleprompter (T)`;
+      setTimeout(() => { btn.textContent = '📤 Send all dialogue to clipboard (paste in NoorCast Teleprompter)'; }, 3000);
+    });
+  });
+  document.getElementById('dockCopyAll')?.addEventListener('click', () => {
+    const n = copyAllForActiveScript();
+    const b = document.getElementById('dockCopyAll');
+    b.textContent = `✓ ${n} lines copied`;
+    setTimeout(() => { b.textContent = '📤 Copy all dialogue'; }, 2400);
+  });
+
+  // ============== ESC to clear copy state, Space to read next ==============
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') speechSynthesis.cancel?.();
+  });
+</script>
+</body>
+</html>

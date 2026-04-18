@@ -119,28 +119,38 @@ async function main() {
   console.log('\n📁 Building ZIP structure...\n');
 
   // Copy app files
+  // v0.10.10: added trilingual guides + etsy-playbooks (FR + AR were missing,
+  // breaking the in-app language switch + 6 broken refs in noorcast.js).
   const appFiles = [
     'index.html', 'noorcast.js', 'style.css', 'sw.js',
-    'icon.svg', 'assets/logo.svg', 'manifest.json',
-    'docs/guide.html', 'docs/cheatsheet.html', 'docs/faq.html', 'docs/start.html',
-    'firmware/makecode.ts', 'assets/workshop-diy-logo.svg'
+    'icon.svg', 'assets/logo.svg', 'assets/workshop-diy-logo.svg', 'manifest.json',
+    'firmware/makecode.ts',
+    'docs/guide.html', 'docs/guide-fr.html', 'docs/guide-ar.html',
+    'docs/etsy-playbook.html', 'docs/etsy-playbook-fr.html', 'docs/etsy-playbook-ar.html',
+    'docs/cheatsheet.html', 'docs/faq.html', 'docs/start.html',
   ];
   for (const f of appFiles) {
     const src = join(ROOT, f);
     if (existsSync(src)) {
       copyFileSync(src, join(ZIP_DIR, f));
       console.log(`  ✓ ${f}`);
+    } else {
+      console.log(`  ⚠️  missing: ${f}`);
     }
   }
 
-  // Copy fonts dir if exists
-  const fontsDir = join(ROOT, 'fonts');
-  if (existsSync(fontsDir)) {
-    mkdirSync(join(ZIP_DIR, 'fonts'), { recursive: true });
-    for (const f of readdirSync(fontsDir)) {
-      copyFileSync(join(fontsDir, f), join(ZIP_DIR, 'fonts', f));
+  // Copy whole-directory bundles (fonts/, flags/)
+  // v0.10.10: flags/ was missing — sw.js cache list referenced ./flags/*.svg
+  // and threw "failed to fetch" during install on the buyer side.
+  for (const dirName of ['fonts', 'flags']) {
+    const srcDir = join(ROOT, dirName);
+    if (existsSync(srcDir)) {
+      mkdirSync(join(ZIP_DIR, dirName), { recursive: true });
+      for (const f of readdirSync(srcDir)) {
+        copyFileSync(join(srcDir, f), join(ZIP_DIR, dirName, f));
+      }
+      console.log(`  ✓ ${dirName}/`);
     }
-    console.log('  ✓ fonts/');
   }
 
   // Copy LICENSE

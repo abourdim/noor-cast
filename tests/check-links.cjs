@@ -15,11 +15,13 @@ const walk = (dir, depth = 0) => {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (['node_modules', '.git', 'output', 'NoorCast-v0.7', 'NoorCast-v0.9', 'test-results'].includes(e.name)) continue;
+      // Skip node_modules + .git + output renders + LEGACY package + test-results.
+      // The freshly-built NoorCast-v0.9 IS scanned because it's what buyers run.
+      if (['node_modules', '.git', 'output', 'NoorCast-v0.7', 'test-results'].includes(e.name)) continue;
       walk(p, depth + 1);
     } else if (/\.(html|md|js|json|css)$/i.test(e.name)) {
-      // Skip the legacy NoorCast-v0.7 + freshly built v0.9 packages — they're snapshots, not source
-      if (p.includes('NoorCast-v0.')) continue;
+      // Only skip the legacy v0.7 snapshot — scan the fresh v0.9 build (it's what buyers see)
+      if (p.includes('NoorCast-v0.7')) continue;
       // Skip tests + node_modules
       if (p.includes('node_modules')) continue;
       FILES.push(p);

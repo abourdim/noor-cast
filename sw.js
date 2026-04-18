@@ -1,7 +1,7 @@
-/* NoorCast Service Worker v0.10.9
+/* NoorCast Service Worker v0.10.10
    Cache-first for app shell, network-first for fonts. */
 
-const CACHE_NAME = 'noorcast-v0_10_9';
+const CACHE_NAME = 'noorcast-v0_10_10';
 const APP_SHELL = [
   './',
   './index.html',
