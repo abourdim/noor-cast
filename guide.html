@@ -1290,14 +1290,19 @@
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch11"><span class="ch-num">11</span> Pilot Scene & Overlay</h2>
 
-<p>Scene <kbd>6</kbd> 🎮 Pilot creates a combined robotics view optimized for controlling robots during recording.</p>
+<p>Scene <kbd>6</kbd> 🎮 <strong>Pilot</strong> is a combined view designed for one specific job: controlling a robot live while you record. It puts the robot's environment full-screen, your face in a small PIP corner, and a draggable HTML control panel within reach.</p>
+
+<p><strong>Why it exists.</strong> Robotics tutorials always need three things on screen: <em>what the robot sees</em>, <em>who's driving it</em>, and <em>controls to drive with</em>. Without the Pilot scene, you'd have to switch between camera scenes mid-action — clunky for a live demo. Pilot keeps all three in one frame.</p>
+
+<p><strong>When to use it.</strong> Live robot piloting demos · "watch the robot follow my joystick" lessons · driving through a maze for younger kids · any moment where you control the bot with one hand and present with the other.</p>
 
 <h3>11.1 Layout</h3>
 <ul>
-  <li><strong>Camera</strong> — fills the entire canvas (robot/workspace view)</li>
-  <li><strong>Face camera</strong> — small circle in bottom-right (PIP)</li>
-  <li><strong>micro:bit overlay</strong> — draggable panel at bottom-left</li>
+  <li><strong>Camera</strong> — fills the entire canvas (robot's-eye-view or workspace shot)</li>
+  <li><strong>Face camera</strong> — small circle in bottom-right (PIP), so viewers see your reactions</li>
+  <li><strong>micro:bit overlay</strong> — HTML panel at bottom-left, draggable, contains D-pad + servos + LED grid</li>
 </ul>
+<p>The overlay is rendered as <strong>HTML on top of the canvas</strong>, not baked into the recording. This means the controls are live and clickable for you, but viewers see only the camera + face PIP — clean, professional output.</p>
 
 <h3>11.2 Overlay Controls</h3>
 <table>
@@ -1323,24 +1328,40 @@
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch12"><span class="ch-num">12</span> Overlays</h2>
 
+<p>An <strong>overlay</strong> is anything that draws on top of (or alongside) your canvas — laser pointer, whiteboard pen, captions, gauges, watermarks, etc. Some bake into your recording, others are teacher-only.</p>
+
+<p><strong>Two types — important to understand the difference:</strong></p>
+<ul>
+  <li><strong>✅ In recording</strong> — drawn ON the canvas via <code>ctx</code>. Viewers see them in the final video.</li>
+  <li><strong>❌ Teacher-only</strong> — drawn as HTML/CSS on top of the stage. You see them while recording, viewers don't. Used for prompts, notes, prep tools.</li>
+</ul>
+
 <table>
   <tr><th>Overlay</th><th>Key</th><th>In Recording?</th><th>Details</th></tr>
-  <tr><td>🔴 Laser pointer</td><td><kbd>L</kbd></td><td>✅ Yes</td><td>Red dot follows cursor</td></tr>
-  <tr><td>❄️ Screen freeze</td><td><kbd>F</kbd></td><td>✅ Yes</td><td>Freezes screen, audio continues</td></tr>
-  <tr><td>✏️ Whiteboard</td><td><kbd>D</kbd></td><td>✅ Yes</td><td>Draw with mouse. Colors, thickness, eraser.</td></tr>
-  <tr><td>📜 Teleprompter</td><td><kbd>T</kbd></td><td>❌ No</td><td>Floating script. Auto-scroll, font/width controls. Persisted.</td></tr>
-  <tr><td>🗒️ Sticky notes</td><td>—</td><td>❌ No</td><td>Draggable yellow notes. Teacher-only.</td></tr>
-  <tr><td># Grid</td><td><kbd>G</kbd></td><td>❌ No</td><td>Rule-of-thirds</td></tr>
-  <tr><td>💡 Spotlight</td><td>—</td><td>✅ Yes</td><td>Darkens everything except cursor area</td></tr>
-  <tr><td>🎬 Letterbox</td><td>—</td><td>✅ Yes</td><td>Cinematic black bars. Adjustable height.</td></tr>
-  <tr><td>🔍 Zoom</td><td><kbd>Z</kbd></td><td>✅ Yes</td><td>1.8× zoom to cursor position</td></tr>
-  <tr><td>🎯 AutoZoom</td><td>—</td><td>✅ Yes</td><td>Click screen source → 1.5s auto-zoom</td></tr>
-  <tr><td>💧 Ripples</td><td>—</td><td>✅ Yes</td><td>Animated rings on mousedown</td></tr>
-  <tr><td>🎨 Cursor trail</td><td>—</td><td>✅ Yes</td><td>Rainbow particles follow mouse</td></tr>
-  <tr><td>⏳ Timer</td><td>—</td><td>✅ Yes</td><td>Countdown timer on canvas</td></tr>
-  <tr><td>🌑 Vignette</td><td>—</td><td>✅ Yes</td><td>Darkens canvas edges with radial gradient. Adjustable intensity (0.1-1.0).</td></tr>
-  <tr><td>🎹 Piano</td><td>—</td><td>✅ Yes</td><td>2-octave keyboard. Keys A-L (white), W-P (black). See <a class="xref" href="#ch17">Audio</a>.</td></tr>
+  <tr><td>🔴 Laser pointer</td><td><kbd>L</kbd></td><td>✅ Yes</td><td>Red dot follows cursor — for "look here" moments</td></tr>
+  <tr><td>❄️ Screen freeze</td><td><kbd>F</kbd></td><td>✅ Yes</td><td>Freezes screen, audio continues — annotate the still frame</td></tr>
+  <tr><td>✏️ Whiteboard</td><td><kbd>D</kbd></td><td>✅ Yes</td><td>Draw with mouse. Colors, thickness, eraser — see <a class="xref" href="#ch28-whiteboard">28.30</a></td></tr>
+  <tr><td>📜 Teleprompter</td><td><kbd>T</kbd></td><td>❌ No</td><td>Floating script. Auto-scroll, font/width controls. Persisted — see <a class="xref" href="#ch28-teleprompter">28.31</a></td></tr>
+  <tr><td>🗒️ Sticky notes</td><td>—</td><td>❌ No</td><td>Draggable yellow notes. Teacher-only — see <a class="xref" href="#ch28-sticky-notes">28.37</a></td></tr>
+  <tr><td># Grid</td><td><kbd>G</kbd></td><td>❌ No</td><td>Rule-of-thirds composition guide</td></tr>
+  <tr><td>💡 Spotlight</td><td>—</td><td>✅ Yes</td><td>Darkens everything except cursor area — like a flashlight in a dark room</td></tr>
+  <tr><td>🎬 Letterbox</td><td>—</td><td>✅ Yes</td><td>Cinematic black bars top + bottom. Adjustable height — see <a class="xref" href="#ch28-overlays-numeric">28.13</a></td></tr>
+  <tr><td>🔍 Zoom</td><td><kbd>Z</kbd></td><td>✅ Yes</td><td>1.8× zoom to cursor position. Click again to dismiss</td></tr>
+  <tr><td>🎯 AutoZoom</td><td>—</td><td>✅ Yes</td><td>Click any screen source → 1.5s smooth auto-zoom — see <a class="xref" href="#ch28-auto-zoom">28.38</a></td></tr>
+  <tr><td>💧 Ripples</td><td>—</td><td>✅ Yes</td><td>Animated rings on every mousedown. Visual feedback for clicks</td></tr>
+  <tr><td>🎨 Cursor trail</td><td>—</td><td>✅ Yes</td><td>Rainbow particles follow mouse — playful "I'm pointing here"</td></tr>
+  <tr><td>⏳ Timer</td><td>—</td><td>✅ Yes</td><td>Countdown timer drawn on canvas. Flashes red at zero</td></tr>
+  <tr><td>🌑 Vignette</td><td>—</td><td>✅ Yes</td><td>Darkens canvas edges with radial gradient. Intensity 0.1-1.0</td></tr>
+  <tr><td>🎹 Piano</td><td>—</td><td>✅ Yes</td><td>2-octave keyboard. Keys A-L (white), W-P (black). See <a class="xref" href="#ch17">Audio</a></td></tr>
+  <tr><td>🎛 Servo gauges</td><td>—</td><td>✅ Yes</td><td>Pan/tilt semicircular gauges. Draggable + resizable. See <a class="xref" href="#ch28-servo-gauge">28.6</a></td></tr>
+  <tr><td>📊 Sensor overlay</td><td>—</td><td>✅ Yes</td><td>X/Y/Z accel + temp + light + sound + LED mirror — micro:bit live data</td></tr>
+  <tr><td>🎭 Mascots</td><td>—</td><td>✅ Yes</td><td>Animated characters walk across the canvas. See <a class="xref" href="#ch28-mascots">28.7</a></td></tr>
+  <tr><td>😊 Co-host</td><td>—</td><td>✅ Yes</td><td>SVG buddy that bobs / blinks / reacts to your voice. See <a class="xref" href="#ch28-cohost-characters">28.28</a></td></tr>
+  <tr><td>©️ Watermark</td><td>—</td><td>✅ Yes</td><td>Draggable text label baked into every frame. See <a class="xref" href="#ch28-watermark">28.5</a></td></tr>
+  <tr><td>🖼 Background image</td><td>—</td><td>✅ Yes</td><td>Your PNG/JPG behind everything. See <a class="xref" href="#ch28-bg-image">28.1</a></td></tr>
 </table>
+
+<p><strong>Performance note.</strong> Each enabled overlay adds ~0.5-1ms per frame. With 30fps, that's a budget of 33ms — you can run 10+ overlays without dropped frames. The Servo gauge skips its render call when the micro:bit is disconnected (zero overhead).</p>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch13"><span class="ch-num">13</span> Tools & More Tools</h2>
@@ -1550,16 +1571,68 @@
 <p>XP, level, and visibility all persisted in localStorage across sessions.</p>
 
 <h3>16.2 Daily Challenges</h3>
-<p>New challenge daily (20 pool). Toast on app load. +25 XP + confetti on completion. Checked every 3s. Examples: "Record 2+ min", "Use 3 scenes", "Apply a skin".</p>
+<p><strong>What.</strong> A small task suggested each day to encourage exploration of features. Examples:</p>
+<ul>
+  <li>"Record at least 2 minutes today"</li>
+  <li>"Use 3 different scenes in one take"</li>
+  <li>"Apply a source skin (frame)"</li>
+  <li>"Add a chapter marker"</li>
+  <li>"Try a Mascot"</li>
+  <li>"Connect a micro:bit"</li>
+  <li>"Use the whiteboard"</li>
+</ul>
+<p><strong>Where.</strong> Toast on app load showing today's challenge. Completion checked every 3s during use. There are 20 challenges in the pool — daily randomized.</p>
+<p><strong>Reward.</strong> +25 XP + confetti burst + toast "🎉 Daily challenge complete!" + the day is marked done in <code>tc-daily-done</code>.</p>
+<p><strong>Why.</strong> Solo creators (especially kids) tend to fall into using only the 5 features they know. The daily nudge gets them to try the other 195. Doubles as motivation streak.</p>
 
 <h3>16.3 Combos</h3>
-<p>3+ features active during recording = COMBO (count × 5 XP). 5+ = SUPER. 7+ = ULTRA. Golden floating text + speed lines.</p>
+<p><strong>What.</strong> When 3 or more features are active simultaneously during a recording, NoorCast detects a COMBO and rewards bonus XP + a celebration popup on the canvas.</p>
+<p><strong>Tiers.</strong></p>
+<ul>
+  <li><strong>3 features</strong> → ⚡ <em>COMBO ×3</em> (+15 XP)</li>
+  <li><strong>4 features</strong> → ⚡ <em>COMBO ×4</em> (+20 XP)</li>
+  <li><strong>5–6 features</strong> → 🔥 <em>SUPER COMBO</em> (+25 to +30 XP)</li>
+  <li><strong>7+ features</strong> → 🌟 <em>ULTRA COMBO</em> (+35 XP+)</li>
+</ul>
+<p><strong>What counts.</strong> Source skins · Background patterns · Text overlays · Background music · Co-host visible · XP bar visible · Voice FX · Live captions · Canvas Flair (neon border).</p>
+<p><strong>Cooldown.</strong> 5 seconds between combo detections — prevents flicker if you toggle features rapidly.</p>
+<p><strong>Off-switch.</strong> Settings → Comportement → uncheck <code>⚡ COMBO popup</code> if it distracts your videos. See <a class="xref" href="#ch28-combo-popup">28.11</a>.</p>
+<p><strong>Why.</strong> Encourages kids to stack features creatively instead of using one at a time. Builds a "more features = more polish" intuition.</p>
 
 <h3>16.4 Unlock Gallery</h3>
-<p>Skins/backgrounds locked behind XP tiers: 0 (starter pack) → 50 → 100 → 200 → 300 → 500 → 750 → 1000. Auto-unlocks on XP gain.</p>
+<p><strong>What.</strong> Source skins, background patterns, and themes are tiered behind XP thresholds. As you record more, items unlock automatically.</p>
+<p><strong>Tier table.</strong></p>
+<table>
+  <tr><th>Tier</th><th>XP threshold</th><th>Unlocks</th></tr>
+  <tr><td>Starter</td><td>0 (default)</td><td>Basic skins (none, neon, polaroid), Space + Pixel backgrounds</td></tr>
+  <tr><td>Tier 1</td><td>50 XP</td><td>+ Comic, Vintage skins · Matrix background</td></tr>
+  <tr><td>Tier 2</td><td>100 XP</td><td>+ Hologram, Glitch · Arcade, Circuit backgrounds</td></tr>
+  <tr><td>Tier 3</td><td>200 XP</td><td>+ Aurora, Cyberpunk · Zellige, Arabesque</td></tr>
+  <tr><td>Tier 4</td><td>300 XP</td><td>+ Crystal, Lava · Riad, Muqarnas</td></tr>
+  <tr><td>Tier 5</td><td>500 XP</td><td>+ Plasma, Quantum · Astrolabe, Algebra</td></tr>
+  <tr><td>Tier 6</td><td>750 XP</td><td>+ Diamond, Cosmic · Radar, Sonar</td></tr>
+  <tr><td>Tier 7</td><td>1000 XP</td><td>All remaining content</td></tr>
+</table>
+<p><strong>How to view.</strong> More → Fun → 🎁 Gallery — see locked items with their threshold + grayscale preview. Toast fires when something unlocks.</p>
+<p><strong>Why.</strong> Game-style progression so kids have a reason to keep recording. Especially effective in classroom settings.</p>
 
 <h3>16.5 Badges</h3>
-<p>Milestones: First recording, 5+ min, Multi-camera, All scenes, 5+ markers, micro:bit, 10 recordings (Veteran), 30+ min total (Marathon), 5+ scenes (Library). Unlock triggers: confetti + trophy animation + badge card.</p>
+<p><strong>What.</strong> Milestone trophies that unlock once per criterion. Shown in Settings → Tes badges. Each earned badge gets a confetti burst + a Badge Card export.</p>
+<p><strong>The 9 badges.</strong></p>
+<dl>
+  <dt>🎬 <strong>First Tutorial</strong></dt><dd>Complete your very first recording (any length).</dd>
+  <dt>⏱ <strong>5-Minute Marathon</strong></dt><dd>Single recording lasting 5+ minutes.</dd>
+  <dt>🎥 <strong>Multi-Camera</strong></dt><dd>Have 2 or more camera sources active at the same time.</dd>
+  <dt>🎭 <strong>Scene Master</strong></dt><dd>Use every preset scene at least once.</dd>
+  <dt>🏷 <strong>Marker King</strong></dt><dd>Drop 5 or more chapter markers in a single recording.</dd>
+  <dt>🤖 <strong>micro:bit Plugged</strong></dt><dd>First successful BLE connection to a micro:bit.</dd>
+  <dt>🎖 <strong>Veteran</strong></dt><dd>10 total recordings in your tutorial history.</dd>
+  <dt>🏆 <strong>Marathon</strong></dt><dd>30 minutes total recording time (cumulative).</dd>
+  <dt>📚 <strong>Library</strong></dt><dd>Save 5 or more custom scenes.</dd>
+</dl>
+<p><strong>What unlocks them.</strong> Auto-detected after each recording. No claim button — you just earn them.</p>
+<p><strong>Reset.</strong> Settings → Maintenance → "🗑 Réinitialiser les badges" wipes them. Useful for class demos / new students.</p>
+<p><strong>Why.</strong> Kids love trophies. Concrete goals beyond "make a video" keep them motivated to explore the feature set.</p>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch17"><span class="ch-num">17</span> Audio</h2>
