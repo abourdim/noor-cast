@@ -40,7 +40,7 @@ a robot. If that's you, here's what you get that nobody else offers:
 - **Kid-friendly.** Animated stickers, confetti, sound pad, background
   music, speed lines, bouncy animations, 8 visual themes, XP leveling.
 - **Runs on a Chromebook.** No dependencies, no install, no RAM hog.
-- **[Full User Guide](./guide.html)** with every feature documented.
+- **[Full User Guide](./docs/guide.html)** with every feature documented.
 
 **The first 5 minutes:** grant cam/mic permissions → pick the `🤖 Démo robot`
 template → connect your micro:bit via the `📡 Connecter micro:bit` button →
@@ -452,10 +452,11 @@ python3 -m http.server 8000
 | `index.html` | ~2,000 | UI shell: header, studio grid, toolbars, settings, help, rec bar, take panel |
 | `noorcast.js` | ~22,000 | All app logic: i18n (400+ keys × 3 langs), engine, recorder, 150+ singletons, 200+ features |
 | `style.css` | ~5,200 | 8 themes, responsive layout, 50+ component groups |
-| `guide.html` | ~500 | Full user guide (11 sections, dark theme) |
+| `docs/guide.html` (+ `-fr`, `-ar`) | ~3,000 | Full user guide (31 chapters, trilingual) |
+| `docs/etsy-playbook.html` (+ `-fr`, `-ar`) | ~1,100 | Hollywood-style 60-sec recording playbook (trilingual) |
 | `manifest.json` | ~12 | PWA manifest |
 | `icon.svg` | ~25 | PWA icon (static clapperboard + play + LED) |
-| `logo.svg` | ~30 | Animated header logo (clap that claps every 3s) |
+| `assets/logo.svg` | ~30 | Animated header logo (clap that claps every 3s) |
 
 No build step, no dependencies, no `node_modules`. Just open `index.html` or run `python3 -m http.server`.
 
