@@ -6050,3 +6050,134 @@ body.tc-focus .tc-stage {
   color: #bba;
   pointer-events: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   v0.9.30: Mobile reflow — make NoorCast usable on tablets + phones
+   ═══════════════════════════════════════════════════════════════════
+   ~50% of casual recording happens on tablets. Today the studio grid
+   uses fixed columns (220 + 1fr + 220) which break below ~960 px.
+   This block stacks the studio vertically + tightens the chrome so
+   the canvas stays the dominant element on small screens.
+   Cascading breakpoints: 960 / 768 / 560 px. */
+
+@media (max-width: 960px) {
+  /* App container goes full-width and loses the cap-shadow padding */
+  .app { max-width: 100vw; padding: 8px; }
+
+  /* Studio grid: stack columns vertically. Sidebars become accordions
+     under the canvas. Right (scenes) collapses by default; user taps
+     the existing toggle to expand. */
+  .tc-studio-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "stage"
+      "lside"
+      "rside";
+    gap: 10px;
+  }
+  .tc-studio-grid > .tc-stage-wrap,
+  .tc-studio-grid > .tc-stage-host { grid-area: stage; }
+  .tc-studio-grid > aside:not(.tc-rsidebar) { grid-area: lside; }
+  .tc-studio-grid > .tc-rsidebar { grid-area: rside; }
+  /* Hide the desktop-only resize handle (no horizontal columns to resize) */
+  .tc-studio-lresize { display: none !important; }
+  /* Sidebars become full-width chunks that scroll naturally */
+  .tc-studio-grid > aside {
+    width: 100% !important;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  /* Workflow tabs shrink labels but keep numbers visible */
+  .tc-step-tab .tc-step-label { display: none; }
+  .tc-step-tab { padding: 10px; }
+
+  /* Toolbar: allow wrap, smaller buttons */
+  .tc-tools-bar { padding: 8px; gap: 4px; }
+  .tc-tool-btn { padding: 6px 10px; font-size: .72rem; }
+  .tc-tool-btn .tc-tool-label { display: none; }  /* icons-only on phone-tablet */
+  .tc-tool-btn kbd { display: none; }
+  .tc-tool-btn .tc-tool-icon { font-size: 1.1rem; }
+
+  /* Status bar gets tighter spacing — wraps naturally */
+  .tc-stage-status { padding: 6px 10px; font-size: .72rem; gap: 4px; }
+  .tc-ss-chunk { padding: 2px 6px; }
+  .tc-ss-handle { display: none; }  /* save space — handle is non-essential here */
+  .tc-ss-handle-sep { display: none; }
+
+  /* Header: hide the maximize button (full-screen anyway), tighten */
+  .tc-max-btn { display: none; }
+  .header-buttons { gap: 4px; }
+  .btn-icon-only { width: 32px; height: 32px; }
+  .tc-mode-badge { font-size: .7rem; padding: 3px 8px; }
+
+  /* REC bar: pin to bottom of stage with full width */
+  .tc-rec-bar { flex-wrap: wrap; gap: 8px; padding: 10px; }
+  .tc-rec-btn { flex: 1 1 100%; padding: 14px; font-size: 1rem; }
+
+  /* Take modal: already collapses to single column at 900 px (added in
+     v0.9.27). Override to start at 960 instead so it matches this block. */
+  .tc-take-modal .tc-take-modal-body { grid-template-columns: 1fr; }
+  .tc-take-modal .tc-take-modal-body > video { position: static; max-height: 50vh; }
+}
+
+@media (max-width: 768px) {
+  /* Header: stack logo above buttons, smaller title */
+  .app-header { flex-direction: column; align-items: stretch; gap: 8px; }
+  .header-left, .header-right { justify-content: center; }
+  .title-block h1 { font-size: 1rem; }
+
+  /* Hide the desktop-style log + help + settings overlays' resize handles */
+  .tc-sidebar-resize { display: none; }
+  /* Flyout panels become bottom sheets */
+  #helpPanel, #settingsPanel, #logPanel {
+    width: 100% !important;
+    max-width: 100% !important;
+    inset-inline-end: 0;
+    inset-inline-start: 0;
+    top: auto !important;
+    bottom: 0;
+    height: 80vh;
+    transform: translateY(100%);
+    transition: transform .3s ease;
+    border-radius: 16px 16px 0 0;
+  }
+  #helpPanel.open, #settingsPanel.open, #logPanel.open { transform: translateY(0); }
+  #helpPanel { border-inline-start: none; }
+
+  /* Take modal close button gets bigger for thumbs */
+  .tc-take-modal-close { width: 44px; height: 44px; font-size: 1.4rem; }
+
+  /* Toolbar: scroll horizontally instead of wrapping (nicer for one-hand) */
+  .tc-tools-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .tc-tool-btn { flex-shrink: 0; }
+}
+
+@media (max-width: 560px) {
+  /* Phone-only tightening — most users won't actually record from a
+     phone (no screen-share API on mobile Chrome) but the UI should
+     still be browsable / take-viewable on a phone. */
+  .tc-step-tab { padding: 8px 6px; font-size: .72rem; }
+  .tc-step-tab .tc-step-num { width: 18px; height: 18px; font-size: .7rem; }
+  .tc-add-zone { padding: 10px 8px 8px; }
+  .tc-add-zone-title { font-size: .7rem; }
+  .tc-source-row { font-size: .8rem; }
+  /* Drop-zone hint cards from v0.9.18: single column, full-width */
+  .tc-stage-hint > div { flex-direction: column !important; }
+}
+
+/* Touch-device tweaks (independent of viewport size — applies to any
+   device that primarily uses touch input). */
+@media (hover: none) and (pointer: coarse) {
+  /* Bigger tap targets across all clickable controls */
+  button, a, .tc-tool-btn, .tc-src-btn, .tc-scene-btn, .tc-step-tab {
+    min-height: 44px;  /* WCAG 2.5.5 minimum target size */
+  }
+  /* Remove hover-only effects that get stuck on touch devices */
+  .tc-tool-btn:hover, .tc-scene-btn:hover { transform: none; }
+}
