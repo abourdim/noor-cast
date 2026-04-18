@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.22 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.23 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.22';
+const APP_VERSION = '0.9.23';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -24228,6 +24228,30 @@ async function init() {
   KidsMode.bootSeq();
   KidsMode.maybePickHandle();
   KidsMode.installStageHint();  // v0.9.18: chunky empty-canvas drop-zones
+  // v0.9.23: A11y — mirror the .active toggle class onto aria-pressed for
+  // every tool/scene button. Single MutationObserver, retroactive for
+  // buttons added later (Templates, dynamically built scene tiles, etc).
+  // Without this, screen readers can't tell whether Laser/Freeze/Sensors
+  // are on or off — they just announce "Laser, button" both times.
+  try {
+    const ARIA_SELECTORS = '.tc-tool-btn, .tc-scene-btn';
+    const ariaSync = (el) => {
+      if (!(el instanceof HTMLElement)) return;
+      el.setAttribute('aria-pressed', el.classList.contains('active') ? 'true' : 'false');
+    };
+    document.querySelectorAll(ARIA_SELECTORS).forEach(ariaSync);
+    new MutationObserver((muts) => {
+      for (const m of muts) {
+        if (m.type === 'attributes' && m.attributeName === 'class') ariaSync(m.target);
+        if (m.type === 'childList') m.addedNodes.forEach(n => {
+          if (n.nodeType === 1) {
+            if (n.matches?.(ARIA_SELECTORS)) ariaSync(n);
+            n.querySelectorAll?.(ARIA_SELECTORS).forEach(ariaSync);
+          }
+        });
+      }
+    }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+  } catch (e) { log('a11y aria-pressed setup failed: ' + e.message, 'info'); }
   // v0.9.16: SFX feedback on every Kids-mode click. Delegated so it works
   // for dynamically-added buttons (scene cards, source rows). One listener
   // for the whole document. Fires only when in Kids mode AND user actually
