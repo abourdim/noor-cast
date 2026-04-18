@@ -3008,6 +3008,114 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
   <li>The safe-zone overlay's exact percentages are based on FB Reels chrome as of 2026. Other platforms (TikTok, IG) are similar but not identical — the green box is a conservative safe area that works on all four.</li>
 </ul>
 
+<h2 id="ch30"><span class="ch-num">30</span> Kids mode — funny + geeky, not "easy mode" (v0.9.11+)</h2>
+
+<p>NoorCast's tagline is literally <em>"kids-friendly multi-cam screen recorder."</em> Kids mode is the playful hacker aesthetic that lives up to it — same powerful engine, very different vibe. Reframed from <code>Simple/Pro</code> (generic SaaS) to <code>Kids/Teacher</code> (clear context). Choose at first launch from the mode picker; switch any time via the header badge.</p>
+
+<h3 id="ch30-vibe">30.1 The vibe</h3>
+<dl>
+  <dt><strong>🚀 Boot sequence</strong></dt>
+  <dd>First launch each session: a 3-second terminal-style splash (<code>&gt; mounting cameras... ✓ / &gt; calibrating awesomeness... ✓ / &gt; READY</code>). Click anywhere to skip. Sets the geek tone instantly.</dd>
+  <dt><strong>🥷 Hacker handle picker</strong></dt>
+  <dd>One-shot picker offers 6 random handles (CyberPanda42, RobotBoss99, PixelNinja, QuantumKid, LaserSheep, DataDoge…). Saved in the app for greetings + future leaderboards. <strong>Never</strong> baked into the recorded video — purely a personalisation choice. Re-pick any time by clicking the handle in the status bar.</dd>
+  <dt><strong>🟢 Terminal-style toasts</strong></dt>
+  <dd>Every notification gets a green-on-black monospace pill with a <code>&gt; </code> prefix. Same palette as the boot sequence + MISSION COMPLETE card → consistent "geek surfaces" identity across the app.</dd>
+  <dt><strong>📦 Konami easter egg</strong></dt>
+  <dd>Type <kbd>↑</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> <kbd>←</kbd> <kbd>→</kbd> <kbd>B</kbd> <kbd>A</kbd> for a 5-second Matrix-rain canvas overlay + glitch SFX. Always armed.</dd>
+  <dt><strong>📰 Geek-jokes ticker</strong></dt>
+  <dd>15 robot/coder/space one-liners per language (EN/FR/AR) auto-rotate in the bottom ticker when no custom messages are set. <em>"🦈 A shark detects a heartbeat from 1 km away. Your camera detects you from 30 cm."</em> Konami hint baked in.</dd>
+  <dt><strong>🎬 MISSION COMPLETE stats card</strong></dt>
+  <dd>After every recording in Kids mode, the take panel opens with a green-on-black ASCII card showing frames hacked, time on screen, scenes used, sounds dropped, plus a "cool factor" meter that scales with duration + scenes + chapters used. Always under 100 % — there's always more to chase.</dd>
+  <dt><strong>🔊 SFX feedback</strong></dt>
+  <dd>Every click on a tool button, scene tile, source row, or REC button fires the 520 Hz "boop" SFX. Subtle but satisfying.</dd>
+</dl>
+
+<h3 id="ch30-design">30.2 Chunky, bouncy design</h3>
+<p>Pure CSS — only fires when <code>.tc-kids</code> is set on the page; Teacher mode looks identical to before.</p>
+<ul>
+  <li><strong>Toolbar buttons</strong>: +30 % padding, gradient background, 3D press-shadow stack, bouncy hover (lift + 1.04× with cubic-bezier overshoot), tactile press (sink + 0.98×)</li>
+  <li><strong>REC button</strong>: bigger (1.25 rem text, 18 px padding), 3-px white inner border, red drop-shadow stack for depth, soft red ring pulses every 2.4 s when idle so you can't miss it</li>
+  <li><strong>Empty stage drop-zones</strong>: three huge clickable cards (📺 Screen / 🎥 Camera / 🎤 Mic) instead of a small "👆 Add a source" hint. Click = does the thing</li>
+  <li><strong>Scene tiles</strong>: lift + 1.04× scale + lime glow on hover; bright lime border + glow when active</li>
+  <li><strong>Source-add zone</strong>: framed under one "✨ ADD A SOURCE" header with a 2.4 s lime pulse during the SETUP step</li>
+  <li><strong>Toasts</strong>: spring-in animation with cubic-bezier overshoot</li>
+</ul>
+
+<h3 id="ch30-safety">30.3 Kids-mode safety</h3>
+<p>Several adult-only or destructive surfaces auto-hide in Kids mode:</p>
+<ul>
+  <li><strong>"💥 Vider le cache complet"</strong> button (Settings → Maintenance) — nukes badges, logo, ticker, fonts, all takes. One accidental kid click = lost work. Hidden via <code>data-mode="pro"</code>.</li>
+  <li><strong>"⚙ Flash firmware first"</strong> button — micro:bit firmware flashing is an adult prep task, not a kid task.</li>
+  <li><strong>Recording quality + format pickers</strong> — auto-set to High 8 Mbps and the platform-best codec. No need for a kid to choose.</li>
+  <li><strong>Wiki / News / Cameras / Hotkeys</strong> tabs in Help — adult reference material.</li>
+  <li><strong>Recording section</strong> in Settings — Pause / Marker buttons during recording.</li>
+</ul>
+<p>The countdown default also changes from 3 s to 5 s in Kids mode (kids need a moment to position themselves before the rec actually starts). User choice always wins once they pick their own value.</p>
+
+<h3 id="ch30-errors">30.4 Kid-friendly errors</h3>
+<p>Boring/scary tech messages get rewritten on the fly when in Kids mode. Pattern-matched, language-agnostic:</p>
+<table style="margin:8px 0;font-size:.9em">
+<tr><td><strong>Boring</strong></td><td><strong>Funny + geeky</strong></td></tr>
+<tr><td>Permission denied</td><td><code>[ERR_403] Browser said "no" 🔐 — click "Allow" next time</code></td></tr>
+<tr><td>0-byte recording</td><td><code>[ERR_VOID] Got 0 bytes 🕳 — try a different format</code></td></tr>
+<tr><td>No camera detected</td><td><code>[ERR_NOCAM] Camera went on vacation 🏖</code></td></tr>
+<tr><td>Codec error</td><td><code>[ERR_CODEC] Browser can't encode that 🤖 — try a different format</code></td></tr>
+<tr><td>Disk write error</td><td><code>[ERR_DISK] Disk hiccup 💾 — pick another folder or restart Chrome</code></td></tr>
+<tr><td>Offline</td><td><code>[ERR_OFFLINE] No wifi 📡 — that's OK, NoorCast works offline 💪</code></td></tr>
+</table>
+
+<h3 id="ch30-pro-nudge">30.5 Pro discoverability nudge</h3>
+<p>After a Kids user saves their 10th successful take, a one-time toast surfaces: <em>"🎓 10 takes done — you're a pro now! Try 🧑‍🏫 Teacher mode for chapters, markers, +30 tools."</em> Gated by <code>tc-pro-nudge-shown</code> so it never repeats.</p>
+
+<h2 id="ch31"><span class="ch-num">31</span> Look &amp; feel — UX architecture (v0.9.26+)</h2>
+
+<p>The v0.9.26 → v0.9.31 ships restructured NoorCast around <strong>workflow-first design</strong> instead of feature-first. Five interlocking ships that together make the app Loom-grade for the open-and-record happy path.</p>
+
+<h3 id="ch31-tabs">31.1 Workflow step tabs (SETUP · TUNE · RECORD · SHARE)</h3>
+<p>A four-tab nav above the toolbar gives the UI a visible mental model. The active tab glows lime with a bright number badge; the next-suggested step pulses gently to guide you forward.</p>
+<table style="margin:8px 0;font-size:.9em">
+<tr><td><strong>Trigger</strong></td><td><strong>Auto-transition</strong></td></tr>
+<tr><td>Add first non-mic source</td><td>SETUP → TUNE</td></tr>
+<tr><td>Recorder enters 'recording' state</td><td>any → RECORD</td></tr>
+<tr><td>Recording stops + take saved</td><td>RECORD → SHARE</td></tr>
+<tr><td>Manual click on any tab</td><td>Always wins, persists in <code>tc-step</code></td></tr>
+</table>
+<p><strong>Chrome reduction:</strong> the toolbar hides in SETUP and SHARE (you don't need 17 tools when you're adding a source or sharing a take). The right scenes sidebar dims to 55 % opacity in SETUP. TUNE and RECORD show the full studio.</p>
+
+<h3 id="ch31-status">31.2 Status-as-language stage bar</h3>
+<p>One line above the REC button consolidates 5 scattered indicators:</p>
+<pre style="background:rgba(0,0,0,.3);padding:10px;border-radius:6px;font-size:.85em;overflow-x:auto">🟢 Ready · 0 sources · 16:9 · 8 Mbps · @PixelNinja</pre>
+<p>Each chunk is clickable and jumps to the relevant setting (sources sidebar, stage-aspect select, recording quality, handle picker). State chunk swaps emoji + colour with Recorder.state: 🟢 Ready / 🔴 Recording / ⏸ Paused / ⚪ No sources yet. <code>aria-live="polite"</code> so screen-reader users hear state changes.</p>
+
+<h3 id="ch31-take-modal">31.3 Take-as-modal</h3>
+<p>After STOP, the take preview takes over as a fullscreen modal instead of inserting inline below the canvas. Header strip with X close, two-column body (video left, downloads + chapters + trim + MISSION COMPLETE right), backdrop click to close, ESC to close, <code>role="dialog"</code> + <code>aria-modal="true"</code>. Closing only hides — re-open via the <strong>🎬 Last take</strong> button that appears in the header once a take exists.</p>
+
+<h3 id="ch31-cta">31.4 Single primary CTA per step</h3>
+<p>The SETUP step now has one framed action ("✨ ADD A SOURCE" zone wrapping the 3 source-add rows) instead of three competing equal-weight buttons. The frame pulses in SETUP, settles into a quiet card once you're past it.</p>
+
+<h3 id="ch31-mobile">31.5 Mobile reflow</h3>
+<p>NoorCast is now usable on tablets and phones via cascading breakpoints:</p>
+<ul>
+  <li><strong>≤ 960 px (tablets)</strong>: studio grid stacks vertically (stage → sidebars), toolbar buttons drop labels (icons only), workflow tab labels hide, status bar tightens, REC button takes full row</li>
+  <li><strong>≤ 768 px (large phones)</strong>: header stacks, flyout panels become bottom sheets sliding up from the bottom edge, toolbar scrolls horizontally one-hand-friendly</li>
+  <li><strong>≤ 560 px (phones)</strong>: empty-canvas drop-zone cards stack vertically, step tabs further tightened</li>
+  <li><strong>Touch devices (any size)</strong>: 44 px minimum tap target on every button (WCAG 2.5.5), no hover-stuck ghost states</li>
+</ul>
+<p><strong>What still doesn't work on phones</strong>: screen capture (Chrome doesn't expose <code>getDisplayMedia</code> on mobile — browser limitation, not ours). Webcam recording, reviewing, trimming, and downloading all work everywhere.</p>
+
+<h3 id="ch31-tour">31.6 30-second guided tour</h3>
+<p>First launch: after the mode + template pickers close, a 5-step tour fires highlighting workflow tabs → add-source zone → REC button → scenes sidebar → status bar. ~5 seconds per step. Lime spotlight ring around each target with a tooltip card; ESC or Skip closes; Enter or → advances. Auto-positions (below → above → right → centre, never off-screen). Marks itself seen via <code>tc-tour-seen</code>.</p>
+<p><strong>🎬 Replay 30-sec tour</strong> button at the top of the Help panel re-triggers it any time.</p>
+
+<h3 id="ch31-a11y">31.7 Accessibility (audit D+ → C)</h3>
+<ul>
+  <li><strong>Focus-visible ring</strong>: 3-px lime outline + soft glow on every focused interactive element. Only on keyboard focus (mouse clicks don't leave the ring behind).</li>
+  <li><strong>aria-pressed mirror</strong>: a single <code>MutationObserver</code> mirrors <code>.active</code> class changes onto <code>aria-pressed="true|false"</code> for every <code>.tc-tool-btn</code> and <code>.tc-scene-btn</code>. Screen readers now correctly announce "Laser, pressed" vs "Laser, not pressed".</li>
+  <li><strong>aria-live toasts</strong>: every <code>showToast()</code> call (errors, mode switches, MISSION COMPLETE, Reels warning) reaches screen-reader users.</li>
+  <li><strong>prefers-reduced-motion</strong>: kids-mode bouncy animations + REC pulse + ticker scroll all snap to .01 ms (effectively off) when the OS-level setting is on.</li>
+  <li><strong>Modal focus management</strong>: open a panel → close button gets focus → close → focus restores to whatever opened the panel. Standard a11y modal pattern.</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Open NoorCast</a>
 </p>

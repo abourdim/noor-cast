@@ -701,4 +701,52 @@ surface. Full chapter in **guide.html → Chapter 29**.
 
 ---
 
-*NoorCast v0.9.3 — A professional tool for teachers who code with robots*
+## What's new in v0.9.11+ — Kids mode (funny + geeky)
+
+The v0.9.11 → v0.9.22 arc reframed `Simple/Pro` as `Kids/Teacher` and
+made Kids mode the playful hacker aesthetic the brand always implied —
+not "easy mode." Full chapter in **guide.html → Chapter 30**.
+
+- **Brand identity**: 🧒 Kids / 🧑‍🏫 Teacher mode picker, header badge,
+  CSS class `.tc-kids`, FOUC-guard inline `<head>` script.
+- **Vibe**: 3-sec terminal boot sequence, 🥷 hacker handle picker (12
+  random names — UI-only, never on the recording), Konami easter egg
+  (Matrix rain + glitch SFX), green-on-black terminal-style toasts,
+  pre-loaded geek-jokes ticker (15 EN/FR/AR), MISSION COMPLETE ASCII
+  card after every recording, satisfying SFX boop on every click.
+- **Chunky design**: bigger toolbar buttons with cubic-bezier bounce,
+  REC ring pulse when idle, 3 huge clickable empty-canvas drop-zones,
+  scene-tile glow, "✨ ADD A SOURCE" framed CTA zone.
+- **Safety**: Maintenance group + firmware-flash button hidden,
+  Recording quality + format auto-set, Wiki/News/Cameras/Hotkeys
+  hidden in Help, countdown default 5 s.
+- **Kid-friendly errors**: 9 patterns rewritten on the fly
+  (`[ERR_NOCAM] Camera went on vacation 🏖`).
+- **Pro discoverability nudge**: after the 10th saved take, a one-time
+  toast points at Teacher mode.
+
+## What's new in v0.9.23+ — Loom-grade UX architecture
+
+The v0.9.26 → v0.9.31 ships restructured NoorCast around workflow-first
+design. Full chapter in **guide.html → Chapter 31**.
+
+- **Workflow tabs** (SETUP · TUNE · RECORD · SHARE) above the toolbar;
+  auto-advances on source-add / rec-start / rec-stop; toolbar hides in
+  SETUP and SHARE.
+- **Status-as-language stage bar**: 5 scattered indicators consolidated
+  into one clickable line above the REC button.
+- **Take-as-modal**: post-record preview takes over as a fullscreen
+  overlay (was inline below canvas, forced scroll). Re-openable via
+  header "🎬 Last take" button.
+- **Single primary CTA per step**: 3 source-add rows now framed under
+  one "✨ ADD A SOURCE" header with a SETUP-step pulse.
+- **Mobile reflow**: cascading breakpoints at 960 / 768 / 560 px.
+  Tablets stack vertically, phones get bottom-sheet panels, touch
+  devices get 44 px tap targets (WCAG 2.5.5).
+- **30-second guided tour** on first launch, replayable from Help.
+- **Accessibility (D+ → C)**: focus-visible ring, aria-pressed mirror,
+  aria-live toasts, prefers-reduced-motion, modal focus management.
+
+---
+
+*NoorCast v0.9.31 — A professional tool for teachers who code with robots*

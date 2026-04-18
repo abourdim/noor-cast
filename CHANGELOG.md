@@ -3,6 +3,101 @@
 All notable changes to **NoorCast** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v0.9.31 — 2026-04-18 (Loom-grade UX arc — workflow tabs, status bar, modal take, mobile, tour)
+
+Five interlocking ships (v0.9.27 → v0.9.31) restructured NoorCast around
+**workflow-first design** instead of feature-first. Together they make the
+app Loom-grade for the open-and-record happy path.
+
+- **v0.9.31 — 30-second guided tour**: 5-step spotlight tour fires once
+  after onboarding (workflow tabs → add-source → REC → scenes → status
+  bar). Replay anytime via Help panel button. Persists `tc-tour-seen`.
+- **v0.9.30 — Mobile reflow**: cascading breakpoints at 960 / 768 / 560 px.
+  Tablets get a stacked grid; phones get bottom-sheet panels + horizontal
+  toolbar scroll; touch devices get 44 px tap targets (WCAG 2.5.5).
+- **v0.9.29 — Single primary CTA per step**: 3 source-add rows wrapped in
+  one framed "✨ ADD A SOURCE" zone with a SETUP-step pulse. Three
+  competing buttons → one primary action with sub-options.
+- **v0.9.28 — Status-as-language stage bar**: 5 scattered indicators (state
+  pill, source count, format, bitrate, handle) consolidated into one line:
+  `🟢 Ready · 0 sources · 16:9 · 8 Mbps · @PixelNinja`. Each chunk is a
+  clickable shortcut. `aria-live="polite"`.
+- **v0.9.27 — Take-as-modal**: post-record take preview takes over as a
+  fullscreen overlay (was inline below the canvas, forced scroll past the
+  stage). 2-column body, sticky video left, downloads/chapters/trim/MISSION
+  COMPLETE right. Re-openable via header "🎬 Last take" button.
+
+## v0.9.26 — 2026-04-18 (Workflow step tabs)
+
+Four-tab nav above the toolbar (SETUP · TUNE · RECORD · SHARE). Auto-
+advances on source-add / rec-start / rec-stop. Toolbar hides in SETUP
+and SHARE. Suggested next step pulses softly. Persists in `tc-step`.
+
+## v0.9.23 → v0.9.25 — Accessibility pass (D+ → C)
+
+- **v0.9.25 — Panel focus management**: `openPanel()` remembers the
+  trigger element + focuses the panel close-X after slide-in; `closePanel()`
+  restores focus to the original opener. logPanel gained `role="dialog"`.
+- **v0.9.24 — aria-live toast + prefers-reduced-motion**: every showToast
+  reaches screen readers; OS-level reduced-motion strips Kids-mode bouncy
+  animations + REC pulse + ticker scroll.
+- **v0.9.23 — Focus-visible ring + aria-pressed mirror**: 3-px lime ring
+  on keyboard focus only; MutationObserver mirrors `.active` → `aria-pressed`
+  on every tool/scene button so screen readers announce toggle state.
+
+## v0.9.11 → v0.9.22 — Kids-mode arc (funny + geeky, not "easy mode")
+
+The biggest brand-identity ship. Reframed `Simple/Pro` → `Kids/Teacher`.
+Full chapter in **guide.html → Chapter 30**.
+
+- **v0.9.22 — Trim discoverability**: Kids-mode toast nudge for takes >2 min
+  pointing at the existing in-browser Trim modal + 4 new test invariants.
+- **v0.9.21 — Burn-in captions**: hold-and-fade extended (8 s + 1.5 s) for
+  social-media compression survivability. Toggle in Settings → Recording.
+- **v0.9.20 — Quirky kid errors + Pro nudge**: `showToast()` interceptor
+  rewrites 9 categories of error into kid-friendly geek messages. After
+  10 successful takes, surface a one-time toast pointing at Teacher mode.
+- **v0.9.19 — Kids-mode safety**: Maintenance group + firmware-flash button
+  hidden via `data-mode="pro"`. Countdown default 3 s → 5 s in Kids mode.
+- **v0.9.18 — Empty-canvas drop-zones**: 3 chunky clickable cards (📺 / 🎥 /
+  🎤) replace the small "👆 Add a source" hint.
+- **v0.9.17 — MISSION COMPLETE stats card**: green-on-black ASCII card at
+  top of the take panel after every Kids-mode recording (frames hacked,
+  scenes used, sounds dropped, cool factor).
+- **v0.9.16 — SFX click feedback**: delegated listener fires Sfx.play('click')
+  on every tool/scene/REC click in Kids mode.
+- **v0.9.15 — Kids-mode visual upgrade**: chunky 3D buttons with cubic-bezier
+  bounce, REC ring pulse, bobbing stage hint, scene-tile glow.
+- **v0.9.14 — Hacker handle decoupled from watermark**: handle is UI-only,
+  never bakes into the recording. Self-heal cleans up v0.9.11–v0.9.13 leak.
+- **v0.9.13 — Watermark visibility**: Android-radius pill with lime border
+  + drop shadow so it's visible on dark canvases.
+- **v0.9.12 — HOTFIX**: cyberpunk theme didn't exist; fall back to robot +
+  add `KNOWN_THEMES_LIST` guard with self-heal.
+- **v0.9.11 — Kids mode brand identity**: rename labels, FOUC-guard inline
+  head script, `data-mode="pro"` for hide gating, KidsMode module (boot
+  sequence, hacker handle picker, Konami easter egg, terminal-style toasts,
+  pre-loaded geek-jokes ticker, auto-theme robot + Orbitron font).
+
+## v0.9.4 → v0.9.10 — Maintainability + small polish
+
+- **v0.9.10 — Probe-and-reveal Download .hex**: when a `.hex` is committed
+  to `firmware/`, the firmware modal probes it via HEAD and lights up the
+  green Download button automatically.
+- **v0.9.9 — LED 5x5 grid sends live**: drag-paint pushes the bitmap to the
+  micro:bit live, throttled to ~10/s via debounce. Send button removed.
+- **v0.9.8 — Servo sliders move live**: same pattern as LED grid — slider
+  drag sends UART throttled. Move button removed.
+- **v0.9.7 — Firmware modal honest**: removed broken Download .hex link;
+  MakeCode online flow is now the primary path.
+- **v0.9.6 — Log panel push-aside**: `body.log-open .app` was dead code
+  since v0.7.x; now actually toggled. Max-width capped at 40vw.
+- **v0.9.5 — WhatsNew toast**: returning users from <0.9.0 get a one-time
+  toast pointing at Reels mode.
+- **v0.9.4 — Maintainability sweep**: 161 raw localStorage calls migrated
+  to silent helpers, 36 redundant try/catch wrappers stripped, +
+  `silentRemove` helper. Empty catches 218 → 180.
+
 ## v0.9.3 — 2026-04-18 (Reels-ready — vertical video done right)
 
 The v0.9.x arc shipped over a single afternoon turns NoorCast into a

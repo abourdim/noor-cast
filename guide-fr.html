@@ -2480,6 +2480,89 @@
   <li>Le bouton ne gère que les 90 premières secondes — pour un autre point de départ, éditez le <code>-ss</code> dans la commande ffmpeg.</li>
 </ul>
 
+<h2 id="ch30"><span class="ch-num">30</span> Mode Kids — drôle + geek (v0.9.11+)</h2>
+<p>NoorCast est <em>kids-friendly</em> par identité. Le mode Kids est l'esthétique hacker enjouée qui va avec — moteur identique, ambiance très différente. Renommé de <code>Simple/Pro</code> en <code>Kids/Teacher</code> (clarté de contexte). Premier lancement : sélecteur de mode. Bascule à tout moment via le badge dans l'en-tête.</p>
+
+<h3 id="ch30-vibe">30.1 L'ambiance</h3>
+<dl>
+  <dt><strong>🚀 Boot sequence</strong></dt><dd>Premier lancement par session : 3 s de splash terminal (<code>&gt; mounting cameras... ✓ / &gt; calibrating awesomeness... ✓</code>). Clic = passe.</dd>
+  <dt><strong>🥷 Pseudo hacker</strong></dt><dd>Sélecteur unique avec 6 pseudos aléatoires (CyberPanda42, RobotBoss99…). Stocké dans l'app pour les salutations. <strong>Jamais</strong> intégré à la vidéo enregistrée. Re-pickable via la barre de statut.</dd>
+  <dt><strong>🟢 Toasts terminal</strong></dt><dd>Notifications en monospace vert sur fond noir avec préfixe <code>&gt; </code>.</dd>
+  <dt><strong>📦 Code Konami</strong></dt><dd><kbd>↑↑↓↓←→←→ B A</kbd> → 5 s de pluie Matrix + SFX glitch.</dd>
+  <dt><strong>📰 Ticker geek</strong></dt><dd>15 blagues robot/code/espace par langue. <em>"🦈 Un requin détecte un battement de cœur à 1 km. Ta caméra te détecte à 30 cm."</em></dd>
+  <dt><strong>🎬 Carte MISSION COMPLETE</strong></dt><dd>Après chaque enregistrement : carte ASCII vert/noir avec frames hackées, temps, scènes, sons + jauge "cool factor" (jusqu'à 99 %).</dd>
+  <dt><strong>🔊 SFX</strong></dt><dd>Boop satisfaisant à chaque clic sur outil / scène / source / REC.</dd>
+</dl>
+
+<h3 id="ch30-design">30.2 Design chunky + bouncy</h3>
+<ul>
+  <li><strong>Boutons d'outils</strong> : padding +30 %, ombre 3D, hover bouncy (lift + scale 1,04× cubic-bezier overshoot)</li>
+  <li><strong>Bouton REC</strong> : plus gros, anneau rouge pulse toutes les 2,4 s en idle</li>
+  <li><strong>Drop-zones canvas vide</strong> : 3 grandes cartes cliquables (📺 Écran / 🎥 Caméra / 🎤 Micro)</li>
+  <li><strong>Cartes scènes + zone "AJOUTER UNE SOURCE"</strong> : effet bounce + glow lime</li>
+  <li><strong>Toasts</strong> : ressort cubic-bezier à l'apparition</li>
+</ul>
+
+<h3 id="ch30-safety">30.3 Sécurité Kids</h3>
+<p>Surfaces destructrices ou pour adultes auto-cachées en mode Kids :</p>
+<ul>
+  <li><strong>"💥 Vider le cache complet"</strong> — efface tout, un clic accidentel = travail perdu</li>
+  <li><strong>"⚙ Flash firmware"</strong> — tâche d'adulte</li>
+  <li><strong>Sélecteurs qualité + format</strong> — auto-réglés (High 8 Mbps, codec optimal)</li>
+  <li><strong>Onglets Wiki / News / Caméras / Hotkeys</strong> dans l'aide</li>
+</ul>
+<p>Compte à rebours par défaut : 3 s → 5 s en mode Kids (le temps de se positionner).</p>
+
+<h3 id="ch30-errors">30.4 Erreurs kid-friendly</h3>
+<p>Les messages techniques ennuyeux sont réécrits à la volée en mode Kids :</p>
+<ul>
+  <li>Permission refusée → <code>[ERR_403] Le navigateur a dit "non" 🔐 — clique "Autoriser"</code></li>
+  <li>Pas de caméra → <code>[ERR_NOCAM] La caméra est en vacances 🏖</code></li>
+  <li>Hors-ligne → <code>[ERR_OFFLINE] Pas de wifi 📡 — pas grave, NoorCast marche hors-ligne 💪</code></li>
+</ul>
+
+<h3 id="ch30-pro-nudge">30.5 Découverte du mode Pro</h3>
+<p>Après la 10ème prise réussie en Kids, un toast unique : <em>"🎓 10 prises faites — tu es un pro maintenant ! Essaie le mode Teacher."</em></p>
+
+<h2 id="ch31"><span class="ch-num">31</span> Look &amp; feel — architecture UX (v0.9.26+)</h2>
+<p>Les ships v0.9.26 → v0.9.31 ont restructuré NoorCast autour du <strong>workflow d'abord</strong> au lieu des fonctionnalités d'abord. Cinq évolutions qui font de NoorCast un outil Loom-grade pour le happy path "ouvre, enregistre, partage".</p>
+
+<h3 id="ch31-tabs">31.1 Onglets de workflow (PRÉPARER · RÉGLER · ENREGISTRER · PARTAGER)</h3>
+<p>Une nav à 4 onglets au-dessus de la barre d'outils donne un modèle mental visible. Onglet actif lime + badge numéroté brillant ; étape suivante suggérée pulse doucement.</p>
+<p><strong>Auto-transitions</strong> : ajout 1ère source → RÉGLER · démarrage REC → ENREGISTRER · arrêt + take sauvée → PARTAGER. Clic manuel sur n'importe quel onglet l'emporte.</p>
+<p>La barre d'outils se cache en PRÉPARER + PARTAGER (focus sur l'ajout / le partage).</p>
+
+<h3 id="ch31-status">31.2 Barre de statut "status-as-language"</h3>
+<p>Une ligne au-dessus de REC consolide 5 indicateurs : <code>🟢 Prêt · 0 sources · 16:9 · 8 Mbps · @PixelNinja</code>. Chaque chunk est cliquable et ouvre le réglage correspondant. <code>aria-live="polite"</code> pour les lecteurs d'écran.</p>
+
+<h3 id="ch31-take-modal">31.3 Take en modal plein écran</h3>
+<p>Après STOP, l'aperçu s'ouvre en overlay plein écran (au lieu de s'insérer sous le canvas et forcer le scroll). Header avec X, body 2 colonnes (vidéo gauche, downloads + chapitres + trim + MISSION COMPLETE droite), backdrop cliquable, ESC ferme. Re-ouvrable via le bouton <strong>🎬 Dernière prise</strong> apparaissant dans l'en-tête.</p>
+
+<h3 id="ch31-cta">31.4 Une seule CTA primaire par étape</h3>
+<p>L'étape PRÉPARER a maintenant une zone unique encadrée ("✨ AJOUTER UNE SOURCE") qui regroupe les 3 lignes Écran / Caméra / Micro. Pulse en lime pendant l'étape SETUP.</p>
+
+<h3 id="ch31-mobile">31.5 Reflow mobile</h3>
+<p>NoorCast est utilisable sur tablettes et téléphones via breakpoints en cascade :</p>
+<ul>
+  <li><strong>≤ 960 px (tablettes)</strong> : grille studio en colonne, boutons d'outils sans labels (icônes seules), bouton REC pleine largeur</li>
+  <li><strong>≤ 768 px (grands phones)</strong> : header en colonne, panneaux flyout deviennent des bottom-sheets glissant du bas, barre d'outils scroll horizontal</li>
+  <li><strong>≤ 560 px (phones)</strong> : drop-zones empilées</li>
+  <li><strong>Devices tactiles</strong> : tap-target min 44 px (WCAG 2.5.5), pas d'effets hover collés</li>
+</ul>
+<p><strong>Ne marche pas sur phone</strong> : capture d'écran (limitation Chrome mobile). Webcam, review, trim, download : OK partout.</p>
+
+<h3 id="ch31-tour">31.6 Visite guidée 30 secondes</h3>
+<p>Premier lancement : après les pickers mode + template, une visite à 5 étapes éclaire les onglets workflow → zone d'ajout → REC → scènes → barre de statut. Spotlight lime + tooltip ; ESC ou Skip ferme. Le bouton <strong>🎬 Revoir la visite</strong> en haut du panneau d'aide la rejoue à tout moment.</p>
+
+<h3 id="ch31-a11y">31.7 Accessibilité (D+ → C)</h3>
+<ul>
+  <li><strong>Anneau de focus visible</strong> : 3-px lime sur tout élément focusé au clavier (jamais à la souris)</li>
+  <li><strong>aria-pressed</strong> : MutationObserver miroite <code>.active</code> → <code>aria-pressed</code> sur tout bouton outil/scène. Lecteurs d'écran annoncent "Laser, pressé"</li>
+  <li><strong>Toasts aria-live</strong> : tous les toasts atteignent les lecteurs d'écran</li>
+  <li><strong>prefers-reduced-motion</strong> : animations Kids + REC pulse + ticker s'arrêtent si l'OS le demande</li>
+  <li><strong>Focus management modal</strong> : ouverture → bouton X focusé → fermeture → focus restauré sur le déclencheur</li>
+</ul>
+
 <p style="text-align:center;margin:30px 0">
   <a href="https://abourdim.github.io/noor-cast/" style="padding:12px 24px;background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);border-radius:12px;font-weight:bold;display:inline-block">🚀 Ouvrir NoorCast</a>
 </p>
