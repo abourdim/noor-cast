@@ -5,14 +5,14 @@
  * Usage: node build-package.js
  * Requires: @playwright/test (already in devDependencies)
  *
- * v0.8.0 update: ZIP_DIR + version refs bumped to v0.8. The legacy
+ * v0.9.5 update: ZIP_DIR + version refs bumped to v0.9 (Reels arc). The legacy
  * NoorCast-v0.7/ directory and NoorCast-v0.7.zip stay in the repo as
  * historical artifacts until the next build run replaces them.
  *
- * To regenerate the v0.8 ZIP for the Etsy listing, run:
+ * To regenerate the v0.9 ZIP for the Etsy listing, run:
  *   1. npm install (if @playwright/test isn't in node_modules)
  *   2. node etsy-package/build-package.js
- *   3. Upload etsy-package/NoorCast-v0.8.zip to your Etsy listing
+ *   3. Upload etsy-package/NoorCast-v0.9.zip to your Etsy listing
  *   4. (optional) Delete the old NoorCast-v0.7/ + .zip if you don't
  *      want to ship the legacy version anymore
  */
@@ -25,7 +25,7 @@ import { resolve, join } from 'path';
 const ROOT = resolve(import.meta.dirname, '..');
 const PKG = resolve(import.meta.dirname);
 const OUT = resolve(PKG, 'output');
-const ZIP_DIR = resolve(PKG, 'NoorCast-v0.8');
+const ZIP_DIR = resolve(PKG, 'NoorCast-v0.9');
 
 // Ensure output dirs
 mkdirSync(OUT, { recursive: true });
@@ -183,17 +183,17 @@ async function main() {
 
   // Create ZIP
   console.log('\n📦 Creating ZIP archive...\n');
-  const zipPath = join(PKG, 'NoorCast-v0.8.zip');
+  const zipPath = join(PKG, 'NoorCast-v0.9.zip');
   try {
-    execSync(`cd "${PKG}" && zip -r "${zipPath}" NoorCast-v0.8/`, { stdio: 'pipe' });
+    execSync(`cd "${PKG}" && zip -r "${zipPath}" NoorCast-v0.9/`, { stdio: 'pipe' });
     console.log(`  ✅ ${zipPath}`);
   } catch {
     console.log('  ⚠️  zip command not available, trying ditto...');
     try {
-      execSync(`cd "${PKG}" && ditto -c -k --keepParent NoorCast-v0.8 "${zipPath}"`, { stdio: 'pipe' });
+      execSync(`cd "${PKG}" && ditto -c -k --keepParent NoorCast-v0.9 "${zipPath}"`, { stdio: 'pipe' });
       console.log(`  ✅ ${zipPath}`);
     } catch {
-      console.log('  ❌ Could not create ZIP. Manually zip the NoorCast-v0.8 folder.');
+      console.log('  ❌ Could not create ZIP. Manually zip the NoorCast-v0.9 folder.');
     }
   }
 
