@@ -81,6 +81,8 @@
 
         <div class="header-right">
           <div class="header-buttons">
+            <!-- v0.9.27: re-open the last take modal — appears once a take exists -->
+            <button id="tcReopenTakeBtn" class="tc-take-reopen-btn" aria-label="Re-open last take" title="Re-open last take (review / share / trim)">🎬 <span data-i18n="reopenTake">Last take</span></button>
             <button id="helpBtn" class="btn-icon-only" aria-label="Help">❓</button>
             <button id="settingsBtn" class="btn-icon-only" aria-label="Settings">⚙️</button>
             <button id="logBtn" class="btn-icon-only" aria-label="Activity Log">📜</button>
@@ -899,8 +901,17 @@
           <button class="tc-rec-aux" id="tcStopBtn" disabled>⏹ <span data-i18n="stop">Stop</span></button>
         </div>
 
-        <!-- Last take preview -->
-        <div class="tc-take" id="tcTake" style="display:none">
+        <!-- v0.9.27: Last-take panel as a fullscreen modal overlay.
+             tc-take-modal class fixes it to viewport, with a backdrop +
+             header X. Closing returns to a fresh canvas state.
+             Re-openable via the new tcReopenTakeBtn (added when a take
+             exists). -->
+        <div class="tc-take tc-take-modal" id="tcTake" style="display:none" role="dialog" aria-modal="true" aria-label="Recorded take">
+          <div class="tc-take-modal-header">
+            <span class="tc-take-modal-title">🎬 <span data-i18n="takeReady">Take ready</span></span>
+            <button class="btn-icon-only tc-take-modal-close" id="tcTakeModalClose" aria-label="Close take" title="Close (Esc)">✕</button>
+          </div>
+          <div class="tc-take-modal-body">
           <video id="tcTakeVideo" controls></video>
           <!-- v0.7.34: audio waveform strip — envelope of the full take,
                click-to-seek, playhead tracks currentTime -->
@@ -959,6 +970,7 @@
             <button class="tc-btn-full tc-badge-btn" id="tcBadgeBtn">🏆 <span data-i18n="badgeBtn">Carte badge</span></button>
             <button class="tc-btn-full" id="tcNewTakeBtn">🎬 <span data-i18n="newTake">Nouveau tuto</span></button>
           </div>
+          </div><!-- /.tc-take-modal-body -->
         </div>
       </div>
 

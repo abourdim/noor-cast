@@ -2376,11 +2376,72 @@ body.log-open .app {
 }
 
 /* ─── Last take preview ─── */
+/* v0.9.27: was inline below the canvas (forced scroll past the stage to
+   review). Now a fullscreen modal overlay — cleanly separates the
+   "recording" experience from the "share & download" experience. */
 .tc-take {
   padding: 14px;
   background: rgba(0,0,0,.25);
   border-top: 1px solid var(--border);
   border-radius: 0 0 14px 14px;
+}
+.tc-take.tc-take-modal {
+  position: fixed; inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, .82);
+  backdrop-filter: blur(6px);
+  border: none; border-radius: 0; padding: 0;
+  display: flex; flex-direction: column;
+  animation: takeModalIn .35s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes takeModalIn {
+  from { opacity: 0; transform: scale(.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.tc-take-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 22px;
+  background: linear-gradient(180deg, rgba(163,230,53,.1), rgba(163,230,53,0));
+  border-bottom: 1px solid rgba(163,230,53,.2);
+}
+.tc-take-modal-title {
+  font-family: var(--font-h);
+  font-size: 1.15rem; font-weight: 800; letter-spacing: .5px;
+  color: var(--accent);
+}
+.tc-take-modal-close {
+  width: 36px; height: 36px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+}
+.tc-take-modal-body {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 22px;
+  align-content: start;
+}
+/* Video stays in left column; everything else (waveform, chapters,
+   sensor chart, rating, downloads, actions) flows in the right column */
+.tc-take-modal .tc-take-modal-body > video {
+  grid-column: 1; grid-row: 1 / span 99;
+  position: sticky; top: 0;
+  max-height: 70vh; max-width: 100%;
+}
+/* All non-video children land in the right column, stacked */
+.tc-take-modal .tc-take-modal-body > *:not(video) {
+  grid-column: 2;
+}
+/* On narrow viewports collapse to one column */
+@media (max-width: 900px) {
+  .tc-take-modal .tc-take-modal-body {
+    grid-template-columns: 1fr;
+  }
+  .tc-take-modal .tc-take-modal-body > video {
+    grid-column: 1; grid-row: auto; position: static; max-height: 50vh;
+  }
+  .tc-take-modal .tc-take-modal-body > *:not(video) { grid-column: 1; }
 }
 .tc-take video {
   width: 100%;
@@ -2388,11 +2449,30 @@ body.log-open .app {
   border-radius: 10px;
   background: #000;
 }
+.tc-take.tc-take-modal video { max-height: 70vh; }
 .tc-take-actions {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
   margin-top: 10px;
 }
+.tc-take-modal .tc-take-actions { grid-template-columns: 1fr; }
 .tc-take-actions a, .tc-take-actions button { text-decoration: none; }
+
+/* Re-open button — appears in the header once a take exists, lets
+   users revisit the modal after closing without re-recording. */
+.tc-take-reopen-btn {
+  display: none;
+  background: rgba(163,230,53,.15);
+  border: 1.5px solid rgba(163,230,53,.4);
+  color: var(--accent);
+  padding: 6px 12px; border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-h);
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .3px;
+  transition: background .15s, transform .12s;
+}
+.tc-take-reopen-btn:hover { background: rgba(163,230,53,.25); transform: translateY(-1px); }
+.tc-take-reopen-btn.tc-visible { display: inline-flex; align-items: center; gap: 6px; }
 
 /* v0.7.93 — 1-5 star rating row shown next to the download buttons */
 .tc-take-rating-wrap {

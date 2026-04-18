@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NoorCast v0.9.26 — kids-friendly multi-cam screen recorder
+   NoorCast v0.9.27 — kids-friendly multi-cam screen recorder
    ════════════════════════════════════════════════════════════════════
    First major release after v0.7.176 → v0.7.254 stabilization run.
    Documented in guide.html Chapter 28 + GUIDE.md "What's new".
@@ -16,7 +16,7 @@
      8. Onboarding + wiring
    ═══════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9.26';
+const APP_VERSION = '0.9.27';
 // v0.7.19: build timestamp shown in Settings > Général > Maintenance.
 // Bump by hand on each release — there's no build step.
 const BUILD_DATE = '2026-04-18 18:00';
@@ -260,6 +260,7 @@ const LANG = {
     skipIntro: '🎙 Sauter le silence d\'intro (démarrer au premier mot)',
     safeZoneTitle: '📱 ZONE SÛRE REELS',
     stepSetup: 'Préparer', stepTune: 'Régler', stepRecord: 'Enregistrer', stepShare: 'Partager',
+    takeReady: 'Prise prête', reopenTake: 'Dernière prise',
     safeZoneTip1: 'Garde l\'essentiel dans la boîte verte',
     safeZoneTip2: 'Les zones rouges seront couvertes par l\'UI de FB/TikTok',
     silenceEncoding: '🔇 Encodage sans silences…',
@@ -989,6 +990,7 @@ const LANG = {
     skipIntro: '🎙 Skip silent intro (start on first word)',
     safeZoneTitle: '📱 REELS SAFE ZONE',
     stepSetup: 'Setup', stepTune: 'Tune', stepRecord: 'Record', stepShare: 'Share',
+    takeReady: 'Take ready', reopenTake: 'Last take',
     safeZoneTip1: 'Keep important content inside the green box',
     safeZoneTip2: 'Red areas will be covered by the FB/TikTok UI',
     silenceEncoding: '🔇 Encoding without silences…',
@@ -1707,6 +1709,7 @@ const LANG = {
     skipIntro: '🎙 تخطّي الصمت الافتتاحي (ابدأ عند أول كلمة)',
     safeZoneTitle: '📱 منطقة Reels الآمنة',
     stepSetup: 'الإعداد', stepTune: 'الضبط', stepRecord: 'التسجيل', stepShare: 'المشاركة',
+    takeReady: 'اللقطة جاهزة', reopenTake: 'آخر لقطة',
     safeZoneTip1: 'احتفظ بالمحتوى المهم داخل المربّع الأخضر',
     safeZoneTip2: 'المناطق الحمراء ستُغطّى بواجهة FB/TikTok',
     silenceEncoding: '🔇 جارٍ الترميز بدون صمت…',
@@ -9501,7 +9504,10 @@ const Recorder = {
     GhostReplay.stop(); // v0.7.192
     this._lastMime = mimeType;
     video.src = url;
-    $('tcTake').style.display = 'block';
+    // v0.9.27: take-as-modal — show as flex overlay + reveal the header
+    // re-open button so users can come back to the take after closing.
+    $('tcTake').style.display = 'flex';
+    $('tcReopenTakeBtn')?.classList.add('tc-visible');
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const fname = `noorcast-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
@@ -23430,6 +23436,36 @@ function wireEvents() {
       Recorder._prevUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
       Recorder._prevUrls = null;
     }
+    // v0.9.27: hide re-open button too — there's nothing to re-open after a fresh take
+    $('tcReopenTakeBtn')?.classList.remove('tc-visible');
+  });
+
+  // v0.9.27: take-as-modal close + re-open + ESC. Closing only HIDES the
+  // modal; the re-open button in the header brings it back without losing
+  // the in-memory video / chapter state.
+  const closeTakeModal = () => {
+    const t = $('tcTake');
+    if (!t || t.style.display === 'none') return;
+    try { $('tcTakeVideo')?.pause(); } catch {}
+    t.style.display = 'none';
+  };
+  $('tcTakeModalClose')?.addEventListener('click', closeTakeModal);
+  $('tcReopenTakeBtn')?.addEventListener('click', () => {
+    if (!Recorder._lastBlob) {
+      showToast('🎬 No take yet — record something first.', 2000);
+      return;
+    }
+    $('tcTake').style.display = 'flex';
+  });
+  // ESC closes the take modal (only when it's the top-most overlay).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (e.target.matches?.('input,textarea,select,[contenteditable]')) return;
+    if ($('tcTake')?.style.display === 'flex') { closeTakeModal(); e.stopPropagation(); }
+  }, true);
+  // Click on the dimmed backdrop (outside the modal body) closes too.
+  $('tcTake')?.addEventListener('click', (e) => {
+    if (e.target?.id === 'tcTake') closeTakeModal();
   });
 
   // Reset Layout — clears all .custom flags and re-runs the active scene
