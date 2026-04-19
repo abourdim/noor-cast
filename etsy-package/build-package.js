@@ -217,7 +217,14 @@ async function main() {
   }
   console.log('  ✓ etsy-mockups/ (7 files)');
 
-  // Create ZIP — try zip (Linux/macOS) → ditto (macOS) → PowerShell (Windows)
+  // Create ZIP — try zip (Linux/macOS) → ditto (macOS) → bsdtar (Windows 10+) →
+  // PowerShell Compress-Archive (older Windows, last resort).
+  //
+  // bsdtar is preferred over Compress-Archive on Windows because
+  // Compress-Archive writes BACKSLASH path separators into zip entries, which
+  // macOS Archive Utility + many non-Info-ZIP tools interpret literally
+  // (creating files like "NoorCast-v0.10\docs\guide.html" on disk instead of
+  // a nested directory tree). bsdtar writes cross-platform forward slashes.
   console.log('\n📦 Creating ZIP archive...\n');
   const zipPath = join(PKG, 'NoorCast-v0.10.zip');
   let zipped = false;
@@ -229,9 +236,22 @@ async function main() {
     execSync(`cd "${PKG}" && ditto -c -k --keepParent NoorCast-v0.10 "${zipPath}"`, { stdio: 'pipe' });
     zipped = true;
   } catch {}
-  // v0.10.7: Windows fallback via PowerShell Compress-Archive
+  // v0.10.14: Windows 10 1803+ ships bsdtar at System32\tar.exe — it produces
+  // portable zips with forward-slash paths. Must use the absolute path because
+  // plain `tar` in Git-Bash resolves to GNU tar (which doesn't write zips).
+  if (!zipped && process.platform === 'win32') try {
+    execSync(`"C:\\Windows\\System32\\tar.exe" -a -c -f "${zipPath}" -C "${PKG}" NoorCast-v0.10`, { stdio: 'pipe' });
+    zipped = true;
+  } catch {}
+  // Same idea on non-Windows: bsdtar or GNU tar with libarchive both work.
+  if (!zipped) try {
+    execSync(`tar -a -c -f "${zipPath}" -C "${PKG}" NoorCast-v0.10`, { stdio: 'pipe' });
+    zipped = true;
+  } catch {}
+  // Last-resort PowerShell fallback (backslash paths — warn in output).
   if (!zipped) try {
     execSync(`powershell.exe -Command "Compress-Archive -Path '${ZIP_DIR}' -DestinationPath '${zipPath}' -Force"`, { stdio: 'pipe' });
+    console.log('  ⚠️  Used Compress-Archive — zip uses backslash paths, may break on macOS.');
     zipped = true;
   } catch {}
   if (zipped) console.log(`  ✅ ${zipPath}`);
