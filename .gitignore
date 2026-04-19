@@ -17,6 +17,9 @@ dist/
 # don't bloat the repo + create noise diffs every rebuild.
 etsy-package/output/
 etsy-package/NoorCast-v*/
+# Exception: keep the current Etsy ZIPs in git as a reference artifact
+# so a fresh clone has the latest listing file ready to upload.
+!etsy-package/NoorCast-v*.zip
 
 # Recorded tutorials (never accidentally committed)
 *.webm
