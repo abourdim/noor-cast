@@ -40,9 +40,18 @@
     .links a { display: inline-block; margin: 6px 12px; padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; }
     .links a:hover { border-color: var(--accent); }
     @media (max-width: 600px) { .start { padding: 16px 12px; } h1 { font-size: 1.6rem; } .grid2 { grid-template-columns: 1fr; } .step { flex-direction: column; align-items: center; text-align: center; } }
+    .lang-switch { position: fixed; top: 12px; right: 16px; display: flex; gap: 6px; z-index: 50; font-family: monospace; }
+    .lang-switch a { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); background: rgba(20,30,20,.9); border: 1px solid var(--border); text-decoration: none; transition: all .15s; }
+    .lang-switch a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+    .lang-switch a.active { color: var(--accent); background: rgba(163,230,53,.1); border-color: var(--accent); cursor: default; }
   </style>
 </head>
 <body>
+<nav class="lang-switch" aria-label="Language">
+  <a href="guide-fr.html" hreflang="fr" title="Guide en français (Start page in English only)">🇫🇷 FR</a>
+  <a href="start.html" class="active" aria-current="page" hreflang="en" title="English">🇬🇧 EN</a>
+  <a href="guide-ar.html" hreflang="ar" title="الدليل بالعربية (Start page in English only)">🇩🇿 AR</a>
+</nav>
 <div class="start">
 
 <div class="hero">

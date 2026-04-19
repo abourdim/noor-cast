@@ -41,6 +41,13 @@
   .pb { background: rgba(56,189,248,.1); color: var(--blue); border: 1px solid rgba(56,189,248,.2); }
   .py { background: rgba(251,191,36,.1); color: var(--gold); border: 1px solid rgba(251,191,36,.2); }
 
+  /* ── Language switcher ── */
+  .lang-switch { position: absolute; top: 16px; right: 20px; display: flex; gap: 6px; z-index: 5; font-family: var(--font-mono, monospace); }
+  .lang-switch a { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #64748b; background: rgba(255,255,255,.02); border: 1px solid rgba(163,230,53,.1); text-decoration: none; transition: all .15s; }
+  .lang-switch a:hover { color: #a3e635; border-color: rgba(163,230,53,.3); text-decoration: none; }
+  .lang-switch a.active { color: #a3e635; background: rgba(163,230,53,.1); border-color: rgba(163,230,53,.3); cursor: default; }
+  [dir="rtl"] .lang-switch { right: auto; left: 20px; }
+
   /* ── Sidebar Nav ── */
   .layout { display: flex; }
   .sidebar {
@@ -215,6 +222,11 @@
 <body>
 
 <div class="cover">
+  <nav class="lang-switch" aria-label="Langue">
+    <a href="guide-fr.html" class="active" aria-current="page" hreflang="fr" title="Français">🇫🇷 FR</a>
+    <a href="guide.html" hreflang="en" title="English">🇬🇧 EN</a>
+    <a href="guide-ar.html" hreflang="ar" title="العربية">🇩🇿 AR</a>
+  </nav>
   <h1>NoorCast</h1>
   <div class="arabic">نُورْكَاسْت</div>
   <div class="sub">Guide Utilisateur Complet — Chaque Fonctionnalité, Chaque Détail</div>

@@ -32,9 +32,19 @@
     .print-btn { position: fixed; bottom: 16px; right: 16px; background: var(--accent); color: var(--bg); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 700; cursor: pointer; z-index: 99; }
     @media print { .print-btn { display: none; } body { background: #fff; color: #000; } .item { border-color: #ccc; background: #f9f9f9; } .item-desc { color: #555; } h2 { background: #f0f0f0; } kbd { border-color: #ccc; color: #333; } }
     @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    .lang-switch { position: fixed; top: 12px; right: 16px; display: flex; gap: 6px; z-index: 50; font-family: monospace; }
+    .lang-switch a { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); background: rgba(20,30,20,.9); border: 1px solid var(--border); text-decoration: none; transition: all .15s; }
+    .lang-switch a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+    .lang-switch a.active { color: var(--accent); background: rgba(163,230,53,.1); border-color: var(--accent); cursor: default; }
+    @media print { .lang-switch { display: none; } }
   </style>
 </head>
 <body>
+<nav class="lang-switch" aria-label="Language">
+  <a href="guide-fr.html" hreflang="fr" title="Guide en français (Cheat sheet in English only)">🇫🇷 FR</a>
+  <a href="cheatsheet.html" class="active" aria-current="page" hreflang="en" title="English">🇬🇧 EN</a>
+  <a href="guide-ar.html" hreflang="ar" title="الدليل بالعربية (Cheat sheet in English only)">🇩🇿 AR</a>
+</nav>
 <div class="sheet">
 
 <h1>📋 Noor<span>Cast</span> Cheat Sheet</h1>
