@@ -1,6 +1,6 @@
 {
   "name": "noor-cast",
-  "version": "0.8.1",
+  "version": "0.9.31",
   "private": true,
   "type": "module",
   "description": "Kids-friendly multi-cam screen recorder",
