@@ -157,6 +157,24 @@ async function main() {
   copyFileSync(join(PKG, 'LICENSE.txt'), join(ZIP_DIR, 'LICENSE.txt'));
   console.log('  ✓ LICENSE.txt');
 
+  // Copy local-server launchers so the buyer doesn't hit the file:// camera
+  // block when they double-click index.html. See docs/guide.html §3.7.
+  for (const launcher of ['start.py', 'start.bat']) {
+    const src = join(ROOT, launcher);
+    if (existsSync(src)) {
+      copyFileSync(src, join(ZIP_DIR, launcher));
+      console.log(`  ✓ ${launcher}`);
+    }
+  }
+
+  // Top-level onboarding page so the buyer sees something readable when
+  // they unzip — start.html lives in docs/ which they'd otherwise miss.
+  const startHtml = join(ROOT, 'docs/start.html');
+  if (existsSync(startHtml)) {
+    copyFileSync(startHtml, join(ZIP_DIR, 'OPEN-ME-FIRST.html'));
+    console.log('  ✓ OPEN-ME-FIRST.html (top-level onboarding)');
+  }
+
   // Copy flyer
   const flyer = join(ROOT, 'assets/noorcast-flyer.png');
   if (existsSync(flyer)) {
