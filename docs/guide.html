@@ -683,14 +683,90 @@
   <tr><th>Problem</th><th>Solution</th></tr>
   <tr><td>Camera not appearing in dropdown</td><td>Check USB connection. Try a different USB port. Refresh the page. Make sure no other app is using the camera.</td></tr>
   <tr><td>Black screen after adding camera</td><td>Another app may be using the camera. Close Zoom/Teams/Skype. Refresh NoorCast.</td></tr>
-  <tr><td>Camera permission denied</td><td>Click the camera icon in the browser's address bar &rarr; Allow. Refresh the page.</td></tr>
+  <tr><td>Camera permission denied</td><td>Click the camera icon (or 🔒 / ⓘ) in the browser's address bar &rarr; Allow. Refresh the page. Full Chrome/Edge steps in <a class="xref" href="#ch3-6">Section 3.6</a>.</td></tr>
+  <tr><td>Dropdown shows only "Camera default" (no real names)</td><td>Permission has not been granted yet. The browser only reveals real device labels <em>after</em> the first <code>getUserMedia</code> success. Click <strong>+ Add</strong>, allow the prompt, and the dropdown refreshes with proper names.</td></tr>
+  <tr><td>Nothing happens when I open <code>index.html</code> directly</td><td>You are on a <code>file://</code> URL. Browsers block camera, mic, and Bluetooth on <code>file://</code>. Serve the folder on <code>localhost</code> instead — see <a class="xref" href="#ch3-7">Section 3.7</a>.</td></tr>
   <tr><td>Wrong camera selected</td><td>Remove the source (click ✕), then add the correct camera from the dropdown.</td></tr>
   <tr><td>Camera image is mirrored</td><td>Right-click the source &rarr; Mirror. Or: <a class="xref" href="#ch5">Style popup</a> &rarr; Flip H.</td></tr>
   <tr><td>Camera feed is laggy</td><td>Close other browser tabs. Reduce the number of active <a class="xref" href="#ch14">canvas pets</a> and <a class="xref" href="#ch18">background patterns</a>.</td></tr>
   <tr><td>Phone camera disconnects</td><td>Keep the phone's screen on (disable auto-lock). Stay on the same Wi-Fi network. Keep DroidCam/EpocCam in foreground.</td></tr>
+  <tr><td>Black preview in Edge but fine in Chrome</td><td>Windows privacy gate is blocking Edge. Open Windows <strong>Settings &rarr; Privacy &amp; security &rarr; Camera</strong> and toggle <em>Camera access</em>, <em>Let apps access your camera</em>, <em>and</em> <strong>Microsoft Edge</strong> all <strong>On</strong>. Full steps in <a class="xref" href="#ch3-6">Section 3.6</a>.</td></tr>
 </table>
 
 <div class="info">NoorCast captures cameras at 1280&times;720 (720p) by default. The canvas composites everything at 1920&times;1080 (1080p) regardless of individual camera resolution.</div>
+
+<h3 id="ch3-6">3.6 Camera Permissions — Chrome &amp; Edge</h3>
+
+<p>When camera won't start even though everything looks plugged in, 95% of the time it's a permission issue. The root cause differs between browsers.</p>
+
+<h4>🧪 One-shot diagnostic</h4>
+<p>Open <strong>DevTools &rarr; Console</strong> (F12) and paste:</p>
+<pre><code>navigator.mediaDevices.getUserMedia({video:true})
+  .then(s =&gt; console.log('OK', s.getVideoTracks()[0].label))
+  .catch(e =&gt; console.log(e.name, e.message));</code></pre>
+<p>The error name tells you where to look:</p>
+<table>
+  <tr><th>Error</th><th>Meaning</th><th>Fix</th></tr>
+  <tr><td><code>NotAllowedError</code></td><td>Browser blocked. Either the site-level permission is <em>Block</em>, or the user clicked <em>Block</em> on the prompt.</td><td>Address-bar icon &rarr; Camera &rarr; Allow. Reload.</td></tr>
+  <tr><td><code>NotFoundError</code></td><td>No camera device visible to the browser.</td><td>Chrome: check USB / built-in cam in <em>Device Manager</em>. Edge: almost always Windows privacy gate (see below).</td></tr>
+  <tr><td><code>NotReadableError</code></td><td>A camera exists but another app holds it.</td><td>Close Zoom, Teams, Meet, OBS, Snap Camera, phone-as-webcam apps. Re-try.</td></tr>
+  <tr><td><code>TypeError</code> / <code>undefined mediaDevices</code></td><td>Page is not a secure context (<code>file://</code>, plain <code>http://</code> on a LAN IP, etc.).</td><td>Serve via <code>https://</code> or <code>http://localhost</code>. See <a class="xref" href="#ch3-7">Section 3.7</a>.</td></tr>
+  <tr><td>Promise stays <code>&lt;pending&gt;</code></td><td>The prompt is visible but you haven't clicked Allow/Block.</td><td>Look top-left under the address bar for the permission popup. Click <strong>Allow</strong>.</td></tr>
+</table>
+
+<h4>🟢 Chrome</h4>
+<ol>
+  <li>Click the <strong>🔒 padlock</strong> (or <strong>ⓘ</strong> info icon for <code>http://localhost</code>) at the far left of the address bar.</li>
+  <li><strong>Site settings</strong> &rarr; <strong>Camera</strong> &rarr; set to <strong>Allow</strong>.</li>
+  <li>Reload with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.</li>
+  <li>If the site doesn't appear in Site settings, go to <code>chrome://settings/content/camera</code> and remove it from the <em>Not allowed to use your camera</em> list.</li>
+</ol>
+
+<h4>🔵 Microsoft Edge</h4>
+<p>Edge has an <em>extra</em> layer on top of Chromium: Windows itself. Fix both.</p>
+<p><strong>Edge side:</strong></p>
+<ol>
+  <li>Edge shows <strong>ⓘ</strong> (not 🔒) for <code>http://localhost</code> because it isn't HTTPS. Click it &rarr; <strong>Permissions for this site</strong> &rarr; <strong>Camera &rarr; Allow</strong> &rarr; reload.</li>
+  <li>Or go directly to <code>edge://settings/content/camera</code> and remove <code>http://localhost:8765</code> from the <em>Block</em> list.</li>
+  <li>If you use Strict tracking prevention (<code>edge://settings/privacy</code>), switch to <strong>Basic</strong> or add <code>localhost</code> to exceptions.</li>
+</ol>
+<p><strong>Windows side (common gotcha):</strong> even when Edge allows the site, Windows can still block the entire browser.</p>
+<ol>
+  <li>Open Start &rarr; <strong>Settings &rarr; Privacy &amp; security &rarr; Camera</strong>.</li>
+  <li>Turn <strong>Camera access</strong> on.</li>
+  <li>Turn <strong>Let apps access your camera</strong> on.</li>
+  <li>Scroll through the app list and turn <strong>Microsoft Edge</strong> on.</li>
+  <li>Retry the DevTools snippet above — if it still says <code>NotFoundError</code>, restart Edge fully (including any background processes in Task Manager).</li>
+</ol>
+
+<div class="info">The camera dropdown fills with real device names <em>after</em> the first successful <code>getUserMedia</code>. Before that, the browser deliberately hides labels to prevent device-fingerprinting, so NoorCast shows a generic "Camera default" placeholder. Click <strong>+ Add</strong> once, allow the prompt, and the dropdown refreshes with proper names.</div>
+
+<h3 id="ch3-7">3.7 Running NoorCast from a local folder</h3>
+
+<p>You cannot just double-click <code>index.html</code>. Browsers refuse camera, microphone, clipboard, and Bluetooth access on <code>file://</code> URLs because they are not a <em>secure context</em>. You must serve the folder over HTTP on <code>localhost</code> (which <em>is</em> treated as secure).</p>
+
+<table>
+  <tr><th>Protocol</th><th>Secure context?</th><th>Camera/Mic works?</th></tr>
+  <tr><td><code>file:///D:/noor-cast/index.html</code></td><td>❌ No</td><td>No</td></tr>
+  <tr><td><code>http://192.168.x.x:8000/</code></td><td>❌ No</td><td>No</td></tr>
+  <tr><td><code>http://localhost:8765/</code></td><td>✅ Yes (localhost exception)</td><td>Yes</td></tr>
+  <tr><td><code>https://abourdim.github.io/noor-cast/</code></td><td>✅ Yes</td><td>Yes</td></tr>
+</table>
+
+<p>NoorCast ships three launchers — pick whichever tool you already have. They all serve the folder on <code>http://localhost:8765</code> and open the page automatically.</p>
+
+<table>
+  <tr><th>Launcher</th><th>Command</th><th>Requires</th></tr>
+  <tr><td>Python (any OS)</td><td><code>python start.py</code> &nbsp;or&nbsp; <code>python3 start.py</code></td><td>Python 3 (preinstalled on macOS/Linux; one-click installer on Windows from <a href="https://python.org">python.org</a> — tick <em>Add to PATH</em>).</td></tr>
+  <tr><td>Node (any OS)</td><td><code>npm start</code></td><td>Node.js. Uses <code>serve</code> which is already in <code>devDependencies</code> after <code>npm install</code>.</td></tr>
+  <tr><td>Windows double-click</td><td><code>start.bat</code></td><td>Nothing extra. The script tries <code>py</code> &rarr; <code>python</code> &rarr; <code>npx</code> in order and opens the browser for you.</td></tr>
+</table>
+
+<p>Close the terminal window (or press <kbd>Ctrl</kbd>+<kbd>C</kbd>) to stop the server. The first run in a new browser will ask for camera/mic permission — allow it, and the dropdown fills with real device names.</p>
+
+<div class="warn">Don't use your LAN IP address (like <code>http://192.168.1.50:8765/</code>) to open NoorCast from another machine — it fails the secure-context check just like <code>file://</code>. For same-machine use, always <code>http://localhost:8765/</code>. For multi-machine, use the hosted HTTPS build.</div>
+
+<p><strong>Easiest answer:</strong> if you don't want to manage a local server at all, just use the hosted version: <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a>. It's HTTPS, always up-to-date, and zero-install.</p>
 
 
 <hr>
@@ -2253,7 +2329,7 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
 <h3>27.1 What's in the Package</h3>
 <table>
   <tr><th>Item</th><th>Format</th><th>Purpose</th></tr>
-  <tr><td><code>NoorCast-v0.7.zip</code></td><td>ZIP (5.2 MB)</td><td>The file buyers download — contains the full app + all extras</td></tr>
+  <tr><td><code>NoorCast-v0.10.zip</code></td><td>ZIP (~5.3 MB)</td><td>The file buyers download — contains the full app + all extras. Rebuilt by <code>build-package.js</code> (see <a class="xref" href="#ch27-7">§ 27.7</a>).</td></tr>
   <tr><td>7 listing mockups</td><td>PNG 2000×1500</td><td>Ready-to-upload Etsy listing photos</td></tr>
   <tr><td>Quick-Start Card</td><td>PNG + HTML (A4)</td><td>Printable 5-step setup guide</td></tr>
   <tr><td>Shortcuts Cheat Sheet</td><td>PNG + HTML (A4 landscape)</td><td>Laminate-ready keyboard shortcuts reference</td></tr>
@@ -2273,7 +2349,7 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
     <strong>Create a new listing.</strong> Click "Add a listing" → choose <em>Digital</em> as the listing type. This means buyers get an instant download after purchase — no shipping needed.
   </div>
   <div class="step">
-    <strong>Upload the ZIP file.</strong> Under "Digital files", upload <code>NoorCast-v0.7.zip</code> (5.2 MB). Etsy allows up to 5 digital files per listing. The ZIP is the only file buyers need.
+    <strong>Upload the ZIP file.</strong> Under "Digital files", upload <code>NoorCast-v0.10.zip</code> (~5.3 MB). Etsy allows up to 5 digital files per listing. The ZIP is the only file buyers need. If you don't have it yet, build it first — see <a class="xref" href="#ch27-7">§ 27.7 Rebuilding the Package</a>.
   </div>
   <div class="step">
     <strong>Add listing photos.</strong> Upload the 7 mockup images from <code>etsy-package/output/</code>:
@@ -2376,16 +2452,71 @@ Piano / Sound Pad / SFX → Speakers + Recording stream
   <li><strong>Track analytics</strong> — Etsy provides views, favorites, and conversion rates. Optimize tags based on what drives traffic.</li>
 </ul>
 
-<h3>27.7 Rebuilding the Package</h3>
-<p>If you update NoorCast and need to regenerate the Etsy package:</p>
+<h3 id="ch27-7">27.7 Rebuilding the Package — Step by Step</h3>
+
+<p>The ZIP you upload to Etsy is <strong>not tracked in git</strong> (it's in <code>.gitignore</code>) because it's a build artifact. You regenerate it locally with one command. The script takes ~30 seconds and produces a reproducible output.</p>
+
+<h4>🔧 Prerequisites (first time only)</h4>
 <div class="steps">
-  <div class="step">Update the app files (noorcast.js, style.css, etc.)</div>
-  <div class="step">Run <code>node etsy-package/build-package.js</code> — this renders all printables to PNG and rebuilds the ZIP</div>
-  <div class="step">Upload the new <code>NoorCast-v0.7.zip</code> to your Etsy listing (replace the old file)</div>
-  <div class="step">Etsy notifies previous buyers that an update is available</div>
+  <div class="step"><strong>Install Node.js 20.11+</strong> (needed for <code>import.meta</code> support). Check with <code>node --version</code>.</div>
+  <div class="step"><strong>Install devDependencies.</strong> From the repo root: <code>npm install</code>. This pulls <code>@playwright/test</code>, used to headless-render the HTML printables to PNG.</div>
+  <div class="step"><strong>Install Playwright's bundled Chromium</strong> the first time: <code>npx playwright install chromium</code> (≈ 170 MB download). You only need Chromium, not Firefox/WebKit.</div>
 </div>
 
-<div class="info">The build script requires Playwright (already in devDependencies). It uses a headless browser to render the HTML printables to high-resolution PNG images, then bundles everything into a ZIP.</div>
+<h4>▶️ Build the ZIP</h4>
+<div class="steps">
+  <div class="step">Update any app files you changed (<code>noorcast.js</code>, <code>style.css</code>, <code>index.html</code>, the docs pages, firmware, etc.).</div>
+  <div class="step">From the repo root, run:
+    <pre><code>node etsy-package/build-package.js</code></pre>
+  </div>
+  <div class="step">The script does six things, in order:
+    <ol>
+      <li>Creates <code>etsy-package/NoorCast-v0.10/</code> (the staging folder) with <code>printables/</code>, <code>etsy-mockups/</code>, <code>assets/</code>, <code>firmware/</code>, and <code>docs/</code> subdirs.</li>
+      <li>Launches headless Chromium via Playwright.</li>
+      <li>For each HTML printable (quickstart card, cheat sheet, classroom poster, lesson plan, sticker sheet, README, 7 Etsy mockups), navigates to the file and takes a 2× deviceScaleFactor screenshot → PNG.</li>
+      <li>Copies the full app (<code>index.html</code>, <code>noorcast.js</code>, <code>style.css</code>, <code>manifest.json</code>, <code>sw.js</code>, <code>assets/</code>, <code>firmware/</code>, <code>docs/</code>) into the staging folder.</li>
+      <li>Writes <code>LICENSE.txt</code> at the root of the staging folder.</li>
+      <li>Zips the whole staging folder into <code>etsy-package/NoorCast-v0.10.zip</code> (uses system <code>zip</code> on macOS/Linux, PowerShell <code>Compress-Archive</code> on Windows).</li>
+    </ol>
+  </div>
+  <div class="step">When the script exits, you should have:
+    <ul>
+      <li><code>etsy-package/NoorCast-v0.10.zip</code> — the file to upload to Etsy.</li>
+      <li><code>etsy-package/output/</code> — the 7 individual mockup PNGs (for Etsy listing photos).</li>
+      <li><code>etsy-package/NoorCast-v0.10/</code> — the extracted staging folder (keep or delete; ignored by git).</li>
+    </ul>
+  </div>
+  <div class="step">Upload the new <code>NoorCast-v0.10.zip</code> to your Etsy listing (replaces the previous digital file). Etsy notifies previous buyers that an update is available.</div>
+</div>
+
+<h4>🔢 Bumping the version number</h4>
+<p>When the next big release lands (v0.11, v0.12…), rename the output:</p>
+<ol>
+  <li>Open <code>etsy-package/build-package.js</code>.</li>
+  <li>Change the single <code>ZIP_DIR</code> constant near the top:<br>
+    <code>const ZIP_DIR = resolve(PKG, 'NoorCast-v0.11');</code></li>
+  <li>Rebuild: <code>node etsy-package/build-package.js</code>.</li>
+  <li>Update the three mentions of <code>NoorCast-v0.10.zip</code> in this chapter to the new version.</li>
+</ol>
+
+<h4>🧹 Removing the legacy zip</h4>
+<p>The old <code>NoorCast-v0.7.zip</code> and <code>NoorCast-v0.7/</code> folder stay on disk as historical artifacts. They're in <code>.gitignore</code>, so they never end up in the repo. Delete them by hand when you're done shipping v0.7 updates:</p>
+<pre><code>rm -rf etsy-package/NoorCast-v0.7 etsy-package/NoorCast-v0.7.zip</code></pre>
+
+<h4>🐞 Troubleshooting the build</h4>
+<table>
+  <tr><th>Symptom</th><th>Fix</th></tr>
+  <tr><td><code>Cannot find package '@playwright/test'</code></td><td>Run <code>npm install</code> from the repo root.</td></tr>
+  <tr><td><code>browserType.launch: Executable doesn't exist</code></td><td>Run <code>npx playwright install chromium</code>.</td></tr>
+  <tr><td><code>import.meta.dirname is undefined</code></td><td>Node too old. Upgrade to 20.11+. The script works around this with <code>fileURLToPath</code>, but verify <code>node --version</code>.</td></tr>
+  <tr><td>ZIP step fails on Windows</td><td>PowerShell's <code>Compress-Archive</code> must be available (built in on Windows 10/11). If running inside Git-Bash, let the script call PowerShell — don't try to use <code>zip</code>.</td></tr>
+  <tr><td>PNGs look empty / blurry</td><td>Fonts haven't loaded before the screenshot. The script already waits 2s — if you added heavy webfonts, bump the <code>page.waitForTimeout</code> in <code>renderHTML()</code>.</td></tr>
+  <tr><td>Mockups show wrong version / date</td><td>The mockup HTML files (<code>etsy-listing-mockups.html</code>) hard-code version strings. Grep <code>etsy-package/*.html</code> for the old version and update before rebuilding.</td></tr>
+</table>
+
+<div class="info">The build script uses a headless browser (Chromium via Playwright) to render the HTML printables to PNG at 2× deviceScaleFactor. Output PNGs are typically 1588×2246 for A4 portrait and 4000×3000 for the 2000×1500 Etsy mockups. If you want to preview a single printable without rebuilding the whole zip, just open the HTML file directly in a browser and use the browser's print-to-PDF.</div>
+
+<div class="warn">Do not commit the zip or the extracted staging folder to git. Both are in <code>.gitignore</code> for a reason — the repo stays small, and the zip is rebuildable from the source files in one command.</div>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch28"><span class="ch-num">28</span> Settings &amp; Feature Reference (A–Z)</h2>

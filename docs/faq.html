@@ -97,6 +97,59 @@
 </details>
 
 <details>
+  <summary>I opened index.html directly and the camera doesn't work</summary>
+  <div>
+    <p>Browsers block camera, microphone, and Bluetooth on <code>file://</code> URLs. NoorCast needs a <strong>secure context</strong> — either <code>https://</code> or <code>http://localhost</code>. Double-clicking <code>index.html</code> gives you <code>file:///…</code>, which is <em>not</em> secure.</p>
+    <p><strong>Fix — serve the folder on localhost.</strong> From the NoorCast folder, pick whichever tool you have:</p>
+    <ul>
+      <li><strong>Any OS (Python):</strong> <code>python start.py</code> (or <code>python3 start.py</code>) — opens <code>http://localhost:8765/index.html</code> automatically.</li>
+      <li><strong>Any OS (Node):</strong> <code>npm start</code> — uses <code>serve</code> from <code>devDependencies</code>.</li>
+      <li><strong>Windows double-click:</strong> <code>start.bat</code> (tries <code>py</code> → <code>python</code> → <code>npx</code>).</li>
+    </ul>
+    <p>Close the terminal window to stop the server. Full details: <a href="guide.html#ch3-7">guide.html → 3.7 Running NoorCast from a local folder</a>.</p>
+    <p><strong>Easiest answer:</strong> use the hosted build at <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a> — always HTTPS, zero server to manage.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Camera permission — Chrome-specific steps</summary>
+  <div>
+    <p>When you click <strong>+ Add</strong> next to the camera dropdown, Chrome shows a popup just under the address bar: <em>"localhost wants to use your camera"</em>. Click <strong>Allow</strong>.</p>
+    <p>If no prompt appears (or you previously clicked Block):</p>
+    <ol>
+      <li>Click the <strong>🔒 padlock</strong> (or <strong>ⓘ</strong> info icon for <code>http://localhost</code>) at the left of the URL.</li>
+      <li><strong>Site settings</strong> → <strong>Camera</strong> → change to <strong>Allow</strong>.</li>
+      <li>Reload with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.</li>
+    </ol>
+    <p>Still blocked? Open <code>chrome://settings/content/camera</code> and remove the site from the <em>Not allowed</em> list.</p>
+    <p><strong>One-shot diagnostic</strong> — paste in DevTools Console (F12):</p>
+    <p><code>navigator.mediaDevices.getUserMedia({video:true}).then(s=&gt;console.log('OK',s.getVideoTracks()[0].label)).catch(e=&gt;console.log(e.name,e.message))</code></p>
+    <p>Error legend: <code>NotAllowedError</code> = blocked (allow it), <code>NotFoundError</code> = no camera plugged, <code>NotReadableError</code> = another app holds it (close Zoom/Teams/Meet), <code>Promise &lt;pending&gt;</code> = prompt is open, click Allow.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Camera permission — Microsoft Edge-specific steps</summary>
+  <div>
+    <p>Edge is Chromium-based but has <em>two</em> permission layers: Edge itself <strong>and</strong> Windows. Fix both.</p>
+    <p><strong>Edge side:</strong></p>
+    <ol>
+      <li>Click the <strong>ⓘ</strong> info icon (Edge shows this instead of a padlock for <code>http://localhost</code>) at the left of the address bar → <strong>Permissions for this site</strong> → <strong>Camera → Allow</strong> → reload.</li>
+      <li>Or go directly to <code>edge://settings/content/camera</code> → remove <code>http://localhost:8765</code> from the <em>Block</em> list.</li>
+      <li>If Tracking prevention is set to Strict (<code>edge://settings/privacy</code>), switch it to <strong>Basic</strong> or add <code>localhost</code> to exceptions.</li>
+    </ol>
+    <p><strong>Windows side (most common Edge gotcha):</strong> even when Edge allows the site, Windows can still block the whole browser.</p>
+    <ol>
+      <li>Start → <strong>Settings → Privacy &amp; security → Camera</strong>.</li>
+      <li><strong>Camera access</strong> = On.</li>
+      <li><strong>Let apps access your camera</strong> = On.</li>
+      <li>Scroll the app list and turn <strong>Microsoft Edge</strong> on.</li>
+    </ol>
+    <p>If the DevTools diagnostic (see Chrome entry above) returns <code>NotFoundError</code> in Edge while Chrome shows the camera, it is almost always the Windows privacy toggle above.</p>
+  </div>
+</details>
+
+<details>
   <summary>What are the badges?</summary>
   <div>
     <p>Local achievement trophies that unlock as you use NoorCast:</p>

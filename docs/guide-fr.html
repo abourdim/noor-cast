@@ -656,14 +656,90 @@
   <tr><th>Problème</th><th>Solution</th></tr>
   <tr><td>Caméra not appearing in dropdown</td><td>Vérifiez la connexion USB. Essayez un autre port. Rafraîchissez la page. Vérifiez qu'aucune autre app n'utilise la caméra.</td></tr>
   <tr><td>Écran noir après ajout de caméra</td><td>Une autre application utilise peut-être la caméra. Fermez Zoom/Teams/Skype. Rafraîchissez NoorCast.</td></tr>
-  <tr><td>Caméra permission denied</td><td>Cliquez sur l'icône caméra dans la barre d'adresse du navigateur &rarr; Tous lesow. Refresh the page.</td></tr>
+  <tr><td>Permission caméra refusée</td><td>Cliquez sur l'icône caméra (ou 🔒 / ⓘ) dans la barre d'adresse &rarr; Autoriser. Rafraîchissez. Étapes complètes Chrome/Edge : <a class="xref" href="#ch3-6">§ 3.6</a>.</td></tr>
+  <tr><td>Le menu déroulant n'affiche que « Camera default »</td><td>La permission n'a pas encore été accordée. Le navigateur ne révèle les vrais noms qu'<em>après</em> le premier <code>getUserMedia</code> réussi. Cliquez sur <strong>+ Ajouter</strong>, autorisez, le menu se rafraîchit avec les vrais noms.</td></tr>
+  <tr><td>Rien ne se passe quand j'ouvre <code>index.html</code> directement</td><td>Vous êtes sur une URL <code>file://</code>. Les navigateurs bloquent caméra, micro et Bluetooth sur <code>file://</code>. Il faut servir le dossier sur <code>localhost</code> — voir <a class="xref" href="#ch3-7">§ 3.7</a>.</td></tr>
   <tr><td>Mauvaise caméra sélectionnée</td><td>Supprimez la source (cliquez ✕), puis ajoutez la bonne caméra depuis le menu.</td></tr>
   <tr><td>Caméra image is mirrored</td><td>Right-click the source &rarr; Mirror. Or: <a class="xref" href="#ch5">Style popup</a> &rarr; Flip H.</td></tr>
   <tr><td>Caméra feed is laggy</td><td>Fermez les autres onglets du navigateur. Reduce the number of active <a class="xref" href="#ch14">canvas pets</a> and <a class="xref" href="#ch18">background patterns</a>.</td></tr>
   <tr><td>La caméra du téléphone se déconnecte</td><td>Gardez l'écran du téléphone allumé (désactivez le verrouillage auto). Restez sur le même réseau Wi-Fi. Keep DroidCam/EpocCam in foreground.</td></tr>
+  <tr><td>Aperçu noir dans Edge mais OK dans Chrome</td><td>La confidentialité Windows bloque Edge. Ouvrez <strong>Paramètres Windows &rarr; Confidentialité &amp; sécurité &rarr; Caméra</strong> et activez les trois : <em>Accès à la caméra</em>, <em>Autoriser les apps à accéder à votre caméra</em>, <em>et</em> <strong>Microsoft Edge</strong> dans la liste. Détails : <a class="xref" href="#ch3-6">§ 3.6</a>.</td></tr>
 </table>
 
 <div class="info">NoorCast captures cameras at 1280&times;720 (720p) by default. The canvas composites everything at 1920&times;1080 (1080p) regardless of individual camera resolution.</div>
+
+<h3 id="ch3-6">3.6 Permissions Caméra — Chrome &amp; Edge</h3>
+
+<p>Quand la caméra refuse de démarrer alors que le matériel est branché, c'est une question de permission dans 95 % des cas. La cause diffère entre les navigateurs.</p>
+
+<h4>🧪 Diagnostic en une ligne</h4>
+<p>Ouvrez <strong>DevTools &rarr; Console</strong> (F12) et collez :</p>
+<pre><code>navigator.mediaDevices.getUserMedia({video:true})
+  .then(s =&gt; console.log('OK', s.getVideoTracks()[0].label))
+  .catch(e =&gt; console.log(e.name, e.message));</code></pre>
+<p>Le nom de l'erreur indique où chercher :</p>
+<table>
+  <tr><th>Erreur</th><th>Signification</th><th>Solution</th></tr>
+  <tr><td><code>NotAllowedError</code></td><td>Le navigateur a bloqué. Permission site sur <em>Bloquer</em>, ou vous avez cliqué « Bloquer » sur la popup.</td><td>Icône barre d'adresse &rarr; Caméra &rarr; Autoriser. Rechargez.</td></tr>
+  <tr><td><code>NotFoundError</code></td><td>Aucune caméra visible pour le navigateur.</td><td>Chrome : vérifiez USB / caméra intégrée dans le <em>Gestionnaire de périphériques</em>. Edge : presque toujours la confidentialité Windows (voir plus bas).</td></tr>
+  <tr><td><code>NotReadableError</code></td><td>Une caméra existe mais une autre app la tient.</td><td>Fermez Zoom, Teams, Meet, OBS, Snap Camera, apps phone-as-webcam. Réessayez.</td></tr>
+  <tr><td><code>TypeError</code> / <code>mediaDevices undefined</code></td><td>Page pas en contexte sécurisé (<code>file://</code>, <code>http://</code> sur IP LAN, etc.).</td><td>Servez via <code>https://</code> ou <code>http://localhost</code>. Voir <a class="xref" href="#ch3-7">§ 3.7</a>.</td></tr>
+  <tr><td>Promise reste <code>&lt;pending&gt;</code></td><td>La popup est visible mais vous n'avez pas cliqué Autoriser/Bloquer.</td><td>Regardez en haut à gauche sous la barre d'adresse. Cliquez <strong>Autoriser</strong>.</td></tr>
+</table>
+
+<h4>🟢 Chrome</h4>
+<ol>
+  <li>Cliquez sur le <strong>🔒 cadenas</strong> (ou l'icône <strong>ⓘ</strong> pour <code>http://localhost</code>) tout à gauche de la barre d'adresse.</li>
+  <li><strong>Paramètres du site</strong> &rarr; <strong>Caméra</strong> &rarr; <strong>Autoriser</strong>.</li>
+  <li>Rechargez avec <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.</li>
+  <li>Si le site n'apparaît pas dans Paramètres du site, ouvrez <code>chrome://settings/content/camera</code> et retirez-le de la liste <em>Non autorisés</em>.</li>
+</ol>
+
+<h4>🔵 Microsoft Edge</h4>
+<p>Edge a une couche <em>supplémentaire</em> par-dessus Chromium : Windows lui-même. Corrigez les deux.</p>
+<p><strong>Côté Edge :</strong></p>
+<ol>
+  <li>Edge affiche <strong>ⓘ</strong> (pas 🔒) pour <code>http://localhost</code> car ce n'est pas HTTPS. Cliquez dessus &rarr; <strong>Autorisations pour ce site</strong> &rarr; <strong>Caméra &rarr; Autoriser</strong> &rarr; rechargez.</li>
+  <li>Ou allez directement sur <code>edge://settings/content/camera</code> et retirez <code>http://localhost:8765</code> de la liste <em>Bloquer</em>.</li>
+  <li>Si la prévention de suivi est en mode Strict (<code>edge://settings/privacy</code>), passez en <strong>De base</strong> ou ajoutez <code>localhost</code> aux exceptions.</li>
+</ol>
+<p><strong>Côté Windows (piège fréquent) :</strong> même si Edge autorise le site, Windows peut bloquer tout le navigateur.</p>
+<ol>
+  <li>Démarrer &rarr; <strong>Paramètres &rarr; Confidentialité &amp; sécurité &rarr; Caméra</strong>.</li>
+  <li><strong>Accès à la caméra</strong> sur On.</li>
+  <li><strong>Autoriser les applications à accéder à votre caméra</strong> sur On.</li>
+  <li>Descendez dans la liste et activez <strong>Microsoft Edge</strong>.</li>
+  <li>Rejouez le snippet DevTools ci-dessus — s'il dit toujours <code>NotFoundError</code>, redémarrez Edge complètement (y compris les processus en arrière-plan via le Gestionnaire des tâches).</li>
+</ol>
+
+<div class="info">Le menu déroulant des caméras se remplit avec les vrais noms <em>après</em> le premier <code>getUserMedia</code> réussi. Avant cela, le navigateur cache volontairement les labels pour empêcher le fingerprinting, donc NoorCast affiche un placeholder « Camera default ». Cliquez <strong>+ Ajouter</strong> une fois, autorisez, et le menu se rafraîchit avec les vrais noms.</div>
+
+<h3 id="ch3-7">3.7 Lancer NoorCast depuis un dossier local</h3>
+
+<p>Vous ne pouvez pas simplement double-cliquer sur <code>index.html</code>. Les navigateurs refusent caméra, micro, presse-papiers et Bluetooth sur les URLs <code>file://</code> car ce n'est pas un <em>contexte sécurisé</em>. Vous devez servir le dossier en HTTP sur <code>localhost</code> (qui <em>est</em> considéré comme sécurisé).</p>
+
+<table>
+  <tr><th>Protocole</th><th>Contexte sécurisé ?</th><th>Caméra/Micro fonctionne ?</th></tr>
+  <tr><td><code>file:///D:/noor-cast/index.html</code></td><td>❌ Non</td><td>Non</td></tr>
+  <tr><td><code>http://192.168.x.x:8000/</code></td><td>❌ Non</td><td>Non</td></tr>
+  <tr><td><code>http://localhost:8765/</code></td><td>✅ Oui (exception localhost)</td><td>Oui</td></tr>
+  <tr><td><code>https://abourdim.github.io/noor-cast/</code></td><td>✅ Oui</td><td>Oui</td></tr>
+</table>
+
+<p>NoorCast fournit trois lanceurs — prenez celui que vous avez déjà. Tous servent le dossier sur <code>http://localhost:8765</code> et ouvrent la page automatiquement.</p>
+
+<table>
+  <tr><th>Lanceur</th><th>Commande</th><th>Prérequis</th></tr>
+  <tr><td>Python (tous OS)</td><td><code>python start.py</code> &nbsp;ou&nbsp; <code>python3 start.py</code></td><td>Python 3 (préinstallé sur macOS/Linux ; installeur en un clic sur Windows depuis <a href="https://python.org">python.org</a> — cochez <em>Add to PATH</em>).</td></tr>
+  <tr><td>Node (tous OS)</td><td><code>npm start</code></td><td>Node.js. Utilise <code>serve</code> déjà présent dans <code>devDependencies</code> après <code>npm install</code>.</td></tr>
+  <tr><td>Windows double-clic</td><td><code>start.bat</code></td><td>Rien de plus. Le script essaie <code>py</code> &rarr; <code>python</code> &rarr; <code>npx</code> dans l'ordre et ouvre le navigateur pour vous.</td></tr>
+</table>
+
+<p>Fermez la fenêtre du terminal (ou <kbd>Ctrl</kbd>+<kbd>C</kbd>) pour arrêter le serveur. Le premier lancement dans un navigateur neuf demandera la permission caméra/micro — autorisez, et le menu se remplit avec les vrais noms des appareils.</p>
+
+<div class="warn">N'utilisez pas votre IP LAN (comme <code>http://192.168.1.50:8765/</code>) pour ouvrir NoorCast depuis une autre machine — ça échoue au test de contexte sécurisé, comme <code>file://</code>. Pour la même machine, toujours <code>http://localhost:8765/</code>. Pour plusieurs machines, utilisez la version HTTPS hébergée.</div>
+
+<p><strong>La réponse la plus simple :</strong> si vous ne voulez pas gérer de serveur local, utilisez la version hébergée : <a href="https://abourdim.github.io/noor-cast/">abourdim.github.io/noor-cast</a>. HTTPS, toujours à jour, zéro installation.</p>
 
 
 <hr>
@@ -1958,7 +2034,7 @@
 <h3>27.1 Contenu du Package</h3>
 <table>
   <tr><th>Élément</th><th>Format</th><th>Objectif</th></tr>
-  <tr><td><code>NoorCast-v0.7.zip</code></td><td>ZIP (5.2 MB)</td><td>Le fichier que les acheteurs téléchargent — contient l'appli complète + tous les extras</td></tr>
+  <tr><td><code>NoorCast-v0.10.zip</code></td><td>ZIP (~5.3 MB)</td><td>Le fichier que les acheteurs téléchargent — contient l'appli complète + tous les extras. Reconstruit par <code>build-package.js</code> (voir <a class="xref" href="#ch27-7">§ 27.7</a>).</td></tr>
   <tr><td>7 listing mockups</td><td>PNG 2000×1500</td><td>Photos de l'annonce Etsy prêtes à téléverser</td></tr>
   <tr><td>Quick-Start Card</td><td>PNG + HTML (A4)</td><td>Guide d'installation imprimable en 5 étapes</td></tr>
   <tr><td>Shortcuts Cheat Sheet</td><td>PNG + HTML (A4 landscape)</td><td>Référence des raccourcis clavier prête à plastifier</td></tr>
@@ -1978,7 +2054,7 @@
     <strong>Créez une nouvelle annonce.</strong> Cliquez "Add a listing" → choose <em>Digital</em> comme type d'annonce. Les acheteurs obtiennent un téléchargement instantané après achat — pas d'expédition nécessaire.
   </div>
   <div class="step">
-    <strong>Téléversez le fichier ZIP.</strong> Under "Digital files", upload <code>NoorCast-v0.7.zip</code> (5.2 MB). Etsy allows up to 5 digital files par annonce. The ZIP is the only file buyers need.
+    <strong>Téléversez le fichier ZIP.</strong> Sous « Digital files », téléversez <code>NoorCast-v0.10.zip</code> (~5.3 Mo). Etsy autorise jusqu'à 5 fichiers numériques par annonce. Le ZIP est le seul fichier dont les acheteurs ont besoin. Si vous ne l'avez pas encore, construisez-le d'abord — voir <a class="xref" href="#ch27-7">§ 27.7 Reconstruire le Package</a>.
   </div>
   <div class="step">
     <strong>Ajoutez les photos de l'annonce.</strong> Upload the 7 mockup images from <code>etsy-package/output/</code>:
@@ -2081,16 +2157,71 @@
   <li><strong>Suivez les analytics</strong> — Etsy fournit les vues, favoris et taux de conversion. Optimisez les tags selon ce qui génère du trafic.</li>
 </ul>
 
-<h3>27.7 Reconstruire le Package</h3>
-<p>Si vous mettez à jour NoorCast et devez régénérer le package Etsy :</p>
+<h3 id="ch27-7">27.7 Reconstruire le Package — pas à pas</h3>
+
+<p>Le ZIP que vous téléversez sur Etsy n'est <strong>pas tracé dans git</strong> (il est dans <code>.gitignore</code>) car c'est un artefact de build. Vous le régénérez localement avec une seule commande. Le script prend ~30 secondes et produit une sortie reproductible.</p>
+
+<h4>🔧 Prérequis (première fois seulement)</h4>
 <div class="steps">
-  <div class="step">Mettez à jour les fichiers de l'appli (noorcast.js, style.css, etc.)</div>
-  <div class="step">Run <code>node etsy-package/build-package.js</code> — ceci rend tous les imprimables en PNG et reconstruit le ZIP</div>
-  <div class="step">Téléversez le nouveau <code>NoorCast-v0.7.zip</code> sur votre annonce Etsy (remplacez l'ancien fichier)</div>
-  <div class="step">Etsy notifie les acheteurs précédents qu'une mise à jour est disponible</div>
+  <div class="step"><strong>Installez Node.js 20.11+</strong> (requis pour <code>import.meta</code>). Vérifiez avec <code>node --version</code>.</div>
+  <div class="step"><strong>Installez les devDependencies.</strong> Depuis la racine du repo : <code>npm install</code>. Ceci récupère <code>@playwright/test</code>, utilisé pour rendre les imprimables HTML en PNG en mode headless.</div>
+  <div class="step"><strong>Installez le Chromium fourni par Playwright</strong> la première fois : <code>npx playwright install chromium</code> (≈ 170 Mo). Vous n'avez besoin que de Chromium, pas de Firefox/WebKit.</div>
 </div>
 
-<div class="info">Le script de build nécessite Playwright (déjà dans devDependencies). Il utilise un navigateur headless pour rendre les imprimables HTML en images PNG haute résolution, puis regroupe tout dans un ZIP.</div>
+<h4>▶️ Construire le ZIP</h4>
+<div class="steps">
+  <div class="step">Mettez à jour les fichiers de l'appli que vous avez modifiés (<code>noorcast.js</code>, <code>style.css</code>, <code>index.html</code>, les pages docs, le firmware, etc.).</div>
+  <div class="step">Depuis la racine du repo, exécutez :
+    <pre><code>node etsy-package/build-package.js</code></pre>
+  </div>
+  <div class="step">Le script effectue six étapes dans l'ordre :
+    <ol>
+      <li>Crée <code>etsy-package/NoorCast-v0.10/</code> (le dossier de staging) avec les sous-dossiers <code>printables/</code>, <code>etsy-mockups/</code>, <code>assets/</code>, <code>firmware/</code> et <code>docs/</code>.</li>
+      <li>Lance Chromium headless via Playwright.</li>
+      <li>Pour chaque imprimable HTML (quickstart card, cheat sheet, poster classroom, lesson plan, sticker sheet, README, 7 mockups Etsy), ouvre le fichier et prend une capture 2× deviceScaleFactor → PNG.</li>
+      <li>Copie l'appli complète (<code>index.html</code>, <code>noorcast.js</code>, <code>style.css</code>, <code>manifest.json</code>, <code>sw.js</code>, <code>assets/</code>, <code>firmware/</code>, <code>docs/</code>) dans le staging.</li>
+      <li>Écrit <code>LICENSE.txt</code> à la racine du staging.</li>
+      <li>Zippe tout le dossier staging en <code>etsy-package/NoorCast-v0.10.zip</code> (utilise <code>zip</code> système sur macOS/Linux, <code>Compress-Archive</code> PowerShell sur Windows).</li>
+    </ol>
+  </div>
+  <div class="step">À la sortie du script, vous devez avoir :
+    <ul>
+      <li><code>etsy-package/NoorCast-v0.10.zip</code> — le fichier à téléverser sur Etsy.</li>
+      <li><code>etsy-package/output/</code> — les 7 PNG de mockups individuels (pour les photos d'annonce Etsy).</li>
+      <li><code>etsy-package/NoorCast-v0.10/</code> — le staging extrait (gardez ou supprimez ; ignoré par git).</li>
+    </ul>
+  </div>
+  <div class="step">Téléversez le nouveau <code>NoorCast-v0.10.zip</code> sur votre annonce Etsy (remplace le fichier numérique précédent). Etsy notifie les acheteurs précédents qu'une mise à jour est disponible.</div>
+</div>
+
+<h4>🔢 Incrémenter le numéro de version</h4>
+<p>Quand la prochaine grosse version sort (v0.11, v0.12…), renommez la sortie :</p>
+<ol>
+  <li>Ouvrez <code>etsy-package/build-package.js</code>.</li>
+  <li>Modifiez la constante <code>ZIP_DIR</code> en haut :<br>
+    <code>const ZIP_DIR = resolve(PKG, 'NoorCast-v0.11');</code></li>
+  <li>Reconstruisez : <code>node etsy-package/build-package.js</code>.</li>
+  <li>Mettez à jour les trois mentions de <code>NoorCast-v0.10.zip</code> dans ce chapitre avec la nouvelle version.</li>
+</ol>
+
+<h4>🧹 Supprimer l'ancien zip</h4>
+<p>L'ancien <code>NoorCast-v0.7.zip</code> et le dossier <code>NoorCast-v0.7/</code> restent sur disque comme artefacts historiques. Ils sont dans <code>.gitignore</code>, donc jamais dans le repo. Supprimez-les à la main quand vous cessez de livrer des mises à jour v0.7 :</p>
+<pre><code>rm -rf etsy-package/NoorCast-v0.7 etsy-package/NoorCast-v0.7.zip</code></pre>
+
+<h4>🐞 Dépannage du build</h4>
+<table>
+  <tr><th>Symptôme</th><th>Solution</th></tr>
+  <tr><td><code>Cannot find package '@playwright/test'</code></td><td>Exécutez <code>npm install</code> depuis la racine du repo.</td></tr>
+  <tr><td><code>browserType.launch: Executable doesn't exist</code></td><td>Exécutez <code>npx playwright install chromium</code>.</td></tr>
+  <tr><td><code>import.meta.dirname is undefined</code></td><td>Node trop vieux. Passez en 20.11+. Le script contourne avec <code>fileURLToPath</code>, mais vérifiez <code>node --version</code>.</td></tr>
+  <tr><td>L'étape ZIP échoue sur Windows</td><td><code>Compress-Archive</code> de PowerShell doit être disponible (intégré à Windows 10/11). Si vous êtes dans Git-Bash, laissez le script appeler PowerShell — n'essayez pas d'utiliser <code>zip</code>.</td></tr>
+  <tr><td>PNGs vides / flous</td><td>Les polices n'ont pas chargé avant la capture. Le script attend déjà 2s — si vous avez ajouté des webfonts lourdes, augmentez <code>page.waitForTimeout</code> dans <code>renderHTML()</code>.</td></tr>
+  <tr><td>Les mockups affichent la mauvaise version / date</td><td>Les fichiers HTML de mockups (<code>etsy-listing-mockups.html</code>) hard-codent des chaînes de version. Grepez <code>etsy-package/*.html</code> pour l'ancienne version et mettez à jour avant de reconstruire.</td></tr>
+</table>
+
+<div class="info">Le script de build utilise un navigateur headless (Chromium via Playwright) pour rendre les imprimables HTML en PNG à 2× deviceScaleFactor. Les PNG font typiquement 1588×2246 pour A4 portrait et 4000×3000 pour les mockups Etsy 2000×1500. Pour prévisualiser un seul imprimable sans reconstruire tout le zip, ouvrez le HTML directement dans un navigateur et utilisez imprimer-en-PDF.</div>
+
+<div class="warn">Ne commitez ni le zip ni le dossier staging extrait dans git. Les deux sont dans <code>.gitignore</code> pour une raison — le repo reste léger, et le zip est reconstructible depuis les sources en une commande.</div>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <h2 id="ch28"><span class="ch-num">28</span> Référence des Réglages &amp; Fonctionnalités (A–Z)</h2>
