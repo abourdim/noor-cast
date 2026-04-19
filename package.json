@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Kids-friendly multi-cam screen recorder",
   "scripts": {
+    "start": "serve -p 8765 .",
     "lint": "eslint noorcast.js",
     "lint:fix": "eslint noorcast.js --fix",
     "test:syntax": "node --check noorcast.js && node --check sw.js",
